@@ -1729,9 +1729,34 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <!-- Don't change version as doc generation may fail -->
-                    <!-- (using custom doxia for twiki pages generation) -->
-                    <version>2.0-beta-6</version>
+                    <version>3.7</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.doxia</groupId>
+                            <artifactId>doxia-site-renderer</artifactId>
+                            <version>1.8.1</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.maven.doxia</groupId>
+                            <artifactId>doxia-sink-api</artifactId>
+                            <version>1.8</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.velocity</groupId>
+                            <artifactId>velocity</artifactId>
+                            <version>1.5</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.maven.doxia</groupId>
+                            <artifactId>doxia-module-markdown</artifactId>
+                            <version>1.8</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.apache.maven.doxia</groupId>
+                            <artifactId>doxia-core</artifactId>
+                            <version>1.7</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -2011,7 +2036,7 @@
                         <exclude>work.log</exclude>
                         <exclude>SecurityAuth.audit</exclude>
                         <exclude>.gitignore</exclude>
-                        <exclude>docs/src/site/twiki/*.twiki</exclude>
+                        <exclude>docs/src/site/markdown/*.md</exclude>
                         <exclude>examples/src/main/data/*</exclude>
                         <exclude>core/src/test/resources/test-ioutils.txt</exclude>
 						<exclude>core/src/test/resources/oldWorkFlowApp.serialized</exclude>

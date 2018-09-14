@@ -1,41 +1,42 @@
-<noautolink>
 
-[[index][::Go back to Oozie Documentation Index::]]
+
+[::Go back to Oozie Documentation Index::](index.html)
 
 -----
 
----+!! Oozie Hive 2 Action Extension
+# Oozie Hive 2 Action Extension
 
-%TOC%
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
 
----++ Hive 2 Action
+## Hive 2 Action
 
-The =hive2= action runs Beeline to connect to Hive Server 2.
+The `hive2` action runs Beeline to connect to Hive Server 2.
 
 The workflow job will wait until the Hive Server 2 job completes before
 continuing to the next action.
 
-To run the Hive Server 2 job, you have to configure the =hive2= action with the =resource-manager=, =name-node=, =jdbc-url=,
- =password= elements, and either Hive's =script= or =query= element, as well as the necessary parameters and configuration.
+To run the Hive Server 2 job, you have to configure the `hive2` action with the `resource-manager`, `name-node`, `jdbc-url`,
+ `password` elements, and either Hive's `script` or `query` element, as well as the necessary parameters and configuration.
 
-A =hive2= action can be configured to create or delete HDFS directories
+A `hive2` action can be configured to create or delete HDFS directories
 before starting the Hive Server 2 job.
 
 Oozie EL expressions can be used in the inline configuration. Property
-values specified in the =configuration= element override values specified
-in the =job-xml= file.
+values specified in the `configuration` element override values specified
+in the `job-xml` file.
 
-As with Hadoop =map-reduce= jobs, it is possible to add files and
+As with Hadoop `map-reduce` jobs, it is possible to add files and
 archives in order to make them available to Beeline. Refer to the
-[WorkflowFunctionalSpec#FilesArchives][Adding Files and Archives for the Job]
+[Adding Files and Archives for the Job](WorkflowFunctionalSpec.html#FilesArchives)
 section for more information about this feature.
 
 Oozie Hive 2 action supports Hive scripts with parameter variables, their
-syntax is =${VARIABLES}=.
+syntax is `${VARIABLES}`.
 
-*Syntax:*
+**Syntax:**
 
-<verbatim>
+
+```
 <workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="[NODE-NAME]">
@@ -75,44 +76,45 @@ syntax is =${VARIABLES}=.
     </action>
     ...
 </workflow-app>
-</verbatim>
+```
 
-The =prepare= element, if present, indicates a list of paths to delete
-or create before starting the job. Specified paths must start with =hdfs://HOST:PORT=.
+The `prepare` element, if present, indicates a list of paths to delete
+or create before starting the job. Specified paths must start with `hdfs://HOST:PORT`.
 
-The =job-xml= element, if present, specifies a file containing configuration
-for Beeline. Multiple =job-xml= elements are allowed in order to specify multiple =job.xml= files.
+The `job-xml` element, if present, specifies a file containing configuration
+for Beeline. Multiple `job-xml` elements are allowed in order to specify multiple `job.xml` files.
 
-The =configuration= element, if present, contains configuration
+The `configuration` element, if present, contains configuration
 properties that are passed to the Beeline job.
 
-The =jdbc-url= element must contain the JDBC URL for the Hive Server 2.  Beeline will use this to know where to connect to.
+The `jdbc-url` element must contain the JDBC URL for the Hive Server 2.  Beeline will use this to know where to connect to.
 
-The =password= element must contain the password of the current user.  However, the =password= is only used if Hive Server 2 is
+The `password` element must contain the password of the current user.  However, the `password` is only used if Hive Server 2 is
 backed by something requiring a password (e.g. LDAP); non-secured Hive Server 2 or Kerberized Hive Server 2 don't require a password
-so in those cases the =password= is ignored and can be omitted from the action XML.  It is up to the user to ensure that a password
+so in those cases the `password` is ignored and can be omitted from the action XML.  It is up to the user to ensure that a password
 is specified when required.
 
-The =script= element must contain the path of the Hive script to
+The `script` element must contain the path of the Hive script to
 execute. The Hive script can be templatized with variables of the form
-=${VARIABLE}=. The values of these variables can then be specified
-using the =params= element.
+`${VARIABLE}`. The values of these variables can then be specified
+using the `params` element.
 
-The =query= element available from uri:oozie:hive2-action:0.2, can be used instead of the =script= element. It allows for embedding
-queries within the =worklfow.xml= directly.  Similar to the =script= element, it also allows for the templatization of variables
-in the form =${VARIABLE}=.
+The `query` element available from uri:oozie:hive2-action:0.2, can be used instead of the `script` element. It allows for embedding
+queries within the `worklfow.xml` directly.  Similar to the `script` element, it also allows for the templatization of variables
+in the form `${VARIABLE}`.
 
-The =params= element, if present, contains parameters to be passed to
+The `params` element, if present, contains parameters to be passed to
 the Hive script.
 
-The =argument= element, if present, contains arguments to be passed as-is to Beeline.
+The `argument` element, if present, contains arguments to be passed as-is to Beeline.
 
 All the above elements can be parameterized (templatized) using EL
 expressions.
 
-*Example:*
+**Example:**
 
-<verbatim>
+
+```
 <workflow-app name="sample-wf" xmlns="uri:oozie:workflow:1.0">
     ...
     <action name="my-hive2-action">
@@ -139,22 +141,21 @@ expressions.
     </action>
     ...
 </workflow-app>
-</verbatim>
+```
 
 
----+++ Security
+### Security
 
-As mentioned above, =password= is only used in cases where Hive Server 2 is backed by something requiring a password (e.g. LDAP).
+As mentioned above, `password` is only used in cases where Hive Server 2 is backed by something requiring a password (e.g. LDAP).
 Non-secured Hive Server 2 and Kerberized Hive Server 2 don't require a password so in these cases it can be omitted.
-See [[DG_UnifiedCredentialsModule][here]] for more information on the configuration for using the Hive Server 2 Action
-with a Kerberized Hive Server 2.
 
----++ Appendix, Hive 2 XML-Schema
+## Appendix, Hive 2 XML-Schema
 
----+++ AE.A Appendix A, Hive 2 XML-Schema
+### AE.A Appendix A, Hive 2 XML-Schema
 
----++++ Hive 2 Action Schema Version 1.0
-<verbatim>
+#### Hive 2 Action Schema Version 1.0
+
+```
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:hive2="uri:oozie:hive2-action:1.0" elementFormDefault="qualified"
            targetNamespace="uri:oozie:hive2-action:1.0">
@@ -188,10 +189,11 @@ with a Kerberized Hive Server 2.
     </xs:complexType>
 .
 </xs:schema>
-</verbatim>
+```
 
----++++ Hive 2 Action Schema Version 0.2
-<verbatim>
+#### Hive 2 Action Schema Version 0.2
+
+```
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:hive2="uri:oozie:hive2-action:0.2" elementFormDefault="qualified"
            targetNamespace="uri:oozie:hive2-action:0.2">
@@ -248,10 +250,11 @@ with a Kerberized Hive Server 2.
     </xs:complexType>
 .
 </xs:schema>
-</verbatim>
+```
 
----++++ Hive 2 Action Schema Version 0.1
-<verbatim>
+#### Hive 2 Action Schema Version 0.1
+
+```
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:hive2="uri:oozie:hive2-action:0.1" elementFormDefault="qualified"
            targetNamespace="uri:oozie:hive2-action:0.1">
@@ -305,8 +308,8 @@ with a Kerberized Hive Server 2.
     </xs:complexType>
 .
 </xs:schema>
-</verbatim>
+```
 
-[[index][::Go back to Oozie Documentation Index::]]
+[::Go back to Oozie Documentation Index::](index.html)
 
-</noautolink>
+

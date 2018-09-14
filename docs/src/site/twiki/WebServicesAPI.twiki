@@ -1,34 +1,34 @@
-<noautolink>
 
-[[index][::Go back to Oozie Documentation Index::]]
+
+[::Go back to Oozie Documentation Index::](index.html)
 
 -----
 
-%TOC%
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
 
----++ Oozie Web Services API, V1 (Workflow, Coordinator, And Bundle)
+## Oozie Web Services API, V1 (Workflow, Coordinator, And Bundle)
 
 The Oozie Web Services API is a HTTP REST JSON API.
 
-All responses are in =UTF-8=.
+All responses are in `UTF-8`.
 
-Assuming Oozie is running at =OOZIE_URL=, the following web services end points are supported:
+Assuming Oozie is running at `OOZIE_URL`, the following web services end points are supported:
 
-   * <OOZIE_URL>/versions
-   * <OOZIE_URL>/v1/admin
-   * <OOZIE_URL>/v1/job
-   * <OOZIE_URL>/v1/jobs
-   * <OOZIE_URL>/v2/job
-   * <OOZIE_URL>/v2/jobs
-   * <OOZIE_URL>/v2/admin
-   * <OOZIE_URL>/v2/sla
+   * \<OOZIE_URL\>/versions
+   * \<OOZIE_URL\>/v1/admin
+   * \<OOZIE_URL\>/v1/job
+   * \<OOZIE_URL\>/v1/jobs
+   * \<OOZIE_URL\>/v2/job
+   * \<OOZIE_URL\>/v2/jobs
+   * \<OOZIE_URL\>/v2/admin
+   * \<OOZIE_URL\>/v2/sla
 
 Documentation on the API is below; in some cases, looking at the corresponding command in the
-[[DG_CommandLineTool][Command Line Documentation]] page will provide additional details and examples.  Most of the functionality
-offered by the Oozie CLI is using the WS API. If you export <code>OOZIE_DEBUG</code> then the Oozie CLI will output the WS API
+[Command Line Documentation](DG_CommandLineTool.html) page will provide additional details and examples.  Most of the functionality
+offered by the Oozie CLI is using the WS API. If you export `OOZIE_DEBUG` then the Oozie CLI will output the WS API
 details used by any commands you execute. This is useful for debugging purposes to or see how the Oozie CLI works with the WS API.
 
----+++ Versions End-Point
+### Versions End-Point
 
 _Identical to the corresponding Oozie v0 WS API_
 
@@ -38,79 +38,87 @@ It support only HTTP GET request and not sub-resources.
 
 It returns the supported Oozie protocol versions by the server.
 
-Current returned values are =0, 1, 2=.
+Current returned values are `0, 1, 2`.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/versions
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 [0,1]
-</verbatim>
+```
 
----+++ Admin End-Point
+### Admin End-Point
 
 This endpoint is for obtaining Oozie system status and configuration information.
 
-It supports the following sub-resources: =status, os-env, sys-props, configuration, instrumentation, systems, available-timezones=.
+It supports the following sub-resources: `status, os-env, sys-props, configuration, instrumentation, systems, available-timezones`.
 
----++++ System Status
+#### System Status
 
 _Identical to the corresponding Oozie v0 WS API_
 
 A HTTP GET request returns the system status.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/status
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {"systemMode":NORMAL}
-</verbatim>
+```
 
-With a HTTP PUT request it is possible to change the system status between =NORMAL=, =NOWEBSERVICE=, and =SAFEMODE=.
+With a HTTP PUT request it is possible to change the system status between `NORMAL`, `NOWEBSERVICE`, and `SAFEMODE`.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/admin/status?systemmode=SAFEMODE
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
-</verbatim>
+```
 
----++++ OS Environment
+#### OS Environment
 
 _Identical to the corresponding Oozie v0 WS API_
 
 A HTTP GET request returns the Oozie system OS environment.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/os-env
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -127,23 +135,25 @@ Content-Type: application/json;charset=UTF-8
   LANG: "en_US.UTF-8",
   ...
 }
-</verbatim>
+```
 
----++++ Java System Properties
+#### Java System Properties
 
 _Identical to the corresponding Oozie v0 WS API_
 
 A HTTP GET request returns the Oozie Java system properties.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/java-sys-properties
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -154,23 +164,25 @@ Content-Type: application/json;charset=UTF-8
   java.vm.info: "mixed mode",
   ...
 }
-</verbatim>
+```
 
----++++ Oozie Configuration
+#### Oozie Configuration
 
 _Identical to the corresponding Oozie v0 WS API_
 
 A HTTP GET request returns the Oozie system configuration.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/configuration
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -185,9 +197,9 @@ Content-Type: application/json;charset=UTF-8
   oozie.service.DBLiteWorkflowStoreService.oozie.autoinstall: "true",
   ...
 }
-</verbatim>
+```
 
----++++ Oozie Instrumentation
+#### Oozie Instrumentation
 
 _Identical to the corresponding Oozie v0 WS API_
 
@@ -196,17 +208,19 @@ Deprecated and by default disabled since 5.0.0.
 A HTTP GET request returns the Oozie instrumentation information.  Keep in mind that timers and counters that the Oozie server
 hasn't incremented yet will not show up.
 
-*Note:* If Instrumentation is enabled, then Metrics is unavailable.
+**Note:** If Instrumentation is enabled, then Metrics is unavailable.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/instrumentation
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -273,9 +287,9 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
----++++ Oozie Metrics
+#### Oozie Metrics
 
 _Available in the Oozie v2 WS API and later_
 
@@ -283,19 +297,21 @@ A HTTP GET request returns the Oozie metrics information.  Keep in mind that tim
 hasn't incremented yet will not show up.
 
 
-*Note:* If Metrics is enabled, then Instrumentation is unavailable.
+**Note:** If Metrics is enabled, then Instrumentation is unavailable.
 
-*Note:* by default enabled since 5.0.0.
+**Note:** by default enabled since 5.0.0.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/admin/metrics
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -360,42 +376,46 @@ Content-Type: application/json;charset=UTF-8
         ...
     }
 }
-</verbatim>
+```
 
----++++ Version
+#### Version
 
 _Identical to the corresponding Oozie v0 WS API_
 
 A HTTP GET request returns the Oozie build version.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/build-version
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {buildVersion: "3.0.0-SNAPSHOT" }
-</verbatim>
+```
 
----++++ Available Time Zones
+#### Available Time Zones
 
 A HTTP GET request returns the available time zones.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/admin/available-timezones
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -436,33 +456,36 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
----++++ Queue Dump
+#### Queue Dump
 
 A HTTP GET request returns the queue dump of the Oozie system.  This is an administrator debugging feature.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 
 GET /oozie/v1/admin/queue-dump
-</verbatim>
+```
 
----++++ Available Oozie Servers
+#### Available Oozie Servers
 
 A HTTP GET request returns the list of available Oozie Servers.  This is useful when Oozie is configured
-for [[AG_Install#HA][High Availability]]; if not, it will simply return the one Oozie Server.
+for [High Availability](AG_Install.html#HA); if not, it will simply return the one Oozie Server.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/admin/available-oozie-servers
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -471,21 +494,23 @@ Content-Type: application/json;charset=UTF-8
     "hostB": "http://hostB:11000/oozie",
     "hostC": "http://hostC:11000/oozie",
 }
-</verbatim>
+```
 
----++++ List available sharelib
+#### List available sharelib
 A HTTP GET request to get list of available sharelib.
 If the name of the sharelib is passed as an argument (regex supported) then all corresponding files are also listed.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/admin/list_sharelib
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 {
@@ -500,17 +525,19 @@ Content-Type: application/json;charset=UTF-8
             "pig"
         ]
 }
-</verbatim>
+```
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/admin/list_sharelib?lib=pig*
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 
@@ -529,24 +556,26 @@ Content-Type: application/json;charset=UTF-8
                 }
             ]
 }
-</verbatim>
+```
 
 
----++++ Update system sharelib
+#### Update system sharelib
 This webservice call makes the oozie server(s) to pick up the latest version of sharelib present
 under oozie.service.WorkflowAppService.system.libpath directory based on the sharelib directory timestamp or reloads
 the sharelib metafile if one is configured. The main purpose is to update the sharelib on the oozie server without restarting.
 
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/admin/update_sharelib
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 [
@@ -573,59 +602,62 @@ Content-Type: application/json;charset=UTF-8
        }
     }
 ]
-</verbatim>
+```
 
----++++ Purge Command
+#### Purge Command
 
 Oozie admin purge command cleans up the Oozie Workflow/Coordinator/Bundle records based on the parameters.
 The unit for parameters is day.
 
 Purge command will delete the workflow records (wf=30) older than 30 days, coordinator records (coord=7) older than 7 days and
 bundle records (bundle=7) older than 7 days. The limit (limit=10) defines, number of records to be fetch at a time. Turn
-(oldCoordAction=true/false) =on/off= coordinator action record purging for long running coordinators. If any of the parameter is
-not provided, then it will be taken from the =oozie-default/oozie-site= configuration.
+(oldCoordAction`true/false) `on/off= coordinator action record purging for long running coordinators. If any of the parameter is
+not provided, then it will be taken from the `oozie-default/oozie-site` configuration.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 
 GET /oozie/v2/admin/purge?wf=30&coord=7&bundle=7&limit=10&oldCoordAction=true
 
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 
 {
   "purge": "Purge command executed successfully"
 }
 
-</verbatim>
+```
 
----+++ Job and Jobs End-Points
+### Job and Jobs End-Points
 
 _Modified in Oozie v1 WS API_
 
 These endpoints are for submitting, managing and retrieving information of workflow, coordinator, and bundle jobs.
 
----++++ Job Submission
+#### Job Submission
 
----++++ Standard Job Submission
+#### Standard Job Submission
 
 An HTTP POST request with an XML configuration as payload creates a job.
 
 The type of job is determined by the presence of one of the following 3 properties:
 
-   * =oozie.wf.application.path= : path to a workflow application directory, creates a workflow job
-   * =oozie.coord.application.path= : path to a coordinator application file, creates a coordinator job
-   * =oozie.bundle.application.path= : path to a bundle application file, creates a bundle job
-   
+   * `oozie.wf.application.path` : path to a workflow application directory, creates a workflow job
+   * `oozie.coord.application.path` : path to a coordinator application file, creates a coordinator job
+   * `oozie.bundle.application.path` : path to a bundle application file, creates a bundle job
+
 Or, if none of those are present, the jobtype parameter determines the type of job to run. It can either be mapreduce or pig.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 POST /oozie/v1/jobs
 Content-Type: application/xml;charset=UTF-8
 .
@@ -641,47 +673,50 @@ Content-Type: application/xml;charset=UTF-8
     </property>
     ...
 </configuration>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 201 CREATED
 Content-Type: application/json;charset=UTF-8
 .
 {
   id: "job-3"
 }
-</verbatim>
+```
 
-A created job will be in =PREP= status. If the query string parameter 'action=start' is provided in 
-the POST URL, the job will be started immediately and its status will be =RUNNING=.
+A created job will be in `PREP` status. If the query string parameter 'action=start' is provided in
+the POST URL, the job will be started immediately and its status will be `RUNNING`.
 
-Coordinator jobs with start time in the future they will not create any action until the start time 
+Coordinator jobs with start time in the future they will not create any action until the start time
 happens.
 
-A coordinator job will remain in =PREP= status until it's triggered, in which case it will change to =RUNNING= status.
+A coordinator job will remain in `PREP` status until it's triggered, in which case it will change to `RUNNING` status.
 The 'action=start' parameter is not valid for coordinator jobs.
 
----++++ Proxy MapReduce Job Submission
+#### Proxy MapReduce Job Submission
 
 You can submit a Workflow that contains a single MapReduce action without writing a workflow.xml. Any required Jars or other files
 must already exist in HDFS.
 
 The following properties are required; any additional parameters needed by the MapReduce job can also be specified here:
-   * =fs.default.name=: The NameNode
-   * =mapred.job.tracker=: The JobTracker
-   * =mapred.mapper.class=: The map-task classname
-   * =mapred.reducer.class=: The reducer-task classname
-   * =mapred.input.dir=: The map-task input directory
-   * =mapred.output.dir=: The reduce-task output directory
-   * =user.name=: The username of the user submitting the job
-   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
-   * =oozie.proxysubmission=: Must be set to =true=
 
-*Request:*
+   * `fs.default.name`: The NameNode
+   * `mapred.job.tracker`: The JobTracker
+   * `mapred.mapper.class`: The map-task classname
+   * `mapred.reducer.class`: The reducer-task classname
+   * `mapred.input.dir`: The map-task input directory
+   * `mapred.output.dir`: The reduce-task output directory
+   * `user.name`: The username of the user submitting the job
+   * `oozie.libpath`: A directory in HDFS that contains necessary Jars for your job
+   * `oozie.proxysubmission`: Must be set to `true`
 
-<verbatim>
+**Request:**
+
+
+```
 POST /oozie/v1/jobs?jobtype=mapreduce
 Content-Type: application/xml;charset=UTF-8
 .
@@ -724,52 +759,58 @@ Content-Type: application/xml;charset=UTF-8
         <value>true</value>
     </property>
 </configuration>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 201 CREATED
 Content-Type: application/json;charset=UTF-8
 .
 {
   id: "job-3"
 }
-</verbatim>
+```
 
----++++ Proxy Pig Job Submission
+#### Proxy Pig Job Submission
 
 You can submit a Workflow that contains a single Pig action without writing a workflow.xml.  Any required Jars or other files must
 already exist in HDFS.
 
 The following properties are required:
-   * =fs.default.name=: The NameNode
-   * =mapred.job.tracker=: The JobTracker
-   * =user.name=: The username of the user submitting the job
-   * =oozie.pig.script=: Contains the pig script you want to run (the actual script, not a file path)
-   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
-   * =oozie.proxysubmission=: Must be set to =true=
+
+   * `fs.default.name`: The NameNode
+   * `mapred.job.tracker`: The JobTracker
+   * `user.name`: The username of the user submitting the job
+   * `oozie.pig.script`: Contains the pig script you want to run (the actual script, not a file path)
+   * `oozie.libpath`: A directory in HDFS that contains necessary Jars for your job
+   * `oozie.proxysubmission`: Must be set to `true`
 
 The following properties are optional:
-   * =oozie.pig.script.params.size=: The number of parameters you'll be passing to Pig
-   required =oozie.pig.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
-   * =oozie.pig.options.size=: The number of options you'll be passing to Pig
-   * =oozie.pig.options.n=: An argument to pass to Pig, the 'n' should be an integer starting with 0 to indicate the option number
 
-The =oozie.pig.options.n= parameters are sent directly to Pig without any modification unless they start with =-D=, in which case
-they are put into the <code><configuration></code> element of the action.
+   * `oozie.pig.script.params.size`: The number of parameters you'll be passing to Pig
+   required
+  *  `oozie.pig.script.params.n`: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
+   * `oozie.pig.options.size`: The number of options you'll be passing to Pig
+   * `oozie.pig.options.n`: An argument to pass to Pig, the 'n' should be an integer starting with 0 to indicate the option number
 
-In addition to passing parameters to Pig with =oozie.pig.script.params.n=, you can also create a properties file on HDFS and
-reference it with the =-param_file= option in =oozie.pig.script.options.n=; both are shown in the following example.
+The `oozie.pig.options.n` parameters are sent directly to Pig without any modification unless they start with `-D`, in which case
+they are put into the `<configuration>` element of the action.
 
-<verbatim>
+In addition to passing parameters to Pig with `oozie.pig.script.params.n`, you can also create a properties file on HDFS and
+reference it with the `-param_file` option in `oozie.pig.script.options.n`; both are shown in the following example.
+
+
+```
 $ hadoop fs -cat /user/rkanter/pig_params.properties
 INPUT=/user/rkanter/examples/input-data/text
-</verbatim>
+```
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 POST /oozie/v1/jobs?jobtype=pig
 Content-Type: application/xml;charset=UTF-8
 .
@@ -824,44 +865,48 @@ Content-Type: application/xml;charset=UTF-8
         <value>true</value>
     </property>
 </configuration>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 201 CREATED
 Content-Type: application/json;charset=UTF-8
 .
 {
   id: "job-3"
 }
-</verbatim>
+```
 
----++++ Proxy Hive Job Submission
+#### Proxy Hive Job Submission
 
 You can submit a Workflow that contains a single Hive action without writing a workflow.xml.  Any required Jars or other files must
 already exist in HDFS.
 
 The following properties are required:
-   * =fs.default.name=: The NameNode
-   * =mapred.job.tracker=: The JobTracker
-   * =user.name=: The username of the user submitting the job
-   * =oozie.hive.script=: Contains the hive script you want to run (the actual script, not a file path)
-   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
-   * =oozie.proxysubmission=: Must be set to =true=
+
+   * `fs.default.name`: The NameNode
+   * `mapred.job.tracker`: The JobTracker
+   * `user.name`: The username of the user submitting the job
+   * `oozie.hive.script`: Contains the hive script you want to run (the actual script, not a file path)
+   * `oozie.libpath`: A directory in HDFS that contains necessary Jars for your job
+   * `oozie.proxysubmission`: Must be set to `true`
 
 The following properties are optional:
-   * =oozie.hive.script.params.size=: The number of parameters you'll be passing to Hive
-   * =oozie.hive.script.params.n=: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
-   * =oozie.hive.options.size=: The number of options you'll be passing to Hive
-   * =oozie.hive.options.n=: An argument to pass to Hive, the 'n' should be an integer starting with 0 to indicate the option number
 
-The =oozie.hive.options.n= parameters are sent directly to Hive without any modification unless they start with =-D=, in which case
-they are put into the <code><configuration></code> element of the action.
+   * `oozie.hive.script.params.size`: The number of parameters you'll be passing to Hive
+   * `oozie.hive.script.params.n`: A parameter (variable definition for the script) in 'key=value' format, the 'n' should be an integer starting with 0 to indicate the parameter number
+   * `oozie.hive.options.size`: The number of options you'll be passing to Hive
+   * `oozie.hive.options.n`: An argument to pass to Hive, the 'n' should be an integer starting with 0 to indicate the option number
 
-*Request:*
+The `oozie.hive.options.n` parameters are sent directly to Hive without any modification unless they start with `-D`, in which case
+they are put into the `<configuration>` element of the action.
 
-<verbatim>
+**Request:**
+
+
+```
 POST /oozie/v1/jobs?jobtype=hive
 Content-Type: application/xml;charset=UTF-8
 .
@@ -907,39 +952,43 @@ Content-Type: application/xml;charset=UTF-8
         <value>true</value>
     </property>
 </configuration>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 201 CREATED
 Content-Type: application/json;charset=UTF-8
 .
 {
   id: "job-3"
 }
-</verbatim>
+```
 
----++++ Proxy Sqoop Job Submission
+#### Proxy Sqoop Job Submission
 
 You can submit a Workflow that contains a single Sqoop command without writing a workflow.xml. Any required Jars or other
  files must already exist in HDFS.
 
 The following properties are required:
-   * =fs.default.name=: The NameNode
-   * =mapred.job.tracker=: The JobTracker
-   * =user.name=: The username of the user submitting the job
-   * =oozie.sqoop.command=: The sqoop command you want to run where each argument occupies one line or separated by "\n"
-   * =oozie.libpath=: A directory in HDFS that contains necessary Jars for your job
-   * =oozie.proxysubmission=: Must be set to =true=
+
+   * `fs.default.name`: The NameNode
+   * `mapred.job.tracker`: The JobTracker
+   * `user.name`: The username of the user submitting the job
+   * `oozie.sqoop.command`: The sqoop command you want to run where each argument occupies one line or separated by "\n"
+   * `oozie.libpath`: A directory in HDFS that contains necessary Jars for your job
+   * `oozie.proxysubmission`: Must be set to `true`
 
 The following properties are optional:
-   * =oozie.sqoop.options.size=: The number of options you'll be passing to Sqoop Hadoop job
-   * =oozie.sqoop.options.n=: An argument to pass to Sqoop hadoop job conf, the 'n' should be an integer starting with 0 to indicate the option number
 
-*Request:*
+   * `oozie.sqoop.options.size`: The number of options you'll be passing to Sqoop Hadoop job
+   * `oozie.sqoop.options.n`: An argument to pass to Sqoop hadoop job conf, the 'n' should be an integer starting with 0 to indicate the option number
 
-<verbatim>
+**Request:**
+
+
+```
 POST /oozie/v1/jobs?jobtype=sqoop
 Content-Type: application/xml;charset=UTF-8
 .
@@ -981,52 +1030,56 @@ Content-Type: application/xml;charset=UTF-8
         <value>true</value>
     </property>
 </configuration>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 201 CREATED
 Content-Type: application/json;charset=UTF-8
 .
 {
   id: "job-3"
 }
-</verbatim>
+```
 
----++++ Managing a Job
+#### Managing a Job
 
 A HTTP PUT request starts, suspends, resumes, kills, update or dryruns a job.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=start
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
-</verbatim>
+```
 
 Valid values for the 'action' parameter are 'start', 'suspend', 'resume', 'kill', 'dryrun', 'rerun', and 'change'.
 
 Rerunning and changing a job require additional parameters, and are described below:
 
----+++++  Re-Running a Workflow Job
+#####  Re-Running a Workflow Job
 
-A workflow job in =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun specifying a list
+A workflow job in `SUCCEEDED`, `KILLED` or `FAILED` status can be partially rerun specifying a list
 of workflow nodes to skip during the rerun. All the nodes in the skip list must have complete its
 execution.
 
 The rerun job will have the same job ID.
 
-A rerun request is done with a HTTP PUT request with a =rerun= action.
+A rerun request is done with a HTTP PUT request with a `rerun` action.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=rerun
 Content-Type: application/xml;charset=UTF-8
 .
@@ -1046,140 +1099,153 @@ Content-Type: application/xml;charset=UTF-8
     </property>
     ...
 </configuration>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
-</verbatim>
+```
 
----+++++ Re-Running a coordinator job
+##### Re-Running a coordinator job
 
-A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by specifying the coordinator actions
+A coordinator job in `RUNNING` `SUCCEEDED`, `KILLED` or `FAILED` status can be partially rerun by specifying the coordinator actions
 to re-execute.
 
-A rerun request is done with an HTTP PUT request with a =coord-rerun= =action=.
+A rerun request is done with an HTTP PUT request with a `coord-rerun` `action`.
 
-The =type= of the rerun can be =date= or =action=.
+The `type` of the rerun can be `date` or `action`.
 
-The =scope= of the rerun depends on the type:
-* =date=: a comma-separated list of date ranges. Each date range element is specified with dates separated by =::=
-* =action=: a comma-separated list of action ranges. Each action range is specified with two action numbers separated by =-=
+The `scope` of the rerun depends on the type:
+* `date`: a comma-separated list of date ranges. Each date range element is specified with dates separated by `::`
+* `action`: a comma-separated list of action ranges. Each action range is specified with two action numbers separated by `-`
 
-The =refresh= parameter can be =true= or =false= to specify if the user wants to refresh an action's input and output events.
+The `refresh` parameter can be `true` or `false` to specify if the user wants to refresh an action's input and output events.
 
-The =nocleanup= parameter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun actions.
+The `nocleanup` parameter can be `true` or `false` to specify is the user wants to cleanup output events for the rerun actions.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=coord-rerun&type=action&scope=1-2&refresh=false&nocleanup=false
 .
-</verbatim>
+```
 
-or 
+or
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=coord-rerun&type=date2009-02-01T00:10Z::2009-03-01T00:10Z&scope=&refresh=false&nocleanup=false
 .
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
-</verbatim>
+```
 
----+++++ Re-Running a bundle job
+##### Re-Running a bundle job
 
-A coordinator job in =RUNNING= =SUCCEEDED=, =KILLED= or =FAILED= status can be partially rerun by specifying the coordinators to
+A coordinator job in `RUNNING` `SUCCEEDED`, `KILLED` or `FAILED` status can be partially rerun by specifying the coordinators to
 re-execute.
 
-A rerun request is done with an HTTP PUT request with a =bundle-rerun= =action=.
+A rerun request is done with an HTTP PUT request with a `bundle-rerun` `action`.
 
-A comma separated list of coordinator job names (not IDs) can be specified in the =coord-scope= parameter.
+A comma separated list of coordinator job names (not IDs) can be specified in the `coord-scope` parameter.
 
-The =date-scope= parameter is a comma-separated list of date ranges. Each date range element is specified with dates separated
-by =::=. If empty or not included, Oozie will figure this out for you
+The `date-scope` parameter is a comma-separated list of date ranges. Each date range element is specified with dates separated
+by `::`. If empty or not included, Oozie will figure this out for you
 
-The =refresh= parameter can be =true= or =false= to specify if the user wants to refresh the coordinator's input and output events.
+The `refresh` parameter can be `true` or `false` to specify if the user wants to refresh the coordinator's input and output events.
 
-The =nocleanup= parameter can be =true= or =false= to specify is the user wants to cleanup output events for the rerun coordinators.
+The `nocleanup` parameter can be `true` or `false` to specify is the user wants to cleanup output events for the rerun coordinators.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=bundle-rerun&coord-scope=coord-1&refresh=false&nocleanup=false
 .
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
-</verbatim>
+```
 
 
----+++++ Changing endtime/concurrency/pausetime of a Coordinator Job
+##### Changing endtime/concurrency/pausetime of a Coordinator Job
 
-A coordinator job not in =KILLED= status can have it's endtime, concurrency, or pausetime changed.
+A coordinator job not in `KILLED` status can have it's endtime, concurrency, or pausetime changed.
 
-A change request is done with an HTTP PUT request with a =change= =action=.
+A change request is done with an HTTP PUT request with a `change` `action`.
 
-The =value= parameter can contain any of the following:
+The `value` parameter can contain any of the following:
 * endtime: the end time of the coordinator job.
 * concurrency: the concurrency of the coordinator job.
 * pausetime: the pause time of the coordinator job.
 
-Multiple arguments can be passed to the =value= parameter by separating them with a ';' character.
+Multiple arguments can be passed to the `value` parameter by separating them with a ';' character.
 
 If an already-succeeded job changes its end time, its status will become running.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=change&value=endtime=2011-12-01T05:00Z
 .
-</verbatim>
+```
 
 or
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=change&value=concurrency=100
 .
-</verbatim>
+```
 
 or
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=change&value=pausetime=2011-12-01T05:00Z
 .
-</verbatim>
+```
 
 or
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/job-3?action=change&value=endtime=2011-12-01T05:00Z;concurrency=100;pausetime=2011-12-01T05:00Z
 .
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
-</verbatim>
+```
 
----+++++ Updating coordinator definition and properties
-Existing coordinator definition and properties will be replaced by new definition and properties. Refer [[DG_CommandLineTool#Updating_coordinator_definition_and_properties][Updating coordinator definition and properties]]
+##### Updating coordinator definition and properties
+Existing coordinator definition and properties will be replaced by new definition and properties. Refer [Updating coordinator definition and properties](DG_CommandLineTool.html#Updating_coordinator_definition_and_properties)
 
-<verbatim>
+
+```
 PUT oozie/v2/job/0000000-140414102048137-oozie-puru-C?action=update
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 {"update":
@@ -1197,26 +1263,28 @@ Content-Type: application/json;charset=UTF-8
                <name>queueName<\/name>\r\n******************************************\n"
       }
 }
-</verbatim>
+```
 
 
----++++ Job Information
+#### Job Information
 
 A HTTP GET request retrieves the job information.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/job/job-3?show=info&timezone=GMT
-</verbatim>
+```
 
-*Response for a workflow job:*
+**Response for a workflow job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
-{ 
+{
   id: "0-200905191240-oozie-W",
   appName: "indexer-workflow",
   appPath: "hdfs://user/bansalm/indexer.wf",
@@ -1250,11 +1318,12 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
-*Response for a coordinator job:*
+**Response for a coordinator job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1282,11 +1351,12 @@ Content-Type: application/json;charset=UTF-8
       nominalTime: "Fri, 01 Jan 2010 01:00:00 GMT",
   ...
 }
-</verbatim>
+```
 
-*Response for a bundle job:*
+**Response for a bundle job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1315,9 +1385,9 @@ Content-Type: application/json;charset=UTF-8
     }
   ...
 }
-</verbatim>
+```
 
-*Getting all the Workflows corresponding to a Coordinator Action:*
+**Getting all the Workflows corresponding to a Coordinator Action:**
 
 A coordinator action kicks off different workflows for its original run and all subsequent reruns.
 Getting a list of those workflow ids is a useful tool to keep track of your actions' runs and
@@ -1326,13 +1396,15 @@ and start and end times for quick reference.
 
 Both v1 and v2 API are supported. v0 is not supported.
 
-<verbatim>
+
+```
 GET /oozie/v2/job/0000001-111219170928042-oozie-joe-C@1?show=allruns
-</verbatim>
+```
 
-*Response*
+**Response**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1356,45 +1428,51 @@ Content-Type: application/json;charset=UTF-8
         "endTime":"Mon, 24 Mar 2014 23:44:24 GMT"
     }
 ]}
-</verbatim>
+```
 
-An alternate API is also available for the same output. With this API, one can pass the coordinator *JOB* Id
-followed by query params - type=action and scope=<action-number>. One single action number can be passed at a time.
+An alternate API is also available for the same output. With this API, one can pass the coordinator **JOB** Id
+followed by query params - `type=action` and `scope=<action-number>`. One single action number can be passed at a time.
 
-<verbatim>
+
+```
 GET /oozie/v2/job/0000001-111219170928042-oozie-joe-C?show=allruns&type=action&scope=1
-</verbatim>
+```
 
-*Retrieve a subset of actions*
+**Retrieve a subset of actions**
 
-Query parameters, =offset= and =length= can be specified with a workflow job to retrieve specific actions. Default is offset=0, len=1000
-<verbatim>
+Query parameters, `offset` and `length` can be specified with a workflow job to retrieve specific actions. Default is offset=0, len=1000
+
+```
 GET /oozie/v1/job/0000002-130507145349661-oozie-joe-W?show=info&offset=5&len=10
-</verbatim>
-Query parameters, =offset=, =length=, =filter= can be specified with a coordinator job to retrieve specific actions. 
-Query parameter, =order= with value "desc" can be used to retrieve the latest coordinator actions materialized instead of actions from @1.
-Query parameters =filter= can be used to retrieve coordinator actions matching specific status.
+```
+Query parameters, `offset`, `length`, `filter` can be specified with a coordinator job to retrieve specific actions.
+Query parameter, `order` with value "desc" can be used to retrieve the latest coordinator actions materialized instead of actions from @1.
+Query parameters `filter` can be used to retrieve coordinator actions matching specific status.
 Default is offset=0, len=0 for v2/job (i.e., does not return any coordinator actions) and offset=0, len=1000 with v1/job and v0/job.
-So if you need actions to be returned with v2 API, specifying =len= parameter is necessary.
-Default =order= is "asc".
-<verbatim>
+So if you need actions to be returned with v2 API, specifying `len` parameter is necessary.
+Default `order` is "asc".
+
+```
 GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&offset=5&len=10&filter=status%3DKILLED&order=desc
-</verbatim>
-Note that the filter is URL encoded, its decoded value is <code>status=KILLED</code>.
-<verbatim>
+```
+Note that the filter is URL encoded, its decoded value is `status=KILLED`.
+
+```
 GET /oozie/v1/job/0000001-111219170928042-oozie-joe-C?show=info&filter=status%21%3DSUCCEEDED&order=desc
-</verbatim>
+```
 This retrieves coordinator actions except for SUCCEEDED status, which is useful for debugging.
 
-*Retrieve information of the retry attempts of the workflow action:*
+**Retrieve information of the retry attempts of the workflow action:**
 
-<verbatim>
+
+```
 GET oozie/v2/job/0000000-161212175234862-oozie-puru-W@pig-node?show=retries
-</verbatim>
+```
 
-*Response*
+**Response**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1415,21 +1493,23 @@ Content-Type: application/json;charset=UTF-8
          }
     ]
 }
-</verbatim>
+```
 
----++++ Job Application Definition
+#### Job Application Definition
 
 A HTTP GET request retrieves the workflow or a coordinator job definition file.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/job/job-3?show=definition
-</verbatim>
+```
 
-*Response for a workflow job:*
+**Response for a workflow job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/xml;charset=UTF-8
 .
@@ -1439,53 +1519,57 @@ Content-Type: application/xml;charset=UTF-8
     ...
     <end name='end' />
 </workflow-app>
-</verbatim>
+```
 
-*Response for a coordinator job:*
+**Response for a coordinator job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/xml;charset=UTF-8
 .
 <?xml version="1.0" encoding="UTF-8"?>
-<coordinator-app name='abc-app' xmlns="uri:oozie:coordinator:0.1" frequency="${days(1)} 
+<coordinator-app name='abc-app' xmlns="uri:oozie:coordinator:0.1" frequency="${days(1)}
                  start="2009-01-01T00:00Z" end="2009-12-31T00:00Z" timezone="America/Los_Angeles">
     <datasets>
     ...
     </datasets>
     ...
 </coordinator-app>
-</verbatim>
+```
 
-*Response for a bundle job:*
+**Response for a bundle job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/xml;charset=UTF-8
 .
 <?xml version="1.0" encoding="UTF-8"?>
-<bundle-app name='abc-app' xmlns="uri:oozie:coordinator:0.1" 
+<bundle-app name='abc-app' xmlns="uri:oozie:coordinator:0.1"
                  start="2009-01-01T00:00Z" end="2009-12-31T00:00Z"">
     <datasets>
     ...
     </datasets>
     ...
 </bundle-app>
-</verbatim>
+```
 
----++++ Job Log
+#### Job Log
 
 An HTTP GET request retrieves the job log.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/job/job-3?show=log
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: text/plain;charset=UTF-8
 .
@@ -1493,21 +1577,23 @@ Content-Type: text/plain;charset=UTF-8
 23:21:31,272 TRACE oozieapp:526 - USER[bansalm] GROUP[other] TOKEN[-] APP[test-wf] JOB[0-20090518232130-oozie-tucu] ACTION[mr-1] Start
 23:21:31,305 TRACE oozieapp:526 - USER[bansalm] GROUP[other] TOKEN[-] APP[test-wf] JOB[0-20090518232130-oozie-tucu] ACTION[mr-1] End
 ...
-</verbatim>
+```
 
----++++ Job Error Log
+#### Job Error Log
 
 An HTTP GET request retrieves the job error log.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/job/0000000-150121110331712-oozie-puru-B?show=errorlog
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: text/plain;charset=UTF-8
 2015-01-21 11:33:29,090  WARN CoordSubmitXCommand:523 - SERVER[-] USER[-] GROUP[-] TOKEN[-] APP[-] JOB[0000000-150121110331712-oozie-puru-B] ACTION[] SAXException :
@@ -1515,46 +1601,50 @@ org.xml.sax.SAXParseException; lineNumber: 20; columnNumber: 22; cvc-complex-typ
         at org.apache.xerces.util.ErrorHandlerWrapper.createSAXParseException(Unknown Source)
         at org.apache.xerces.util.ErrorHandlerWrapper.error(Unknown Source)
 ...
-</verbatim>
+```
 
 
----++++ Job Audit Log
+#### Job Audit Log
 
 An HTTP GET request retrieves the job audit log.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/job/0000000-150322000230582-oozie-puru-C?show=auditlog
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: text/plain;charset=UTF-8
 2015-03-22 00:04:35,494  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [start], PARAMETER [null], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
 2015-03-22 00:05:13,823  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
 2015-03-22 00:06:59,561  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
 2015-03-22 23:22:20,012  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [suspend], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
-2015-03-22 23:28:48,218  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [resume], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]</verbatim>
-</verbatim>
+2015-03-22 23:28:48,218  INFO oozieaudit:520 - IP [-], USER [purushah], GROUP [null], APP [-], JOBID [0000000-150322000230582-oozie-puru-C], OPERATION [resume], PARAMETER [0000000-150322000230582-oozie-puru-C], STATUS [SUCCESS], HTTPCODE [200], ERRORCODE [null], ERRORMESSAGE [null]
+```
 
 
----++++ Filtering the server logs with logfilter options
+#### Filtering the server logs with logfilter options
 User can provide multiple option to filter logs using -logfilter opt1=val1;opt2=val1;opt3=val1. This can be used to fetch only just logs of interest faster as fetching Oozie server logs is slow due to the overhead of pattern matching.
 
-<verbatim>
+
+```
 GET /oozie/v1/job/0000003-140319184715726-oozie-puru-C?show=log&logfilter=limit=3;loglevel=WARN
-</verbatim>
+```
 
 
-Refer to the [[DG_CommandLineTool#Filtering_the_server_logs_with_logfilter_options][Filtering the server logs with logfilter options]] for more details.
+Refer to the [Filtering the server logs with logfilter options](DG_CommandLineTool.html#Filtering_the_server_logs_with_logfilter_options) for more details.
 
 
----++++ Job graph
+#### Job graph
 
-An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG or SVG image, or as a DOT string).
+An `HTTP GET` request returns the image of the workflow DAG (rendered as a PNG or SVG image, or as a DOT string).
+
    * The nodes that are being executed are painted yellow
    * The nodes that have successfully executed are painted green
    * The nodes that have failed execution are painted red
@@ -1563,132 +1653,148 @@ An =HTTP GET= request returns the image of the workflow DAG (rendered as a PNG o
    * An arc painted red marks the failure of the node and highlights the _error_ action
    * An arc painted gray marks a path not taken yet
 
-*PNG request:*
-<verbatim>
-GET /oozie/v1/job/job-3?show=graph[&show-kill=true][&format=png]
-</verbatim>
+**PNG request:**
 
-*PNG response:*
-<verbatim>
+```
+GET /oozie/v1/job/job-3?show=graph[&show-kill=true][&format=png]
+```
+
+**PNG response:**
+
+```
 HTTP/1.1 200 OK
 Content-Type: image/png
 Content-Length: {image_size_in_bytes}
 
 {image_bits}
+```
 
-*SVG request:*
-<verbatim>
+**SVG request:**
+
+```
 GET /oozie/v1/job/job-3?show=graph[&show-kill=true]&format=svg
-</verbatim>
+```
 
-*SVG response:*
-<verbatim>
+**SVG response:**
+
+```
 HTTP/1.1 200 OK
 Content-Type: image/svg+xml
 Content-Length: {image_size_in_bytes}
 
 {image_bits}
+```
 
-*DOT request:*
-<verbatim>
+**DOT request:**
+
+```
 GET /oozie/v1/job/job-3?show=graph[&show-kill=true]&format=dot
-</verbatim>
+```
 
-*DOT response:*
-<verbatim>
+**DOT response:**
+
+```
 HTTP/1.1 200 OK
 Content-Type: text/plain
 Content-Length: {dot_size_in_bytes}
 
 {dot_bytes}
-</verbatim>
+```
 
-The optional =show-kill= parameter shows =kill= node in the graph. Valid values for this parameter are =1=, =yes=, and =true=.
-This parameter has no effect when workflow fails and the failure node leads to the =kill= node; in  that case =kill= node is shown
+The optional `show-kill` parameter shows `kill` node in the graph. Valid values for this parameter are `1`, `yes`, and `true`.
+This parameter has no effect when workflow fails and the failure node leads to the `kill` node; in  that case `kill` node is shown
 always.
 
-The optional =format= parameter describes whether the response has to be rendered as a PNG image, or an SVG image, or a DOT string.
-When omitted, =format= is considered as =png= for backwards compatibility. Oozie Web UI uses the =svg= =format=.
+The optional `format` parameter describes whether the response has to be rendered as a PNG image, or an SVG image, or a DOT string.
+When omitted, `format` is considered as `png` for backwards compatibility. Oozie Web UI uses the `svg` `format`.
 
 The node labels are the node names provided in the workflow XML.
 
-This API returns =HTTP 400= when run on a resource other than a workflow, viz. bundle and coordinator.
+This API returns `HTTP 400` when run on a resource other than a workflow, viz. bundle and coordinator.
 
----++++ Job Status
+#### Job Status
 
-An =HTTP GET= request that returns the current status (e.g. =SUCCEEDED=, =KILLED=, etc) of a given job.  If you are only interested
-in the status, and don't want the rest of the information that the =info= query provides, it is recommended to use this call
+An `HTTP GET` request that returns the current status (e.g. `SUCCEEDED`, `KILLED`, etc) of a given job.  If you are only interested
+in the status, and don't want the rest of the information that the `info` query provides, it is recommended to use this call
 as it is more efficient.
 
-*Request*
-<verbatim>
+**Request**
+
+```
 GET /oozie/v2/job/0000000-140908152307821-oozie-rkan-C?show=status
-</verbatim>
+```
 
-*Response*
+**Response**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {
   "status" : "SUCCEEDED"
 }
-</verbatim>
+```
 
 It accepts any valid Workflow Job ID, Coordinator Job ID, Coordinator Action ID, or Bundle Job ID.
 
----++++ Changing job SLA definition and alerting
-An =HTTP PUT= request to change job SLA alert status/SLA definition.
+#### Changing job SLA definition and alerting
+An `HTTP PUT` request to change job SLA alert status/SLA definition.
 
    * All sla commands takes actions-list or date parameter.
-   * =date=: a comma-separated list of date ranges. Each date range element is specified with dates separated by =::=
-   * =action-list=: a comma-separated list of action ranges. Each action range is specified with two action numbers separated by =-=
-   * For bundle jobs additional =coordinators= (coord_name/id) parameter can be passed.
-   * Sla change command need extra parameter =value= to specify new sla definition.
-
-
+   * `date`: a comma-separated list of date ranges. Each date range element is specified with dates separated by `::`
+   * `action-list`: a comma-separated list of action ranges. Each action range is specified with two action numbers separated by `-`
+   * For bundle jobs additional `coordinators` (coord_name/id) parameter can be passed.
+   * Sla change command need extra parameter `value` to specify new sla definition.
    * Changing SLA definition
+
    SLA definition of should-start, should-end, nominal-time and max-duration can be changed.
 
-<verbatim>
+
+```
 PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-change&value=<key>=<value>;...;<key>=<value>
-</verbatim>
+```
 
    * Disabling SLA alert
 
-<verbatim>
+
+```
 PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-disable&action-list=3-4
-</verbatim>
+```
 Will disable SLA alert for actions 3 and 4.
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/0000003-140319184715726-oozie-puru-C?action=sla-disable&date=2009-02-01T00:10Z::2009-03-01T00:10Z
-</verbatim>
+```
 Will disable SLA alert for actions whose nominal time is in-between 2009-02-01T00:10Z 2009-03-01T00:10Z (inclusive).
 
 
-<verbatim>
+
+```
 PUT /oozie/v1/job/0000004-140319184715726-oozie-puru-B?action=sla-disable&date=2009-02-01T00:10Z::2009-03-01T00:10Z&coordinators=abc
-</verbatim>
+```
 For bundle jobs additional coordinators (list of comma separated coord_name/id) parameter can be passed.
 
    * Enabling SLA alert
 
-<verbatim>
+
+```
 PUT /oozie/v2/job/0000003-140319184715726-oozie-puru-C?action=sla-enable&action-list=1,14,17-20
-</verbatim>
+```
 Will enable SLA alert for actions 1,14,17,18,19,20.
 
----+++ Getting missing dependencies of coordinator action(s)
+### Getting missing dependencies of coordinator action(s)
 
-<verbatim>
+
+```
 GET oozie/v2/job/0000000-170104115137443-oozie-puru-C?show=missing-dependencies&action-list=1,20
-</verbatim>
+```
 
-*Response*
+**Response**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 
@@ -1728,22 +1834,24 @@ Content-Type: application/json;charset=UTF-8
         "id": 20
     }]
 }
-</verbatim>
----++++ Jobs Information
+```
+#### Jobs Information
 
 A HTTP GET request retrieves workflow and coordinator jobs information.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50&timezone=GMT
-</verbatim>
+```
 
-Note that the filter is URL encoded, its decoded value is <code>user=bansalm</code>.
+Note that the filter is URL encoded, its decoded value is `user=bansalm`.
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1793,11 +1901,12 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
 No action information is returned when querying for multiple jobs.
 
-The syntax for the filter is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
+
+The syntax for the filter is  `[NAME=VALUE][;NAME=VALUE]*`
 
 Valid filter names are:
 
@@ -1809,36 +1918,38 @@ Valid filter names are:
    * status: the status of the job
    * startCreatedTime : the start of the window about workflow job's created time
    * endCreatedTime : the end of above window
-   * sortby: order the results. Supported values for =sortby= are: =createdTime= and =lastModifiedTime=
+   * sortby: order the results. Supported values for `sortby` are: `createdTime` and `lastModifiedTime`
 
 The query will do an AND among all the filter names.
 
 The query will do an OR among all the filter values for the same name. Multiple values must be specified as different
 name value pairs.
 
-Additionally the =offset= and =len= parameters can be used for pagination. The start parameter is base 1.
+Additionally the `offset` and `len` parameters can be used for pagination. The start parameter is base 1.
 
-Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
-The valid values of job type are: =wf=, =coordinator= or =bundle=.
+Moreover, the `jobtype` parameter could be used to determine what type of job is looking for.
+The valid values of job type are: `wf`, `coordinator` or `bundle`.
 
-startCreatedTime and endCreatedTime should be specified either in *ISO8601 (UTC)* format *(yyyy-MM-dd'T'HH:mm'Z')* or
+startCreatedTime and endCreatedTime should be specified either in **ISO8601 (UTC)** format **(yyyy-MM-dd'T'HH:mm'Z')** or
 a offset value in days or hours or minutes from the current time. For example, -2d means the (current time - 2 days),
 -3h means the (current time - 3 hours), -5m means the (current time - 5 minutes).
 
----++++ Bulk modify jobs
+#### Bulk modify jobs
 
 A HTTP PUT request can kill, suspend, or resume all jobs that satisfy the url encoded parameters.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 PUT /oozie/v1/jobs?action=kill&filter=name%3Dcron-coord&offset=1&len=50&jobtype=coordinator
-</verbatim>
+```
 
 This request will kill all the coordinators with name=cron-coord up to 50 of them.
 
-Note that the filter is URL encoded, its decoded value is <code>name=cron-coord</code>.
-The syntax for the filter is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
+Note that the filter is URL encoded, its decoded value is `name=cron-coord`.
+
+The syntax for the filter is  `[NAME=VALUE][;NAME=VALUE]*`
 
 Valid filter names are:
 
@@ -1852,13 +1963,14 @@ The query will do an AND among all the filter names.
 The query will do an OR among all the filter values for the same name. Multiple values must be specified as different
 name value pairs.
 
-Additionally the =offset= and =len= parameters can be used for pagination. The start parameter is base 1.
+Additionally the `offset` and `len` parameters can be used for pagination. The start parameter is base 1.
 
-Moreover, the =jobtype= parameter could be used to determine what type of job is looking for.
-The valid values of job type are: =wf=, =coordinator= or =bundle=
+Moreover, the `jobtype` parameter could be used to determine what type of job is looking for.
+The valid values of job type are: `wf`, `coordinator` or `bundle`
 
-*Response:*
-<verbatim>
+**Response:**
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1895,17 +2007,19 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
-<verbatim>
+
+```
 PUT /oozie/v1/jobs?action=suspend&filter=status%3Drunning&offset=1&len=50&jobtype=wf
-</verbatim>
+```
 
 This request will suspend all the workflows with status=running up to 50 of them.
-Note that the filter is URL encoded, its decoded value is <code>status=running</code>.
+Note that the filter is URL encoded, its decoded value is `status=running`.
 
-*Response:*
-<verbatim>
+**Response:**
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -1943,21 +2057,21 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
----++++ Jobs information using Bulk API
+#### Jobs information using Bulk API
 
 A HTTP GET request retrieves a bulk response for all actions, corresponding to a particular bundle, that satisfy user specified criteria.
 This is useful for monitoring purposes, where user can find out about the status of downstream jobs with a single bulk request.
 The criteria are used for filtering the actions returned. Valid options (_case insensitive_) for these request criteria are:
 
-   * *bundle*: the application name from the bundle definition
-   * *coordinators*: the application name(s) from the coordinator definition.
-   * *actionStatus*: the status of coordinator action (Valid values are WAITING, READY, SUBMITTED, RUNNING, SUSPENDED, TIMEDOUT, SUCCEEDED, KILLED, FAILED)
-   * *startCreatedTime*: the start of the window you want to look at, of the actions' created time
-   * *endCreatedTime*: the end of above window
-   * *startScheduledTime*: the start of the window you want to look at, of the actions' scheduled i.e. nominal time.
-   * *endScheduledTime*: the end of above window
+   * **bundle**: the application name from the bundle definition
+   * **coordinators**: the application name(s) from the coordinator definition.
+   * **actionStatus**: the status of coordinator action (Valid values are WAITING, READY, SUBMITTED, RUNNING, SUSPENDED, TIMEDOUT, SUCCEEDED, KILLED, FAILED)
+   * **startCreatedTime**: the start of the window you want to look at, of the actions' created time
+   * **endCreatedTime**: the end of above window
+   * **startScheduledTime**: the start of the window you want to look at, of the actions' scheduled i.e. nominal time.
+   * **endScheduledTime**: the end of above window
 
 Specifying 'bundle' is REQUIRED. All the rest are OPTIONAL but that might result in thousands of results depending on the size of your job. (pagination comes into play then)
 
@@ -1966,29 +2080,32 @@ For e.g if the query string is only "bundle=MyBundle", the response will have al
 
 The query will do an AND among all the filter names, and OR among each filter name's values.
 
-The syntax for the request criteria is <verbatim>[NAME=VALUE][;NAME=VALUE]*</verbatim>
+
+The syntax for the request criteria is  `[NAME=VALUE][;NAME=VALUE]*`
 
 For 'coordinators' and 'actionStatus', if user wants to check for multiple values, they can be passed in a comma-separated manner.
-*Note*: The query will do an OR among them. Hence no need to repeat the criteria name
+**Note**: The query will do an OR among them. Hence no need to repeat the criteria name
 
-All the time values should be specified in *ISO8601 (UTC)* format i.e. *yyyy-MM-dd'T'HH:mm'Z'*
+All the time values should be specified in **ISO8601 (UTC)** format i.e. **yyyy-MM-dd'T'HH:mm'Z'**
 
-Additionally the =offset= and =len= parameters can be used as usual for pagination. The start parameter is base 1.
+Additionally the `offset` and `len` parameters can be used as usual for pagination. The start parameter is base 1.
 
 If you specify a coordinator in the list, that does not exist, no error is thrown; simply the response will be empty or pertaining to the other valid coordinators.
 However, if bundle name provided does not exist, an error is thrown.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v1/jobs?bulk=bundle%3Dmy-bundle-app;coordinators%3Dmy-coord-1,my-coord-5;actionStatus%3DKILLED&offset=1&len=50
-</verbatim>
+```
 
-Note that the filter is URL encoded, its decoded value is <code>user=chitnis</code>. If typing in browser URL, one can type decoded value itself i.e. using '='
+Note that the filter is URL encoded, its decoded value is `user=chitnis`. If typing in browser URL, one can type decoded value itself i.e. using '='
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -2054,22 +2171,22 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
----++ Oozie Web Services API, V2 (Workflow , Coordinator And Bundle)
+## Oozie Web Services API, V2 (Workflow , Coordinator And Bundle)
 
 The Oozie Web Services API is a HTTP REST JSON API.
 
-All responses are in =UTF-8=.
+All responses are in `UTF-8`.
 
-Assuming Oozie is running at =OOZIE_URL=, the following web services end points are supported:
+Assuming Oozie is running at `OOZIE_URL`, the following web services end points are supported:
 
-   * <OOZIE_URL>/versions
-   * <OOZIE_URL>/v2/admin
-   * <OOZIE_URL>/v2/job
-   * <OOZIE_URL>/v2/jobs
+   * \<OOZIE_URL\>/versions
+   * \<OOZIE_URL\>/v2/admin
+   * \<OOZIE_URL\>/v2/job
+   * \<OOZIE_URL\>/v2/jobs
 
-*Changes in v2 job API:*
+**Changes in v2 job API:**
 
 There is a difference in the JSON format of Job Information API (*/job) particularly for map-reduce action.
 No change for other actions.
@@ -2078,39 +2195,43 @@ In v2, externalId and consoleUrl point to launcher job ID, and externalChildIDs 
 
 v2 supports retrieving of JMS topic on which job notifications are sent
 
-*REST API URL:*
+**REST API URL:**
 
-<verbatim>
+
+```
 GET http://localhost:11000/oozie/v2/job/0000002-130507145349661-oozie-vira-W?show=jmstopic
-</verbatim>
+```
 
-*Changes in v2 admin API:*
+**Changes in v2 admin API:**
 
 v2 adds support for retrieving JMS connection information related to JMS notifications.
 
-*REST API URL:*
+**REST API URL:**
 
-<verbatim>
+
+```
 GET http://localhost:11000/oozie/v2/admin/jmsinfo
-</verbatim>
+```
 
 v2/jobs remain the same as v1/jobs
 
----+++ Job and Jobs End-Points
+### Job and Jobs End-Points
 
----++++ Job Information
+#### Job Information
 
 A HTTP GET request retrieves the job information.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 GET /oozie/v2/job/job-3?show=info&timezone=GMT
-</verbatim>
+```
 
-*Response for a workflow job:*
+**Response for a workflow job:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
@@ -2152,38 +2273,41 @@ Content-Type: application/json;charset=UTF-8
     ...
   ]
 }
-</verbatim>
+```
 
----++++ Managing a Job
----+++++ Ignore a Coordinator Job or Action
+#### Managing a Job
+##### Ignore a Coordinator Job or Action
 
-A ignore request is done with an HTTP PUT request with a =ignore=
+A ignore request is done with an HTTP PUT request with a `ignore`
 
-The =type= parameter supports =action= only.
-The =scope= parameter can contain coordinator action id(s) to be ignored.
-Multiple action ids can be passed to the =scope= parameter
+The `type` parameter supports `action` only.
+The `scope` parameter can contain coordinator action id(s) to be ignored.
+Multiple action ids can be passed to the `scope` parameter
 
-*Request:*
+**Request:**
 
 Ignore a coordinator job
-<verbatim>
+
+```
 PUT /oozie/v2/job/job-3?action=ignore
-</verbatim>
+```
 
 Ignore coordinator actions
-<verbatim>
-PUT /oozie/v2/job/job-3?action=ignore&type=action&scope=3-4
-</verbatim>
 
----+++ Validate End-Point
+```
+PUT /oozie/v2/job/job-3?action=ignore&type=action&scope=3-4
+```
+
+### Validate End-Point
 
 This endpoint is to validate a workflow, coordinator, bundle XML file.
 
----++++ Validate a local file
+#### Validate a local file
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 POST /oozie/v2/validate?file=/home/test/myApp/workflow.xml
 Content-Type: application/xml;charset=UTF-8
 .
@@ -2207,43 +2331,46 @@ Content-Type: application/xml;charset=UTF-8
     </kill>
     <end name="end"/>
 </workflow-app>
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {
   validate: "Valid workflow-app"
 }
-</verbatim>
+```
 
----++++ Validate a file in HDFS
+#### Validate a file in HDFS
 
 You can validate a workflow, coordinator, bundle XML file in HDFS. The XML file must already exist in HDFS.
 
-*Request:*
+**Request:**
 
-<verbatim>
+
+```
 POST /oozie/v2/validate?file=hdfs://localhost:8020/user/test/myApp/workflow.xml
 Content-Type: application/xml;charset=UTF-8
 .
-</verbatim>
+```
 
-*Response:*
+**Response:**
 
-<verbatim>
+
+```
 HTTP/1.1 200 OK
 Content-Type: application/json;charset=UTF-8
 .
 {
   validate: "Valid workflow-app"
 }
-</verbatim>
+```
 
-</noautolink>
+
 
 
 

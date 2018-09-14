@@ -1,58 +1,61 @@
-<noautolink>
 
-[[index][::Go back to Oozie Documentation Index::]]
 
----+!! Oozie Examples
+[::Go back to Oozie Documentation Index::](index.html)
 
-%TOC%
+# Oozie Examples
 
----++ Command Line Examples
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
 
----+++ Setting Up the Examples
+## Command Line Examples
 
-Oozie examples are bundled within the Oozie distribution in the =oozie-examples.tar.gz= file.
+### Setting Up the Examples
 
-Expanding this file will create an =examples/= directory in the local file system.
+Oozie examples are bundled within the Oozie distribution in the `oozie-examples.tar.gz` file.
 
-The =examples/= directory must be copied to the user HOME directory in HDFS:
+Expanding this file will create an `examples/` directory in the local file system.
 
-<verbatim>
+The `examples/` directory must be copied to the user HOME directory in HDFS:
+
+
+```
 $ hadoop fs -put examples examples
-</verbatim>
+```
 
-*NOTE:* If an examples directory already exists in HDFS, it must be deleted before copying it again. Otherwise files may not be
+**NOTE:** If an examples directory already exists in HDFS, it must be deleted before copying it again. Otherwise files may not be
 copied.
 
----+++ Running the Examples
+### Running the Examples
 
-For the Streaming and Pig example, the [[DG_QuickStart#OozieShareLib][Oozie Share Library]] must be installed in HDFS.
+For the Streaming and Pig example, the [Oozie Share Library](DG_QuickStart.html#OozieShareLib) must be installed in HDFS.
 
-Add Oozie =bin/= to the environment PATH.
+Add Oozie `bin/` to the environment PATH.
 
-The examples assume the ResourceManager is =localhost:8032= and the NameNode is =hdfs://localhost:8020=. If the actual
+The examples assume the ResourceManager is `localhost:8032` and the NameNode is `hdfs://localhost:8020`. If the actual
 values are different, the job properties files in the examples directory must be edited to the correct values.
 
 The example applications are under the examples/app directory, one directory per example. The directory contains the
-application XML file (workflow, or workflow and coordinator), the =job.properties= file to submit the job and any JAR
+application XML file (workflow, or workflow and coordinator), the `job.properties` file to submit the job and any JAR
 files the example may need.
 
-The inputs for all examples are in the =examples/input-data/= directory.
+The inputs for all examples are in the `examples/input-data/` directory.
 
-The examples create output under the =examples/output-data/${EXAMPLE_NAME}= directory.
+The examples create output under the `examples/output-data/${EXAMPLE_NAME}` directory.
 
-*Note*: The =job.properties= file needs to be a local file during submissions, and not a HDFS path.
+**Note**: The `job.properties` file needs to be a local file during submissions, and not a HDFS path.
 
-*How to run an example application:*
+**How to run an example application:**
 
-<verbatim>
+
+```
 $ oozie job -oozie http://localhost:11000/oozie -config examples/apps/map-reduce/job.properties -run
 .
 job: 14-20090525161321-oozie-tucu
-</verbatim>
+```
 
 Check the workflow job status:
 
-<verbatim>
+
+```
 $ oozie job -oozie http://localhost:11000/oozie -info 14-20090525161321-oozie-tucu
 .
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -71,28 +74,30 @@ Action Name             Type        Status     Transition  External Id          
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 mr-node                 map-reduce  OK         end         job_200904281535_0254  SUCCEEDED        -             2009-05-26 05:01 +0000  2009-05-26 05:01 +0000
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
-</verbatim>
+```
 
-To check the workflow job status via the Oozie web console, with a browser go to =http://localhost:11000/oozie=.
+To check the workflow job status via the Oozie web console, with a browser go to `http://localhost:11000/oozie`.
 
-To avoid having to provide the =-oozie= option with the Oozie URL with every =oozie= command, set =OOZIE_URL= env 
+To avoid having to provide the `-oozie` option with the Oozie URL with every `oozie` command, set `OOZIE_URL` env
 variable to the Oozie URL in the shell environment. For example:
 
-<verbatim>
+
+```
 $ export OOZIE_URL="http://localhost:11000/oozie"
 $
 $ oozie job -info 14-20090525161321-oozie-tucu
-</verbatim>
+```
 
----++ Java API Example
+## Java API Example
 
-Oozie provides a =[[./apidocs/org/org/apache/oozie/client/package-summary.html][Java Client API]] that simplifies
+Oozie provides a [Java Client API](./apidocs/org/org/apache/oozie/client/package-summary.html) that simplifies
 integrating Oozie with Java applications. This Java Client API is a convenience API to interact with Oozie Web-Services
 API.
 
 The following code snippet shows how to submit an Oozie job using the Java Client API.
 
-<verbatim>
+
+```
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 .
@@ -127,20 +132,21 @@ import java.util.Properties;
     System.out.println("Workflow job completed ...");
     System.out.println(wf.getJobInfo(jobId));
     ...
-</verbatim>
+```
 
----++ Local Oozie Example
+## Local Oozie Example
 
-Oozie provides an embedded Oozie implementation, =[[./apidocs/org/apache/oozie/local/LocalOozie.html][LocalOozie]]=,
+Oozie provides an embedded Oozie implementation,  [LocalOozie](./apidocs/org/apache/oozie/local/LocalOozie.html) ,
 which is useful for development, debugging and testing of workflow applications within the convenience of an IDE.
 
-The code snippet below shows the usage of the =LocalOozie= class. All the interaction with Oozie is done using Oozie
- =OozieClient= Java API, as shown in the previous section.
+The code snippet below shows the usage of the `LocalOozie` class. All the interaction with Oozie is done using Oozie
+ `OozieClient` Java API, as shown in the previous section.
 
-The examples bundled with Oozie include the complete and running class, =LocalOozieExample= from where this snippet was
+The examples bundled with Oozie include the complete and running class, `LocalOozieExample` from where this snippet was
 taken.
 
-<verbatim>
+
+```
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
@@ -181,18 +187,18 @@ import java.util.Properties;
     // stop local Oozie
     LocalOozie.stop();
     ...
-</verbatim>
+```
 
-Also asynchronous actions like FS action can be used / tested using =LocalOozie= / =OozieClient= API. Please see the module
-=oozie-mini= for details like =fs-decision.xml= workflow example.
+Also asynchronous actions like FS action can be used / tested using `LocalOozie` / `OozieClient` API. Please see the module
+`oozie-mini` for details like `fs-decision.xml` workflow example.
 
 
----++ Fluent Job API Examples
+## Fluent Job API Examples
 
-There are some elaborate examples how to use the [[DG_FluentJobAPI][Fluent Job API]], under =examples/fluentjob/=. There are two
-simple examples covered under [[DG_FluentJobAPI#A_Simple_Example][Fluent Job API :: A Simple Example]] and
-[[DG_FluentJobAPI#A_More_Verbose_Example][Fluent Job API :: A More Verbose Example]].
+There are some elaborate examples how to use the [Fluent Job API](DG_FluentJobAPI.html), under `examples/fluentjob/`. There are two
+simple examples covered under [Fluent Job API :: A Simple Example](DG_FluentJobAPI.html#A_Simple_Example) and
+[Fluent Job API :: A More Verbose Example](DG_FluentJobAPI.html#A_More_Verbose_Example).
 
-[[index][::Go back to Oozie Documentation Index::]]
+[::Go back to Oozie Documentation Index::](index.html)
 
-</noautolink>
+

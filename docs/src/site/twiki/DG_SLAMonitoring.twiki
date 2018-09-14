@@ -1,12 +1,12 @@
-<noautolink>
 
-[[index][::Go back to Oozie Documentation Index::]]
 
----+!! Oozie SLA Monitoring
+[::Go back to Oozie Documentation Index::](index.html)
 
-%TOC%
+# Oozie SLA Monitoring
 
----++ Overview
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
+
+## Overview
 
 Critical jobs can have certain SLA requirements associated with them. This SLA can be in terms of time
 i.e. a maximum allowed time limit associated with when the job should start, by when should it end,
@@ -23,27 +23,30 @@ Oozie now also has a SLA tab in the Oozie UI, where users can query for SLA info
 of how their jobs fared against their SLAs.
 
 
----++ Oozie Server Configuration
+## Oozie Server Configuration
 
-Refer to [[AG_Install#Notifications_Configuration][Notifications Configuration]] for configuring Oozie server to track
+Refer to [Notifications Configuration](AG_Install.html#Notifications_Configuration) for configuring Oozie server to track
 SLA for jobs and send notifications.
 
----++ SLA Tracking
+## SLA Tracking
 
 Oozie allows tracking SLA for meeting the following criteria:
+
    * Start time
    * End time
    * Job Duration
 
----++++ Event Status
+### Event Status
 Corresponding to each of these 3 criteria, your jobs are processed for whether Met or Miss i.e.
+
    * START_MET, START_MISS
    * END_MET, END_MISS
    * DURATION_MET, DURATION_MISS
 
----++++ SLA Status
+### SLA Status
 Expected end-time is the most important criterion for majority of users while deciding overall SLA Met or Miss.
 Hence the _"SLA_Status"_ for a job will transition through these four stages
+
    * Not_Started <-- Job not yet begun
    * In_Process <-- Job started and is running, and SLAs are being tracked
    * Met <-- caused by an END_MET
@@ -52,19 +55,26 @@ Hence the _"SLA_Status"_ for a job will transition through these four stages
 In addition to overshooting expected end-time, and END_MISS (and so an eventual SLA MISS) also occurs when the
 job does not end successfully e.g. goes to error state - Failed/Killed/Error/Timedout.
 
----++ Configuring SLA in Applications
+## Configuring SLA in Applications
 
-To make your jobs trackable for SLA, you simply need to add the =<sla:info>= tag to your workflow application definition.
-If you were already using the existing SLA schema in your workflows (Schema xmlns:sla="uri:oozie:sla:0.1"), you don't need to
+To make your jobs trackable for SLA, you simply need to add the `<sla:info>` tag to your workflow application definition.
+If you were already using the existing SLA schema
+in your workflows (Schema xmlns:sla="uri:oozie:sla:0.1"), you don't need to
 do anything extra to receive SLA notifications via JMS messages. This new SLA monitoring framework is backward-compatible -
-no need to change application XML for now and you can continue to fetch old records via the [[DG_CommandLineTool#SLAOperations][command line API]].
-However, usage of old schema and API is deprecated and we strongly recommend using new schema.
-   * New SLA schema is 'uri:oozie:sla:0.2'
-   * In order to use new SLA schema, you will need to upgrade your workflow/coordinator schema to 0.5 i.e. 'uri:oozie:workflow:0.5'
+no need to change application XML for now and you can continue to fetch old records via the [command line API](DG_CommandLineTool.html#SLAOperations).
+However, usage of old schema
+and API is deprecated and we strongly recommend using new schema.
 
----+++ SLA Definition in Workflow
+   * New SLA schema
+is 'uri:oozie:sla:0.2'
+   * In order to use new SLA schema,
+ you will need to upgrade your workflow/coordinator schema
+to 0.5 i.e. 'uri:oozie:workflow:0.5'
+
+### SLA Definition in Workflow
 Example:
-<verbatim>
+
+```
 <workflow-app name="test-wf-job-sla"
               xmlns="uri:oozie:workflow:0.5"
               xmlns:sla="uri:oozie:sla:0.2">
@@ -97,25 +107,28 @@ Example:
         <sla:alert-contact>joe@example.com</sla:alert-contact>
     </sla:info>
 </workflow-app>
-</verbatim>
+```
 
-For the list of tags usable under =<sla:info>=, refer to [[WorkflowFunctionalSpec#SLASchema][Schemas Appendix]].
-This new schema is much more compact and meaningful, getting rid of redundant and unused tags.
+For the list of tags usable under `<sla:info>`, refer to [Schemas Appendix](WorkflowFunctionalSpec.html#SLASchema).
+This new schema
+is much more compact and meaningful, getting rid of redundant and unused tags.
 
-   * ==nominal-time==: As the name suggests, this is the time relative to which your jobs' SLAs will be calculated. Generally since Oozie workflows are aligned with synchronous data dependencies, this nominal time can be parameterized to be passed the value of your coordinator nominal time. Nominal time is also required in case of independent workflows and you can specify the time in which you expect the workflow to be run if you don't have a synchronous dataset associated with it.
-   * ==should-start==: Relative to =nominal-time= this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *start running* to meet SLA. This is optional.
-   * ==should-end==: Relative to =nominal-time= this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *finish* to meet SLA.
-   * ==max-duration==: This is the maximum amount of time (along with time-unit - MINUTES, HOURS, DAYS) your job is expected to run. This is optional.
-   * ==alert-events==: Specify the types of events for which *Email* alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not necessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
-   * ==alert-contact==: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you just want to view your job SLA history in the UI and do not want to receive email alerts.
+   * `nominal-time`: As the name suggests, this is the time relative to which your jobs' SLAs will be calculated. Generally since Oozie workflows are aligned with synchronous data dependencies, this nominal time can be parameterized to be passed the value of your coordinator nominal time. Nominal time is also required in case of independent workflows and you can specify the time in which you expect the workflow to be run if you don't have a synchronous dataset associated with it.
+   * `should-start`: Relative to `nominal-time` this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *start running* to meet SLA. This is optional.
+   * `should-end`: Relative to `nominal-time` this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *finish* to meet SLA.
+   * `max-duration`: This is the maximum amount of time (along with time-unit - MINUTES, HOURS, DAYS) your job is expected to run. This is optional.
+   * `alert-events`: Specify the types of events for which **Email** alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not necessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
+   * `alert-contact`: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you just want to view your job SLA history in the UI and do not want to receive email alerts.
 
 NOTE: All tags can be parameterized as a EL function or a fixed value.
 
-Same schema can be applied to and embedded under Workflow-Action as well as Coordinator-Action XML.
+Same schema
+can be applied to and embedded under Workflow-Action as well as Coordinator-Action XML.
 
----+++ SLA Definition in Workflow Action
+### SLA Definition in Workflow Action
 
-<verbatim>
+
+```
 <workflow-app name="test-wf-action-sla" xmlns="uri:oozie:workflow:0.5" xmlns:sla="uri:oozie:sla:0.2">
     <start to="grouper"/>
     <action name="grouper">
@@ -130,10 +143,11 @@ Same schema can be applied to and embedded under Workflow-Action as well as Coor
     </action>
     <end name="end"/>
 </workflow-app>
-</verbatim>
+```
 
----+++ SLA Definition in Coordinator Action
-<verbatim>
+### SLA Definition in Coordinator Action
+
+```
 <coordinator-app name="test-coord-sla" frequency="${coord:days(1)}" freq_timeunit="DAY"
     end_of_duration="NONE" start="2013-06-20T08:01Z" end="2013-12-01T08:01Z"
     timezone="America/Los_Angeles" xmlns="uri:oozie:coordinator:0.4" xmlns:sla="uri:oozie:sla:0.2">
@@ -147,22 +161,24 @@ Same schema can be applied to and embedded under Workflow-Action as well as Coor
         </sla:info>
     </action>
 </coordinator-app>
-</verbatim>
+```
 
----++ Accessing SLA Information
+## Accessing SLA Information
 
 SLA information is accessible via the following ways:
+
    * Through the SLA tab of the Oozie Web UI.
    * JMS messages sent to a configured JMS provider for instantaneous tracking.
    * RESTful API to query for SLA summary.
-   * As an =Instrumentation.Counter= entry that is accessible via RESTful API and reflects to the number of all SLA tracked external
-   entities. Name of this counter is =sla-calculator.sla-map=.
+   * As an `Instrumentation.Counter` entry that is accessible via RESTful API and reflects to the number of all SLA tracked external
+   entities. Name of this counter is `sla-calculator.sla-map`.
 
 For JMS Notifications, you have to have a message broker in place, on which Oozie publishes messages and you can
 hook on a subscriber to receive those messages. For more info on setting up and consuming JMS messages, refer
-[[DG_JMSNotifications][JMS Notifications]] documentation.
+[JMS Notifications](DG_JMSNotifications.html) documentation.
 
 In the REST API, the following filters can be applied while fetching SLA information:
+
    * app_name - Application name
    * id  - id of the workflow job, workflow action or coordinator action
    * parent_id - Parent id of the workflow job, workflow action or coordinator action
@@ -179,14 +195,16 @@ the number of milliseconds that have elapsed since January 1, 1970 00:00:00.000 
 
 The examples below demonstrate the use of REST API and explains the JSON response.
 
----+++ Scenario 1: Workflow Job Start_Miss
-*Request:*
-<verbatim>
-GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_start=2013-06-18T00:01Z;nominal_end=2013-06-23T00:01Z;app_name=my-sla-app
-</verbatim>
+### Scenario 1: Workflow Job Start_Miss
+**Request:**
 
-*JSON Response*
-<verbatim>
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_start=2013-06-18T00:01Z;nominal_end=2013-06-23T00:01Z;app_name=my-sla-app
+```
+
+**JSON Response**
+
+```
 {
 
     id : "000056-1238791320234-oozie-joe-W"
@@ -208,16 +226,18 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_start=2013-06-1
     upstreamApps: "dependent-app-1, dependent-app-2"
 
 }
-</verbatim>
+```
 
----+++ Scenario 2: Workflow Action End_Miss
-*Request:*
-<verbatim>
+### Scenario 2: Workflow Action End_Miss
+**Request:**
+
+```
 GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=parent_id=000056-1238791320234-oozie-joe-W
-</verbatim>
+```
 
-*JSON Response*
-<verbatim>
+**JSON Response**
+
+```
 {
 
     id : "000056-1238791320234-oozie-joe-W@map-reduce-action"
@@ -239,16 +259,18 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=parent_id=000056-123879
     upstreamApps: "dependent-app-1, dependent-app-2"
 
 }
-</verbatim>
+```
 
----+++ Scenario 3: Coordinator Action Duration_Miss
-*Request:*
-<verbatim>
+### Scenario 3: Coordinator Action Duration_Miss
+**Request:**
+
+```
 GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=id=000001-1238791320234-oozie-joe-C
-</verbatim>
+```
 
-*JSON Response*
-<verbatim>
+**JSON Response**
+
+```
 {
 
     id : "000001-1238791320234-oozie-joe-C@2"
@@ -270,19 +292,21 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=id=000001-1238791320234
     upstreamApps: "dependent-app-1, dependent-app-2"
 
 }
-</verbatim>
+```
 
 Scenario #3 is particularly interesting because it is an overall "MET" because it met its expected End-time,
 but it is "Duration_Miss" because the actual run (between actual start and actual end) exceeded expected duration.
 
----+++ Scenario 4: All Coordinator actions in a Bundle
-*Request:*
-<verbatim>
-GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-150130225116604-oozie-B;event_status=END_MISS
-</verbatim>
+### Scenario 4: All Coordinator actions in a Bundle
+**Request:**
 
-*JSON Response*
-<verbatim>
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-150130225116604-oozie-B;event_status=END_MISS
+```
+
+**JSON Response**
+
+```
 {
     id : "000001-1238791320234-oozie-joe-C@1"
     parentId : "000001-1238791320234-oozie-joe-C"
@@ -323,13 +347,14 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-15013022
     actualDuration: 3360000 <-- (actual duration in milliseconds)
     durationDelay: -4 <-- (duration delay in minutes)
 }
-</verbatim>
+```
 
 Scenario #4 (All Coordinator actions in a Bundle) is to get SLA information of all coordinator actions under bundle job in one call.
 startDelay/durationDelay/endDelay values returned indicate how much delay compared to expected time (positive values in case of MISS, and negative values in case of MET).
 
----+++ Sample Email Alert
-<verbatim>
+### Sample Email Alert
+
+```
 Subject: OOZIE - SLA END_MISS (AppName=wf-sla-job, JobID=0000004-130610225200680-oozie-oozi-W)
 
 
@@ -353,77 +378,82 @@ SLA Details:
   Expected End Time - Mon Jun 10 23:38:00 UTC 2013
   Expected Duration (in mins) - 5
   Actual Duration (in mins) - -1
-</verbatim>
+```
 
----+++ Changing job SLA definition and alerting
+### Changing job SLA definition and alerting
 Following are ways to enable/disable SLA alerts for coordinator actions.
 
----++++ 1. Specify in Bundle XML during submission.
+#### 1. Specify in Bundle XML during submission.
 Following properties can be specified in bundle xml as properties for coordinator.
 
-=oozie.sla.disable.alerts.older.than= this property can be specified in hours, the SLA notification for
+`oozie.sla.disable.alerts.older.than` this property can be specified in hours, the SLA notification for
 coord actions will be disabled whose nominal is time older then this value. Default is 48 hours.
-<verbatim>
+
+```
 <property>
     <name>oozie.sla.disable.alerts.older.than</name>
     <value>12</value>
 </property>
-</verbatim>
+```
 
-=oozie.sla.disable.alerts= List of coord actions to be disabled. Value can be specified as list of coord actions or date range.
-<verbatim>
+`oozie.sla.disable.alerts` List of coord actions to be disabled. Value can be specified as list of coord actions or date range.
+
+```
 <property>
     <name>oozie.sla.disable.alerts</name>
     <value>1,3-4,7-10</value>
 </property>
-</verbatim>
+```
 Will disable alert for coord actions 1,3,5,7,8,9,10
 
-=oozie.sla.enable.alerts= List of coord actions to be enabled. Value can be specified as list of coord actions or date range.
-<verbatim>
+`oozie.sla.enable.alerts` List of coord actions to be enabled. Value can be specified as list of coord actions or date range.
+
+```
 <property>
     <name>oozie.sla.enable.alerts</name>
     <value>2009-01-01T01:00Z::2009-05-31T23:59Z</value>
 </property>
-</verbatim>
+```
 This will enable SLA alert for coord actions whose nominal time is in between (inclusive) 2009-01-01T01:00Z and 2009-05-31T23:59Z.
 
 ALL keyword can be specified to specify all actions. Below property will disable SLA notifications for all coord actions.
-<verbatim>
+
+```
 <property>
     <name>oozie.sla.disable.alerts</name>
     <value>ALL</value>
 </property>
-</verbatim>
+```
 
----++++ 2. Specify during Coordinator job submission or update
+#### 2. Specify during Coordinator job submission or update
 Above properties can be specified in job.properties in
-[[DG_CommandLineTool#Updating_coordinator_definition_and_properties][Coord job update command]],
-in [[DG_CommandLineTool#Submitting_a_Workflow_Coordinator_or_Bundle_Job][Coord job submit command]]
-or in [[DG_CommandLineTool#Running_a_Workflow_Coordinator_or_Bundle_Job][Coord job run command]]
+[Coord job update command](DG_CommandLineTool.html#Updating_coordinator_definition_and_properties),
+in [Coord job submit command](DG_CommandLineTool.html#Submitting_a_Workflow_Coordinator_or_Bundle_Job)
+or in [Coord job run command](DG_CommandLineTool.html#Running_a_Workflow_Coordinator_or_Bundle_Job)
 
----++++ 3. Change using command line
-Refer [[DG_CommandLineTool#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]] for commandline usage.
+#### 3. Change using command line
+Refer [Changing job SLA definition and alerting](DG_CommandLineTool.html#Changing_job_SLA_definition_and_alerting) for commandline usage.
 
----++++ 4. Change using REST API
-Refer the REST API [[WebServicesAPI#Changing_job_SLA_definition_and_alerting][Changing job SLA definition and alerting]].
+#### 4. Change using REST API
+Refer the REST API [Changing job SLA definition and alerting](WebServicesAPI.html#Changing_job_SLA_definition_and_alerting).
 
----++ In-memory SLA entries and database content
+## In-memory SLA entries and database content
 
-There are special circumstances when the in-memory =SLACalcStatus= entries can exist without the workflow or coordinator job or
+There are special circumstances when the in-memory `SLACalcStatus` entries can exist without the workflow or coordinator job or
 action instances in database. For example:
-   * SLA tracked database content may already have been deleted, and =SLA_SUMMARY= entry is not present anymore in database
-   * SLA tracked database content and =SLA_SUMMARY= entry aren't yet present in database
 
-By the time =SLAService= scheduled job will be running, SLA map contents are checked. When the =SLA_SUMMARY= entry for the in-memory
+   * SLA tracked database content may already have been deleted, and `SLA_SUMMARY` entry is not present anymore in database
+   * SLA tracked database content and `SLA_SUMMARY` entry aren't yet present in database
+
+By the time `SLAService` scheduled job will be running, SLA map contents are checked. When the `SLA_SUMMARY` entry for the in-memory
 SLA entry is missing, a counter is increased. When this counter reaches the server-wide preconfigured value
-=oozie.sla.service.SLAService.maximum.retry.count= (by default =3=), in-memory SLA entry will get purged.
+`oozie.sla.service.SLAService.maximum.retry.count` (by default `3`), in-memory SLA entry will get purged.
 
----++ Known issues
+## Known issues
 There are two known issues when you define SLA for a workflow action.
    * If there are decision nodes and SLA is defined for a workflow action not in the execution path because of the decision node, you will still get an SLA_MISS notification.
    * If you have dangling action nodes in your workflow definition and SLA is defined for it, you will still get an SLA_MISS notification.
 
-[[index][::Go back to Oozie Documentation Index::]]
+[::Go back to Oozie Documentation Index::](index.html)
 
-</noautolink>
+

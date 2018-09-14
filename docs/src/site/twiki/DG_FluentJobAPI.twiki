@@ -1,27 +1,27 @@
-<noautolink>
 
-[[index][::Go back to Oozie Documentation Index::]]
 
----+!! Fluent Job API
+[::Go back to Oozie Documentation Index::](index.html)
 
-%TOC%
+# Fluent Job API
 
----++ Introduction
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
+
+## Introduction
 
 Oozie is a mature workflow scheduler system. XML is the standard way of defining workflow, coordinator, or bundle jobs.  For users
 who prefer an alternative, the Fluent Job API provides a Java interface instead.
 
----+++ Motivation
+### Motivation
 
 Prior to Oozie 5.1.0, the following ways were available to submit a workflow, coordinator, or bundle job: through Oozie CLI or via
 HTTP submit a generic workflow, coordinator, or bundle job, or submit a Pig, Hive, Sqoop, or MapReduce workflow job.
 
 As the generic way goes, the user has to have uploaded a workflow, coordinator, or bundle XML and all necessary dependencies like
-scripts, JAR or ZIP files, to HDFS beforehand, as well as have a =job.properties= file at command line and / or provide any
+scripts, JAR or ZIP files, to HDFS beforehand, as well as have a `job.properties` file at command line and / or provide any
 missing parameters as part of the command.
 
 As the specific Pig, Hive, or Sqoop ways go, the user can provide all necessary parameters as part of the command issued. A
- =workflow.xml= file will be generated with all the necessary details and stored to HDFS so that Oozie can grab it. Note that
+ `workflow.xml` file will be generated with all the necessary details and stored to HDFS so that Oozie can grab it. Note that
 dependencies have to be uploaded to HDFS beforehand as well.
 
 There are some usability problems by using the XML job definition. XML is not an ideal way to express dependencies and a directed
@@ -40,7 +40,7 @@ fork / join pairs automatically.
 Either way, there were no programmatic ways to define workflow jobs. That doesn't mean users could not generate XML themselves -
 actually this is something HUE's Oozie UI also tries to target.
 
----+++ Goals
+### Goals
 
 Fluent Job API aims to solve following from the user's perspective. It provides a Java API instead of declarative XML to define
 workflows. It defines dependencies across actions as opposed to defining a control flow. This is how data engineers and data
@@ -54,7 +54,7 @@ workflow rendered as XML, as well as coexist XML based and Fluent Job API based 
 time all workflow action types. When XSDs change, as few manual steps are necessary as possible both on API internal and public
 side.
 
----+++ Non-goals
+### Non-goals
 
 The following points are not targeted for the initial release of Fluent Job API with Oozie 5.1.0. It doesn't provide API in any
 language other than Java. It doesn't provide a REPL. It doesn't allow for dynamic action instantiation depending on e.g. conditional
@@ -71,7 +71,7 @@ for user-supplied custom actions / XSDs.
 
 Most of the non-goals may be targeted as enhancements of the Fluent Job API for future Oozie releases.
 
----+++ Approach
+### Approach
 
 When using the Fluent Job API, the following points are different from the XML jobs definition. Instead of control flow (successor)
 definition, the user can define dependencies (parents of an action).
@@ -82,32 +82,33 @@ Control flow and necessary boilerplate are generated automatically by keeping us
 new dependencies to keep Oozie workflow format of nested fork / join pairs. Note that not every dependency DAG can be expressed in
 the Oozie workflow format. When this is not possible, user is notified at build time.
 
----++ How To Use
+## How To Use
 
----+++ A Simple Example
+### A Simple Example
 
 The simplest thing to create using the Oozie Fluent Job API is a workflow consisting of only one action. Let's see how it goes, step
 by step.
 
-First, put the project =org.apache.oozie:oozie-fluent-job-api= to the build path. In case of a Maven managed build, create a new
-Maven project and declare a Maven dependency to =org.apache.oozie:oozie-fluent-job-api=.
+First, put the project `org.apache.oozie:oozie-fluent-job-api` to the build path. In case of a Maven managed build, create a new
+Maven project and declare a Maven dependency to `org.apache.oozie:oozie-fluent-job-api`.
 
-Then, create a class that =implements WorkflowFactory= and implement the method =WorkflowFactory#create()=. inside that method,
-create a =ShellAction= using =ShellActionBuilder=, fill in some attributes then create a =Workflow= using =WorkflowBuilder= using
-the =ShellAction= just built. Return the =Workflow=.
+Then, create a class that `implements WorkflowFactory` and implement the method `WorkflowFactory#create()`. inside that method,
+create a `ShellAction` using `ShellActionBuilder`, fill in some attributes then create a `Workflow` using `WorkflowBuilder` using
+the `ShellAction` just built. Return the `Workflow`.
 
-Compile a Fluent Job API jar that has the =Main-Class= attribute set to the =WorkflowFactory= subclass just created,
-e.g. =shell-workflow.jar=.
+Compile a Fluent Job API jar that has the `Main-Class` attribute set to the `WorkflowFactory` subclass just created,
+e.g. `shell-workflow.jar`.
 
-Moving on, [[DG_CommandLineTool#Checking_a_workflow_definition_generated_by_a_Fluent_Job_API_jar_file][check via command line]] that
+Moving on, [check via command line](DG_CommandLineTool.html#Checking_a_workflow_definition_generated_by_a_Fluent_Job_API_jar_file) that
 the compiled API JAR file is valid.
 
 As a finishing touch,
-[[DG_CommandLineTool#Running_a_workflow_definition_generated_by_a_Fluent_Job_API_jar_file][run via command line]] the Fluent Job API
+[run via command line](DG_CommandLineTool.html#Running_a_workflow_definition_generated_by_a_Fluent_Job_API_jar_file) the Fluent Job API
 workflow.
 
-*For reference, a simplistic API JAR example consisting of a =Workflow= having only one =ShellAction=:*
-<verbatim>
+**For reference, a simplistic API JAR example consisting of a `Workflow` having only one `ShellAction`:**
+
+```
 public class MyFirstWorkflowFactory implements WorkflowFactory {
 .
     @Override
@@ -129,10 +130,11 @@ public class MyFirstWorkflowFactory implements WorkflowFactory {
         return shellWorkflow;
     }
 }
-</verbatim>
+```
 
-*After check, the generated workflow XML looks like this:*
-<verbatim>
+**After check, the generated workflow XML looks like this:**
+
+```
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workflow:workflow-app xmlns:workflow="uri:oozie:workflow:1.0"  xmlns:shell="uri:oozie:shell-action:1.0" name="shell-workflow">
 .
@@ -163,21 +165,22 @@ public class MyFirstWorkflowFactory implements WorkflowFactory {
     <workflow:end name="end"/>
 .
 </workflow:workflow-app>
-</verbatim>
+```
 
 
----+++ A More Verbose Example
+### A More Verbose Example
 
-*Error handling*
+**Error handling**
 
-If you would like to provide some error handling in case of action failure, you should add an =ErrorHandler= to the =Node=
-representing the action. The error handler action will be added as the ="error-transition"= of the original action in the generated
-Oozie workflow XML. Both the ="ok-transition"= and the ="error-transition"= of the error handler action itself will lead to an
+If you would like to provide some error handling in case of action failure, you should add an `ErrorHandler` to the `Node`
+representing the action. The error handler action will be added as the `"error-transition"` of the original action in the generated
+Oozie workflow XML. Both the `"ok-transition"` and the `"error-transition"` of the error handler action itself will lead to an
 autogenerated kill node.
 
-*Here you find an example consisting of a =Workflow= having three =ShellAction=s, an error handler =EmailAction=, and one =decision=
-to sort out which way to go:*
-<verbatim>
+**Here you find an example consisting of a `Workflow` having three `ShellAction`s, an error handler `EmailAction`, and one `decision`
+to sort out which way to go:**
+
+```
 public class MySecondWorkflowFactory implements WorkflowFactory {
 .
     @Override
@@ -218,10 +221,11 @@ public class MySecondWorkflowFactory implements WorkflowFactory {
         return workflow;
     }
 }
-</verbatim>
+```
 
-*After check, the generated workflow XML looks like this:*
-<verbatim>
+**After check, the generated workflow XML looks like this:**
+
+```
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workflow:workflow-app ... name="shell-example">
 .
@@ -305,72 +309,76 @@ public class MySecondWorkflowFactory implements WorkflowFactory {
     <workflow:end name="end"/>
 .
 </workflow:workflow-app>
-</verbatim>
+```
 
----+++ Runtime Limitations
+### Runtime Limitations
 
 Even if Fluent Job API tries to abstract away the task of assembly job descriptor XML files, there are some runtime
-limitations apart from the [[DG_FluentJobAPI#Non-goals][non-goals section]]. All such limitations are based on the current
+limitations apart from the [non-goals section](DG_FluentJobAPI.html#Non-goals). All such limitations are based on the current
 implementations and subject to further improvements and fixes.
 
-There is only one =kill= possibility in every =workflow=. That is, there can be defined only one =action= to be executed just before
-any other =action= turns to be =kill=ed. Furthermore, =kill= goes to =end= directly. That means, there cannot be defined an
-intricate network of =kill= nodes, cascading sometimes to other =action= nodes, avoiding going to =end= in the first place.
+There is only one `kill` possibility in every `workflow`. That is, there can be defined only one `action` to be executed just before
+any other `action` turns to be `kill`ed. Furthermore, `kill` goes to `end` directly. That means, there cannot be defined an
+intricate network of `kill` nodes, cascading sometimes to other `action` nodes, avoiding going to `end` in the first place.
 
-There are places where =decision= node generation fails, throwing an =Exception=. The problem is that during the transformation,
-Fluent Job API reaches a state where there is a =fork= that transitions to two =decision= nodes, which in turn split into two paths
-each. One of the paths from the first =decision= joins a path from the other =decision=, but the remaining conditional paths never
-meet. Therefore, not all paths originating from the =fork= converge to the same =join=.
+There are places where `decision` node generation fails, throwing an `Exception`. The problem is that during the transformation,
+Fluent Job API reaches a state where there is a `fork` that transitions to two `decision` nodes, which in turn split into two paths
+each. One of the paths from the first `decision` joins a path from the other `decision`, but the remaining conditional paths never
+meet. Therefore, not all paths originating from the `fork` converge to the same `join`.
 
----++ Appendixes
+## Appendixes
 
----+++ AE.A Appendix A, API JAR format
+### AE.A Appendix A, API JAR format
 
-It's kept simple - all the necessary Java class files that are needed are packed into a JAR file, that has a =META-INF/MANIFEST.MF=
-with a single entry having the =Main-Class= attribute set to the fully qualified name of the entry class, the one that
-=implements WorkflowFactory=:
-<verbatim>
+It's kept simple - all the necessary Java class files that are needed are packed into a JAR file, that has a `META-INF/MANIFEST.MF`
+with a single entry having the `Main-Class` attribute set to the fully qualified name of the entry class, the one that
+`implements WorkflowFactory`:
+
+```
 Main-Class: org.apache.oozie.jobs.api.factory.MyFirstWorkflowFactory
-</verbatim>
+```
 
-*An example of the command line assembly of such an API JAR:*
-<verbatim>
+**An example of the command line assembly of such an API JAR:**
+
+```
 jar cfe simple-workflow.jar org.apache.oozie.fluentjob.api.factory.MyFirstWorkflowFactory \
 -C /Users/forsage/Workspace/oozie/fluent-job/fluent-job-api/target/classes \
 org/apache/oozie/jobs/api/factory/MyFirstWorkflowFactory.class
-</verbatim>
+```
 
----+++ AE.B Appendix B, Some Useful Builder classes
+### AE.B Appendix B, Some Useful Builder classes
 
-For a complete list of =Builder= classes, please have a look at =oozie-fluent-job-api= artifact's following packages:
-   * =org.apache.oozie.fluentjob.api.action= - =ActionBuilder= classes
-   * =org.apache.oozie.fluentjob.api.factory= - the single entry point, =WorkflowFactory= is here
-   * =org.apache.oozie.fluentjob.api.workflow= - workflow related =Builder= classes
+For a complete list of `Builder` classes, please have a look at `oozie-fluent-job-api` artifact's following packages:
 
-On examples how to use these please see =oozie-examples= artifact's =org.apache.oozie.example.fluentjob= package.
+   * `org.apache.oozie.fluentjob.api.action` - `ActionBuilder` classes
+   * `org.apache.oozie.fluentjob.api.factory` - the single entry point, `WorkflowFactory` is here
+   * `org.apache.oozie.fluentjob.api.workflow` - workflow related `Builder` classes
 
----+++ AE.C Appendix C, How To Extend
+On examples how to use these please see `oozie-examples` artifact's `org.apache.oozie.example.fluentjob` package.
+
+### AE.C Appendix C, How To Extend
 
 Sometimes there are new XSD versions of an existing custom or core workflow action, sometimes it's a new custom workflow action that
 gets introduced. In any case, Fluent Job API needs to keep up with the changes.
 
 Here are the steps needed:
-   * in =fluent-job-api/pom.xml= extend or modify =jaxb2-maven-plugin= section =sources= by a new =source=
-   * in =fluent-job-api/src/main/xjb/bindings.xml= extend by a new or modify an existing =jaxb:bindings=
-   * in =fluent-job-api=, =org.apache.oozie.fluentjob.api.mapping= package, introduce a new or modify an existing =DozerConverter=
-   * in =dozer_config.xml=, introduce a new or modify an existing =converter= inside =custom-converters=
-   * in =fluent-job-api=, =org.apache.oozie.fluentjob.api.action=, introduce a new =Action= and a new =Builder=
+
+   * in `fluent-job-api/pom.xml` extend or modify `jaxb2-maven-plugin` section `sources` by a new `source`
+   * in `fluent-job-api/src/main/xjb/bindings.xml` extend by a new or modify an existing `jaxb:bindings`
+   * in `fluent-job-api`, `org.apache.oozie.fluentjob.api.mapping` package, introduce a new or modify an existing `DozerConverter`
+   * in `dozer_config.xml`, introduce a new or modify an existing `converter` inside `custom-converters`
+   * in `fluent-job-api`, `org.apache.oozie.fluentjob.api.action`, introduce a new `Action` and a new `Builder`
    * write new / modify existing relevant unit and integration tests
 
----+++ AE.D Appendix D, API compatibility guarantees
+### AE.D Appendix D, API compatibility guarantees
 
-Fluent Job API is available beginning version 5.1.0. It's marked =@InterfaceAudience.Private= (intended for use in Oozie itself) and
-=@InterfaceStability.Unstable= (no stability guarantees are provided across any level of release granularity) to indicate that for
+Fluent Job API is available beginning version 5.1.0. It's marked `@InterfaceAudience.Private` (intended for use in Oozie itself) and
+`@InterfaceStability.Unstable` (no stability guarantees are provided across any level of release granularity) to indicate that for
 the next few minor releases it's bound to change a lot.
 
-Beginning from around 5.4.0 planning the next phase, =@InterfaceStability.Evolving= (compatibility breaking only between minors),
-and a few minor releases later, =@InterfaceAudience.Public= (safe to use outside of Oozie).
+Beginning from around 5.4.0 planning the next phase, `@InterfaceStability.Evolving` (compatibility breaking only between minors),
+and a few minor releases later, `@InterfaceAudience.Public` (safe to use outside of Oozie).
 
-[[index][::Go back to Oozie Documentation Index::]]
+[::Go back to Oozie Documentation Index::](index.html)
 
-</noautolink>
+

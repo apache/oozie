@@ -1,28 +1,29 @@
-<noautolink>
 
-[[index][::Go back to Oozie Documentation Index::]]
+
+[::Go back to Oozie Documentation Index::](index.html)
 
 -----
 
----+!! Oozie Email Action Extension
+# Oozie Email Action Extension
 
-%TOC%
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
 
-#EmailAction
----++++ 3.2.4 Email action
+<a name="EmailAction"></a>
+## 3.2.4 Email action
 
-The =email= action allows sending emails in Oozie from a workflow application. An email action must provide =to=
-addresses, =cc= addresses (optional), =bcc= addresses (optional), a =subject= and a =body=.
+The `email` action allows sending emails in Oozie from a workflow application. An email action must provide `to`
+addresses, `cc` addresses (optional), `bcc` addresses (optional), a `subject` and a `body`.
 Multiple recipients of an email can be provided as comma separated addresses.
 
 The email action is executed synchronously, and the workflow job will wait until the specified
 emails are sent before continuing to the next action.
 
-All values specified in the =email= action can be parameterized (templatized) using EL expressions.
+All values specified in the `email` action can be parameterized (templatized) using EL expressions.
 
-*Syntax:*
+**Syntax:**
 
-<verbatim>
+
+```
 <workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
     ...
     <action name="[NODE-NAME]">
@@ -40,37 +41,39 @@ All values specified in the =email= action can be parameterized (templatized) us
     </action>
     ...
 </workflow-app>
-</verbatim>
+```
 
-The =to= and =cc= and =bcc= commands are used to specify recipients who should get the mail. Multiple email recipients
-can be provided using comma-separated values. Providing a =to= command is necessary, while the =cc= or =bcc= may
+The `to` and `cc` and `bcc` commands are used to specify recipients who should get the mail. Multiple email recipients
+can be provided using comma-separated values. Providing a `to` command is necessary, while the `cc` or `bcc` may
 optionally be used along.
 
-The =subject= and =body= commands are used to specify subject and body of the mail.
+The `subject` and `body` commands are used to specify subject and body of the mail.
 From uri:oozie:email-action:0.2 one can also specify mail content type as <content_type>text/html</content_type>.
 "text/plain" is default.
 
-The =attachment= is used to attach a file(s) on HDFS to the mail. Multiple attachment can be provided using comma-separated values.
+The `attachment` is used to attach a file(s) on HDFS to the mail. Multiple attachment can be provided using comma-separated values.
 Non fully qualified path is considered as a file on default HDFS. A local file cannot be attached.
 
-*Configuration*
+**Configuration**
 
-The =email= action requires some SMTP server configuration to be present (in oozie-site.xml). The following are the values
+The `email` action requires some SMTP server configuration to be present (in oozie-site.xml). The following are the values
 it looks for:
-   * =oozie.email.smtp.host= - The host where the email action may find the SMTP server (localhost by default).
-   * =oozie.email.smtp.port= - The port to connect to for the SMTP server (25 by default).
-   * =oozie.email.from.address= - The from address to be used for mailing all emails (oozie@localhost by default).
-   * =oozie.email.smtp.auth= - Boolean property that toggles if authentication is to be done or not. (false by default).
-   * =oozie.email.smtp.starttls.enable= - Boolean property that toggles if use TLS communication or not. (false by default).
-   * =oozie.email.smtp.username= - If authentication is enabled, the username to login as (empty by default).
-   * =oozie.email.smtp.password= - If authentication is enabled, the username's password (empty by default).
-   * =oozie.email.attachment.enabled= - Boolean property that toggles if configured attachments are to be placed into the emails.
+
+   * `oozie.email.smtp.host` - The host where the email action may find the SMTP server (localhost by default).
+   * `oozie.email.smtp.port` - The port to connect to for the SMTP server (25 by default).
+   * `oozie.email.from.address` - The from address to be used for mailing all emails (oozie@localhost by default).
+   * `oozie.email.smtp.auth` - Boolean property that toggles if authentication is to be done or not. (false by default).
+   * `oozie.email.smtp.starttls.enable` - Boolean property that toggles if use TLS communication or not. (false by default).
+   * `oozie.email.smtp.username` - If authentication is enabled, the username to login as (empty by default).
+   * `oozie.email.smtp.password` - If authentication is enabled, the username's password (empty by default).
+   * `oozie.email.attachment.enabled` - Boolean property that toggles if configured attachments are to be placed into the emails.
    (false by default).
-   * =oozie.email.smtp.socket.timeout.ms= - The timeout to apply over all SMTP server socket operations (10000ms by default).
+   * `oozie.email.smtp.socket.timeout.ms` - The timeout to apply over all SMTP server socket operations (10000ms by default).
 
-*Example:*
+**Example:**
 
-<verbatim>
+
+```
 <workflow-app name="sample-wf" xmlns="uri:oozie:workflow:0.1">
     ...
     <action name="an-email">
@@ -86,14 +89,15 @@ it looks for:
     </action>
     ...
 </workflow-app>
-</verbatim>
+```
 
 In the above example, an email is sent to 'bob', 'the.other.bob', 'will' (cc), yet.another.bob (bcc)
 with the subject and body both containing the workflow ID after substitution.
 
----+++ AE.A Appendix A, Email XML-Schema
+## AE.A Appendix A, Email XML-Schema
 
-<verbatim>
+
+```
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:email="uri:oozie:email-action:0.2" elementFormDefault="qualified"
            targetNamespace="uri:oozie:email-action:0.2">
@@ -112,11 +116,12 @@ with the subject and body both containing the workflow ID after substitution.
         </xs:sequence>
     </xs:complexType>
 </xs:schema>
-</verbatim>
+```
 
-*GMail example to oozie-site.xml*
+**GMail example to oozie-site.xml**
 
-<verbatim>
+
+```
 oozie.email.smtp.host=smtp.gmail.com
 oozie.email.smtp.port=587
 oozie.email.from.address=<some email address>
@@ -124,8 +129,8 @@ oozie.email.smtp.auth=true
 oozie.email.smtp.starttls.enable=true
 oozie.email.smtp.username=<Gmail Id>
 oozie.email.smtp.password=<Gmail Pass>
-</verbatim>
+```
 
-[[index][::Go back to Oozie Documentation Index::]]
+[::Go back to Oozie Documentation Index::](index.html)
 
-</noautolink>
+

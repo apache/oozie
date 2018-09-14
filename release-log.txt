@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-2734 [docs] Switch from TWiki to Markdown (asalamon74 via andras.piros, pbacsko, gezapeti)
 OOZIE-3298 [MapReduce action] External ID is not filled properly and failing MR job is treated as SUCCEEDED (andras.piros via pbacsko, asasvari, gezapeti)
 OOZIE-3317 amend [build] Fix false positive precommit reports (kmarton via andras.piros)
 OOZIE-3160 PriorityDelayQueue put()/take() can cause significant CPU load due to busy waiting (pbacsko)
