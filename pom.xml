@@ -2036,13 +2036,14 @@
                         <exclude>work.log</exclude>
                         <exclude>SecurityAuth.audit</exclude>
                         <exclude>.gitignore</exclude>
-                        <exclude>docs/src/site/markdown/*.md</exclude>
+                        <exclude>**/*.md</exclude>
                         <exclude>examples/src/main/data/*</exclude>
                         <exclude>core/src/test/resources/test-ioutils.txt</exclude>
 						<exclude>core/src/test/resources/oldWorkFlowApp.serialized</exclude>
                         <exclude>sharelib/pig/src/test/resources/PigMain.txt</exclude>
                         <exclude>sharelib/hive/src/test/resources/HiveMain.txt</exclude>
                         <exclude>webapp/src/main/resources/.gitignore</exclude>
+                        <exclude>webapp/overlays/**</exclude>
                         <!-- MIT or 3 BSD licenses -->
                         <exclude>webapp/src/main/webapp/console/sla/js/graph/*</exclude>
                         <exclude>webapp/src/main/webapp/console/sla/js/table/*</exclude>
