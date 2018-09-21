@@ -18,7 +18,9 @@
 
 package org.apache.oozie.example.fluentjob;
 
-import org.apache.oozie.fluentjob.api.action.LauncherBuilder;
+import org.apache.oozie.fluentjob.api.action.JavaAction;
+import org.apache.oozie.fluentjob.api.action.JavaActionBuilder;
+
 import org.apache.oozie.fluentjob.api.factory.WorkflowFactory;
 import org.apache.oozie.fluentjob.api.workflow.GlobalBuilder;
 import org.apache.oozie.fluentjob.api.workflow.Workflow;
@@ -30,19 +32,29 @@ import org.apache.oozie.fluentjob.api.workflow.WorkflowBuilder;
 public class Global implements WorkflowFactory {
     @Override
     public Workflow create() {
+        final JavaAction parent = JavaActionBuilder.create()
+                .withName("java-main-1")
+                .withMainClass("org.apache.oozie.example.DemoJavaMain")
+                .withArchive(
+                        "${nameNode}/user/${wf:user()}/${examplesRoot}/apps/java-main/lib/oozie-examples-${projectVersion}.jar")
+                .withArg("Hello")
+                .withArg("Oozie!")
+                .build();
+        JavaActionBuilder.createFromExistingAction(parent)
+                .withName("java-main-2")
+                .withoutArg("Oozie!")
+                .withArg("Oozie2!")
+                .withParent(parent)
+                .build();
+
         final Workflow workflow = new WorkflowBuilder()
                 .withName("workflow-with-global")
                 .withGlobal(GlobalBuilder.create()
                         .withResourceManager("${resourceManager}")
                         .withNameNode("${nameNode}")
-                        .withJobXml("job.xml")
-                        .withConfigProperty("key1", "value1")
-                        .withLauncher(new LauncherBuilder()
-                                .withMemoryMb(1024L)
-                                .withVCores(1L)
-                                .build())
+                        .withConfigProperty("mapred.job.queue.name", "${queueName}")
                         .build())
-                .build();
+                .withDagContainingNode(parent).build();
 
         return workflow;
     }
