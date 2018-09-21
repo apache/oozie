@@ -519,7 +519,7 @@
 
     <property>
         <name>oozie.service.CallableQueueService.queue.oldImpl</name>
-        <value>false</value>
+        <value>true</value>
         <description>
             If set to false, then CallableQueueService will use a more performant, less CPU-intensive
             queuing mechanism to execute asynchronous tasks internally. The old implementation generates
