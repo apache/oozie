@@ -311,6 +311,113 @@ public class MySecondWorkflowFactory implements WorkflowFactory {
 </workflow:workflow-app>
 ```
 
+### Running the JavaMain example
+
+Oozie contains several simple Fluent Job API examples. The JavaMain Fluent JOB API example generates a workflow
+similar to the basic java-main example.
+
+The source code for all the Fluent Job API examples can be found in the `oozie-examples.tar.gz` file.
+
+#### Compilation
+
+To compile the examples we also need the `oozie-fluent-job-api` jar file.
+The name of the file also contains the Oozie version number, in this example we assume that the name of the file is
+`oozie-fluent-job-api-5.1.0.jar`.
+
+Assuming that the `src` directory contains the source files we can use the following command to compile the JavaMain example:
+
+```
+javac -classpath oozie-fluent-job-api-5.1.0.jar src/org/apache/oozie/example/fluentjob/JavaMain.java
+```
+
+#### Jar creation
+
+The next command creates the jar file:
+
+```
+jar cfe fluentjob-javamain-example.jar org.apache.oozie.example.fluentjob.JavaMain -C src \
+org/apache/oozie/example/fluentjob/JavaMain.class
+```
+
+This jar contains only the `JavaMain.class` file. The content of the `MAINFEST.MF` file is the following:
+
+```
+Manifest-Version: 1.0
+Created-By: 1.8.0_171 (Oracle Corporation)
+Main-Class: org.apache.oozie.example.fluentjob.JavaMain
+```
+
+#### Validating the jar
+
+It is possible to validate the jar file:
+
+```
+oozie job -oozie http://localhost:11000/oozie -validatejar fluentjob-javamain-example.jar
+```
+
+The command should print out: `Valid workflow-app`
+
+If we also use the `-verbose` option the command prints out the generated XML as well:
+
+```
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workflow:workflow-app xmlns:email="uri:oozie:email-action:0.2" xmlns:workflow="uri:oozie:workflow:1.0" name="java-main-example">
+    <workflow:start to="java-main"/>
+    <workflow:kill name="kill">
+        <workflow:message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</workflow:message>
+    </workflow:kill>
+    <workflow:action name="email-on-error">
+        <email:email>
+            <email:to>somebody@apache.org</email:to>
+            <email:subject>Workflow error</email:subject>
+            <email:body>Shell action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</email:body>
+        </email:email>
+        <workflow:ok to="kill"/>
+        <workflow:error to="kill"/>
+    </workflow:action>
+    <workflow:action name="java-main">
+        <workflow:java>
+            <workflow:resource-manager>${resourceManager}</workflow:resource-manager>
+            <workflow:name-node>${nameNode}</workflow:name-node>
+            <workflow:configuration>
+                <workflow:property>
+                    <workflow:name>mapred.job.queue.name</workflow:name>
+                    <workflow:value>${queueName}</workflow:value>
+                </workflow:property>
+            </workflow:configuration>
+            <workflow:main-class>org.apache.oozie.example.DemoJavaMain</workflow:main-class>
+            <workflow:arg>Hello</workflow:arg>
+            <workflow:arg>Oozie!</workflow:arg>
+            <workflow:archive>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/java-main/lib/oozie-examples-${projectVersion}.jar</workflow:archive>
+        </workflow:java>
+        <workflow:ok to="end"/>
+        <workflow:error to="email-on-error"/>
+    </workflow:action>
+    <workflow:end name="end"/>
+</workflow:workflow-app>
+```
+
+### Running the jar
+
+To run the jar it is also necessary to provide a properties file using the `-config` option:
+
+```
+oozie job -oozie http://localhost:11000/oozie -runjar fluentjob-javamain-example.jar -config fluentjob-javamain.properties
+```
+
+The contents of the `fluentjob-javamain.properties` file is similar to the `job.properties` file of the basic java-main example,
+but we also need one extra property called `projectVersion`. The following shows a sample properties file:
+
+```
+resourceManager=localhost:8032
+nameNode=hdfs://localhost:9000
+queueName=default
+examplesRoot=examples
+projectVersion=5.1.0
+```
+
+It is also possible to use the `-verbose` option here if we want to print out the generated XML.
+
 ### Runtime Limitations
 
 Even if Fluent Job API tries to abstract away the task of assembly job descriptor XML files, there are some runtime

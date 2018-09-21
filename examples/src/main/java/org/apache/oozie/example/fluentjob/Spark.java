@@ -45,6 +45,7 @@ public class Spark implements WorkflowFactory {
                 .withMode("${mode}")
                 .withActionName("Spark File Copy Example")
                 .withActionClass("org.apache.oozie.example.SparkFileCopy")
+                .withArchive("${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar")
                 .withJar("${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar")
                 .withErrorHandler(ErrorHandler.buildAsErrorHandler(EmailActionBuilder.create()
                         .withName("email-on-error")
