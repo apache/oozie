@@ -21,14 +21,10 @@ package org.apache.oozie.action.hadoop;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.xml.sax.SAXException;
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
@@ -40,7 +36,7 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 @Deprecated
 public class PrepareActionsDriver {
-    private static final PrepareActionsHandler prepareHandler = new PrepareActionsHandler();
+    private static final PrepareActionsHandler prepareHandler = new PrepareActionsHandler(new LauncherURIHandlerFactory(null));
 
     /**
      * Method to parse the prepare XML and execute the corresponding prepare actions

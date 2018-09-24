@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.w3c.dom.Document;
@@ -34,6 +35,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class PrepareActionsHandler {
+    private final LauncherURIHandlerFactory factory;
+
+    @VisibleForTesting
+    PrepareActionsHandler(final LauncherURIHandlerFactory factory) {
+        this.factory = factory;
+    }
 
     /**
      * Method to parse the prepare XML and execute the corresponding prepare actions
@@ -45,25 +52,24 @@ public class PrepareActionsHandler {
      * @throws ParserConfigurationException if the parser is not well configured
      * @throws LauncherException in case of error
      */
-    public void prepareAction(String prepareXML, Configuration conf)
+    void prepareAction(String prepareXML, Configuration conf)
             throws IOException, SAXException, ParserConfigurationException, LauncherException {
         Document doc = getDocumentFromXML(prepareXML);
         doc.getDocumentElement().normalize();
 
         // Get the list of child nodes, basically, each one corresponding to a separate action
         NodeList nl = doc.getDocumentElement().getChildNodes();
-        LauncherURIHandlerFactory factory = new LauncherURIHandlerFactory(conf);
 
         for (int i = 0; i < nl.getLength(); ++i) {
             Node n = nl.item(i);
-            String operation = n.getNodeName();
+            String operation = n.getLocalName();
             if (n.getAttributes() == null || n.getAttributes().getNamedItem("path") == null) {
                 continue;
             }
             String pathStr = n.getAttributes().getNamedItem("path").getNodeValue().trim();
             // use Path to avoid URIsyntax error caused by square bracket in glob
             URI uri = new Path(pathStr).toUri();
-            LauncherURIHandler handler = factory.getURIHandler(uri);
+            LauncherURIHandler handler = factory.getURIHandler(uri, conf);
             execute(operation, uri, handler, conf);
         }
     }

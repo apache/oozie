@@ -145,7 +145,7 @@ public class LauncherAM {
                         new AMRMCallBackHandler(),
                         new HdfsOperations(new SequenceFileWriterFactory()),
                         new LocalFsOperations(),
-                        new PrepareActionsHandler(),
+                        new PrepareActionsHandler(new LauncherURIHandlerFactory(null)),
                         new LauncherAMCallbackNotifierFactory(),
                         new LauncherSecurityManager(),
                         System.getenv(ApplicationConstants.Environment.CONTAINER_ID.name()),

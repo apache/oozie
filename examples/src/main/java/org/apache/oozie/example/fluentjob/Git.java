@@ -18,7 +18,10 @@
 
 package org.apache.oozie.example.fluentjob;
 
-import org.apache.oozie.fluentjob.api.action.*;
+import org.apache.oozie.fluentjob.api.action.GitAction;
+import org.apache.oozie.fluentjob.api.action.GitActionBuilder;
+import org.apache.oozie.fluentjob.api.action.Prepare;
+import org.apache.oozie.fluentjob.api.action.PrepareBuilder;
 import org.apache.oozie.fluentjob.api.factory.WorkflowFactory;
 import org.apache.oozie.fluentjob.api.workflow.Workflow;
 import org.apache.oozie.fluentjob.api.workflow.WorkflowBuilder;
@@ -29,10 +32,15 @@ import org.apache.oozie.fluentjob.api.workflow.WorkflowBuilder;
 public class Git implements WorkflowFactory {
     @Override
     public Workflow create() {
+        final Prepare prepare = new PrepareBuilder()
+                .withDelete("${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/git/oozie")
+                .build();
+
         final GitAction parent = GitActionBuilder.create()
                 .withResourceManager("${resourceManager}")
                 .withNameNode("${nameNode}")
-                .withDestinationUri("/user/${wf:user()}/${examplesRoot}/output-data/git/oozie")
+                .withPrepare(prepare)
+                .withDestinationUri("${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/git/oozie")
                 .withGitUri("https://github.com/apache/oozie")
                 .build();
 

@@ -19,6 +19,8 @@
 package org.apache.oozie.action.hadoop;
 
 import java.net.URI;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
 
@@ -62,4 +64,8 @@ public class LauncherURIHandlerFactory {
         return handler;
     }
 
+    @VisibleForTesting
+    LauncherURIHandler getURIHandler(final URI uri, final Configuration configuration) throws LauncherException {
+        return new LauncherURIHandlerFactory(configuration).getURIHandler(uri);
+    }
 }

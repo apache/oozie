@@ -18,11 +18,14 @@
 <workflow-app xmlns="uri:oozie:workflow:1.0" name="git-wf">
     <start to="git-node"/>
     <action name="git-node">
-        <git xmlns="uri:oozie:git-action:0.1">
+        <git xmlns="uri:oozie:git-action:1.0">
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/git/oozie"/>
+            </prepare>
             <git-uri>https://github.com/apache/oozie</git-uri>
-            <destination-uri>/user/${wf:user()}/${examplesRoot}/output-data/git/oozie</destination-uri>
+            <destination-uri>${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/git/oozie</destination-uri>
         </git>
         <ok to="end"/>
         <error to="fail"/>
