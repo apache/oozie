@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3351 [tests] Flaky test TestMemoryLocks#testWriteLockSameThreadNoWait() (pbacsko)
 OOZIE-3229 [client] [ui] Improved SLA filtering options (asalamon74, andras.piros)
 OOZIE-3346 [examples] [action] Fix Git example. PrepareActionsHandler should support XML namespace prefixes (asalamon74, andras.piros)
 OOZIE-3347 [examples] Fix Fluent Job global example (asalamon74 via andras.piros)

@@ -232,8 +232,6 @@ public class TestMemoryLocks extends XTestCase {
                 MemoryLocks.MemoryLockToken token2 = getLock();
 
                 if (token != null) {
-                    coordinator.lockAcquireDone();
-
                     log.info("Got lock [{0}]", nameIndex);
                     sb.append(nameIndex + "-L1 ");
                     if (token2 != null) {
@@ -241,6 +239,7 @@ public class TestMemoryLocks extends XTestCase {
                     }
                     sb.append(nameIndex + "-U1 ");
 
+                    coordinator.lockAcquireDone();
                     coordinator.awaitContinueSignal();
 
                     token.release();
