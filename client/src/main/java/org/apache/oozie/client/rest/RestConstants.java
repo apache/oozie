@@ -51,6 +51,8 @@ public interface RestConstants {
 
     String ORDER_PARAM = "order";
 
+    String SORTBY_PARAM = "sortby";
+
     String ACTION_NAME_PARAM = "action-name";
 
     String JOB_FILTER_PARAM = "filter";

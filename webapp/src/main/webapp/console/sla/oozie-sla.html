@@ -70,9 +70,51 @@
                 <label><span class="OR">(or)</span></label>
                 <label>JobId: <input type="text" id ="job_id" ><br></label>
             </div>
-            <label><span class="NominalStart">Nominal Time Range (GMT) - From: <input id="startDate"></span></label>
-            <label>To: </label><input id="endDate">
-            <button id="search" class="search-button"><span class="search-span">Search</span></button>
+            <label id="parent"><span class="Parent id">Parent id: <input id="parent_id"></span></label>
+            <label><span class="Bundle">Bundle: <input id="bundle"></span></label>
+            <label><span class="AppType">AppType: <input id="app_type"></span></label>
+            <label><span class="User Name">User Name: <input id="user_name"></span></label>
+            <label><span class="Job status">Job status: <input id="job_status"></span></label>
+            <div id="nominalCreated">
+                <label>
+                    <span class="NominalStart">Nominal Time Range (GMT) - From:
+                        <input id="nominal_start" class="datepicker"></span>
+                </label>
+                <label>To: </label><input id="nominal_end" class="datepicker">
+                <label>
+                    <span class="Created">Created Time Range (GMT) - From: <input id="created_start" class="datepicker"></span>
+                </label>
+                <label>To: </label><input id="created_end" class="datepicker">
+            </div>
+            <div id="expected">
+                <label>
+                    <span class="ExpectedStart">Expected Start Time Range (GMT) - From:
+                        <input id="expectedstart_start" class="datepicker"></span>
+                </label>
+                <label>To: </label><input id="expectedstart_end" class="datepicker">
+                <label>
+                    <span class="ExpectedEnd">ExpectedEnd Time Range (GMT) - From:
+                        <input id="expectedend_start" class="datepicker"></span>
+                </label>
+                <label>To: </label><input id="expectedend_end" class="datepicker">
+                <label><span class="ExpectedDuration">Expected Duration - From: <input id="expected_duration_min"></span></label>
+                <label>To: </label><input id="expected_duration_max">
+            </div>
+            <div id="actual">
+                <label>
+                    <span class="ActualStart">Actual Start Time Range (GMT) - From:
+                        <input id="actualstart_start" class="datepicker"></span>
+                </label>
+                <label>To: </label><input id="actualstart_end" class="datepicker">
+                <label>
+                    <span class="ActualEnd">Actual End Time Range (GMT) - From:
+                        <input id="actualend_start" class="datepicker"></span>
+                </label>
+                <label>To: </label><input id="actualend_end" class="datepicker">
+                <label><span class="ActualDuration">Actual Duration - From: <input id="actual_duration_min"></span></label>
+                <label>To: </label><input id="actual_duration_max">
+                <button id="search" class="search-button"><span class="search-span">Search</span></button>
+            </div>
         </div>
         <div id="tabs">
             <ul>

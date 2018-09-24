@@ -42,7 +42,7 @@ body {
     margin-right: 20px;
 }
 
-.NominalStart {
+#parent, #nominalCreated, #expected, #actual {
     margin: 0px 10px 0px 10px;
 }
 

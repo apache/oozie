@@ -152,22 +152,6 @@ public class OozieClient {
 
     public static final String FILTER_APPNAME = "appname";
 
-    public static final String FILTER_SLA_APPNAME = "app_name";
-
-    public static final String FILTER_SLA_ID = "id";
-
-    public static final String FILTER_SLA_PARENT_ID = "parent_id";
-
-    public static final String FILTER_BUNDLE = "bundle";
-
-    public static final String FILTER_SLA_EVENT_STATUS = "event_status";
-
-    public static final String FILTER_SLA_STATUS = "sla_status";
-
-    public static final String FILTER_SLA_NOMINAL_START = "nominal_start";
-
-    public static final String FILTER_SLA_NOMINAL_END = "nominal_end";
-
     public static final String FILTER_CREATED_TIME_START = "startcreatedtime";
 
     public static final String FILTER_CREATED_TIME_END = "endcreatedtime";

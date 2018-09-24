@@ -179,19 +179,47 @@ hook on a subscriber to receive those messages. For more info on setting up and 
 
 In the REST API, the following filters can be applied while fetching SLA information:
 
-   * app_name - Application name
-   * id  - id of the workflow job, workflow action or coordinator action
-   * parent_id - Parent id of the workflow job, workflow action or coordinator action
-   * nominal_start and nominal_end - Start and End range for nominal time of the workflow or coordinator.
-   * bundle -  Bundle Job ID or Bundle App Name. Fetches SLA information for actions of all coordinators in that bundle.
-   * event_status - event status such as START_MET/START_MISS/DURATION_MET/DURATION_MISS/END_MET/END_MISS
-   * sla_status - sla status such as NOT_STARTED/IN_PROCESS/MET/MISS
+   * `app_name` - Application name
+   * `id`  - id of the workflow job, workflow action or coordinator action
+   * `parent_id` - Parent id of the workflow job, workflow action or coordinator action
+   * `nominal_after` and `nominal_before` - Start and End range for nominal time of the workflow or coordinator.
+   * `bundle` -  Bundle Job ID or Bundle App Name. Fetches SLA information for actions of all coordinators in that bundle.
+   * `event_status` - event status such as START_MET/START_MISS/DURATION_MET/DURATION_MISS/END_MET/END_MISS
+   * `sla_status` - sla status such as NOT_STARTED/IN_PROCESS/MET/MISS
+   * `job_status` - job status such as CREATED/STARTED/SUCCEEDED/KILLED/FAILED
+   * `app_type` - application type such as COORDINATOR_ACTION/COORDINATOR_JOB/WORKFLOW_JOB/WORKFLOW_ACTION
+   * `user_name` - the username of the user who submitted the job
+   * `created_after` and `created_before` - Start and End range for created time of the workflow or coordinator.
+   * `expectedstart_after` and `expectedstart_before` - Start and End range for expected start time of the workflow or coordinator.
+   * `expectedend_after` and `expectedend_before` - Start and End range for expected end time of the workflow or coordinator.
+   * `actualstart_after` and `actualstart_before` - Start and End range for actual start time of the workflow or coordinator.
+   * `actualend_after` and `actualend_before` - Start and End range for actual end time of the workflow or coordinator.
+   * `actual_duration_min` and `actual_duration_max` - Min and Max range for actual duration (in milliseconds)
+   * `expected_duration_min` and `expected_duration_max` - Min and Max range for expected duration (in milliseconds)
 
-multiple event_status and sla_status can be specified with comma separation. When multiple statuses are specified, they are considered as OR.
-For example, event_status=START_MET;END_MISS list the coordinator actions where event status is either START_MET OR END_MISS.
+It is possible to specify multiple filter conditions with semicolon separation, only information meeting all the conditions will be
+fetched.
 
-When timezone query parameter is specified, the expected and actual start/end time returned is formatted. If not specified,
+Multiple `event_status` and `sla_status` can be specified with comma separation.
+When multiple statuses are specified, they are considered as OR.
+For example, `event_status=START_MET,END_MISS` list the coordinator actions where event status is either `START_MET` OR `END_MISS`.
+
+For the `app_name`, `app_type`, `user_name`, and `job_status` filter fields two wildchars can also be used:
+the percent sign ( `%` ) represents zero, one, or multiple characters, the underscore ( `_` ) character represents a single
+character.
+
+For compatibility reasons `nominal_start` and `nominal_end` filter names can also be used instead of `nominal_after`
+and `nominal_before`.
+
+When `timezone` query parameter is specified, the expected and actual start/end time returned is formatted. If not specified,
 the number of milliseconds that have elapsed since January 1, 1970 00:00:00.000 GMT is returned.
+
+It is possible to specify the ordering of the list by using the `sortby` and the `order` parameters. The possible values for the
+`sortby` parameter are: actualDuration, actualEndTS, actualStartTS, appName, appType, createdTimeTS, eventProcessed, eventStatus,
+expectedDuration, expectedEndTS, expectedStartTS, jobId, jobStatus, lastModifiedTS, nominalTimeTS, parentId, slaStatus, and user.
+The possible value for the `order` parameter are: desc and asc. The default value for the `sortby` parameter is nominalTimeTS, the
+default value for the `order` parameter is asc. If several items has the same sortby column values the these items will be sorted
+by the ascending order of the nominalTimeTS field.
 
 The examples below demonstrate the use of REST API and explains the JSON response.
 
@@ -199,7 +227,7 @@ The examples below demonstrate the use of REST API and explains the JSON respons
 **Request:**
 
 ```
-GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_start=2013-06-18T00:01Z;nominal_end=2013-06-23T00:01Z;app_name=my-sla-app
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=nominal_after=2013-06-18T00:01Z;nominal_before=2013-06-23T00:01Z;app_name=my-sla-app
 ```
 
 **JSON Response**
@@ -351,6 +379,361 @@ GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=bundle=1234567-15013022
 
 Scenario #4 (All Coordinator actions in a Bundle) is to get SLA information of all coordinator actions under bundle job in one call.
 startDelay/durationDelay/endDelay values returned indicate how much delay compared to expected time (positive values in case of MISS, and negative values in case of MET).
+
+### Scenario 5: Workflow jobs actually started in a 24 hour period
+*Request:*
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=app_type=WORKFLOW_JOB;actualstart_after=2018-08-13T00:01Z;actualstart_before=2018-08-14T00:01Z
+```
+
+*JSON Response*
+```
+{
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "one-op-wf",
+      "actualEnd": "Mon, 13 Aug 2018 14:49:21 GMT",
+      "actualDuration": 503,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "DURATION_MET,END_MISS,START_MISS",
+      "startDelay": 4531068,
+      "id": "0000001-180813160322492-oozie-test-W",
+      "lastModified": "Mon, 13 Aug 2018 14:49:31 GMT",
+      "user": "testuser",
+      "actualStart": "Mon, 13 Aug 2018 14:49:20 GMT",
+      "endDelay": 4531059
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 02:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 02:10:00 GMT",
+      "appName": "one-op-wf",
+      "actualEnd": "Mon, 13 Aug 2018 14:49:21 GMT",
+      "actualDuration": 222,
+      "expectedStart": "Fri, 01 Jan 2010 02:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "DURATION_MET,END_MISS,START_MISS",
+      "startDelay": 4531008,
+      "id": "0000002-180813160322492-oozie-test-W",
+      "lastModified": "Mon, 13 Aug 2018 14:49:41 GMT",
+      "user": "testuser",
+      "actualStart": "Mon, 13 Aug 2018 14:49:21 GMT",
+      "endDelay": 4530999
+    }
+```
+
+Scenario #5 is to get SLA information of all workflow jobs by filtering for the actual start date
+instead of the nominal start date.
+
+### Scenario 6: Workflow jobs executed much faster than required
+*Request:*
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=app_type=WORKFLOW_JOB;expected_duration_min=10000;actual_duration_max=1000
+```
+
+*JSON Response*
+```
+{
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "one-op-wf",
+      "actualEnd": "Mon, 13 Aug 2018 14:49:21 GMT",
+      "actualDuration": 503,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "DURATION_MET,END_MISS,START_MISS",
+      "startDelay": 4531068,
+      "id": "0000001-180813160322492-oozie-test-W",
+      "lastModified": "Mon, 13 Aug 2018 14:49:31 GMT",
+      "user": "testuser",
+      "actualStart": "Mon, 13 Aug 2018 14:49:20 GMT",
+      "endDelay": 4531059
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 02:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 02:10:00 GMT",
+      "appName": "one-op-wf",
+      "actualEnd": "Mon, 13 Aug 2018 14:49:21 GMT",
+      "actualDuration": 222,
+      "expectedStart": "Fri, 01 Jan 2010 02:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "DURATION_MET,END_MISS,START_MISS",
+      "startDelay": 4531008,
+      "id": "0000002-180813160322492-oozie-test-W",
+      "lastModified": "Mon, 13 Aug 2018 14:49:41 GMT",
+      "user": "testuser",
+      "actualStart": "Mon, 13 Aug 2018 14:49:21 GMT",
+      "endDelay": 4530999
+    }
+```
+
+Scenario #6 is to get SLA information of all workflow jobs where the expected duration was more than 10 seconds (10000ms),
+but the actual duration was less than a second (1000ms).
+
+### Scenario 7: Coordinator actions with START_MET or END_MET event status
+
+*Request:*
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=app_type=COORDINATOR_ACTION;event_status=START_MET,END_MET
+```
+
+*JSON Response*
+```
+    {
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "aggregator-coord",
+      "actualEnd": "Wed, 29 Aug 2018 10:29:59 GMT",
+      "actualDuration": 167,
+      "expectedStart": "Tue, 18 Feb 2200 11:41:46 GMT",
+      "expectedDuration": 60000,
+      "parentId": "0000006-180829120813646-oozie-test-C",
+      "durationDelay": 0,
+      "slaStatus": "MISS",
+      "appType": "COORDINATOR_ACTION",
+      "slaAlertStatus": "Disabled",
+      "eventStatus": "START_MET,DURATION_MET,END_MISS",
+      "startDelay": -95446151,
+      "id": "0000006-180829120813646-oozie-test-C@1",
+      "lastModified": "Wed, 29 Aug 2018 10:30:07 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 29 Aug 2018 10:29:59 GMT",
+      "endDelay": 4553839
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 05 Jan 2029 11:39:31 GMT",
+      "appName": "aggregator-coord",
+      "actualEnd": "Wed, 29 Aug 2018 10:15:48 GMT",
+      "actualDuration": 394,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 60000,
+      "parentId": "0000000-180829120813646-oozie-test-C",
+      "durationDelay": 0,
+      "slaStatus": "MET",
+      "appType": "COORDINATOR_ACTION",
+      "slaAlertStatus": "Disabled",
+      "eventStatus": "START_MISS,DURATION_MET,END_MET",
+      "startDelay": 4553834,
+      "id": "0000000-180829120813646-oozie-test-C@1",
+      "lastModified": "Wed, 29 Aug 2018 10:15:57 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 29 Aug 2018 10:15:48 GMT",
+      "endDelay": -5446163
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 02:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 02:10:00 GMT",
+      "appName": "aggregator-coord",
+      "actualEnd": "Wed, 29 Aug 2018 10:29:59 GMT",
+      "actualDuration": 172,
+      "expectedStart": "Tue, 18 Feb 2200 12:41:46 GMT",
+      "expectedDuration": 60000,
+      "parentId": "0000006-180829120813646-oozie-test-C",
+      "durationDelay": 0,
+      "slaStatus": "MISS",
+      "appType": "COORDINATOR_ACTION",
+      "slaAlertStatus": "Disabled",
+      "eventStatus": "START_MET,DURATION_MET,END_MISS",
+      "startDelay": -95446211,
+      "id": "0000006-180829120813646-oozie-test-C@2",
+      "lastModified": "Wed, 29 Aug 2018 10:30:17 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 29 Aug 2018 10:29:59 GMT",
+      "endDelay": 4553779
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 02:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 05 Jan 2029 12:39:31 GMT",
+      "appName": "aggregator-coord",
+      "actualEnd": "Wed, 29 Aug 2018 10:15:48 GMT",
+      "actualDuration": 208,
+      "expectedStart": "Fri, 01 Jan 2010 02:01:00 GMT",
+      "expectedDuration": 60000,
+      "parentId": "0000000-180829120813646-oozie-test-C",
+      "durationDelay": 0,
+      "slaStatus": "MET",
+      "appType": "COORDINATOR_ACTION",
+      "slaAlertStatus": "Disabled",
+      "eventStatus": "START_MISS,DURATION_MET,END_MET",
+      "startDelay": 4553774,
+      "id": "0000000-180829120813646-oozie-test-C@2",
+      "lastModified": "Wed, 29 Aug 2018 10:16:07 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 29 Aug 2018 10:15:48 GMT",
+      "endDelay": -5446223
+    }
+```
+
+Scenario #7 shows the possibility of filtering multiple event statuses. We list two comma separated statuses
+(START_MET,END_MET) and list coordinator actions with either START_MET or END_MET event status.
+
+### Scenario 8: Not yet started workflow jobs expected to start before a specified date.
+
+*Request:*
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=app_type=WORKFLOW_JOB;sla_status=NOT_STARTED;expectedstart_before=2018-08-14T00:01Z
+```
+
+*JSON Response*
+```
+    {
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "PREP",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "one-op-wf",
+      "actualEnd": null,
+      "actualDuration": -1,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "slaStatus": "NOT_STARTED",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "START_MISS,END_MISS",
+      "startDelay": 4561259,
+      "id": "0000031-180903152228376-oozie-test-W",
+      "lastModified": "Mon, 03 Sep 2018 14:00:50 GMT",
+      "user": "testuser",
+      "actualStart": null,
+      "endDelay": 4561250
+    }
+```
+
+Scenario #8 shows the possibility to list problematic jobs even before they start. It also shows the possibility to combine
+several filter fields.
+
+### Scenario 9: Filtering for app_name using % wildchar
+
+*Request:*
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=app_name=appname-%25
+```
+
+Note that the filter is URL encoded, its decoded value is `app_name=appname-%`
+
+*JSON Response*
+```
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "appname-2",
+      "actualEnd": "Wed, 19 Sep 2018 15:02:48 GMT",
+      "actualDuration": 245,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "START_MISS,END_MISS,DURATION_MET",
+      "startDelay": 4584361,
+      "id": "0000003-180919170132414-oozie-test-W",
+      "lastModified": "Wed, 19 Sep 2018 15:02:56 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 19 Sep 2018 15:02:48 GMT",
+      "endDelay": 4584352
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "appname-1",
+      "actualEnd": "Wed, 19 Sep 2018 15:02:23 GMT",
+      "actualDuration": 378,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "START_MISS,END_MISS,DURATION_MET",
+      "startDelay": 4584361,
+      "id": "0000001-180919170132414-oozie-test-W",
+      "lastModified": "Wed, 19 Sep 2018 15:02:26 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 19 Sep 2018 15:02:23 GMT",
+      "endDelay": 4584352
+    }
+```
+
+### Scenario 9: Filtering for app_name using % wildchar and sorting the order by the application name in descending order
+
+*Request:*
+```
+GET <oozie-host>:<port>/oozie/v2/sla?timezone=GMT&filter=app_name=appname-%25&sortby=appName&order=desc
+```
+
+Note that the filter is URL encoded, its decoded value is `app_name=appname-%`
+
+*JSON Response*
+```
+{
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "appname-2",
+      "actualEnd": "Wed, 19 Sep 2018 15:02:48 GMT",
+      "actualDuration": 245,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "START_MISS,END_MISS,DURATION_MET",
+      "startDelay": 4584361,
+      "id": "0000003-180919170132414-oozie-test-W",
+      "lastModified": "Wed, 19 Sep 2018 15:02:56 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 19 Sep 2018 15:02:48 GMT",
+      "endDelay": 4584352
+    },
+    {
+      "nominalTime": "Fri, 01 Jan 2010 01:00:00 GMT",
+      "jobStatus": "SUCCEEDED",
+      "expectedEnd": "Fri, 01 Jan 2010 01:10:00 GMT",
+      "appName": "appname-1",
+      "actualEnd": "Wed, 19 Sep 2018 15:02:23 GMT",
+      "actualDuration": 378,
+      "expectedStart": "Fri, 01 Jan 2010 01:01:00 GMT",
+      "expectedDuration": 300000,
+      "durationDelay": -4,
+      "slaStatus": "MISS",
+      "appType": "WORKFLOW_JOB",
+      "slaAlertStatus": "Enabled",
+      "eventStatus": "START_MISS,END_MISS,DURATION_MET",
+      "startDelay": 4584361,
+      "id": "0000001-180919170132414-oozie-test-W",
+      "lastModified": "Wed, 19 Sep 2018 15:02:26 GMT",
+      "user": "testuser",
+      "actualStart": "Wed, 19 Sep 2018 15:02:23 GMT",
+      "endDelay": 4584352
+    }
+```
 
 ### Sample Email Alert
 
