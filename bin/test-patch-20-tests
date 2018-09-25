@@ -25,6 +25,8 @@ SUMMARYFILEFULL=""
 STDOUT="/dev/null"
 MVNPASSTHRU=""
 FLAKY_LIMIT=10
+TIMEOUT_MSG="There was a timeout or other error in the fork"
+TEST_FAILURE_PER_PROJECT=5
 
 ###############################################################################
 cleanupAndExit() {
@@ -50,6 +52,7 @@ parseArgs() {
     --tempdir=*)
       TEMPDIR=${i#*=}
       TESTS_OUT="${TEMPDIR}/${TASKNAME}.out"
+      TEST_RESULTS_DIR="${TEMPDIR}/${TASKNAME}/results"
       ;;
     --reportdir=*)
       REPORTDIR=${i#*=}
@@ -87,7 +90,8 @@ parseArgs() {
 
 count_test_result_type() {
   local type=$1
-  find . -name "TEST-*.xml" -exec sh -c 'xmllint --xpath "string(//testsuite/@'"${type}"')" $1; echo' _ {} \; \
+  local path=$2
+  find "${path}" -name "TEST-*.xml" -exec sh -c 'xmllint --xpath "string(//testsuite/@'"${type}"')" $1; echo' _ {} \; \
   |  awk 'BEGIN {count=0} {count=count+$1} END {print count}';
 }
 
@@ -126,6 +130,14 @@ run_tests() {
   echo "$exitCode" >  "${TEMPDIR}/${TASKNAME}.exitCode"
 }
 
+save_failures() {
+    if [ ! -d "$TEST_RESULTS_DIR" ]; then
+      mkdir -p "${TEST_RESULTS_DIR}"
+    fi
+
+    rsync -qR "$(find . -name  'TEST*.xml' ! -path '*/test-patch/*'  -print0 | xargs -0 grep -El '<error|<failure')" "${TEST_RESULTS_DIR}"
+}
+
 print_flakies() {
   if [ -f "${TEMPDIR}/${TASKNAME}.flakies.out" ]; then
     echo ".    {color:orange}Tests failed at first run:{color}"
@@ -147,40 +159,52 @@ print_flakies_full() {
   print_flakies
 }
 
-generate_report() {
-    failedTests=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< FAILURE" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
-    testsWithError=$(find . -name '*\.txt' | grep target/surefire-reports | xargs grep  "<<< ERROR" | grep -v "Tests run:" | sed 's/.*\.txt\://' | sed 's/ .*//')
-    testsRun=$(grep "Tests run:" "${TESTS_OUT}" | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
-    testsFailed=$(count_test_result_type failures)
-    testsErrors=$(count_test_result_type errors)
-    hasFailures=$((testsFailed + testsErrors))
-    testsExitCode=$(cat "${TEMPDIR}/${TASKNAME}.exitCode")
-    errors=$(grep -c '\[ERROR\]' "${TESTS_OUT}")
+printTestFailures() {
+    failurePattern=$1
+    failureType=$2
 
-    if [[ ${errors} -gt 0 && ${testsErrors} -eq 0 ]] ; then
+    for path in "${TEST_RESULTS_DIR}"/* ; do
+        [ -d "${path}" ] || continue # if not a directory, skip
+        module="$(basename "${path}")"
+        totalFailedTestsInModule=$(count_test_result_type "$failureType" "$path")
+        if [[ ${totalFailedTestsInModule} != 0 ]] ; then
+            echo "{color:red}-1{color} [ERROR] There are [${totalFailedTestsInModule}] test ${failureType} in [${module}]. Listing only the first [${TEST_FAILURE_PER_PROJECT}] ones"
+            failures=$(find "${path}" -name 'TEST*.xml'  -print0 | xargs grep -hB1 "${failurePattern}" | grep -Evm"${TEST_FAILURE_PER_PROJECT}" "${failurePattern}|--" | cut -d \" -f4,2 | sed 's/"/:/g' )
+            echo "${failures}"
+        fi
+    done
+}
+
+generate_report() {
+    testsRun=$(grep "Tests run:" "${TESTS_OUT}" | grep -v " Time elapsed:" | awk '{print $4}' | sed 's/,//' | awk 'BEGIN {count=0} {count=count+$1} END {print count}')
+    testsFailed=$(count_test_result_type failures "${TEST_RESULTS_DIR}")
+    testsErrors=$(count_test_result_type errors "${TEST_RESULTS_DIR}")
+    timeout=$(grep -c "${TIMEOUT_MSG}" "${TESTS_OUT}")
+    hasFailures=$((testsFailed + testsErrors + timeout))
+    testsExitCode=$(cat "${TEMPDIR}/${TASKNAME}.exitCode")
+
+    if [[ ${hasFailures} != 0 ]] ; then
         echo "{color:red}-1 ${TASKNAME}{color}"
-        echo "There were errors during execution. Check console output for details."
+        echo ".    Tests run        : $testsRun"
+        echo ".    Tests failed     : $testsFailed"
+        echo ".    Tests in error   : $testsErrors"
+        echo ".    Tests timed out  : $timeout"
+        echo ""
+        if [[ ${testsFailed} != 0 ]] ; then
+            printTestFailures "<failure" failures
+            echo ""
+        fi
+        if [[ ${testsErrors} != 0 ]] ; then
+            printTestFailures "<error" errors
+            echo ""
+        fi
+        echo "Check console output for the full list of errors/failures"
     else
-        if [[ ${hasFailures} != 0 ]] ; then
-            echo "{color:red}-1 ${TASKNAME}{color}"
-            echo ".    Tests run: $testsRun"
-            echo ".    Tests failed: $testsFailed"
-            echo ".    Tests errors: $testsErrors"
-            echo ""
-            echo ".    The patch failed the following testcases:"
-            echo ""
-            echo "${failedTests//#/.      /}"
-            echo ""
-            echo ".    Tests failing with errors:"
-            echo "${testsWithError//#/.      /}"
-            echo ""
+        if [[ "${testsExitCode}" != "0" ]] ; then
+            echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run test cases"
         else
-            if [[ "${testsExitCode}" != "0" ]] ; then
-                echo "{color:red}-1 ${TASKNAME}{color} - patch does not compile, cannot run testcases"
-            else
-                echo "{color:green}+1 ${TASKNAME}{color}"
-                echo ".    Tests run: $testsRun"
-            fi
+            echo "{color:green}+1 ${TASKNAME}{color}"
+            echo ".    Tests run: $testsRun"
         fi
     fi
 }
@@ -193,9 +217,10 @@ case $OP in
     ;;
   post)
     run_tests
+    save_failures
     ;;
   report)
-    generate_report  >> "${SUMMARYFILE}"
+    generate_report >> "${SUMMARYFILE}"
     print_flakies_short >> "${SUMMARYFILE}"
     print_flakies_full >> "${SUMMARYFILEFULL}"
     ;;

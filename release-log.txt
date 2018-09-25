@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3343 [build] [tests] Add the first five test errors per module to the report (kmarton via andras.piros)
 OOZIE-3307 [core] Limit heap usage of LauncherAM (andras.piros)
 OOZIE-3352 [tests] TestCallableQueueService#testPriorityExecutionOrder() is flaky (pbacsko)
 OOZIE-3351 [tests] Flaky test TestMemoryLocks#testWriteLockSameThreadNoWait() (pbacsko)
