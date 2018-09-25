@@ -944,65 +944,6 @@ public class TestCallableQueueService extends XTestCase {
         assertTrue(uniquesAfter.toString(), uniquesAfter.isEmpty());
     }
 
-    public void testPriorityExecutionOrder() throws InterruptedException, ServiceException {
-        Services.get().destroy();
-        setSystemProperty(CallableQueueService.CONF_THREADS, "1");
-        setSystemProperty(CallableQueueService.CONF_QUEUE_SIZE, "1000000");
-        new Services().init();
-
-        final int taskCount = 999_999;
-        Multimap<Integer, Long> executions = Multimaps.synchronizedMultimap(ArrayListMultimap.create());
-        List<BookingCallable> callables = new ArrayList<>(taskCount);
-
-        for (int i = 2; i >= 0; i--) {
-            String type = String.valueOf(i);
-            for (int j = 0; j < taskCount / 3; j++) {
-                String key = type + "_" + UUID.randomUUID().toString();
-                BookingCallable dc = new BookingCallable(executions, taskCount, key, type, i, 0);
-                callables.add(dc);
-            }
-        }
-
-        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
-
-        for (int i = 0; i < taskCount; i++) {
-            queueservice.queue(callables.get(i));
-        }
-
-        try {
-            finished.await(10, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("Error", e);
-            fail("Exception during test: " + e.getMessage());
-        }
-        // It's necessary because after finished.await() returns, the last XCallable
-        // could still be running
-        waitFor(1000, new Predicate() {
-            @Override
-            public boolean evaluate() throws Exception {
-                return queueservice.queueSize() == 0;
-            }
-        });
-
-        Map<Integer, Long> minTime = new HashMap<>();
-        Map<Integer, Long> maxTime = new HashMap<>();
-
-        for (Map.Entry<Integer, Collection<Long>> entry : executions.asMap().entrySet()) {
-            int prio = entry.getKey();
-            Collection<Long> values = entry.getValue();
-            minTime.put(prio, Collections.min(values));
-            maxTime.put(prio, Collections.max(values));
-        }
-
-        // Expected timeline of execution times:
-        // --> [min] Prio #2 [max] --> [min] Prio #1 [max] --> [min] Prio #0 [max]
-
-        assertTrue("Failed: maxTime prio #2: " + maxTime.get(2) + " / minTime prio #1: " + minTime.get(1),
-                maxTime.get(2) <= minTime.get(1));
-        assertTrue("Failed: maxTime prio #1: " + maxTime.get(1) + " / minTime prio #0: " + minTime.get(0),
-                maxTime.get(1) <= minTime.get(0));
-    }
-
     public void testMaxConcurrencyReached() throws Exception {
         Services.get().destroy();
         setSystemProperty(CallableQueueService.CONF_QUEUE_SIZE, "100000");
