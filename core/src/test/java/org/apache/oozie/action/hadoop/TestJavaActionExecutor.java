@@ -2697,4 +2697,32 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                "    </configuration>" +
                "</global>";
     }
+
+    public void testSubmitOKWithLauncherJavaOptsExhaustingHeap() throws Exception {
+        final String actionXml = "<java>" +
+                "    <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "        <name-node>" + getNameNodeUri() + "</name-node>" +
+                "        <configuration>" +
+                "            <property>" +
+                "                <name>oozie.launcher.javaopts</name>" +
+                "                <value>-Xms512m -Xmx1536m -XX:-DisableExplicitGC</value>" +
+                "            </property>" +
+                "        </configuration>" +
+                "        <main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
+                "    <arg>-Xmx3072m</arg>" +
+                "</java>";
+        final Context context = createContext(actionXml, null);
+        submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(context.getAction().getExternalId());
+        ActionExecutor ae = new JavaActionExecutor();
+        ae.check(context, context.getAction());
+        assertEquals("FAILED/KILLED", context.getAction().getExternalStatus());
+        assertNull(context.getAction().getData());
+
+        ae.end(context, context.getAction());
+        assertEquals(WorkflowAction.Status.ERROR, context.getAction().getStatus());
+
+        assertTrue("error message should contain: \"Java heap space\"",
+                context.getAction().getErrorMessage().contains("Java heap space"));
+    }
 }

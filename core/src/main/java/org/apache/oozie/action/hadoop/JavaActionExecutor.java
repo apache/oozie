@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -113,6 +114,7 @@ import org.jdom.Namespace;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -168,6 +170,31 @@ public class JavaActionExecutor extends ActionExecutor {
     private static final String OOZIE_ACTION_NAME = "oozie.action.name";
     private final static String ACTION_SHARELIB_FOR = "oozie.action.sharelib.for.";
     public static final String OOZIE_ACTION_DEPENDENCY_DEDUPLICATE = "oozie.action.dependency.deduplicate";
+
+    /**
+     * Heap to physical memory ration for {@link LauncherAM}, in order its YARN container doesn't get killed before physical memory
+     * gets exhausted.
+     */
+    private static final double LAUNCHER_HEAP_PMEM_RATIO = 0.8;
+
+    /**
+     * Matches one or more occurrence of {@code Xmx}, {@code Xms}, {@code mx}, {@code ms}, {@code XX:MaxHeapSize}, or
+     * {@code XX:MinHeapSize} JVM parameters, mixed with any other content.
+     * <p>
+     * Examples:
+     * <ul>
+     *     <li>{@code -Xms384m}</li>
+     *     <li>{@code -Xmx:789k}</li>
+     *     <li>{@code -XX:MaxHeapSize=123g}</li>
+     *     <li>{@code -ms:384m}</li>
+     *     <li>{@code -mx789k}</li>
+     *     <li>{@code -XX:MinHeapSize=123g}</li>
+     * </ul>
+     */
+    @VisibleForTesting
+    @SuppressFBWarnings(value = {"REDOS"}, justification = "Complex regular expression")
+    static final Pattern HEAP_MODIFIERS_PATTERN =
+            Pattern.compile(".*((\\-X?m[s|x][\\:]?)|(\\-XX\\:(Min|Max)HeapSize\\=))([0-9]+[kKmMgG]?).*");
 
     private static int maxActionOutputLen;
     private static int maxExternalStatsSize;
@@ -1265,6 +1292,8 @@ public class JavaActionExecutor extends ActionExecutor {
                 vargs.add(oozieLauncherJavaOpts);
             }
         }
+
+        checkAndSetMaxHeap(launcherJobConf, vargs);
     }
 
     private boolean handleJavaOpts(Element actionXml, StringBuilder javaOpts) {
@@ -1287,6 +1316,29 @@ public class JavaActionExecutor extends ActionExecutor {
                     + " the <launcher> element. See the documentation for details");
         }
         return oldJavaOpts;
+    }
+
+    private void checkAndSetMaxHeap(final Configuration launcherJobConf, final List<String> vargs) {
+        LOG.debug("Checking and setting max heap for the LauncherAM");
+
+        final int launcherMemoryMb = readMemoryMb(launcherJobConf);
+        final int calculatedHeapMaxMb = (int) (launcherMemoryMb * LAUNCHER_HEAP_PMEM_RATIO);
+
+        boolean heapModifiersPresent = false;
+        for (final String varg : vargs) {
+            if (HEAP_MODIFIERS_PATTERN.matcher(varg).matches()) {
+                heapModifiersPresent = true;
+            }
+        }
+        if (heapModifiersPresent) {
+            LOG.trace("Some heap modifier JVM options are configured by the user, leaving LauncherAM's maximum heap option");
+        }
+        else {
+            LOG.trace("No heap modifier JVM options are configured by the user, overriding LauncherAM's maximum heap option");
+
+            LOG.debug("Calculated maximum heap option {0} MB set for the LauncherAM", calculatedHeapMaxMb);
+            vargs.add(String.format("-Xmx%sm", calculatedHeapMaxMb));
+        }
     }
 
     private void setApplicationName(final Context context,
@@ -1340,28 +1392,35 @@ public class JavaActionExecutor extends ActionExecutor {
         appContext.setPriority(pri);
     }
 
-    private void setResources(Configuration launcherJobConf, ApplicationSubmissionContext appContext) {
-        int memory;
+    private void setResources(final Configuration launcherJobConf, final ApplicationSubmissionContext appContext) {
+        final Resource resource = Resource.newInstance(readMemoryMb(launcherJobConf), readVCores(launcherJobConf));
+        appContext.setResource(resource);
+    }
+
+    private int readMemoryMb(final Configuration launcherJobConf) {
+        final int memory;
         if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY) != null) {
             memory = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY, -1);
             Preconditions.checkArgument(memory > 0, "Launcher memory is 0 or negative");
         } else {
-            int defaultMemory = ConfigurationService.getInt(DEFAULT_LAUNCHER_MEMORY_MB, -1);
+            final int defaultMemory = ConfigurationService.getInt(DEFAULT_LAUNCHER_MEMORY_MB, -1);
             Preconditions.checkArgument(defaultMemory > 0, "Default launcher memory is 0 or negative");
             memory = defaultMemory;
         }
+        return memory;
+    }
 
-        int vcores;
+    private int readVCores(final Configuration launcherJobConf) {
+        final int vcores;
         if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY) != null) {
             vcores = launcherJobConf.getInt(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY, -1);
             Preconditions.checkArgument(vcores > 0, "Launcher vcores is 0 or negative");
         } else {
-            int defaultVcores = ConfigurationService.getInt(DEFAULT_LAUNCHER_VCORES);
+            final int defaultVcores = ConfigurationService.getInt(DEFAULT_LAUNCHER_VCORES);
             Preconditions.checkArgument(defaultVcores > 0, "Default launcher vcores is 0 or negative");
             vcores = defaultVcores;
         }
-        Resource resource = Resource.newInstance(memory, vcores);
-        appContext.setResource(resource);
+        return vcores;
     }
 
     private Map<String, String>  extractEnvVarsFromOozieLauncherProps(String oozieLauncherEnvProperty) {

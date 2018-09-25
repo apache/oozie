@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -37,7 +38,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
+import static org.apache.commons.io.FileUtils.ONE_KB;
+import static org.apache.commons.io.FileUtils.ONE_MB;
 
 public class LauncherMainTester {
 
@@ -57,20 +64,21 @@ public class LauncherMainTester {
             throw new RuntimeException("Failing on purpose");
         }
 
+        final  String firstArgument = args[0];
         if (args.length == 1) {
-            if (args[0].equals("throwable")) {
+            if (firstArgument.equals("throwable")) {
                 throw new Throwable("throwing throwable");
             }
-            if (args[0].equals("exception")) {
+            if (firstArgument.equals("exception")) {
                 throw new IOException("throwing exception");
             }
-            if (args[0].equals("exit0")) {
+            if (firstArgument.equals("exit0")) {
                 System.exit(0);
             }
-            if (args[0].equals("exit1")) {
+            if (firstArgument.equals("exit1")) {
                 System.exit(1);
             }
-            if (args[0].equals("out")) {
+            if (firstArgument.equals("out")) {
                 File file = new File(System.getProperty("oozie.action.output.properties"));
                 Properties props = new Properties();
                 props.setProperty("a", "A");
@@ -79,7 +87,7 @@ public class LauncherMainTester {
                 os.close();
                 System.out.println(file.getAbsolutePath());
             }
-            if (args[0].equals("id")) {
+            if (firstArgument.equals("id")) {
                 File file = new File(System.getProperty("oozie.action.newId"));
                 Properties props = new Properties();
                 props.setProperty("id", "IDSWAP");
@@ -88,7 +96,7 @@ public class LauncherMainTester {
                 os.close();
                 System.out.println(file.getAbsolutePath());
             }
-            if (args[0].equals("securityManager")) {
+            if (firstArgument.equals("securityManager")) {
                 SecurityManager sm = System.getSecurityManager();
                 if (sm == null) {
                     throw new Throwable("no security manager");
@@ -100,9 +108,12 @@ public class LauncherMainTester {
                 sm.checkPermission(null);
                 sm.checkPermission(null, sm.getSecurityContext());
             }
+            if (firstArgument.startsWith("-Xmx")) {
+                tryAllocate(firstArgument);
+            }
         }
         if(args.length == 3) {
-            if(args[0].equals("javamapreduce")) {
+            if(firstArgument.equals("javamapreduce")) {
                 executeJavaMapReduce(args);
             }
         }
@@ -148,6 +159,29 @@ public class LauncherMainTester {
             w.write(content);
         }
         System.out.println("Job Id written to file");
+    }
+
+    private static void tryAllocate(final String xmxParameter) {
+        Preconditions.checkArgument(JavaActionExecutor.HEAP_MODIFIERS_PATTERN.matcher(xmxParameter).matches(),
+                String.format("malformed heap modifier pattern [%s]", xmxParameter));
+
+        final String xmxParameterKey = "-Xmx";
+        final String configuredHeapMaxUnitAndUOM =
+                xmxParameter.substring(xmxParameter.indexOf(xmxParameterKey) + xmxParameterKey.length());
+        final long configuredHeapMaxMb = new BytesAndUOMConverter().toMegabytes(
+                configuredHeapMaxUnitAndUOM);
+
+        System.out.println(String.format("Trying to allocate in total [%s] megabytes", configuredHeapMaxMb));
+
+        final List<ByteBuffer> megabytes = new ArrayList<>();
+        for (int ixMB = 0; ixMB < configuredHeapMaxMb; ixMB++) {
+            megabytes.add(ByteBuffer.allocate((int) ONE_MB));
+            if (ixMB % (ONE_KB / 8) == 0) {
+                System.out.println(String.format("Allocated [%s] megabytes", ixMB));
+            }
+        }
+
+        System.out.println(String.format("All [%s] megabytes allocated successfully", configuredHeapMaxMb));
     }
 
     private static void checkAndSleep(String args[]) throws InterruptedException {
