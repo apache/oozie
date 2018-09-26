@@ -182,8 +182,11 @@ public class GraphNodesToWORKFLOWAPPConverter extends DozerConverter<GraphNodes,
             final Object mappedObject = mapper.map(nodeBase, SOURCE_TARGET_CLASSES.get(sourceClass));
 
             if (nodeBase instanceof ExplicitNode) {
-                final ACTION errorHandlerAction = addErrorTransition((ExplicitNode) nodeBase, (ACTION) mappedObject, kill);
-                if (errorHandlerAction != null) {
+                final ACTION errorHandlerAction = ensureErrorTransition(workflowapp, (ExplicitNode) nodeBase,
+                        (ACTION) mappedObject,
+                        kill
+                );
+                if (errorHandlerAction != null && !workflowapp.getDecisionOrForkOrJoin().contains(errorHandlerAction)) {
                     workflowapp.getDecisionOrForkOrJoin().add(errorHandlerAction);
                 }
             }
@@ -200,7 +203,10 @@ public class GraphNodesToWORKFLOWAPPConverter extends DozerConverter<GraphNodes,
         return kill;
     }
 
-    private ACTION addErrorTransition(final ExplicitNode node, final ACTION action, final KILL kill) {
+    private ACTION ensureErrorTransition(final WORKFLOWAPP workflowapp,
+                                         final ExplicitNode node,
+                                         final ACTION action,
+                                         final KILL kill) {
         final ACTIONTRANSITION error = ensureError(action);
 
         final ErrorHandler errorHandler = node.getRealNode().getErrorHandler();
@@ -213,11 +219,30 @@ public class GraphNodesToWORKFLOWAPPConverter extends DozerConverter<GraphNodes,
         else {
             final Node handlerNode = errorHandler.getHandlerNode();
 
-            final ACTION handlerAction = createErrorHandlerAction(handlerNode, kill);
+            final ACTION handlerAction = ensureErrorHandlerAction(workflowapp, handlerNode, kill);
             error.setTo(handlerAction.getName());
 
             return handlerAction;
         }
+    }
+
+    private ACTION ensureErrorHandlerAction(final WORKFLOWAPP workflowapp, final Node handlerNode, final KILL kill) {
+        ACTION handlerAction = null;
+        for (final Object alreadyPresentObject : workflowapp.getDecisionOrForkOrJoin()) {
+            if (alreadyPresentObject instanceof ACTION) {
+                final ACTION alreadyPresentAction = (ACTION) alreadyPresentObject;
+                if (alreadyPresentAction.getName().equals(handlerNode.getName())) {
+                    handlerAction = alreadyPresentAction;
+                    break;
+                }
+            }
+        }
+
+        if (handlerAction == null) {
+            handlerAction = createErrorHandlerAction(handlerNode, kill);
+        }
+
+        return handlerAction;
     }
 
     private ACTIONTRANSITION ensureError(final ACTION action) {

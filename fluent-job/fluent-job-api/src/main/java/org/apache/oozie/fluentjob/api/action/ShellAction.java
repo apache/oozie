@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * A class representing the Oozie shell action.
- * Instances of this class should be built using the builder {@link EmailActionBuilder}.
+ * Instances of this class should be built using the builder {@link ShellActionBuilder}.
  *
  * The properties of the builder can only be set once, an attempt to set them a second time will trigger
  * an {@link IllegalStateException}.

@@ -73,6 +73,7 @@ public class TestGraphMapping {
 
         final MapReduceAction mrAction = MapReduceActionBuilder.create()
                 .withName("map-reduce-action")
+                .withErrorHandler(errorHandler)
                 .build();
         final FSAction fsAction = FSActionBuilder.create()
                 .withName("fs-action")
@@ -100,11 +101,12 @@ public class TestGraphMapping {
         final List<Object> actions = expectedWorkflowapp.getDecisionOrForkOrJoin();
 
         final ACTION actionMr = convertEmailActionByHand((ExplicitNode) graph.getNodeByName(mrAction.getName()));
+        final ACTIONTRANSITION mrErrorTransition = actionMr.getError();
+        mrErrorTransition.setTo(errorHandlerName);
 
         final ACTION actionFs = convertEmailActionByHand((ExplicitNode) graph.getNodeByName(fsAction.getName()));
-
-        final ACTIONTRANSITION error = actionFs.getError();
-        error.setTo(errorHandlerName);
+        final ACTIONTRANSITION fsErrorTransition = actionFs.getError();
+        fsErrorTransition.setTo(errorHandlerName);
 
         final Node emailErrorHandlerNode = emailBuilder.build();
         final ExplicitNode emailErrorHandlerExplicitNode
@@ -120,11 +122,11 @@ public class TestGraphMapping {
         errorHandlerAction.setError(okAndError);
 
         actions.add(kill);
-        actions.add(actionMr);
         actions.add(errorHandlerAction);
+        actions.add(actionMr);
         actions.add(actionFs);
 
-        assertEquals(expectedWorkflowapp, workflowapp);
+        assertEquals("expected and actual WORKFLOWAPP should look the same", expectedWorkflowapp, workflowapp);
     }
 
     @Test
