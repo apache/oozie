@@ -64,21 +64,21 @@ public class LauncherMainTester {
             throw new RuntimeException("Failing on purpose");
         }
 
-        final  String firstArgument = args[0];
+        final  String firstArgument = args.length > 0 ? args[0] : null;
         if (args.length == 1) {
-            if (firstArgument.equals("throwable")) {
+            if ("throwable".equals(firstArgument)) {
                 throw new Throwable("throwing throwable");
             }
-            if (firstArgument.equals("exception")) {
+            if ("exception".equals(firstArgument)) {
                 throw new IOException("throwing exception");
             }
-            if (firstArgument.equals("exit0")) {
+            if ("exit0".equals(firstArgument)) {
                 System.exit(0);
             }
-            if (firstArgument.equals("exit1")) {
+            if ("exit1".equals(firstArgument)) {
                 System.exit(1);
             }
-            if (firstArgument.equals("out")) {
+            if ("out".equals(firstArgument)) {
                 File file = new File(System.getProperty("oozie.action.output.properties"));
                 Properties props = new Properties();
                 props.setProperty("a", "A");
@@ -87,7 +87,7 @@ public class LauncherMainTester {
                 os.close();
                 System.out.println(file.getAbsolutePath());
             }
-            if (firstArgument.equals("id")) {
+            if ("id".equals(firstArgument)) {
                 File file = new File(System.getProperty("oozie.action.newId"));
                 Properties props = new Properties();
                 props.setProperty("id", "IDSWAP");
@@ -96,7 +96,7 @@ public class LauncherMainTester {
                 os.close();
                 System.out.println(file.getAbsolutePath());
             }
-            if (firstArgument.equals("securityManager")) {
+            if ("securityManager".equals(firstArgument)) {
                 SecurityManager sm = System.getSecurityManager();
                 if (sm == null) {
                     throw new Throwable("no security manager");
@@ -113,7 +113,7 @@ public class LauncherMainTester {
             }
         }
         if(args.length == 3) {
-            if(firstArgument.equals("javamapreduce")) {
+            if ("javamapreduce".equals(firstArgument)) {
                 executeJavaMapReduce(args);
             }
         }
