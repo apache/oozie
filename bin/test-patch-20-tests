@@ -135,7 +135,7 @@ save_failures() {
       mkdir -p "${TEST_RESULTS_DIR}"
     fi
 
-    rsync -qR "$(find . -name  'TEST*.xml' ! -path '*/test-patch/*'  -print0 | xargs -0 grep -El '<error|<failure')" "${TEST_RESULTS_DIR}"
+    rsync -qR $(find . -name  'TEST*.xml' ! -path '*/test-patch/*' -print0 | xargs -0 grep -El '<error|<failure') "${TEST_RESULTS_DIR}"
 }
 
 print_flakies() {

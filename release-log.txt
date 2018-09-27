@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release (trunk - unreleased)
 
+OOZIE-3343 amend [build] [tests] Add the first five test errors per module to the report (kmarton via andras.piros)
 OOZIE-3348 [Hive action] Remove dependency hive-contrib (kmarton via andras.piros)
 OOZIE-3340 [fluent-job] Create error handler ACTION only if needed (kmarton, andras.piros)
 OOZIE-3307 amend [core] Limit heap usage of LauncherAM (andras.piros)
