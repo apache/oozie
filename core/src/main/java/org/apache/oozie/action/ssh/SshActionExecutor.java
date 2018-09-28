@@ -740,8 +740,10 @@ public class SshActionExecutor extends ActionExecutor {
      * @return the exit value of the processSettings.
      * @throws IOException
      */
-    private int drainBuffers(Process p, StringBuffer inputBuffer, StringBuffer errorBuffer, int maxLength)
+    private int drainBuffers(final Process p, final StringBuffer inputBuffer, final StringBuffer errorBuffer, final int maxLength)
             throws IOException {
+        LOG.trace("drainBuffers() start");
+
         int exitValue = -1;
 
         int inBytesRead = 0;
@@ -749,22 +751,42 @@ public class SshActionExecutor extends ActionExecutor {
 
         boolean processEnded = false;
 
-        try (BufferedReader ir = new BufferedReader(new InputStreamReader(p.getInputStream(), Charsets.UTF_8));
-             BufferedReader er = new BufferedReader(new InputStreamReader(p.getErrorStream(), Charsets.UTF_8))) {
+        try (final BufferedReader ir = new BufferedReader(new InputStreamReader(p.getInputStream(), Charsets.UTF_8));
+             final BufferedReader er = new BufferedReader(new InputStreamReader(p.getErrorStream(), Charsets.UTF_8))) {
+            // Here we do some kind of busy waiting, checking whether the process has finished by calling Process#exitValue().
+            // If not yet finished, an IllegalThreadStateException is thrown and ignored, the progress on stdout and stderr read,
+            // and retried until the process has ended.
+            // Note that Process#waitFor() may block sometimes, that's why we do a polling mechanism using Process#exitValue()
+            // instead. Until we extend unit and integration test coverage for SSH action, and we can introduce a more sophisticated
+            // error handling based on the extended coverage, this solution should stay in place.
             while (!processEnded) {
                 try {
-                    exitValue = p.waitFor();
+                    // Doesn't block but throws IllegalThreadStateException if the process hasn't finished yet
+                    exitValue = p.exitValue();
                     processEnded = true;
                 }
-                catch (final IllegalThreadStateException | InterruptedException e) {
-                    LOG.warn("An exception occurred while waiting for the process, continuing to drain. " +
-                            "[e.message={0}]", e.getMessage());
+                catch (final IllegalThreadStateException itse) {
+                    // Continue to drain
                 }
 
+                // Drain input and error streams
                 inBytesRead += drainBuffer(ir, inputBuffer, maxLength, inBytesRead, processEnded);
                 errBytesRead += drainBuffer(er, errorBuffer, maxLength, errBytesRead, processEnded);
+
+                // Necessary evil: sleep and retry
+                if (!processEnded) {
+                    try {
+                        Thread.sleep(500);
+                    }
+                    catch (final InterruptedException ie) {
+                        // Sleep a little, then check again
+                    }
+                }
             }
         }
+
+        LOG.trace("drainBuffers() end [exitValue={0}]", exitValue);
+
         return exitValue;
     }
 
