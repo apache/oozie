@@ -97,7 +97,9 @@ public abstract class ZKXTestCase extends XDataTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-        Services.get().destroy();
+        if (Services.get() != null) {
+            Services.get().destroy();
+        }
         sDiscovery.close();
         sDiscovery = null;
         client.close();

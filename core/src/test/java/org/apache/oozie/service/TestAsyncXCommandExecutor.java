@@ -74,6 +74,7 @@ public class TestAsyncXCommandExecutor {
     private static final long DEFAULT_MAXWAIT = 30_000;
     private static final int TEST_PRIORITIES = 5;
     private static final int MAX_PRIORITY = TEST_PRIORITIES - 1;
+    private static final int AWAIT_TERMINATION_TIMEOUT_SECONDS = 1;
 
     @Mock
     private ThreadPoolExecutor executor;
@@ -100,7 +101,7 @@ public class TestAsyncXCommandExecutor {
         pendingCommandsPerType = new ConcurrentHashMap<>();
         delayQueue = new LinkedBlockingQueue<>();  // in reality it's not LBQ, but it's fine here
         asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, DEFAULT_MAX_ACTIVE_COMMANDS, DEFAULT_MAXWAIT,
-                TEST_PRIORITIES);
+                TEST_PRIORITIES, AWAIT_TERMINATION_TIMEOUT_SECONDS);
         when(callableWrapper.filterDuplicates()).thenReturn(true);
         when(callableWrapper.getElement().getKey()).thenReturn("key");
         when(callableWrapper.getElement().getType()).thenReturn(DEFAULT_TYPE);
@@ -158,7 +159,7 @@ public class TestAsyncXCommandExecutor {
 
     @Test
     public void testSubmissionSuccessfulAfterDelayWhenMaxConcurrencyCheckDisabled() {
-        asyncExecutor = createExecutor(false, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES);
+        asyncExecutor = createExecutor(false, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES, AWAIT_TERMINATION_TIMEOUT_SECONDS);
         when(callableWrapper.getInitialDelay()).thenReturn(100L);
         when(callableWrapper.getDelay(eq(TimeUnit.MILLISECONDS))).thenReturn(50L);
         XCallable<?> wrappedCommand = mock(XCallable.class);
@@ -242,7 +243,7 @@ public class TestAsyncXCommandExecutor {
 
     @Test
     public void testSubmissionWhenQueueIsFull() {
-        asyncExecutor = createExecutor(true, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES);
+        asyncExecutor = createExecutor(true, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES, AWAIT_TERMINATION_TIMEOUT_SECONDS);
         callableWrapper = mock(CallableWrapper.class, Mockito.RETURNS_DEEP_STUBS);
         when(callableWrapper.filterDuplicates()).thenReturn(true);
         when(callableWrapper.getElement().getKey()).thenReturn("key");
@@ -257,7 +258,7 @@ public class TestAsyncXCommandExecutor {
 
     @Test
     public void testSubmissionWhenQueueSizeIsIgnored() {
-        asyncExecutor = createExecutor(true, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES);
+        asyncExecutor = createExecutor(true, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES, AWAIT_TERMINATION_TIMEOUT_SECONDS);
         callableWrapper = mock(CallableWrapper.class, Mockito.RETURNS_DEEP_STUBS);
         when(callableWrapper.filterDuplicates()).thenReturn(true);
         when(callableWrapper.getElement().getKey()).thenReturn("key");
@@ -369,7 +370,8 @@ public class TestAsyncXCommandExecutor {
 
     @Test
     public void testAntiStarvationWhenDelayIsAboveMaxWait() {
-        asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, DEFAULT_MAX_ACTIVE_COMMANDS, 500, TEST_PRIORITIES);
+        asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, DEFAULT_MAX_ACTIVE_COMMANDS, 500, TEST_PRIORITIES,
+                AWAIT_TERMINATION_TIMEOUT_SECONDS);
         when(callableWrapper.getDelay(eq(TimeUnit.MILLISECONDS))).thenReturn(-40000L);
         when(callableWrapper.getPriority()).thenReturn(0);
         pendingCommandsPerType.put(DEFAULT_TYPE, Sets.newHashSet(callableWrapper));
@@ -394,7 +396,8 @@ public class TestAsyncXCommandExecutor {
 
     @Test
     public void testAntiStarvationWhenPriorityIsHighest() {
-        asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, DEFAULT_MAX_ACTIVE_COMMANDS, 500, TEST_PRIORITIES);
+        asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, DEFAULT_MAX_ACTIVE_COMMANDS, 500, TEST_PRIORITIES,
+                AWAIT_TERMINATION_TIMEOUT_SECONDS);
         when(callableWrapper.getDelay(eq(TimeUnit.MILLISECONDS))).thenReturn(-1000L);
         when(callableWrapper.getPriority()).thenReturn(MAX_PRIORITY);
         pendingCommandsPerType.put(DEFAULT_TYPE, Sets.newHashSet(callableWrapper));
@@ -419,7 +422,8 @@ public class TestAsyncXCommandExecutor {
 
     @Test
     public void testPriorityHandling() {
-        asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, 100, DEFAULT_MAXWAIT, 100);
+        asyncExecutor = createExecutor(DEFAULT_ENABLE_CONCURRENCY_CHECK, 100, DEFAULT_MAXWAIT, 100,
+                AWAIT_TERMINATION_TIMEOUT_SECONDS);
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
@@ -490,7 +494,7 @@ public class TestAsyncXCommandExecutor {
     }
 
     private AsyncXCommandExecutor createExecutor(boolean needMaxConcurrencyCheck, int maxActiveCallables,
-            long maxWait, int priorities) {
+            long maxWait, int priorities, int awaitTerminationTimeoutSeconds) {
         return new AsyncXCommandExecutor(needMaxConcurrencyCheck,
                 callableQueueService,
                 maxActiveCallables,
@@ -501,6 +505,7 @@ public class TestAsyncXCommandExecutor {
                 pendingCommandsPerType,
                 activeCommands,
                 maxWait,
-                priorities);
+                priorities,
+                awaitTerminationTimeoutSeconds);
     }
 }

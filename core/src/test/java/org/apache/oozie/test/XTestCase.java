@@ -81,6 +81,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.LauncherMain;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -409,6 +410,8 @@ public abstract class XTestCase extends TestCase {
         oozieSiteConf.set(Services.CONF_SERVICE_CLASSES, classes.replaceAll("org.apache.oozie.service.ShareLibService,",""));
         // Make sure to create the Oozie DB during unit tests
         oozieSiteConf.set(JPAService.CONF_CREATE_DB_SCHEMA, "true");
+        // Make sure thread pools shut down in a timely manner
+        oozieSiteConf.set(CallableQueueService.CONF_QUEUE_AWAIT_TERMINATION_TIMEOUT_SECONDS, "1");
         File target = new File(testCaseConfDir, "oozie-site.xml");
         oozieSiteConf.writeXml(new FileOutputStream(target));
 

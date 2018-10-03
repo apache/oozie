@@ -63,6 +63,7 @@ public class AsyncXCommandExecutor {
     private final long maxActiveCommands;  // equivalent of "queueSize" in CQS
     private final long maxWait;
     private final long maxPriority;
+    private final int awaitTerminationTimeoutSeconds;
 
     private final BlockingQueue<CallableWrapper<?>> priorityBlockingQueue;
     private final BlockingQueue<AccessibleRunnableScheduledFuture<ScheduledXCallable>> delayWorkQueue;
@@ -78,7 +79,8 @@ public class AsyncXCommandExecutor {
             CallableQueueService callableAccess,
             long maxActiveCommands,
             long maxWait,
-            int priorities) {
+            int priorities,
+            int awaitTerminationTimeoutSeconds) {
 
         priorityBlockingQueue = new PriorityBlockingQueue<CallableWrapper<?>>(100, new PriorityComparator());
 
@@ -115,6 +117,9 @@ public class AsyncXCommandExecutor {
         this.pendingCommandsPerType = new ConcurrentHashMap<>();
         Preconditions.checkArgument(priorities > 0, "Number of priorities must be >0");
         this.maxPriority = priorities - 1;
+        Preconditions.checkArgument(awaitTerminationTimeoutSeconds > 0,
+                String.format("Await termination timeout must be >0, is %s", awaitTerminationTimeoutSeconds));
+        this.awaitTerminationTimeoutSeconds = awaitTerminationTimeoutSeconds;
     }
 
     @VisibleForTesting
@@ -128,7 +133,8 @@ public class AsyncXCommandExecutor {
             ConcurrentHashMap<String, Set<CallableWrapper<?>>> pendingCommandsPerType,
             AtomicInteger activeCommands,
             long maxWait,
-            long priorities) {
+            long priorities,
+            int awaitTerminationTimeoutSeconds) {
 
         this.priorityBlockingQueue = priorityBlockingQueue;
         this.delayWorkQueue = delayQueue;
@@ -141,6 +147,7 @@ public class AsyncXCommandExecutor {
         this.activeCommands = activeCommands;
         this.maxWait = maxWait;
         this.maxPriority = priorities - 1;
+        this.awaitTerminationTimeoutSeconds = awaitTerminationTimeoutSeconds;
     }
 
     public synchronized boolean queue(CallableWrapper<?> wrapper, boolean ignoreQueueSize) {
@@ -264,6 +271,14 @@ public class AsyncXCommandExecutor {
         } catch (InterruptedException e) {
             log.warn("Interrupted while waiting for executor shutdown");
         }
+    }
+
+    public boolean isShutDown() {
+        return executor.isShutdown() || scheduledExecutor.isShutdown();
+    }
+
+    public boolean isTerminated() {
+        return executor.isTerminated() || scheduledExecutor.isTerminated();
     }
 
     public List<String> getQueueDump() {
@@ -399,7 +414,7 @@ public class AsyncXCommandExecutor {
     }
 
     private void shutdownExecutor(ExecutorService executor, String name) throws InterruptedException {
-        long limit = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30);
+        long limit = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(this.awaitTerminationTimeoutSeconds);
         executor.shutdown();
         while (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
             log.info("Waiting for [{0}] to shutdown", name);

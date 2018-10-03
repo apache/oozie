@@ -518,13 +518,27 @@
     </property>
 
     <property>
-        <name>oozie.service.CallableQueueService.queue.oldImpl</name>
+        <name>oozie.service.CallableQueueService.queue.newImpl</name>
         <value>true</value>
         <description>
-            If set to false, then CallableQueueService will use a more performant, less CPU-intensive
-            queuing mechanism to execute asynchronous tasks internally. The old implementation generates
-            noticeable CPU load even if Oozie is completely idle, especially when oozie.service.CallableQueueService.threads
-            set to a large number. The previous queuing mechanism is kept as a fallback option.
+            If set to true, then CallableQueueService will use a faster, less CPU-intensive queuing mechanism to execute
+            asynchronous tasks internally.
+            The old implementation generates noticeable CPU load even if Oozie is completely idle, especially when
+            oozie.service.CallableQueueService.threads is set to a large number. The previous queuing mechanism is kept as a
+            fallback option.
+            This is an experimental feature in Oozie 5.1.0 that needs to be re-evaluated upon an upcoming minor release,
+            meaning the old implementation and this feature flag will also be removed.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.CallableQueueService.queue.awaitTermination.timeout.seconds</name>
+        <value>30</value>
+        <description>
+            Number of seconds while awaiting termination of ThreadPoolExecutor instances when CallableQueueService#destroy()
+            is called, in seconds.
+            The more elements you tend to have in your callable queue, the more you want CallableQueueService to wait
+            before shutting down its thread pools.
         </description>
     </property>
 
