@@ -131,6 +131,12 @@
             <artifactId>hive-exec</artifactId>
             <scope>compile</scope>
             <version>${hive.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.pentaho</groupId>
+                    <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
