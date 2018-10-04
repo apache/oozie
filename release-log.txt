@@ -1,4 +1,4 @@
--- Oozie 5.1.0 release (trunk - unreleased)
+-- Oozie 5.1.0 release
 
 OOZIE-3358 [docs] Check and fix differences between help and command line documentation for Fluent Job API (kmarton via andras.piros)
 OOZIE-3348 amend [Hive action] Remove dependency hive-contrib (kmarton via andras.piros)
