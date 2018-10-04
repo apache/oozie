@@ -109,13 +109,13 @@ oozie job <OPTIONS>           : job operations
           -slaenable            enables sla alerts for the job and its children
           -slachange            Update sla param for jobs, supported param are should-start, should-end and max-duration
           -retries              Get information of the retry attempts for a given workflow action.
-          -apijarcheck <jar>    based on the supplied Fluent Job API jar, a workflow definition XML is generated and checked whether
+          -validatejar <jar>    based on the supplied Fluent Job API jar, a workflow definition XML is generated and checked whether
                                 it's a valid Oozie workflow. Output is whether the generated workflow is a valid one
-          -apijarsubmit <jar>   based on the supplied Fluent Job API jar, a workflow definition XML is generated and submitted. When
+          -submitjar <jar>      based on the supplied Fluent Job API jar, a workflow definition XML is generated and submitted. When
                                 the parameter =oozie.wf.application.path= isn't supplied on the command line, an HDFS location with
                                 the prefix defined in
                                 =oozie-site.xml#oozie.client.jobs.application.generated.path= is used. Output is the workflow ID
-          -apijarrun <jar>      based on the supplied Fluent Job API jar, a workflow definition XML is generated and run. When the
+          -runjar <jar>         based on the supplied Fluent Job API jar, a workflow definition XML is generated and run. When the
                                 parameter =oozie.wf.application.path= isn't supplied on the command line, an HDFS location with the
                                 prefix defined in
                                 =oozie-site.xml#oozie.client.jobs.application.generated.path= is used. Output is the workflow ID
