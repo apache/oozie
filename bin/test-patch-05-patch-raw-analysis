@@ -16,7 +16,6 @@ if [ "${TESTPATCHDEBUG}" == "true" ] ; then
   set -x
 fi
 
-BASEDIR=$(pwd)
 TASKNAME="RAW_PATCH_ANALYSIS"
 OP=""
 TEMPDIR=""
@@ -26,7 +25,7 @@ PATCHFILE=""
 
 ###############################################################################
 cleanupAndExit() {
-  exit $1
+  exit "$1"
 }
 ###############################################################################
 printUsage() {
@@ -36,7 +35,7 @@ printUsage() {
 }
 ###############################################################################
 parseArgs() {
-  for i in $*
+  for i in "$@"
   do
     case $i in
     --taskname)
@@ -75,7 +74,7 @@ parseArgs() {
 }
 ###############################################################################
 checkNoAuthors() {
-  authorTags=`grep "^+" ${PATCHFILE} | grep -v "^+++" | grep -c -i -e ".*\*.* @author"`
+  authorTags=$(grep "^+" "${PATCHFILE}" | grep -v "^+++" | grep -c -i -e ".*\*.* @author")
   if [[ ${authorTags} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch seems to contain ${authorTags} line(s) with @author tags")
   else
@@ -84,7 +83,7 @@ checkNoAuthors() {
 }
 ###############################################################################
 checkNoTabs() {
-  tabs=`grep "^+" ${PATCHFILE} | grep -v "^+++" | grep -c $'\t'`
+  tabs=$(grep "^+" "${PATCHFILE}" | grep -v "^+++" | grep -c $'\t')
   if [[ ${tabs} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch contains ${tabs} line(s) with tabs")
   else
@@ -93,7 +92,7 @@ checkNoTabs() {
 }
 ###############################################################################
 checkNoTrailingSpaces() {
-  trailingSpaces=`grep "^+" ${PATCHFILE} | grep -v "^+++" | grep -c -e " $"`
+  trailingSpaces=$(grep "^+" "${PATCHFILE}" | grep -v "^+++" | grep -c -e " $")
   if [[ ${trailingSpaces} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch contains ${trailingSpaces} line(s) with trailing spaces")
   else
@@ -103,7 +102,7 @@ checkNoTrailingSpaces() {
 ###############################################################################
 checkLinesLength() {
   # We check for > 133 to account for the "+" sign
-  longLines=`grep "^+" ${PATCHFILE} | grep -v "^+++" | awk 'BEGIN{count=0}{if ( length > 133 ) { count=count+1} }END{ print count}'`
+  longLines=$(grep "^+" "${PATCHFILE}" | grep -v "^+++" | awk 'BEGIN{count=0}{if ( length > 133 ) { count=count+1} }END{ print count}')
   if [[ ${longLines} != 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch contains ${longLines} line(s) longer than 132 characters")
   else
@@ -112,7 +111,7 @@ checkLinesLength() {
 }
 ###############################################################################
 checkForTestcases() {
-  testcases=`grep -c -i -e '^+++.*/test.*java' ${PATCHFILE}`
+  testcases=$(grep -c -i -e '^+++.*/test.*java' "${PATCHFILE}")
   if [[ ${testcases} == 0 ]] ; then
     REPORT+=("{color:red}-1{color} the patch does not add/modify any testcase")
     #reverting for summary +1 calculation
@@ -122,6 +121,15 @@ checkForTestcases() {
     #reverting for summary +1 calculation
     testcases=0
   fi
+}
+###############################################################################
+checkNoStarImports() {
+    starImports=$(grep -c "\+\s*import[a-zA-Z .]*\*" "${PATCHFILE}")
+    if [[ ${starImports} != 0 ]] ; then
+      REPORT+=("{color:red}-1{color} the patch contains ${starImports} star import(s)")
+    else
+      REPORT+=("{color:green}+1{color} the patch does not introduce any star imports")
+    fi
 }
 ###############################################################################
 
@@ -137,16 +145,17 @@ case $OP in
     checkNoAuthors
     checkNoTabs
     checkNoTrailingSpaces
+    checkNoStarImports
     checkLinesLength
     checkForTestcases
-    total=`expr $authorTags + $tabs + $trailingSpaces + $longLines + $testcases`
+    total=$((authorTags + tabs + trailingSpaces + longLines + testcases + starImports))
     if [[ $total == 0 ]] ; then
-      echo "{color:green}+1 ${TASKNAME}{color}" >> $SUMMARYFILE
+      echo "{color:green}+1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
     else
-      echo "{color:red}-1 ${TASKNAME}{color}" >> $SUMMARYFILE
+      echo "{color:red}-1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
     fi
     for line in "${REPORT[@]}" ; do
-      echo ".    ${line}" >> $SUMMARYFILE
+      echo ".    ${line}" >> "$SUMMARYFILE"
     done
     ;;
 esac
