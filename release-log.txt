@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3368 [fluent-job] CredentialsRetrying example does not compile (daniel.becker via andras.piros)
 OOZIE-3277 [build] Check for star imports (kmarton via andras.piros)
 
 -- Oozie 5.1.0 release

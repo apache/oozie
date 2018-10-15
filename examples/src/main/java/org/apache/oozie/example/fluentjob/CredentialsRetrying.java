@@ -18,7 +18,6 @@
 
 package org.apache.oozie.example.fluentjob;
 
-import com.google.common.collect.Lists;
 import org.apache.oozie.fluentjob.api.action.*;
 import org.apache.oozie.fluentjob.api.factory.WorkflowFactory;
 import org.apache.oozie.fluentjob.api.workflow.*;
@@ -80,6 +79,7 @@ public class CredentialsRetrying implements WorkflowFactory {
                 .withRetryInterval(1)
                 .withRetryMax(3)
                 .withRetryPolicy("exponential")
+                .withJdbcUrl("${jdbcURL}")
                 .withScript("call-hive2.sql")
                 .build();
 
