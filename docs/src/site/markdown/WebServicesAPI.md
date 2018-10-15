@@ -1044,6 +1044,94 @@ Content-Type: application/json;charset=UTF-8
 }
 ```
 
+#### Embedded workflow XML Job Submission
+
+You can submit a workflow XML embedded into the XML configuration. This job submission mode
+makes it possible to submit a job using a single REST API call, instead of the separate workflow.xml
+upload and REST API call of the standard job submission mode.
+
+The following property is required:
+
+* `oozie.jobs.api.generated.xml`: The workflow XML. Note that the XML should
+be HTML escaped.
+
+**Request:**
+
+```
+POST /oozie/v1/jobs?action=start
+Content-Type: application/xml;charset=UTF-8
+.
+<configuration>
+  <property>
+    <name>resourceManager</name>
+    <value>localhost:8032</value>
+  </property>
+  <property>
+    <name>nameNode</name>
+    <value>hdfs://localhost:9000</value>
+  </property>
+  <property>
+    <name>queueName</name>
+    <value>default</value>
+  </property>
+  <property>
+    <name>user.name</name>
+    <value>testuser</value>
+  </property>
+  <property>
+    <name>oozie.jobs.api.generated.xml</name>
+    <value>&lt;workflow-app xmlns=&quot;uri:oozie:workflow:1.0&quot; name=&quot;shell-wf&quot;&gt;
+    &lt;start to=&quot;shell-node&quot;/&gt;
+    &lt;action name=&quot;shell-node&quot;&gt;
+        &lt;shell xmlns=&quot;uri:oozie:shell-action:1.0&quot;&gt;
+            &lt;resource-manager&gt;${resourceManager}&lt;/resource-manager&gt;
+            &lt;name-node&gt;${nameNode}&lt;/name-node&gt;
+            &lt;configuration&gt;
+                &lt;property&gt;
+                    &lt;name&gt;mapred.job.queue.name&lt;/name&gt;
+                    &lt;value&gt;${queueName}&lt;/value&gt;
+                &lt;/property&gt;
+            &lt;/configuration&gt;
+            &lt;exec&gt;echo&lt;/exec&gt;
+            &lt;argument&gt;my_output=Hello Oozie&lt;/argument&gt;
+            &lt;capture-output/&gt;
+        &lt;/shell&gt;
+        &lt;ok to=&quot;check-output&quot;/&gt;
+        &lt;error to=&quot;fail&quot;/&gt;
+    &lt;/action&gt;
+    &lt;decision name=&quot;check-output&quot;&gt;
+        &lt;switch&gt;
+            &lt;case to=&quot;end&quot;&gt;
+                ${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}
+            &lt;/case&gt;
+            &lt;default to=&quot;fail-output&quot;/&gt;
+        &lt;/switch&gt;
+    &lt;/decision&gt;
+    &lt;kill name=&quot;fail&quot;&gt;
+        &lt;message&gt;Shell action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]&lt;/message&gt;
+    &lt;/kill&gt;
+    &lt;kill name=&quot;fail-output&quot;&gt;
+        &lt;message&gt;Incorrect output, expected [Hello Oozie] but was [${wf:actionData('shell-node')['my_output']}]&lt;/message&gt;
+    &lt;/kill&gt;
+    &lt;end name=&quot;end&quot;/&gt;
+&lt;/workflow-app&gt;
+    </value>
+  </property>
+</configuration>
+```
+
+**Response:**
+
+```
+HTTP/1.1 201 CREATED
+Content-Type: application/json;charset="UTF-8"
+.
+{
+  id: "0000047-181005142721927-oozie-test-W"
+}
+```
+
+
 #### Managing a Job
 
 A HTTP PUT request starts, suspends, resumes, kills, update or dryruns a job.
