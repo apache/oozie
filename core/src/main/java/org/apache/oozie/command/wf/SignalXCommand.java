@@ -372,8 +372,9 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                             // is inserted only once
                             WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_ID_TYPE_LASTCHECK,
                                     newAction.getId());
-
-                            continue;
+                            if (!SubWorkflowActionExecutor.ACTION_TYPE.equals(newAction.getType())) {
+                                continue;
+                            }
                         } catch (JPAExecutorException jee) {
                         }
                     }

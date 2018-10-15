@@ -29,6 +29,7 @@ import org.apache.oozie.action.hadoop.LauncherMainTester;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.WorkflowJob.Status;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -613,6 +614,72 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         return workflowUri;
     }
 
+    public void testSubWorkflowRerunTermination() throws Exception {
+        try {
+            Path subWorkflowAppPath = getFsTestCaseDir();
+            FileSystem fs = getFileSystem();
+            Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+            Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
+            writer.write(getFailingSubWorkflow());
+            writer.close();
+            String workflowUri = getTestCaseFileUri("workflow.xml");
+            String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
+                    "<start to=\"shell-node\"/>" +
+                    "<action name=\"shell-node\">" +
+                    "<shell xmlns=\"uri:oozie:shell-action:0.3\">" +
+                    "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                    "<name-node>" + getNameNodeUri() + "</name-node>" +
+                    "<exec>dummycommand</exec>" +
+                    "</shell>" +
+                    "<ok to=\"subwf\"/>" +
+                    "<error to=\"subwf\"/>" +
+                    "</action>" +
+                    "<action name=\"subwf\">" +
+                    "     <sub-workflow xmlns='uri:oozie:workflow:0.4'>" +
+                    "          <app-path>" + subWorkflowAppPath.toString() + "</app-path>" +
+                    "     </sub-workflow>" +
+                    "     <ok to=\"end\"/>" +
+                    "     <error to=\"fail\"/>" +
+                    "</action>" +
+                    "<kill name=\"fail\">" +
+                    "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                    "</kill>" +
+                    "<end name=\"end\"/>" +
+                    "</workflow-app>";
+
+            writeToFile(appXml, workflowUri);
+            LocalOozie.start();
+            final OozieClient wfClient = LocalOozie.getClient();
+            Properties conf = wfClient.createConfiguration();
+            conf.setProperty(OozieClient.APP_PATH, workflowUri);
+            conf.setProperty(OozieClient.USER_NAME, getTestUser());
+            conf.setProperty("appName", "var-app-name");
+            final String jobId = wfClient.submit(conf);
+            wfClient.start(jobId);
+
+            waitFor(JOB_TIMEOUT, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return (wfClient.getJobInfo(jobId).getStatus() == Status.KILLED);
+                }
+            });
+
+            conf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
+            wfClient.reRun(jobId,conf);
+
+            waitFor(JOB_TIMEOUT, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return (wfClient.getJobInfo(jobId).getStatus() == Status.KILLED);
+                }
+            });
+
+            WorkflowJob job = wfClient.getJobInfo(jobId);
+            assertEquals(job.getStatus(), Status.KILLED);
+
+        } finally {
+            LocalOozie.stop();
+        }
+    }
+
     public void testParentGlobalConf() throws Exception {
         try {
             Path subWorkflowAppPath = createSubWorkflowXml();
@@ -830,5 +897,24 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 + "</kill>"
                 + "<end name='end' />"
                 + "</workflow-app>";
+    }
+
+    private String getFailingSubWorkflow() {
+        return  "<workflow-app xmlns='uri:oozie:workflow:0.4' name='app'>" +
+                "<start to=\"shell-node\"/>" +
+                "<action name=\"shell-node\">" +
+                "<shell xmlns=\"uri:oozie:shell-action:0.3\">" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<exec>dummycommand</exec>" +
+                "</shell>" +
+                "<ok to=\"subwf\"/>" +
+                "<error to=\"subwf\"/>" +
+                "</action>" +
+                "<kill name='fail'>" +
+                "<message>shell action fail, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                "</kill>" +
+                "<end name='end' />" +
+                "</workflow-app>";
     }
 }

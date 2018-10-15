@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3365 Workflow and coordinator action status remains RUNNING after rerun (satishsaley)
 OOZIE-3361 [docs] Document embedded XML job submission mode (asalamon74 via andras.piros)
 OOZIE-3368 [fluent-job] CredentialsRetrying example does not compile (daniel.becker via andras.piros)
 OOZIE-3277 [build] Check for star imports (kmarton via andras.piros)
