@@ -100,7 +100,7 @@ public class GraphVisualization {
 
     public static void graphToPng(final Graph graph, final String fileName) throws IOException {
         final MutableGraph mg = Parser.read(graphToDot(graph));
-        mg.setLabel(fileName);
+        mg.setName(fileName);
 
         Graphviz.fromGraph(mg)
                 .width(PNG_WIDTH)
@@ -110,7 +110,7 @@ public class GraphVisualization {
 
     public static void workflowToPng(final Workflow workflow, final String fileName) throws IOException {
         final MutableGraph mg = Parser.read(workflowToDot(workflow));
-        mg.setLabel(fileName);
+        mg.setName(fileName);
 
         Graphviz.fromGraph(mg)
                 .width(PNG_WIDTH)

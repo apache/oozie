@@ -58,10 +58,9 @@ public class GraphvizRenderer implements GraphRenderer {
     private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
     private static final long GRAPHVIZ_TIMEOUT_SECONDS = ConfigurationService.getLong("oozie.graphviz.timeout.seconds");
 
-    private Graph graphvizGraph = Factory.graph().generalAttr().with(RankDir.TOP_TO_BOTTOM).directed();
+    private Graph graphvizGraph = Factory.graph().graphAttr().with(RankDir.TOP_TO_BOTTOM).directed();
     private final Map<String, Node> graphvizNodes = new LinkedHashMap<>();
     private final Multimap<String, String> edges = ArrayListMultimap.create();
-    ;
     private int arcCount = 0;
 
     @Override
@@ -234,8 +233,8 @@ public class GraphvizRenderer implements GraphRenderer {
     }
 
     private Graphviz newGraphviz() {
+        // Defaults to Rasterizer#BATIK
         return Graphviz.fromGraph(graphvizGraph)
-                .rasterizer(Rasterizer.BATIK)
                 .engine(Engine.DOT)
                 .height(calculateHeight(arcCount));
     }
