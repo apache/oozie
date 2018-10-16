@@ -7,6 +7,7 @@ OOZIE-3277 [build] Check for star imports (kmarton via andras.piros)
 
 -- Oozie 5.1.0 release
 
+OOZIE-3369 [core] Upgrade guru.nidi:graphviz-java to 0.7.0 (andras.piros)
 OOZIE-3358 [docs] Check and fix differences between help and command line documentation for Fluent Job API (kmarton via andras.piros)
 OOZIE-3348 amend [Hive action] Remove dependency hive-contrib (kmarton via andras.piros)
 OOZIE-3160 amend PriorityDelayQueue put()/take() can cause significant CPU load due to busy waiting (andras.piros)
