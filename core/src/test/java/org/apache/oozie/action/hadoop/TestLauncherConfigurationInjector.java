@@ -19,9 +19,12 @@
 package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
+
+import static org.apache.oozie.action.hadoop.JavaActionExecutor.HADOOP_USER;
 
 public class TestLauncherConfigurationInjector extends XTestCase {
 
@@ -39,7 +42,7 @@ public class TestLauncherConfigurationInjector extends XTestCase {
         super.tearDown();
     }
 
-    public void testOverrideSwitchedOffSourceCopiedToTargetWithTwoDifferentKeys() {
+    public void testOverrideSwitchedOffSourceCopiedToTargetWithTwoDifferentKeys() throws ActionExecutorException {
         ConfigurationService.setBoolean("oozie.launcher.override", false);
 
         final Configuration sourceConf = SourceConfigurationFactory.createOverridingAndLauncherEntries();
@@ -78,7 +81,7 @@ public class TestLauncherConfigurationInjector extends XTestCase {
         assertTrue("queue", launcherConf.get("queue").contains("default2"));
     }
 
-    public void testLauncherConfigSourceCopiedToTarget() {
+    public void testLauncherConfigSourceCopiedToTarget() throws ActionExecutorException {
         final Configuration sourceConf = SourceConfigurationFactory.createLauncherEntries();
         final Configuration launcherConf = newConfigurationWithoutDefaults();
 
@@ -87,7 +90,7 @@ public class TestLauncherConfigurationInjector extends XTestCase {
         assertLauncherAndDefaultEntries(launcherConf);
     }
 
-    public void testOverridingConfigCopiedToTarget() {
+    public void testOverridingConfigCopiedToTarget() throws ActionExecutorException {
         final Configuration sourceConf = SourceConfigurationFactory.createOverridingEntries();
         final Configuration launcherConf = newConfigurationWithoutDefaults();
 
@@ -118,7 +121,7 @@ public class TestLauncherConfigurationInjector extends XTestCase {
         assertEquals("modify ACL", "modify", launcherConf.get(JavaActionExecutor.LAUNCER_MODIFY_ACL));
     }
 
-    public void testMultipleOverrideOrder() {
+    public void testMultipleOverrideOrder() throws ActionExecutorException {
         final Configuration sourceConf = SourceConfigurationFactory.createMultipleOverridingEntries();
         final Configuration launcherConf = newConfigurationWithoutDefaults();
 
@@ -127,7 +130,7 @@ public class TestLauncherConfigurationInjector extends XTestCase {
         assertHigherRankingOverridingAndNoDefaultEntries(launcherConf);
     }
 
-    public void testPrependLauncherConfigSourcePrependedToTarget() {
+    public void testPrependLauncherConfigSourcePrependedToTarget() throws ActionExecutorException {
         final Configuration sourceConf = SourceConfigurationFactory.createPrependingAndLauncherEntries();
         final Configuration launcherConf = newConfigurationWithoutDefaults();
 
@@ -145,6 +148,21 @@ public class TestLauncherConfigurationInjector extends XTestCase {
                 launcherConf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY).contains("ENV=env:$ENV PATH=/path2:$PATH"));
         assertTrue("env", launcherConf.get("env").contains("PATH=/path2:$PATH"));
         assertFalse("env", launcherConf.get("env").contains("ENV=env:$ENV"));
+    }
+
+    public void testLauncherConfigurationFiltering() {
+        final Configuration sourceConf = SourceConfigurationFactory.createLauncherEntries();
+        sourceConf.set("oozie.launcher." + HADOOP_USER, "should-not-be-present");
+        final Configuration launcherConf = newConfigurationWithoutDefaults();
+
+        try {
+            new LauncherConfigurationInjector(sourceConf).inject(launcherConf);
+            fail(String.format("configuration entry %s should be filtered out", HADOOP_USER));
+        }
+        catch (final ActionExecutorException e) {
+            assertEquals("error code mismatch", "JA010", e.getErrorCode());
+        }
+
     }
 
     private static class SourceConfigurationFactory {

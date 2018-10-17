@@ -93,7 +93,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> deleteList = new ArrayList<JsonBean>();
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     public static final String DISABLE_CHILD_RERUN = "oozie.wf.rerun.disablechild";
 
@@ -103,10 +102,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     public ReRunXCommand(String jobId, Configuration conf) {
@@ -163,7 +158,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
 
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
-                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
+                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_USER_PROPERTIES);
+                PropertiesUtils.checkDefaultDisallowedProperties(defaultConf);
                 XConfiguration.injectDefaults(defaultConf, conf);
             }
 

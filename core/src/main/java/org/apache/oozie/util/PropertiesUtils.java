@@ -25,8 +25,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.Reader;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 
 public class PropertiesUtils {
@@ -51,6 +54,7 @@ public class PropertiesUtils {
     public static final String REDUCE_IN = "REDUCE_IN";
     public static final String REDUCE_OUT = "REDUCE_OUT";
     public static final String GROUPS = "GROUPS";
+    public static final Set<String> DEFAULT_DISALLOWED_PROPERTIES = ImmutableSet.of(OozieClient.USER_NAME, MRJobConfig.USER_NAME);
 
     public static String propertiesToString(Properties props) {
         ParamChecker.notNull(props, "props");
@@ -113,4 +117,7 @@ public class PropertiesUtils {
         }
     }
 
+    public static void checkDefaultDisallowedProperties(final Configuration conf) throws CommandException {
+        checkDisallowedProperties(conf, DEFAULT_DISALLOWED_PROPERTIES);
+    }
 }

@@ -36,6 +36,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -78,6 +79,13 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
     @Override
     protected String storeToDB(String xmlElement, Element eJob, CoordinatorJobBean coordJob) throws CommandException {
         check(oldCoordJob, coordJob);
+
+        ConfigUtils.checkAndSetDisallowedProperties(conf,
+                this.oldCoordJob.getUser(),
+                new CommandException(ErrorCode.E1003,
+                        String.format("%s=%s", OozieClient.USER_NAME, conf.get(OozieClient.USER_NAME))),
+                true);
+
         computeDiff(eJob);
         oldCoordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         if (isConfChange) {
