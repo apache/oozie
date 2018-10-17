@@ -23,6 +23,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.XLog;
 
@@ -193,7 +194,7 @@ class LauncherConfigurationInjector {
      * Inject the overridden and prepended values from {@link #sourceConfiguration} into {@code launcherConf} wherever applicable.
      * @param launcherConf the target {@code Configuration} of the Launcher AM
      */
-    void inject(final Configuration launcherConf) {
+    void inject(final Configuration launcherConf) throws ActionExecutorException {
         LOG.debug("Injecting configuration entries to launcher configuration.");
 
         copyToLauncherConf(sourceConfiguration, launcherConf);
@@ -345,10 +346,15 @@ class LauncherConfigurationInjector {
      * @param source
      * @param target
      */
-    private void copyToLauncherConf(final Configuration source, final Configuration target) {
+    private void copyToLauncherConf(final Configuration source, final Configuration target) throws ActionExecutorException {
         for (final Map.Entry<String, String> entry : source) {
             if (entry.getKey().startsWith(OOZIE_LAUNCHER_PREFIX)) {
                 final String name = entry.getKey().substring(OOZIE_LAUNCHER_PREFIX.length());
+                if (JavaActionExecutor.DISALLOWED_PROPERTIES.contains(name)) {
+                    LOG.error("Property [{0}] not allowed in launcher configuration", name);
+                    throw new ActionExecutorException(ActionExecutorException.ErrorType.FAILED, "JA010",
+                    "Property [{0}] not allowed in launcher configuration", name);
+                }
                 final String value = entry.getValue();
                 // setting original KEY
                 target.set(entry.getKey(), value);

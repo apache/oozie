@@ -113,7 +113,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         this.dryrun = dryrun;
     }
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
 
     static {
@@ -122,10 +121,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     @Override
@@ -153,7 +148,8 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             if (fs.exists(configDefault)) {
                 try {
                     defaultConf = new XConfiguration(fs.open(configDefault));
-                    PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
+                    PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_USER_PROPERTIES);
+                    PropertiesUtils.checkDefaultDisallowedProperties(defaultConf);
                     XConfiguration.injectDefaults(defaultConf, conf);
                 }
                 catch (IOException ex) {

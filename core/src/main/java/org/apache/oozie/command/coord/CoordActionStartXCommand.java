@@ -34,12 +34,13 @@ import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
@@ -172,6 +173,13 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             }
             runConf.unset(CoordRerunXCommand.RERUN_CONF);
         }
+
+        ConfigUtils.checkAndSetDisallowedProperties(runConf,
+                this.user,
+                new CommandException(ErrorCode.E1003,
+                        String.format("%s=%s", OozieClient.USER_NAME, runConf.get(OozieClient.USER_NAME))),
+                true);
+
         return runConf;
     }
 

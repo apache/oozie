@@ -56,7 +56,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String SUBWORKFLOW_DEPTH = "oozie.action.subworkflow.depth";
     public static final String SUBWORKFLOW_RERUN = "oozie.action.subworkflow.rerun";
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     public XLog LOG = XLog.getLog(getClass());
 
 
@@ -66,9 +66,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
 
-        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
+        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
     }
 
     protected SubWorkflowActionExecutor() {
@@ -101,7 +99,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             String strConf = XmlUtils.prettyPrint(eConf).toString();
             Configuration conf = new XConfiguration(new StringReader(strConf));
             try {
-                PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_DEFAULT_PROPERTIES);
+                PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+                PropertiesUtils.checkDefaultDisallowedProperties(conf);
             }
             catch (CommandException ex) {
                 throw convertException(ex);

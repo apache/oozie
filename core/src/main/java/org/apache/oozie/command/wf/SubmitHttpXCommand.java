@@ -66,7 +66,6 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
         this.conf = ParamChecker.notNull(conf, "conf");
     }
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
 
     static {
@@ -75,10 +74,6 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     abstract protected Element generateSection(Configuration conf, Namespace ns);
@@ -189,6 +184,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+            PropertiesUtils.checkDefaultDisallowedProperties(conf);
 
             // Resolving all variables in the job properties.
             // This ensures the Hadoop Configuration semantics is preserved.
@@ -269,7 +265,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
     /**
      * Add file section in X.
      *
-     * @param parent XML element to be appended
+     * @param X XML element to be appended
      * @param conf Configuration object
      * @param ns XML element namespace
      */
@@ -281,7 +277,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
     /**
      * Add archive section in X.
      *
-     * @param parent XML element to be appended
+     * @param X XML element to be appended
      * @param conf Configuration object
      * @param ns XML element namespace
      */

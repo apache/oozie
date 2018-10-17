@@ -43,6 +43,7 @@ import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
@@ -312,6 +313,13 @@ public class BundleStartXCommand extends StartTransitionXCommand {
 
             // copy configuration properties in the coordElem to the runConf
             XConfiguration.copy(localConf, runConf);
+
+            ConfigUtils.checkAndSetDisallowedProperties(runConf,
+                    bundleJob.getUser(),
+                    new CommandException(ErrorCode.E1303,
+                            String.format("%s=%s", OozieClient.USER_NAME, runConf.get(OozieClient.USER_NAME)),
+                            bundleJob.getUser()),
+                    true);
         }
 
         // Step 3: Extract value of 'app-path' in coordElem, save it as a
