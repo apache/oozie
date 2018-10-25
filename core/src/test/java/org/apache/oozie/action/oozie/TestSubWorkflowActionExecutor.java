@@ -568,7 +568,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             conf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
             wfClient.reRun(jobId,conf);
 
-            waitFor(JOB_TIMEOUT, new Predicate() {
+            waitFor(JOB_TIMEOUT * 2, new Predicate() {
                 public boolean evaluate() throws Exception {
                     return (wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.SUCCEEDED) &&
                             (wfClient.getJobInfo(jobId).getActions().get(2).getStatus() == WorkflowAction.Status.OK);
