@@ -151,8 +151,8 @@ public class ConfigUtils {
                                                                              final E toThrow,
                                                                              final boolean performWrite) throws E {
         Preconditions.checkNotNull(base, "base");
-        Preconditions.checkNotNull(base, "newValue");
-        Preconditions.checkNotNull(base, "toThrow");
+        Preconditions.checkNotNull(newValue, "newValue");
+        Preconditions.checkNotNull(toThrow, "toThrow");
 
         for (final String defaultDisallowedProperty : PropertiesUtils.DEFAULT_DISALLOWED_PROPERTIES) {
             checkAndSetConfigValue(base, defaultDisallowedProperty, newValue, toThrow, performWrite);
