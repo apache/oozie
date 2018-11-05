@@ -1712,6 +1712,8 @@ The node labels are the node names provided in the workflow XML.
 
 This API returns `HTTP 400` when run on a resource other than a workflow, viz. bundle and coordinator.
 
+Note that when running on JDK8 the supported minimum minor version for this feature is `1.8.0_u40`.
+
 #### Job Status
 
 An `HTTP GET` request that returns the current status (e.g. `SUCCEEDED`, `KILLED`, etc) of a given job.  If you are only interested

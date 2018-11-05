@@ -24,7 +24,10 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XLog;
 import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.internal.AssumptionViolatedException;
 
 import javax.imageio.ImageIO;
 import java.io.BufferedReader;
@@ -36,6 +39,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class TestGraphGenerator extends XTestCase {
+    private static final XLog LOG = XLog.getLog(TestGraphGenerator.class);
+
     private static final String GRAPH_WORKFLOW_DECISION_FORK_JOIN_XML = "graph-workflow-decision-fork-join.xml";
     private static final String GRAPH_WORKFLOW_MANY_ACTIONS_XML = "graph-workflow-many-actions.xml";
     private static final String GRAPH_WORKFLOW_SIMPLE_XML = "graph-workflow-simple.xml";
@@ -59,6 +64,15 @@ public class TestGraphGenerator extends XTestCase {
     }
 
     public void testSimpleGraphPng() {
+        try {
+            assumeJDKVersion();
+        }
+        catch (final AssumptionViolatedException ave) {
+            // Due to JUnit38ClassRunner we have to check that explicitly instead of relying on junit.framework
+            LOG.warn(ave.getMessage());
+            return;
+        }
+
         final WorkflowJobBean jsonWFJob = createSimpleWorkflow();
 
         generateAndAssertPng(jsonWFJob, GRAPH_WORKFLOW_SIMPLE_XML, false);
@@ -103,6 +117,15 @@ public class TestGraphGenerator extends XTestCase {
     }
 
     public void testSimpleGraphDot() {
+        try {
+            assumeJDKVersion();
+        }
+        catch (final AssumptionViolatedException ave) {
+            // Due to JUnit38ClassRunner we have to check that explicitly instead of relying on junit.framework
+            LOG.warn(ave.getMessage());
+            return;
+        }
+
         final WorkflowJobBean jsonWFJob = createSimpleWorkflow();
 
         File outputDot = null;
@@ -127,6 +150,15 @@ public class TestGraphGenerator extends XTestCase {
     }
 
     public void testSimpleGraphSvg() {
+        try {
+            assumeJDKVersion();
+        }
+        catch (final AssumptionViolatedException ave) {
+            // Due to JUnit38ClassRunner we have to check that explicitly instead of relying on junit.framework
+            LOG.warn(ave.getMessage());
+            return;
+        }
+
         final WorkflowJobBean jsonWFJob = createSimpleWorkflow();
 
         File outputDot = null;
@@ -151,6 +183,15 @@ public class TestGraphGenerator extends XTestCase {
     }
 
     public void testGraphWithManyNodes() throws Exception {
+        try {
+            assumeJDKVersion();
+        }
+
+        catch (final AssumptionViolatedException ave) {
+            // Due to JUnit38ClassRunner we have to check that explicitly instead of relying on junit.framework
+            LOG.warn(ave.getMessage());
+            return;
+        }
         new GraphGenerator(readXmlFromClasspath(GRAPH_WORKFLOW_MANY_ACTIONS_XML),
                 createWorkflowInProgress(25),
                 true,
@@ -163,6 +204,15 @@ public class TestGraphGenerator extends XTestCase {
     }
 
     public void testGraphWithDecisionForkJoin() throws Exception {
+        try {
+            assumeJDKVersion();
+        }
+        catch (final AssumptionViolatedException ave) {
+            // Due to JUnit38ClassRunner we have to check that explicitly instead of relying on junit.framework
+            LOG.warn(ave.getMessage());
+            return;
+        }
+
         new GraphGenerator(readXmlFromClasspath(GRAPH_WORKFLOW_DECISION_FORK_JOIN_XML),
                 createWorkflowWithDecisionForkJoin(),
                 true,
@@ -217,6 +267,21 @@ public class TestGraphGenerator extends XTestCase {
         workflowActionBean.setStatus(status);
 
         return workflowActionBean;
+    }
+
+    /**
+     * Due to {@code guru.nidi:graphviz-java} >= 0.5.1 we need to check whether we have the proper minor version when running on
+     * JDK8.
+     * @see <a href="https://github.com/nidi3/graphviz-java/commit/b7cf5761f97f1491d3bdc65367ec00e38d66291d">this commit</a>
+     */
+    private void assumeJDKVersion() {
+        final String version = System.getProperty("java.version");
+        if (version.startsWith("1.8.0_")) {
+            try {
+                Assume.assumeTrue("An old version of Java 1.8 is used, skipping.", Integer.parseInt(version.substring(6)) >= 40);
+            }
+            catch (final NumberFormatException ignored) {}
+        }
     }
 
     private static class NullOutputStream extends OutputStream {
