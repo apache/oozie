@@ -48,6 +48,7 @@ Enough reading already? Follow the steps in [Oozie Quick Start](DG_QuickStart.ht
    * [Oozie Core Javadocs](./core/apidocs/index.html)
    * [Oozie Web Services API](WebServicesAPI.html)
    * [Action Authentication](DG_ActionAuthentication.html)
+   * [Fluent Job API](DG_FluentJobAPI.html)
 
 ### Action Extensions
 
@@ -59,6 +60,7 @@ Enough reading already? Follow the steps in [Oozie Quick Start](DG_QuickStart.ht
    * [Ssh Action](DG_SshActionExtension.html)
    * [DistCp Action](DG_DistCpActionExtension.html)
    * [Spark Action](DG_SparkActionExtension.html)
+   * [Git Action](DG_GitActionExtension.html)
    * [Writing a Custom Action Executor](DG_CustomActionExecutor.html)
 
 ### Job Status and SLA Monitoring
