@@ -214,7 +214,7 @@ public abstract class XCommand<T> implements XCallable<T> {
             if (isReQueueRequired()) {
                 // if not acquire the lock, re-queue itself with default delay
                 queue(this, getRequeueDelay());
-                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself [{2}]", this.toString(),
+                LOG.debug("Could not get lock for [{0}], timed out [{1}]ms, and requeue itself [{2}]", getEntityKey(),
                         getLockTimeOut(), getName());
             }
             else {
