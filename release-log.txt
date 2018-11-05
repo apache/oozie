@@ -9,6 +9,7 @@ OOZIE-3277 [build] Check for star imports (kmarton via andras.piros)
 
 -- Oozie 5.1.0 release
 
+OOZIE-3376 [tests] TestGraphGenerator should assume JDK8 minor version at least 1.8.0_u40 (andras.piros)
 OOZIE-3370 amend Property filtering is not consistent across job submission (andras.piros)
 OOZIE-3370 Property filtering is not consistent across job submission (andras.piros)
 OOZIE-3369 [core] Upgrade guru.nidi:graphviz-java to 0.7.0 (andras.piros)
