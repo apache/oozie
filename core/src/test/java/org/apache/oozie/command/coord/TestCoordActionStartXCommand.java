@@ -29,7 +29,9 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -114,6 +116,29 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         assertTrue(action.getErrorMessage().contains(
                 "XML schema error, cvc-pattern-valid: Value '${someParam}' "
                         + "is not facet-valid with respect to pattern"));
+    }
+
+    /**
+     * Coord action XML contains disallowed property change and
+     * test that CoordActionStartXCommand stores error code and error message in
+     * action's table during error handling
+     *
+     * @throws IOException
+     * @throws JPAExecutorException
+     * @throws CommandException
+     */
+    public void testActionStartWithError1003Reported() throws IOException, JPAExecutorException, CommandException {
+        String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
+        String wfApp = "<start to='${someParam}' />";
+        Map<String, String> additionalProperties = new HashMap<>();
+        additionalProperties.put("user.name", "admin");
+        addRecordToActionTable(actionId, 1, wfApp, additionalProperties);
+        new CoordActionStartXCommand(actionId, "test", "myapp", "myjob").call();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetForStartJPAExecutor(actionId));
+        assertEquals("Expected status was FAILED due to E1003 error code", CoordinatorAction.Status.FAILED, action.getStatus());
+        assertEquals(action.getErrorCode(), ErrorCode.E1003.toString());
+        assertTrue(action.getErrorMessage().contains("Invalid coordinator application attributes"));
     }
 
     /**
@@ -211,6 +236,11 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
 
     private void addRecordToActionTable(String actionId, int actionNum, String wfParam)
             throws IOException, JPAExecutorException {
+        addRecordToActionTable(actionId, actionNum, wfParam, null);
+    }
+
+    private void addRecordToActionTable(String actionId, int actionNum, String wfParam, Map<String, String> additionalProperties)
+            throws IOException, JPAExecutorException {
         final JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setJobId(actionId);
@@ -257,6 +287,14 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "<name>inputB</name>";
         actionXml += "<value>" + getTestCaseFileUri("coord/US//2009/02/01") + "</value>";
         actionXml += "</property>";
+        if (additionalProperties != null) {
+            for (Map.Entry<String, String> entry : additionalProperties.entrySet()) {
+                actionXml += "<property>";
+                actionXml += "<name>" + entry.getKey() + "</name>";
+                actionXml += "<value>" + entry.getValue() + "</value>";
+                actionXml += "</property>";
+            }
+        }
         actionXml += "</configuration>";
         actionXml += "</workflow>";
         String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>" + " <sla:app-name>test-app</sla:app-name>"

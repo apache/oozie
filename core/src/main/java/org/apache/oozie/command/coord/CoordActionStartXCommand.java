@@ -192,14 +192,15 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
         log.debug("actionid=" + actionId + ", status=" + coordAction.getStatus());
         if (coordAction.getStatus() == CoordinatorAction.Status.SUBMITTED) {
-            // log.debug("getting.. job id: " + coordAction.getJobId());
-            // create merged runConf to pass to WF Engine
-            Configuration runConf = mergeConfig(coordAction);
-            coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
-            // log.debug("%%% merged runconf=" +
-            // XmlUtils.prettyPrint(runConf).toString());
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             try {
+                // log.debug("getting.. job id: " + coordAction.getJobId());
+                // create merged runConf to pass to WF Engine
+                Configuration runConf = mergeConfig(coordAction);
+                coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
+                // log.debug("%%% merged runconf=" +
+                // XmlUtils.prettyPrint(runConf).toString());
+                DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
+
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
                 SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(),
                         Status.STARTED,
