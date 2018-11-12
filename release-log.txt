@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3338 [build] Remove SVN references (asalamon74 via andras.piros)
 OOZIE-3378 [core] Coordinator action's status is SUBMITTED after E1003 error (asalamon74 via andras.piros)
 OOZIE-3373 [core] Logging of lock information is inconsistent (Prabhu Joseph via andras.piros)
 OOZIE-3371 TestSubWorkflowActionExecutor#testSubWorkflowRerun() is flaky (andras.piros)

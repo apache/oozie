@@ -17,13 +17,13 @@ The Maven command (mvn) must be in the command path.
 
 ## Installing Oozie Jars To Maven Cache
 
-Oozie source tree is at Apache SVN or Apache GIT. MiniOozie sample project is under Oozie source tree.
+Oozie source tree is at Apache GIT. The code is also mirrored at GitHub. MiniOozie sample project is under Oozie source tree.
 
 The following command downloads Oozie trunk to local:
 
 
 ```
-$ svn co https://svn.apache.org/repos/asf/incubator/oozie/trunk
+$ git clone git://git.apache.org/oozie.git
 ```
 
 OR
