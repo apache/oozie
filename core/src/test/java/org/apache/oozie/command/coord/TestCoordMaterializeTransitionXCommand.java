@@ -43,7 +43,6 @@ import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
-import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -61,7 +60,10 @@ import org.jdom.Element;
 @SuppressWarnings("deprecation")
 public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
-    private int oneHourInSeconds = hoursToSeconds(1);
+    private static final int TIME_IN_MIN = 60 * 1000;
+    private static final int TIME_IN_HOURS = TIME_IN_MIN * 60;
+    private static final int TIME_IN_DAY = TIME_IN_HOURS * 24;
+    private JPAService jpaService;
 
     @Override
     protected void setUp() throws Exception {
@@ -69,6 +71,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         new Services().init();
         Services.get().setService(FakeCallableQueueService.class);
         Services.get().get(SchedulerService.class).destroy();
+        jpaService = Services.get().get(JPAService.class);
     }
 
     @Override
@@ -146,7 +149,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -179,7 +181,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -201,7 +202,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, new Date[]{});
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -227,7 +227,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -252,7 +251,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -277,7 +275,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -302,7 +299,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(expectedNominalTimeCount, job.getLastActionNumber());
@@ -330,7 +326,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertFalse(job.isDoneMaterialization());
             assertEquals(expectedNominalTimeCount, job.getLastActionNumber());
@@ -365,7 +360,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            final JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertFalse("coordinator job shouldn't have yet been materialized", job.isDoneMaterialization());
             assertEquals("coordinator action count mismatch", expectedNominalTimeCount, job.getLastActionNumber());
@@ -414,7 +408,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     private void checkTwoActionsAfterCatchup(CoordinatorJobBean job, int expectedJobCount, String nextMaterialization)
             throws ParseException {
         try {
-            final JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue("coordinator job should have already been materialized", job.isDoneMaterialization());
             assertEquals("coordinator action count mismatch", expectedJobCount, job.getLastActionNumber());
@@ -466,7 +459,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(expectedNominalTimeCount, job.getLastActionNumber());
@@ -493,7 +485,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, nominalTimes);
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             job =  jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
             assertTrue(job.isDoneMaterialization());
             assertEquals(job.getLastActionNumber(), expectedNominalTimeCount);
@@ -504,6 +495,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             fail("Job ID " + job.getId() + " was not stored properly in db");
         }
     }
+
     public void testActionMaterWithPauseTime1() throws Exception {
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T10:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
@@ -570,6 +562,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     /**
      * Test a coordinator job that will run in far future,
      * materialization should not happen.
+     *
      * @throws Exception
      */
     public void testMatLookupCommand2() throws Exception {
@@ -583,6 +576,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     /**
      * Test a coordinator job that will run within 5 minutes from now,
      * materilization should happen.
+     *
      * @throws Exception
      */
     public void testMatLookupCommand3() throws Exception {
@@ -613,7 +607,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
                 + "</coordinator-app>";
         CoordinatorJobBean job = addRecordToCoordJobTable(coordXml);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
-        JPAService jpaService = Services.get().get(JPAService.class);
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(CoordinatorJob.Status.FAILED, job.getStatus());
         // GetActions for coord job, should be none
@@ -625,6 +618,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     /**
      * Test a coordinator job that will run beyond 5 minutes from now,
      * materilization should not happen.
+     *
      * @throws Exception
      */
     public void testMatLookupCommand4() throws Exception {
@@ -640,11 +634,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
      *
      * @throws Exception
      */
-    public void testMaterializationLookup() throws Exception {
-        long TIME_IN_MIN = 60 * 1000;
-        long TIME_IN_HOURS = TIME_IN_MIN * 60;
-        long TIME_IN_DAY = TIME_IN_HOURS * 24;
-        JPAService jpaService = Services.get().get(JPAService.class);
+    public void testMaterializationLookupDaysFixedDate() throws Exception {
         // test with days
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-05-03T23:59Z");
@@ -658,11 +648,12 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(new Date(startTime.getTime() + TIME_IN_DAY * 3), job.getNextMaterializedTime());
+    }
 
-        // test with hours
-        startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
-        endTime = DateUtils.parseDateOozieTZ("2009-05-03T23:59Z");
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+    public void testMaterializationLookupHours() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date endTime = DateUtils.parseDateOozieTZ("2009-05-03T23:59Z");
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setNextMaterializedTime(startTime);
         job.setMatThrottling(10);
         job.setFrequency("1");
@@ -671,11 +662,13 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(new Date(startTime.getTime() + TIME_IN_HOURS * 10), job.getNextMaterializedTime());
+    }
 
-        // test with hours, time should not pass the current time.
-        startTime = new Date(new Date().getTime() - TIME_IN_DAY * 3);
-        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+    public void testMaterializationLookupRelativeDays1() throws Exception {
+        Date currentDate = new Date();
+        Date startTime = new Date(currentDate.getTime() - TIME_IN_DAY * 3);
+        Date endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setNextMaterializedTime(startTime);
         job.setMatThrottling(10);
         job.setFrequency("1");
@@ -683,17 +676,15 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
-        // that because startTime and endTime assume GMT
         Date next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
-        TimeZone tz = TimeZone.getTimeZone(job.getTimeZone());
-        next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
+        adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
         assertEquals(next, job.getNextMaterializedTime());
+    }
 
-        // test with hours, time should not pass the current time.
-        startTime = new Date(new Date().getTime());
-        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+    public void testMaterializationLookupRelativeDays2() throws Exception {
+        Date startTime = new Date(new Date().getTime());
+        Date endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setNextMaterializedTime(startTime);
         job.setMatThrottling(10);
         job.setFrequency("1");
@@ -701,52 +692,46 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
-        // that because startTime and endTime assume GMT
-        next = new Date(startTime.getTime() + TIME_IN_DAY);
-        tz = TimeZone.getTimeZone(job.getTimeZone());
-        next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
+        Date next = new Date(startTime.getTime() + TIME_IN_DAY);
+        adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
         assertEquals(next, job.getNextMaterializedTime());
+    }
 
+    public void testMaterializationLookupMinute() throws Exception {
         // for current job in min, should not exceed hour windows
-        startTime = new Date(new Date().getTime());
-        endTime = new Date(startTime.getTime() + TIME_IN_HOURS * 24);
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        Date startTime = new Date(new Date().getTime());
+        Date endTime = new Date(startTime.getTime() + TIME_IN_HOURS * 24);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setMatThrottling(20);
         job.setFrequency("5");
         job.setTimeUnitStr("MINUTE");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
-        // that because startTime and endTime assume GMT
-        next = new Date(startTime.getTime() + TIME_IN_HOURS);
-        tz = TimeZone.getTimeZone(job.getTimeZone());
-        next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
+        Date next = new Date(startTime.getTime() + TIME_IN_HOURS);
+        adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
         assertEquals(next, job.getNextMaterializedTime());
+    }
 
-        // for current job in hour, should not exceed hour windows
-        startTime = new Date(new Date().getTime());
-        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 24);
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+    public void testMaterializationLookupRelativeDays3() throws Exception {
+        Date startTime = new Date(new Date().getTime());
+        Date endTime = new Date(startTime.getTime() + TIME_IN_DAY * 24);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setMatThrottling(20);
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
-        // that because startTime and endTime assume GMT
-        next = new Date(startTime.getTime() + TIME_IN_DAY);
-        tz = TimeZone.getTimeZone(job.getTimeZone());
-        next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
+        Date next = new Date(startTime.getTime() + TIME_IN_DAY);
+        adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
         assertEquals(next, job.getNextMaterializedTime());
+    }
 
-        // Case: job started in Daylight time, and materialization is in
-        // Standard time
-        startTime = getDaylightCalendar().getTime();
-        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+    public void testMaterializationLookupDaylightStartStandardMaterialization() throws Exception {
+        Date startTime = getDaylightCalendar().getTime();
+        Date endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setNextMaterializedTime(startTime);
         job.setMatThrottling(10);
         job.setFrequency("1");
@@ -754,21 +739,17 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        // If the startTime and endTime straddle a DST shift (the Coord is in
-        // "America/Los_Angeles"), then we need to adjust for
-        // that because startTime and endTime assume GMT
-        next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
-        tz = TimeZone.getTimeZone(job.getTimeZone());
-        next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
+        Date next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
 
         assertEquals(next, job.getNextMaterializedTime());
+    }
 
-        // Case: job started in Standard time, and materialization is in
-        // Daylight time
+    public void testMaterializationLookupStandardTimeStartDaylightMaterialization() throws Exception {
         Calendar c = getStandardCalendar();
-        startTime = c.getTime();
-        endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
-        job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
+        Date startTime = c.getTime();
+        Date endTime = new Date(startTime.getTime() + TIME_IN_DAY * 3);
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
         job.setNextMaterializedTime(startTime);
         job.setMatThrottling(10);
         job.setFrequency("1");
@@ -776,24 +757,32 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
         new CoordMaterializeTransitionXCommand(job, hoursToSeconds(1), startTime, endTime).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
-        // If the startTime and endTime straddle a DST shift (the Coord is in
-        // "America/Los_Angeles"), then we need to adjust for
-        // that because startTime and endTime assume GMT
-        next = new Date(startTime.getTime() + TIME_IN_DAY * 4);
-        tz = TimeZone.getTimeZone(job.getTimeZone());
-        next.setTime(next.getTime() + DaylightOffsetCalculator.getDSTOffset(tz, startTime, next));
+        Date next = new Date(startTime.getTime() + TIME_IN_DAY * 4);
+        adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
         assertEquals(next, job.getNextMaterializedTime());
-
     }
 
-    Calendar getDaylightCalendar() {
+    private void adjustExpectedMaterializationDateForDSTSwitch(Date date, Date startTime, CoordinatorJobBean job) {
+        // If the startTime and endTime straddle a DST shift (the Coord is in "America/Los_Angeles"), then we need to adjust for
+        // that because startTime and endTime assume GMT
+        TimeZone tz = TimeZone.getTimeZone(job.getTimeZone());
+        long offset = DaylightOffsetCalculator.getDSTOffset(tz, startTime, date);
+        Date currentDate = new Date();
+        Date shiftedDate = new Date(date.getTime() + offset);
+        if (offset>0 && date.before(currentDate) && shiftedDate.after(currentDate)) {
+            offset -= TIME_IN_DAY;
+        }
+        date.setTime(date.getTime() + offset);
+    }
+
+    private Calendar getDaylightCalendar() {
         final Calendar daylight = Calendar.getInstance();
         daylight.set(2012, 10, 2, 15, 28, 00);
 
         return daylight;
     }
 
-    Calendar getStandardCalendar() {
+    private Calendar getStandardCalendar() {
         final Calendar standard = Calendar.getInstance();
         standard.set(2013, 2, 9, 15, 28, 00);
 
@@ -1033,11 +1022,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordinatorJobBean cronJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 cronFrequency);
 
-        new CoordMaterializeTransitionXCommand(elJob.getId(), oneHourInSeconds).call();
-        new CoordMaterializeTransitionXCommand(cronJob.getId(), oneHourInSeconds).call();
-
-
-        JPAService jpaService = Services.get().get(JPAService.class);
+        new CoordMaterializeTransitionXCommand(elJob.getId(), TIME_IN_HOURS).call();
+        new CoordMaterializeTransitionXCommand(cronJob.getId(), TIME_IN_HOURS).call();
 
         elJob = jpaService.execute(new CoordJobGetJPAExecutor(elJob.getId()));
         cronJob = jpaService.execute(new CoordJobGetJPAExecutor(cronJob.getId()));
@@ -1052,9 +1038,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     private void testCronNominalTimes (Date startTime, Date endTime, Date[] nominalTimes, String cronFrequency) throws Exception {
         CoordinatorJobBean cronJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 cronFrequency);
-        new CoordMaterializeTransitionXCommand(cronJob.getId(), oneHourInSeconds).call();
+        new CoordMaterializeTransitionXCommand(cronJob.getId(), TIME_IN_HOURS).call();
 
-        JPAService jpaService = Services.get().get(JPAService.class);
         cronJob = jpaService.execute(new CoordJobGetJPAExecutor(cronJob.getId()));
         checkCoordActionsNominalTime(cronJob.getId(), nominalTimes.length, nominalTimes);
         assertTrue("Cron job materialization should be complete", cronJob.isDoneMaterialization());
@@ -1064,9 +1049,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             throws Exception {
         CoordinatorJobBean elJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 elFrequency, elTimeUnit);
-        new CoordMaterializeTransitionXCommand(elJob.getId(), oneHourInSeconds).call();
+        new CoordMaterializeTransitionXCommand(elJob.getId(), TIME_IN_HOURS).call();
 
-        JPAService jpaService = Services.get().get(JPAService.class);
         elJob = jpaService.execute(new CoordJobGetJPAExecutor(elJob.getId()));
         checkCoordActionsNominalTime(elJob.getId(), nominalTimes.length, nominalTimes);
         assertTrue("EL job materialization should be complete", elJob.isDoneMaterialization());
@@ -1228,7 +1212,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     private void checkCoordJobs(String jobId, CoordinatorJob.Status expectedStatus) {
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(jobId));
             if (job.getStatus() != expectedStatus) {
                 fail("CoordJobMatLookupCommand didn't work because the status for job id"
@@ -1242,7 +1225,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     private void checkCoordWaiting(String jobId, int expectedValue) {
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             int numWaitingActions = jpaService.execute(new CoordJobGetRunningActionsCountJPAExecutor(jobId));
             assert (numWaitingActions <= expectedValue);
         }
@@ -1253,7 +1235,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     private CoordinatorActionBean checkCoordAction(String actionId) throws JPAExecutorException {
         long lastSeqId[] = new long[1];
-        JPAService jpaService = Services.get().get(JPAService.class);
         List<SLAEventBean> slaEventList = jpaService.execute(new SLAEventsGetForSeqIdJPAExecutor(-1, 10, lastSeqId));
 
         if (slaEventList.size() == 0) {
@@ -1268,15 +1249,14 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     }
 
     private CoordinatorActionBean getCoordAction(String actionId) throws JPAExecutorException {
-        JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean actionBean;
+        jpaService = Services.get().get(JPAService.class);
         actionBean = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
         return actionBean;
     }
 
     private void checkCoordActionsNominalTime(String jobId, int number, Date[] nominalTimes) {
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(jobId,
                     null, 1, 1000, false));
 
@@ -1297,7 +1277,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     private void checkCoordActionsStatus(String jobId, CoordinatorActionBean.Status[] statuses) {
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(jobId,
                     null, 1, 1000, false));
 
@@ -1318,7 +1297,6 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     private void checkCoordActionsTimeout(String actionId, int expected) {
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
             CoordinatorActionBean action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
             assertEquals(action.getTimeOut(), expected);
         }
