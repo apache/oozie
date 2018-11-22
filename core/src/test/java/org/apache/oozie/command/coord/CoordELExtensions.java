@@ -19,6 +19,7 @@
  package org.apache.oozie.command.coord;
 
 import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.util.ELEvaluator;
@@ -45,19 +46,19 @@ public class CoordELExtensions {
         dsInstanceCal.set(Calendar.SECOND, 0);
         dsInstanceCal.set(Calendar.MILLISECOND, 0);
 
-        int[] instCnt = new int[1];
+        final AtomicInteger instCnt = new AtomicInteger(0);
         Calendar compInstCal = CoordELFunctions
                 .getCurrentInstance(dsInstanceCal.getTime(), instCnt);
         if (compInstCal == null) {
             return "";
         }
-        int dsInstanceCnt = instCnt[0];
+        int dsInstanceCnt = instCnt.get();
 
         compInstCal = CoordELFunctions.getCurrentInstance(nominalInstanceCal.getTime(), instCnt);
         if (compInstCal == null) {
             return "";
         }
-        int nominalInstanceCnt = instCnt[0];
+        int nominalInstanceCnt = instCnt.get();
 
         return "coord:current(" + (dsInstanceCnt - nominalInstanceCnt) + ")";
     }

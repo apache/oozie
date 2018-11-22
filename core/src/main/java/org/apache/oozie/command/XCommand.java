@@ -218,7 +218,7 @@ public abstract class XCommand<T> implements XCallable<T> {
                         getLockTimeOut(), getName());
             }
             else {
-                throw new CommandException(ErrorCode.E0606, this.toString(), getLockTimeOut());
+                throw new CommandException(ErrorCode.E0606, getEntityKey(), getLockTimeOut());
             }
         }
         else {
