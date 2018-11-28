@@ -28,6 +28,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.JsonUtils;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.ExtendedCallableQueueService;
@@ -125,7 +126,7 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
         validateRetryConsoleUrl(wfXml);
     }
 
-    public void validateRetryConsoleUrl(String wfXml) throws Exception {
+    private void validateRetryConsoleUrl(String wfXml) throws Exception {
         Configuration conf = new XConfiguration();
         File workflowUri = new File(getTestCaseDir(), "workflow.xml");
         writeToFile(wfXml, workflowUri);
@@ -144,14 +145,12 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
         waitFor(20 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
                 List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
-                WorkflowActionBean action = null;
                 for (WorkflowActionBean bean : actions) {
-                    if (bean.getType().equals("test")) {
-                        action = bean;
-                        break;
+                    if (bean.getType().equals("test") && bean.getUserRetryCount() == 2) {
+                        return true;
                     }
                 }
-                return (action != null && action.getUserRetryCount() == 2);
+                return false;
             }
         });
 
@@ -167,26 +166,53 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
             }
         }
 
-        WorkflowActionRetryInfoXCommand command = new WorkflowActionRetryInfoXCommand(action1.getId());
-        List<Map<String, String>> retriesList = command.call();
-        assertEquals(2, retriesList.size());
-        assertEquals(2, action1.getUserRetryCount());
+        List<Map<String, String>> retries1List = getRetryList(action1);
+        int retries1Num = retries1List == null ? 0 : retries1List.size();
 
-        assertEquals(retriesList.get(0).get(JsonTags.ACTION_ATTEMPT), "1");
-        assertEquals(retriesList.get(0).get(JsonTags.WORKFLOW_ACTION_START_TIME),
-                JsonUtils.formatDateRfc822(action1.getStartTime()));
+        List<Map<String, String>> retries2List = getRetryList(action2);
+        int retries2Num = retries2List == null ? 0 : retries2List.size();
 
-        assertNotNull(retriesList.get(0).get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL));
-        assertNotNull(retriesList.get(0).get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS));
+        assertTrue( String.format("Invalid number of retries %d and %d", retries1Num, retries2Num),
+                retries1Num == 2 || retries2Num == 2);
 
-        assertNotNull(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL));
-        assertNotNull(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS));
+        if (retries1List != null) {
+            assertEquals("Invalid action attempt", retries1List.get(0).get(JsonTags.ACTION_ATTEMPT), "1");
+            assertEquals("Invalid workflow action start time", retries1List.get(0).get(JsonTags.WORKFLOW_ACTION_START_TIME),
+                    JsonUtils.formatDateRfc822(action1.getStartTime()));
+            for (Map<String,String> retry : retries1List) {
+                assertNotNull("Workflow action console URL should not be null", retry.get(JsonTags.WORKFLOW_ACTION_CONSOLE_URL));
+                assertNotNull("Missing external child ids", retry.get(JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS));
+            }
+            if (retries1List.size() >= 2) {
+                final Date action1EndTime = action1.getEndTime();
+                final Date secondRetry1EndTime = JsonUtils.parseDateRfc822(retries1List.get(1).get(
+                        JsonTags.WORKFLOW_ACTION_END_TIME));
+                assertTrue("action end time should be within ten seconds of second retry end time",
+                        new Interval(secondRetry1EndTime.getTime(), secondRetry1EndTime.getTime() + 10_000)
+                                .contains(action1EndTime.getTime()));
+            }
+        }
 
-        final Date actionEndTime = action2 == null ? action1.getEndTime() : action2.getEndTime();
-        final Date secondRetryEndTime = JsonUtils.parseDateRfc822(retriesList.get(1).get(JsonTags.WORKFLOW_ACTION_END_TIME));
+        if (retries2List != null) {
+            assertEquals("Invalid action attempt", retries2List.get(0).get(JsonTags.ACTION_ATTEMPT), "1");
+            assertEquals("Invalid workflow action start time", retries2List.get(0).get(JsonTags.WORKFLOW_ACTION_START_TIME),
+                    JsonUtils.formatDateRfc822(action2.getStartTime()));
+            if (retries2List.size() >= 2) {
+                final Date action2EndTime = action2.getEndTime();
+                final Date secondRetry2EndTime = JsonUtils.parseDateRfc822(retries2List.get(1).get(
+                        JsonTags.WORKFLOW_ACTION_END_TIME));
+                assertTrue("action end time should be within ten seconds of second retry end time",
+                        new Interval(secondRetry2EndTime.getTime(), secondRetry2EndTime.getTime() + 10_000)
+                                .contains(action2EndTime.getTime()));
+            }
+        }
+    }
 
-        assertTrue("action end time should be within ten seconds of second retry end time",
-                new Interval(secondRetryEndTime.getTime(), secondRetryEndTime.getTime() + 10_000)
-                        .contains(actionEndTime.getTime()));
+    private List<Map<String, String>> getRetryList(WorkflowActionBean action) throws CommandException {
+        if (action == null) {
+            return null;
+        }
+        WorkflowActionRetryInfoXCommand command = new WorkflowActionRetryInfoXCommand(action.getId());
+        return command.call();
     }
 }
