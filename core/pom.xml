@@ -546,9 +546,7 @@
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
-                    <descriptors>
-                        <descriptor>../src/main/assemblies/empty.xml</descriptor>
-                    </descriptors>
+                    <ignoreMissingDescriptor>true</ignoreMissingDescriptor>
                 </configuration>
             </plugin>
             <plugin>
