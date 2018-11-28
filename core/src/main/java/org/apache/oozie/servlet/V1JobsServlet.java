@@ -144,8 +144,9 @@ public class V1JobsServlet extends BaseJobsServlet {
         }
 
         final List<String> appPathsWithFileNames;
-        if (!findAppPathsWithFileNames(conf.get(OozieClient.APP_PATH), "workflow.xml").isEmpty()) {
-            appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.APP_PATH), "workflow.xml");
+        final String appPath = conf.get(OozieClient.APP_PATH);
+        if (!findAppPathsWithFileNames(appPath, "workflow.xml").isEmpty()) {
+            appPathsWithFileNames = findAppPathsWithFileNames(appPath, "workflow.xml");
         }
         else if (!findAppPathsWithFileNames(conf.get(OozieClient.LIBPATH), "workflow.xml").isEmpty()) {
             appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.LIBPATH), "workflow.xml");
@@ -168,10 +169,11 @@ public class V1JobsServlet extends BaseJobsServlet {
         for (final String appPathWithFileName : appPathsWithFileNames) {
             final String sourceContent = conf.get(OozieClient.CONFIG_KEY_GENERATED_XML);
             if (sourceContent == null) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307,
-                        String.format("Configuration entry %s not present", OozieClient.CONFIG_KEY_GENERATED_XML));
+                final String errorMessage = String.format("App directory [%s] does not exist and " +
+                        "app definition cannot be created because of missing config value [%s]",
+                        appPath,  OozieClient.CONFIG_KEY_GENERATED_XML);
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, errorMessage);
             }
-
             if (tryCreateOnDFS(userName, appPathWithFileName, sourceContent)) {
                 return;
             }
