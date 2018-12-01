@@ -41,6 +41,7 @@ import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.BufferDrainer;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XLog;
@@ -146,11 +147,11 @@ public class SshActionExecutor extends ActionExecutor {
                 LOG.debug("Ssh command [{0}]", dataCommand);
                 try {
                     final Process process = Runtime.getRuntime().exec(dataCommand.split("\\s"));
-
-                    final StringBuffer outBuffer = new StringBuffer();
-                    final StringBuffer errBuffer = new StringBuffer();
+                    final BufferDrainer bufferDrainer = new BufferDrainer(process, maxLen);
+                    bufferDrainer.drainBuffers();
+                    final StringBuffer outBuffer = bufferDrainer.getInputBuffer();
+                    final StringBuffer errBuffer = bufferDrainer.getErrorBuffer();
                     boolean overflow = false;
-                    drainBuffers(process, outBuffer, errBuffer, maxLen);
                     LOG.trace("outBuffer={0}", outBuffer);
                     LOG.trace("errBuffer={0}", errBuffer);
                     if (outBuffer.length() > maxLen) {
@@ -306,11 +307,11 @@ public class SshActionExecutor extends ActionExecutor {
         String outFile = getRemoteFileName(context, action, "pid", false, false);
         String getOutputCmd = SSH_COMMAND_BASE + host + " cat " + outFile;
         try {
-            Process process = Runtime.getRuntime().exec(getOutputCmd.split("\\s"));
-            StringBuffer buffer = new StringBuffer();
-            drainBuffers(process, buffer, null, maxLen);
+            final Process process = Runtime.getRuntime().exec(getOutputCmd.split("\\s"));
+            final BufferDrainer bufferDrainer = new BufferDrainer(process, maxLen);
+            bufferDrainer.drainBuffers();
+            final StringBuffer buffer = bufferDrainer.getInputBuffer();
             String pid = getFirstLine(buffer);
-
             if (Long.valueOf(pid) > 0) {
                 return pid;
             }
@@ -358,8 +359,9 @@ public class SshActionExecutor extends ActionExecutor {
         Runtime runtime = Runtime.getRuntime();
         Process p = runtime.exec(command.split("\\s"));
 
-        StringBuffer errorBuffer = new StringBuffer();
-        int exitValue = drainBuffers(p, null, errorBuffer, maxLen);
+        final BufferDrainer bufferDrainer = new BufferDrainer(p, maxLen);
+        final int exitValue = bufferDrainer.drainBuffers();
+        final StringBuffer errorBuffer = bufferDrainer.getErrorBuffer();
 
         if (exitValue != 0) {
             String error = getTruncatedString(errorBuffer);
@@ -447,12 +449,11 @@ public class SshActionExecutor extends ActionExecutor {
         LOG.trace("Executing SSH command [finalCommand={0}]", Arrays.toString(finalCommand));
         final Process p = runtime.exec(finalCommand);
 
-        final StringBuffer inputBuffer = new StringBuffer();
-        final StringBuffer errorBuffer = new StringBuffer();
-        final int exitValue = drainBuffers(p, inputBuffer, errorBuffer, maxLen);
-
+        BufferDrainer bufferDrainer = new BufferDrainer(p, maxLen);
+        final int exitValue = bufferDrainer.drainBuffers();
+        final StringBuffer inputBuffer = bufferDrainer.getInputBuffer();
+        final StringBuffer errorBuffer = bufferDrainer.getErrorBuffer();
         final String pid = getFirstLine(inputBuffer);
-
         if (exitValue != 0) {
             String error = getTruncatedString(errorBuffer);
             throw new IOException(XLog.format("Not able to execute ssh-base.sh on {0}", host) + " | " + "ErrorStream: "
@@ -504,7 +505,8 @@ public class SshActionExecutor extends ActionExecutor {
         Process ps = null;
         try {
             ps = Runtime.getRuntime().exec(command.split("\\s"));
-            returnValue = drainBuffers(ps, null, null, 0);
+            final BufferDrainer bufferDrainer = new BufferDrainer(ps, 0);
+            returnValue = bufferDrainer.drainBuffers();
         }
         catch (IOException e) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FAILED_OPERATION", XLog.format(
@@ -726,97 +728,6 @@ public class SshActionExecutor extends ActionExecutor {
         else {
             return strBuffer.substring(0, maxLen);
         }
-    }
-
-    /**
-     * Drains the inputStream and errorStream of the Process being executed. The contents of the streams are stored if a
-     * buffer is provided for the stream.
-     *
-     * @param p The Process instance.
-     * @param inputBuffer The buffer into which STDOUT is to be read. Can be null if only draining is required.
-     * @param errorBuffer The buffer into which STDERR is to be read. Can be null if only draining is required.
-     * @param maxLength The maximum data length to be stored in these buffers. This is an indicative value, and the
-     * store content may exceed this length.
-     * @return the exit value of the processSettings.
-     * @throws IOException
-     */
-    private int drainBuffers(final Process p, final StringBuffer inputBuffer, final StringBuffer errorBuffer, final int maxLength)
-            throws IOException {
-        LOG.trace("drainBuffers() start");
-
-        int exitValue = -1;
-
-        int inBytesRead = 0;
-        int errBytesRead = 0;
-
-        boolean processEnded = false;
-
-        try (final BufferedReader ir = new BufferedReader(new InputStreamReader(p.getInputStream(), Charsets.UTF_8));
-             final BufferedReader er = new BufferedReader(new InputStreamReader(p.getErrorStream(), Charsets.UTF_8))) {
-            // Here we do some kind of busy waiting, checking whether the process has finished by calling Process#exitValue().
-            // If not yet finished, an IllegalThreadStateException is thrown and ignored, the progress on stdout and stderr read,
-            // and retried until the process has ended.
-            // Note that Process#waitFor() may block sometimes, that's why we do a polling mechanism using Process#exitValue()
-            // instead. Until we extend unit and integration test coverage for SSH action, and we can introduce a more sophisticated
-            // error handling based on the extended coverage, this solution should stay in place.
-            while (!processEnded) {
-                try {
-                    // Doesn't block but throws IllegalThreadStateException if the process hasn't finished yet
-                    exitValue = p.exitValue();
-                    processEnded = true;
-                }
-                catch (final IllegalThreadStateException itse) {
-                    // Continue to drain
-                }
-
-                // Drain input and error streams
-                inBytesRead += drainBuffer(ir, inputBuffer, maxLength, inBytesRead, processEnded);
-                errBytesRead += drainBuffer(er, errorBuffer, maxLength, errBytesRead, processEnded);
-
-                // Necessary evil: sleep and retry
-                if (!processEnded) {
-                    try {
-                        Thread.sleep(500);
-                    }
-                    catch (final InterruptedException ie) {
-                        // Sleep a little, then check again
-                    }
-                }
-            }
-        }
-
-        LOG.trace("drainBuffers() end [exitValue={0}]", exitValue);
-
-        return exitValue;
-    }
-
-    /**
-     * Reads the contents of a stream and stores them into the provided buffer.
-     *
-     * @param br The stream to be read.
-     * @param storageBuf The buffer into which the contents of the stream are to be stored.
-     * @param maxLength The maximum number of bytes to be stored in the buffer. An indicative value and may be
-     * exceeded.
-     * @param bytesRead The number of bytes read from this stream to date.
-     * @param readAll If true, the stream is drained while their is data available in it. Otherwise, only a single chunk
-     * of data is read, irrespective of how much is available.
-     * @return bReadSession returns drainBuffer for stream of contents
-     * @throws IOException
-     */
-    private int drainBuffer(BufferedReader br, StringBuffer storageBuf, int maxLength, int bytesRead, boolean readAll)
-            throws IOException {
-        int bReadSession = 0;
-        if (br.ready()) {
-            char[] buf = new char[1024];
-            do {
-                int bReadCurrent = br.read(buf, 0, 1024);
-                if (storageBuf != null && bytesRead < maxLength) {
-                    storageBuf.append(buf, 0, bReadCurrent);
-                }
-                bReadSession += bReadCurrent;
-            } while (br.ready() && readAll);
-        }
-        return bReadSession;
     }
 
     /**
