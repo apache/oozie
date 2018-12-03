@@ -1,5 +1,6 @@
 -- Oozie 5.1.0 release
 
+OOZIE-3390 [Shell action] STDERR contains a bogus error message (kmarton, andras.piros)
 OOZIE-3389 Getting input dependency list on the UI throws NPE (andras.piros via asalamon74, kmarton)
 OOZIE-3386 Misleading error message when workflow application does not exist (kmarton)
 OOZIE-3377 [docs] Remaining 5.1.0 documentation changes (andras.piros)

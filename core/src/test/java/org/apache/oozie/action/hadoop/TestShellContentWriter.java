@@ -65,6 +65,25 @@ public class TestShellContentWriter {
     }
 
     @Test
+    public void testPrintShellValidShellCommand() {
+        callPrint(1, "echo");
+
+        Assert.assertTrue(String.format("output stream must be empty but is [%s]", outputStream.toString()),
+                outputStream.toString().isEmpty());
+        Assert.assertTrue(String.format("error stream must be empty but is [%s]", errorStream.toString()),
+                errorStream.toString().isEmpty());
+    }
+
+    @Test
+    public void testPrintShellInvalidShellCommand() {
+        callPrint(1, "invalid command");
+
+        Assert.assertTrue(String.format("output stream must be empty but is [%s]", outputStream.toString()),
+                outputStream.toString().isEmpty());
+        Assert.assertTrue(String.format("invalid error stream message [%s]", errorStream.toString()),
+                errorStream.toString().contains("doesn't appear to exist"));
+    }
+    @Test
     public void testPrintControlCharacter() throws Exception {
         writeScript("echo Hello World\011");
 
@@ -107,7 +126,8 @@ public class TestShellContentWriter {
         writeScript("");
 
         Assert.assertTrue(outputStream.toString().isEmpty());
-        Assert.assertTrue(errorStream.toString().contains("doesn't appear to exist"));
+        Assert.assertTrue(String.format("invalid error stream message [%s]", errorStream.toString()),
+                errorStream.toString().contains("doesn't appear to exist"));
     }
 
     private void writeScript(String content) throws IOException {
@@ -120,11 +140,15 @@ public class TestShellContentWriter {
             Files.write(scriptFile.toPath(), content.getBytes());
         }
 
+        callPrint(maxLen, scriptFile.getAbsolutePath());
+    }
+
+    private void callPrint(final int maxLen, final String filename) {
         ShellContentWriter writer = new ShellContentWriter(
                 maxLen,
                 outputStream,
                 errorStream,
-                scriptFile.getAbsolutePath()
+                filename
         );
 
         writer.print();

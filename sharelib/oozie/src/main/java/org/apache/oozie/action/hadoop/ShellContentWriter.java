@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.Charsets;
 
 import java.io.BufferedInputStream;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Dump the content of a shell script to output stream.
@@ -67,7 +69,7 @@ public class ShellContentWriter {
         Path path = Paths.get(filename);
 
         try {
-            if (Files.exists(path)) {
+            if (isValidScript(path)) {
                 BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
                 long len = attributes.size();
                 if (len < maxLen) {
@@ -88,9 +90,35 @@ public class ShellContentWriter {
                     writeLine(errorStream, message);
                 }
             } else {
-                writeLine(errorStream, "Path " + filename + " doesn't appear to exist");
+                writeLine(errorStream, "Path " + filename + " doesn't appear to exist, not printing its content.");
             }
         } catch (IOException ignored) { }
+    }
+
+    @SuppressFBWarnings(value = {"COMMAND_INJECTION", "PATH_TRAVERSAL_OUT"},
+            justification = "pathToScript is specified in the WF action. It will surely be executed later on, no need to filter")
+    private boolean isValidScript(final Path pathToScript) {
+        if (Files.exists(pathToScript)) {
+            return true;
+        }
+
+        try {
+            // command -v is not present on every tested platform, using which instead
+            final Process presentOnPathProcess = new ProcessBuilder()
+                    .command("which", pathToScript.toString())
+                    .start();
+
+            final boolean hasFinished = presentOnPathProcess.waitFor(1, TimeUnit.SECONDS);
+            if (!hasFinished) {
+                return false;
+            }
+
+            final int exitValue = presentOnPathProcess.exitValue();
+
+            return exitValue == 0;
+        } catch (final IOException | InterruptedException | IllegalThreadStateException e) {
+            return false;
+        }
     }
 
     // Read the file into the given buffer.
