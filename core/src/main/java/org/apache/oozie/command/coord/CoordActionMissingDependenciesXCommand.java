@@ -107,19 +107,20 @@ public class CoordActionMissingDependenciesXCommand
     @Override
     protected List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> execute() throws CommandException {
 
-        List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> inputDependenciesListPair =
+        final List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> inputDependenciesListPair =
                 new ArrayList<Pair<CoordinatorActionBean, Map<String, ActionDependency>>>();
         try {
 
-            for (CoordinatorActionBean coordAction : coordActions) {
-                CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
-                CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
-                Map<String, ActionDependency> dependencyMap = new HashMap<String, ActionDependency>();
+            for (final CoordinatorActionBean coordAction : coordActions) {
+                final CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+                final CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
+                final Map<String, ActionDependency> dependencyMap = new HashMap<>();
                 dependencyMap.putAll(coordPullInputDependency.getMissingDependencies(coordAction));
                 dependencyMap.putAll(coordPushInputDependency.getMissingDependencies(coordAction));
 
-                inputDependenciesListPair.add(
-                        new Pair<CoordinatorActionBean, Map<String, ActionDependency>>(coordAction, dependencyMap));
+                if (!dependencyMap.isEmpty()) {
+                    inputDependenciesListPair.add(new Pair<>(coordAction, dependencyMap));
+                }
             }
         }
         catch (Exception e) {

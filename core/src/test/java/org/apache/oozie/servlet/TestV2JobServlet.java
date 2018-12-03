@@ -19,7 +19,6 @@
 package org.apache.oozie.servlet;
 
 import org.apache.oozie.client.CoordinatorWfAction;
-import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.service.ConfigurationService;
@@ -117,11 +116,18 @@ public class TestV2JobServlet extends DagServletTestCase {
                 url = createURL(MockCoordinatorEngineService.JOB_ID + (MockCoordinatorEngineService.coordJobs.size() + 1), params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 return null;
             }
         });
+    }
+
+    private void assertBadRequestOrInternalServerError(final int responseCode) {
+        assertTrue(String.format("HTTP response code [%d] is unexpected, should be one of [%d, %d]",
+                            responseCode, HttpServletResponse.SC_BAD_REQUEST, HttpServletResponse.SC_INTERNAL_SERVER_ERROR),
+                HttpServletResponse.SC_BAD_REQUEST == responseCode
+                || HttpServletResponse.SC_INTERNAL_SERVER_ERROR == responseCode);
     }
 
     public void testGetCoordActionReruns() throws Exception {
@@ -180,7 +186,7 @@ public class TestV2JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("PUT");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
                 assertEquals(RestConstants.JOB_ACTION_CHANGE, MockCoordinatorEngineService.did);
 
                 return null;
@@ -219,7 +225,7 @@ public class TestV2JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("PUT");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
                 assertEquals(RestConstants.JOB_ACTION_IGNORE, MockCoordinatorEngineService.did);
 
                 return null;
@@ -313,7 +319,7 @@ public class TestV2JobServlet extends DagServletTestCase {
                 URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
 
                 return null;
             }
@@ -334,7 +340,7 @@ public class TestV2JobServlet extends DagServletTestCase {
                 URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
 
                 return null;
             }
@@ -355,7 +361,7 @@ public class TestV2JobServlet extends DagServletTestCase {
                 URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
 
                 return null;
             }
@@ -419,7 +425,7 @@ public class TestV2JobServlet extends DagServletTestCase {
                 URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
 
                 return null;
             }
@@ -440,7 +446,8 @@ public class TestV2JobServlet extends DagServletTestCase {
                 URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
+                assertBadRequestOrInternalServerError(conn.getResponseCode());
+
                 return null;
             }
         });

@@ -370,6 +370,11 @@ public class CoordOldInputDependency implements CoordInputDependency {
 
         Element eAction = XmlUtils.parseXml(coordAction.getActionXml());
         Element inputList = eAction.getChild("input-events", eAction.getNamespace());
+
+        if (inputList == null || inputList.getChildren().isEmpty()) {
+            return dependenciesMap;
+        }
+
         List<Element> eDataEvents = inputList.getChildren("data-in", eAction.getNamespace());
         for (Element event : eDataEvents) {
             Element uri = event.getChild("uris", event.getNamespace());
