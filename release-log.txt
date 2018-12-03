@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3389 Getting input dependency list on the UI throws NPE (andras.piros via asalamon74, kmarton)
 OOZIE-3382 [SSH action] [SSH action] Optimize process streams draining (asalamon74 via andras.piros)
 OOZIE-3384 [tests] TestWorkflowActionRetryInfoXCommand#testRetryConsoleUrlForked() is flaky (asalamon74 via kmarton)
 OOZIE-3386 Misleading error message when workflow application does not exist (kmarton)
