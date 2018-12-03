@@ -1,9 +1,7 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
-OOZIE-3389 Getting input dependency list on the UI throws NPE (andras.piros via asalamon74, kmarton)
 OOZIE-3382 [SSH action] [SSH action] Optimize process streams draining (asalamon74 via andras.piros)
 OOZIE-3384 [tests] TestWorkflowActionRetryInfoXCommand#testRetryConsoleUrlForked() is flaky (asalamon74 via kmarton)
-OOZIE-3386 Misleading error message when workflow application does not exist (kmarton)
 OOZIE-3120 Upgrade maven-assembly plugin to v.3.1.0 (dionusos via kmarton)
 OOZIE-3381 [coordinator] Enhance logging of CoordElFunctions (andras.piros via kmarton)
 OOZIE-3380 TestCoordMaterializeTransitionXCommand failure after DST change date (asalamon74 via kmarton)
@@ -18,6 +16,7 @@ OOZIE-3277 [build] Check for star imports (kmarton via andras.piros)
 
 -- Oozie 5.1.0 release
 
+OOZIE-3390 [Shell action] STDERR contains a bogus error message (kmarton, andras.piros)
 OOZIE-3389 Getting input dependency list on the UI throws NPE (andras.piros via asalamon74, kmarton)
 OOZIE-3386 Misleading error message when workflow application does not exist (kmarton)
 OOZIE-3377 [docs] Remaining 5.1.0 documentation changes (andras.piros)
