@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3397 Improve logging in NotificationXCommand (kmarton)
 OOZIE-3382 [SSH action] [SSH action] Optimize process streams draining (asalamon74 via andras.piros)
 OOZIE-3384 [tests] TestWorkflowActionRetryInfoXCommand#testRetryConsoleUrlForked() is flaky (asalamon74 via kmarton)
 OOZIE-3120 Upgrade maven-assembly plugin to v.3.1.0 (dionusos via kmarton)

@@ -30,6 +30,7 @@ public abstract class NotificationXCommand extends XCommand<Void> {
 
     public static final String NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY = "oozie.notification.url.connection.timeout";
     public static final String NOTIFICATION_PROXY_KEY = "oozie.notification.proxy";
+    private static final int MAX_RETRIES = 3;
 
     protected int retries = 0;
     protected String jobId;
@@ -92,7 +93,7 @@ public abstract class NotificationXCommand extends XCommand<Void> {
     }
 
     protected void handleRetry() {
-        if (retries < 3) {
+        if (retries < MAX_RETRIES) {
             retries++;
             this.resetUsed();
             queue(this, 60 * 1000);
@@ -106,15 +107,25 @@ public abstract class NotificationXCommand extends XCommand<Void> {
         if (url != null) {
             Proxy proxy = getProxy(proxyConf);
             try {
+                LOG.debug("Trying to send notification to [{0}] for the [{1}] time out of total [{2}]",
+                        url, retries, MAX_RETRIES);
                 URL url = new URL(this.url);
                 HttpURLConnection urlConn = (HttpURLConnection) url.openConnection(proxy);
-                urlConn.setConnectTimeout(getTimeOut());
-                urlConn.setReadTimeout(getTimeOut());
-                if (urlConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                int timeout = getTimeOut();
+                urlConn.setConnectTimeout(timeout);
+                urlConn.setReadTimeout(timeout);
+                LOG.debug("Setting connection timeout and read timeout to [{0}] ms", timeout);
+                int responseCode = urlConn.getResponseCode();
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    LOG.warn("Notification sending to URL [{0}] failed. response code: [{1}], response message: [{2}]",
+                            this.url, responseCode, urlConn.getResponseMessage());
                     handleRetry();
+                } else {
+                    LOG.debug("Notification sent to [{0}]", this.url);
                 }
             }
             catch (IOException ex) {
+                LOG.warn("Notification sending to URL [{0}] failed with exception [{1}]", url, ex.getMessage());
                 handleRetry();
             }
         }
