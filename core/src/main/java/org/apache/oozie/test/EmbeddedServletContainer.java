@@ -39,7 +39,8 @@ import java.util.Map;
 
 /**
  * An embedded servlet container for testing purposes. <p> It provides reduced functionality, it supports only
- * Servlets. <p> The servlet container is started in a free port.
+ * Servlets. <p> The servlet container is started in a free port or a specific port which depends on the testing
+ * purposes.
  */
 public class EmbeddedServletContainer {
     private Server server;
@@ -62,6 +63,11 @@ public class EmbeddedServletContainer {
         context.setErrorHandler(getErrorHandler());
         this.addServletEndpoint("/error/*", ErrorServlet.class);
         server.setHandler(context);
+    }
+
+    public EmbeddedServletContainer(String contextPath, int port) {
+        this(contextPath);
+        this.port = port;
     }
 
     /**
@@ -115,18 +121,33 @@ public class EmbeddedServletContainer {
     }
 
     /**
-     * Start the servlet container. <p> The container starts on a free port.
+     * Start the servlet container. <p> The container starts on a free port or a specific port.
      *
      * @throws Exception thrown if the container could not start.
      */
     public void start() throws Exception {
         host = InetAddress.getLocalHost().getHostName();
+        port = startServerWithPort(port);
+        System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
+    }
+
+    /**
+     * if port is the default value (-1), this will start on the free port, and this function will return this port
+     * if port is not -1, this will start on the specific port
+     * @param port
+     * @return
+     * @throws Exception
+     */
+    private int startServerWithPort(int port) throws Exception {
+        host = InetAddress.getLocalHost().getHostName();
         ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
         connector.setHost(host);
+        if (port != -1) {
+            connector.setPort(port);
+        }
         server.setConnectors(new Connector[] { connector });
         server.start();
-        port = connector.getLocalPort();
-        System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
+        return connector.getLocalPort();
     }
 
     /**
