@@ -27,7 +27,6 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
@@ -36,11 +35,9 @@ import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.V1JobsServlet;
-import org.apache.oozie.test.XDataTestCase;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.Ignore;
 
 public class TestV1JobsServletBundleEngine extends DagServletTestCase {
     static {
@@ -51,23 +48,9 @@ public class TestV1JobsServletBundleEngine extends DagServletTestCase {
 
     private Services services;
 
-    /**
-     * This class is needed in order to reuse some methods of class {@link XDataTestCase}. We cannot directly extend it there as
-     * we extend {@link DagServletTestCase}. Anonymous inner class is also not an option since we cannot assign it an annotation.
-     * The @Ignore annotation is needed to prevent JUnit from recognizing this inner class as a test.
-     */
-    @Ignore
-    private static class XDataTestCase1 extends XDataTestCase {
-    }
-
-    private final XDataTestCase1 xDataTestCase = new XDataTestCase1();
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-
-        xDataTestCase.setName(getName());
-        xDataTestCase.setUpPub();
 
         new Services().init();
         services = Services.get();
@@ -79,7 +62,6 @@ public class TestV1JobsServletBundleEngine extends DagServletTestCase {
         if (services != null) {
             services.destroy();
         }
-        xDataTestCase.tearDownPub();
         super.tearDown();
     }
 
@@ -89,7 +71,7 @@ public class TestV1JobsServletBundleEngine extends DagServletTestCase {
      * {@link BundleEngine#parseFilter(String)}.
      */
     public void testGetBundleJobs() throws Exception {
-        final BundleJobBean bundleJobBean = xDataTestCase.addRecordToBundleJobTable(Job.Status.PREP, false);
+        final BundleJobBean bundleJobBean = addRecordToBundleJobTable(Job.Status.PREP, false);
 
         runTest("/v1/jobs", V1JobsServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             @Override

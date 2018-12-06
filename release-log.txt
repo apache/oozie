@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3399 [tests] Eliminate nested class in TestV1JobsServletBundleEngine and TestV1JobServletBundleEngine (asalamon74 via andras.piros)
 OOZIE-3379 [client] Auth token cache file name should include OOZIE_URL (zuston via andras.piros)
 OOZIE-3397 Improve logging in NotificationXCommand (kmarton)
 OOZIE-3382 [SSH action] [SSH action] Optimize process streams draining (asalamon74 via andras.piros)
