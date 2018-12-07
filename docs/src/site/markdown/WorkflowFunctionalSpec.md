@@ -1382,8 +1382,7 @@ by any `job-xml` elements.
 <a name="SubWorkflowAction"></a>
 #### 3.2.5 Sub-workflow Action
 
-The `sub-workflow` action runs a child workflow job, the child workflow job can be in the same Oozie system or in
-another Oozie system.
+The `sub-workflow` action runs a child workflow job.
 
 The parent workflow job will wait until the child workflow job has completed.
 
