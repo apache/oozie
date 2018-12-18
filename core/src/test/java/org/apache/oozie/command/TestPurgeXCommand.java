@@ -2859,6 +2859,92 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : Tbe subsubworkflow shouldn't get purged,
+     *        the subworkflow should get purged,
+     *        the workflow parent should get purged --> neither will get purged
+     *
+     * @throws Exception
+     */
+    public void testPurgeWFWithSubSubWF() throws Exception {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                subwfJob.getId());
+        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
+        WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
+        WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
+        WorkflowJobGetJPAExecutor subsubwfJobGetCmd = new WorkflowJobGetJPAExecutor(subsubwfJob.getId());
+        WorkflowActionGetJPAExecutor subsubwfActionGetCmd = new WorkflowActionGetJPAExecutor(subsubwfAction.getId());
+
+        wfJob = jpaService.execute(wfJobGetCmd);
+        wfAction = jpaService.execute(wfActionGetCmd);
+        subwfJob = jpaService.execute(subwfJobGetCmd);
+        subwfAction = jpaService.execute(subwfActionGetCmd);
+        subsubwfJob = jpaService.execute(subsubwfJobGetCmd);
+        subsubwfAction = jpaService.execute(subsubwfActionGetCmd);
+
+        assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
+        assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
+        assertEquals(WorkflowJob.Status.RUNNING, subsubwfJob.getStatus());
+        assertEquals(WorkflowAction.Status.RUNNING, subsubwfAction.getStatus());
+
+        new PurgeXCommand(7, 1, 1, 10).call();
+
+        try {
+            jpaService.execute(wfJobGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Workflow Job should not have been purged");
+        }
+
+        try {
+            jpaService.execute(wfActionGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("Workflow Action should not have been purged");
+        }
+
+        try {
+            jpaService.execute(subwfJobGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("SubWorkflow Job should not have been purged");
+        }
+
+        try {
+            jpaService.execute(subwfActionGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("SubWorkflow Action should not have been purged");
+        }
+        try {
+            jpaService.execute(subsubwfJobGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("SubSubWorkflow Job should not have been purged");
+        }
+
+        try {
+            jpaService.execute(subsubwfActionGetCmd);
+        }
+        catch (JPAExecutorException je) {
+            fail("SubSubWorkflow Action should not have been purged");
+        }
+
+    }
+
+    /**
      * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
      * Subworkflow has terminated, last modified time is known, but end time is null
      *
