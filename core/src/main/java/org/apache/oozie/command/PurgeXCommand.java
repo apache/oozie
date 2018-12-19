@@ -185,52 +185,61 @@ public class PurgeXCommand extends XCommand<Void> {
     }
 
     /**
-     * Process workflows to purge them and their children.  Uses the processWorkflowsHelper method to help via recursion to make
-     * sure that the workflow children are deleted before their parents.
+     * Process workflows to purge them and their children if all the descendants are purgeable. Skip the workflows that have
+     * non-purgeable descendants.
      *
      * @param wfs List of workflows to process
      * @throws JPAExecutorException If a JPA executor has a problem
      */
     private void processWorkflows(List<String> wfs) throws JPAExecutorException {
-        List<String> wfsToPurge = processWorkflowsHelper(wfs);
+        List<String> wfsToPurge = findPurgeableWorkflows(wfs);
         purgeWorkflows(wfsToPurge);
     }
 
     /**
-     * Used by the processWorkflows method and via recursion.
+     * Get purgeable workflow list.
      *
-     * @param wfs List of workflows to process
+     * @param workflows List of workflows to process
      * @return List of workflows to purge
      * @throws JPAExecutorException If a JPA executor has a problem
      */
-    private List<String> processWorkflowsHelper(List<String> wfs) throws JPAExecutorException {
-        // If the list is empty, then we've finished recursing
-        if (wfs.isEmpty()) {
-            return wfs;
+    private List<String> findPurgeableWorkflows(List<String> workflows) throws JPAExecutorException {
+        List<String> purgeableWorkflows = new ArrayList<>();
+        for (String workflowId : workflows) {
+            purgeableWorkflows.addAll(findAllDescendantWorkflowsIfPurgeable(workflowId));
         }
-        List<String> subwfs = new ArrayList<String>();
-        List<String> wfsToPurge = new ArrayList<String>();
-        for (String wfId : wfs) {
-            int size;
-            List<WorkflowJobBean> swfBeanList = new ArrayList<WorkflowJobBean>();
-            do {
-                size = swfBeanList.size();
-                swfBeanList.addAll(jpaService.execute(
-                        new WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor(wfId, swfBeanList.size(), limit)));
-            } while (size != swfBeanList.size());
+        return purgeableWorkflows;
+    }
 
+    private List<String> findAllDescendantWorkflowsIfPurgeable(String workflowId) throws JPAExecutorException {
+        List<String> descendantWorkflows = new ArrayList<>();
+        descendantWorkflows.add(workflowId);
+        int nextWorkflowIndex = 0;
+        while (nextWorkflowIndex < descendantWorkflows.size()) {
+            String wfId = descendantWorkflows.get(nextWorkflowIndex);
+            List<WorkflowJobBean> subWorkflows = getSubWorkflowJobBeans(wfId);
             // Checking if sub workflow is ready to purge
-            List<String> children = fetchTerminatedWorkflow(swfBeanList);
-
-            // if all sub workflow ready to purge add them all and add current workflow
-            if(children.size() == swfBeanList.size()) {
-                subwfs.addAll(children);
-                wfsToPurge.add(wfId);
+            List<String> terminatedSubWorkflows = fetchTerminatedWorkflow(subWorkflows);
+            if (terminatedSubWorkflows.size() == subWorkflows.size()) {
+                descendantWorkflows.addAll(terminatedSubWorkflows);
             }
+            else {
+                return new ArrayList<>();
+            }
+            ++nextWorkflowIndex;
         }
-        // Recurse on the children we just found to process their children
-        wfsToPurge.addAll(processWorkflowsHelper(subwfs));
-        return wfsToPurge;
+        return descendantWorkflows;
+    }
+
+    private List<WorkflowJobBean> getSubWorkflowJobBeans(String wfId) throws JPAExecutorException {
+        int size;
+        List<WorkflowJobBean> swfBeanList = new ArrayList<>();
+        do {
+            size = swfBeanList.size();
+            swfBeanList.addAll(jpaService.execute(
+                    new WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor(wfId, swfBeanList.size(), limit)));
+        } while (size != swfBeanList.size());
+        return swfBeanList;
     }
 
     /**
