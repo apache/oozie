@@ -125,7 +125,7 @@ public abstract class NotificationXCommand extends XCommand<Void> {
                 }
             }
             catch (IOException ex) {
-                LOG.warn("Notification sending to URL [{0}] failed with exception [{1}]", url, ex.getMessage());
+                LOG.warn("Notification sending to URL [{0}] failed", url, ex);
                 handleRetry();
             }
         }
