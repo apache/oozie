@@ -104,8 +104,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -145,8 +143,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.FAILED);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -186,8 +182,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -227,8 +221,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
@@ -268,8 +260,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
@@ -308,8 +298,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED,
                 "coord-action-get.xml", 0);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
@@ -348,8 +336,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.KILLED,
                 "coord-action-get.xml", 0);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
@@ -388,8 +374,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
@@ -426,8 +410,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.SUCCEEDED, job.getStatus());
@@ -479,8 +461,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
@@ -532,8 +512,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.KILLED, job.getStatus());
@@ -585,8 +563,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
         BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.RUNNING, job.getStatus());
@@ -629,9 +605,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChild1() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -691,9 +664,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeLongRunningCoordWithWFChild() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -756,9 +726,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeLongRunningCoordWithWFChildNegative() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -816,9 +783,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChild2() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -877,9 +841,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChild2MoreThanLimit() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1073,9 +1034,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChild3() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -1137,9 +1095,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChild3MoreThanLimit() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1349,9 +1304,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChild1() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1432,9 +1384,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChild2() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1517,9 +1466,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChild2MoreThanLimit() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -1837,9 +1783,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChild3() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1927,9 +1870,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChild3MoreThanLimit() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -2272,9 +2212,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeWFWithSubWF1() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
@@ -2333,9 +2270,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeWFWithSubWF2() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
@@ -2394,9 +2328,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeWFWithSubWF2MoreThanLimit() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob.getId(), "2", WorkflowAction.Status.OK);
@@ -2590,9 +2521,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeWFWithSubWF3() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
@@ -2655,9 +2583,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeWFWithSubWF3MoreThanLimit() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob.getId(), "2", WorkflowAction.Status.OK);
@@ -2993,9 +2918,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeWFWithEndedSubWFWithNullEndTimeValidLastModifiedTime() throws Exception {
-        final JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
 
@@ -3053,9 +2975,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChildWithSubWF1() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -3137,9 +3056,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChildWithSubWF2() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -3221,9 +3137,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChildWithSubWF3() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
@@ -3315,9 +3228,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeCoordWithWFChildWithSubWFNullEndTimeValidLastModifiedTime() throws Exception {
-        final JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
 
         final QueryExecutor<WorkflowJobBean, WorkflowJobQueryExecutor.WorkflowJobQuery> workflowJobQueryExecutor =
@@ -3420,9 +3330,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChildWithSubWF1() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -3527,9 +3434,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChildWithSubWF2() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -3635,9 +3539,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeBundleWithCoordChildWithWFChildWithSubWF3() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        assertNotNull(jpaService);
-
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -3749,7 +3650,6 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeLotsOfJobs() throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
 
         /* Job relationships:
@@ -4159,8 +4059,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         wfBean.setEndTime(new Date(System.currentTimeMillis() + (long)100*24*60*60*1000 + (long)2*60*60*1000));
 
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
             WorkflowJobInsertJPAExecutor wfInsertCmd = new WorkflowJobInsertJPAExecutor(wfBean);
             jpaService.execute(wfInsertCmd);
         }
@@ -4204,8 +4102,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setLastModifiedTime(DateUtils.parseDateOozieTZ("2009-12-18T01:00Z"));
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
             CoordJobInsertJPAExecutor coordInsertCmd = new CoordJobInsertJPAExecutor(coordJob);
             jpaService.execute(coordInsertCmd);
         }
@@ -4222,8 +4118,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleJobBean bundle = createBundleJob(jobStatus, false);
         bundle.setLastModifiedTime(lastModifiedTime);
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
             BundleJobInsertJPAExecutor bundleInsertjpa = new BundleJobInsertJPAExecutor(bundle);
             jpaService.execute(bundleInsertjpa);
         }
@@ -4248,8 +4142,6 @@ public class TestPurgeXCommand extends XDataTestCase {
     public static CoordinatorJobBean setLastModifiedTime(CoordinatorJobBean job, String date) throws Exception {
         job.setLastModifiedTime(DateUtils.parseDateOozieTZ(date));
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
             CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, job);
         }
         catch (JPAExecutorException je) {
@@ -4263,8 +4155,6 @@ public class TestPurgeXCommand extends XDataTestCase {
     public static WorkflowJobBean setEndTime(WorkflowJobBean job, String date) throws Exception {
         job.setEndTime(DateUtils.parseDateOozieTZ(date));
         try {
-            JPAService jpaService = Services.get().get(JPAService.class);
-            assertNotNull(jpaService);
             WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END, job);
         }
         catch (JPAExecutorException je) {
