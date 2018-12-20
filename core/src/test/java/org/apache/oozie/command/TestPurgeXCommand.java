@@ -710,48 +710,22 @@ public class TestPurgeXCommand extends XDataTestCase {
      */
     public void testPurgeWFWithSubWF3MoreThanLimit() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob.getId(), "2", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob.getId(), "3", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob.getId(), "4", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob.getId(), "5", WorkflowAction.Status.OK);
-        WorkflowJobBean subwfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowJobBean subwfJob5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction2 = addRecordToWfActionTable(subwfJob2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction3 = addRecordToWfActionTable(subwfJob3.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction4 = addRecordToWfActionTable(subwfJob4.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subwfAction5 = addRecordToWfActionTable(subwfJob5.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowActionBean[] wfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        WorkflowJobBean[] subwfJobs = new WorkflowJobBean[TEST_CHILD_NUM];
+        WorkflowActionBean[] subwfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        for (int i=0; i<TEST_CHILD_NUM; ++i) {
+            wfActions[i] = addRecordToWfActionTable(wfJob.getId(), String.format("action%d", i), WorkflowAction.Status.OK);
+            subwfJobs[i] = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                    wfJob.getId());
+            subwfActions[i] = addRecordToWfActionTable(subwfJobs[i].getId(), "1", WorkflowAction.Status.OK);
+        }
 
         new PurgeXCommand(7, 1, 1, 3).call();
 
         assertWorkflowJobPurged(wfJob);
-
-        assertWorkflowActionPurged(wfAction1);
-        assertWorkflowActionPurged(wfAction2);
-        assertWorkflowActionPurged(wfAction3);
-        assertWorkflowActionPurged(wfAction4);
-        assertWorkflowActionPurged(wfAction5);
-
-        assertWorkflowJobPurged(subwfJob1);
-        assertWorkflowJobPurged(subwfJob2);
-        assertWorkflowJobPurged(subwfJob3);
-        assertWorkflowJobPurged(subwfJob4);
-        assertWorkflowJobPurged(subwfJob5);
-
-        assertWorkflowActionPurged(subwfAction1);
-        assertWorkflowActionPurged(subwfAction2);
-        assertWorkflowActionPurged(subwfAction3);
-        assertWorkflowActionPurged(subwfAction4);
-        assertWorkflowActionPurged(subwfAction5);
+        assertWorkflowActionsPurged(wfActions);
+        assertWorkflowJobsPurged(subwfJobs);
+        assertWorkflowActionsPurged(subwfActions);
     }
 
     /**
