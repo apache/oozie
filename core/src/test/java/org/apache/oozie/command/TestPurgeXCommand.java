@@ -75,6 +75,7 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestPurgeXCommand extends XDataTestCase {
     private JPAService jpaService;
+    private static final int TEST_CHILD_NUM=5;
 
     @Override
     protected void setUp() throws Exception {
@@ -820,48 +821,22 @@ public class TestPurgeXCommand extends XDataTestCase {
      */
     public void testPurgeWFWithSubWF2MoreThanLimit() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob.getId(), "2", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob.getId(), "3", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob.getId(), "4", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob.getId(), "5", WorkflowAction.Status.OK);
-        WorkflowJobBean subwfJob1 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                wfJob.getId());
-        WorkflowJobBean subwfJob2 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                wfJob.getId());
-        WorkflowJobBean subwfJob3 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                wfJob.getId());
-        WorkflowJobBean subwfJob4 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                wfJob.getId());
-        WorkflowJobBean subwfJob5 = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                wfJob.getId());
-        WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.RUNNING);
-        WorkflowActionBean subwfAction2 = addRecordToWfActionTable(subwfJob2.getId(), "1", WorkflowAction.Status.RUNNING);
-        WorkflowActionBean subwfAction3 = addRecordToWfActionTable(subwfJob3.getId(), "1", WorkflowAction.Status.RUNNING);
-        WorkflowActionBean subwfAction4 = addRecordToWfActionTable(subwfJob4.getId(), "1", WorkflowAction.Status.RUNNING);
-        WorkflowActionBean subwfAction5 = addRecordToWfActionTable(subwfJob5.getId(), "1", WorkflowAction.Status.RUNNING);
+        WorkflowActionBean[] wfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        WorkflowJobBean[] subwfJobs = new WorkflowJobBean[TEST_CHILD_NUM];
+        WorkflowActionBean[] subwfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        for (int i=0; i<TEST_CHILD_NUM; ++i) {
+            wfActions[i] = addRecordToWfActionTable(wfJob.getId(), String.format("action%d",i), WorkflowAction.Status.OK);
+            subwfJobs[i] = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                    wfJob.getId());
+            subwfActions[i] = addRecordToWfActionTable(subwfJobs[i].getId(), String.format("action%d",i), WorkflowAction.Status.RUNNING);
+        }
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
         assertWorkflowJobNotPurged(wfJob);
-
-        assertWorkflowActionNotPurged(wfAction1);
-        assertWorkflowActionNotPurged(wfAction2);
-        assertWorkflowActionNotPurged(wfAction3);
-        assertWorkflowActionNotPurged(wfAction4);
-        assertWorkflowActionNotPurged(wfAction5);
-
-        assertWorkflowJobNotPurged(subwfJob1);
-        assertWorkflowJobNotPurged(subwfJob2);
-        assertWorkflowJobNotPurged(subwfJob3);
-        assertWorkflowJobNotPurged(subwfJob4);
-        assertWorkflowJobNotPurged(subwfJob5);
-
-        assertWorkflowActionNotPurged(subwfAction1);
-        assertWorkflowActionNotPurged(subwfAction2);
-        assertWorkflowActionNotPurged(subwfAction3);
-        assertWorkflowActionNotPurged(subwfAction4);
-        assertWorkflowActionNotPurged(subwfAction5);
+        assertWorkflowActionsNotPurged(wfActions);
+        assertWorkflowJobsNotPurged(subwfJobs);
+        assertWorkflowActionsNotPurged(subwfActions);
     }
 
     /**
@@ -1020,6 +995,36 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertWorkflowJobPurged(subsub2wfJob);
         assertWorkflowActionPurged(subsub1wfAction);
         assertWorkflowActionPurged(subsub2wfAction);
+    }
+
+    private void assertCoordinatorActionsPurged(CoordinatorActionBean... coordinatorActionBeans) {
+        for (CoordinatorActionBean bean : coordinatorActionBeans) {
+            assertCoordinatorActionPurged(bean);
+        }
+    }
+
+    private void assertWorkflowJobsPurged(WorkflowJobBean... workflowJobBeans) {
+        for (WorkflowJobBean bean : workflowJobBeans) {
+            assertWorkflowJobPurged(bean);
+        }
+    }
+
+    private void assertWorkflowJobsNotPurged(WorkflowJobBean... workflowJobBeans) {
+        for (WorkflowJobBean bean : workflowJobBeans) {
+            assertWorkflowJobNotPurged(bean);
+        }
+    }
+
+    private void assertWorkflowActionsPurged(WorkflowActionBean... workflowActionBeans) {
+        for (WorkflowActionBean bean : workflowActionBeans) {
+            assertWorkflowActionPurged(bean);
+        }
+    }
+
+    private void assertWorkflowActionsNotPurged(WorkflowActionBean... workflowActionBeans) {
+        for (WorkflowActionBean bean : workflowActionBeans) {
+            assertWorkflowActionNotPurged(bean);
+        }
     }
 
     private void assertWorkflowJobNotPurged(WorkflowJobBean workflowJobBean) {
