@@ -101,8 +101,8 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testSucJobPurgeXCommand() throws Exception {
-        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
@@ -116,8 +116,8 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testFailJobPurgeXCommand() throws Exception {
-        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.FAILED);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.FAILED);
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
@@ -131,8 +131,8 @@ public class TestPurgeXCommand extends XDataTestCase {
     * @throws Exception
     */
     public void testKillJobPurgeXCommand() throws Exception {
-        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
+        WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
@@ -146,8 +146,8 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testPurgeXCommandFailed() throws Exception {
-        WorkflowJobBean job = this.addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
+        WorkflowJobBean job = addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
@@ -225,10 +225,10 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testSucBundlePurgeXCommand() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+        BundleJobBean job = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
             "2011-01-01T01:00Z"));
-        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
-        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
@@ -244,10 +244,10 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testFailBundlePurgeXCommand() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.DONEWITHERROR, DateUtils.parseDateOozieTZ(
+        BundleJobBean job = addRecordToBundleJobTable(Job.Status.DONEWITHERROR, DateUtils.parseDateOozieTZ(
             "2011-01-01T01:00Z"));
-        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
-        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
+        addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
@@ -263,10 +263,10 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testKillBundlePurgeXCommand() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.KILLED, DateUtils.parseDateOozieTZ(
+        BundleJobBean job = addRecordToBundleJobTable(Job.Status.KILLED, DateUtils.parseDateOozieTZ(
             "2011-01-01T01:00Z"));
-        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
-        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
+        addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
+        addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
@@ -282,10 +282,10 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testBundlePurgeXCommandFailed() throws Exception {
-        BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.RUNNING, DateUtils.parseDateOozieTZ(
+        BundleJobBean job = addRecordToBundleJobTable(Job.Status.RUNNING, DateUtils.parseDateOozieTZ(
             "2011-01-01T01:00Z"));
-        this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
-        this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
+        addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
+        addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
