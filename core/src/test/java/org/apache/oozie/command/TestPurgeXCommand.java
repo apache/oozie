@@ -314,7 +314,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow should get purged, but the coordinator parent shouldn't get purged --> neither will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChild1() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -336,7 +336,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * the workflow and corresponding coord actions will get purged after we turn the purge.old.coord.action on
      * Coordinator itself will not be purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeLongRunningCoordWithWFChild() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
@@ -358,7 +358,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * the workflow and corresponding coord actions will NOT get purged after we turn the purge.old.coord.action off
      * Neither will be purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeLongRunningCoordWithWFChildNegative() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
@@ -378,7 +378,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow should not get purged, but the coordinator parent should get purged --> neither will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChild2() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -399,7 +399,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The workflows should not get purged, but the coordinator parent should get purged --> none will get purged
      * There are more workflow children than the limit
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChild2MoreThanLimit() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -450,7 +450,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow should get purged, and the coordinator parent should get purged --> both will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChild3() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -470,7 +470,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow should get purged, and the coordinator parent should get purged --> both will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChild3MoreThanLimit() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -521,7 +521,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow and coordinator should get purged, but the bundle parent shouldn't get purged --> none will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChild1() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -546,7 +546,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow and coordinator should not get purged, but the bundle parent should get purged --> none will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChild2() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -573,7 +573,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The workflow and coordinator should not get purged, but the bundle parent should get purged --> none will get purged
      * There are more coordinator children than the limit
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChild2MoreThanLimit() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -660,7 +660,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The workflow and coordinator should get purged, and the bundle parent should get purged --> all will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChild3() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -686,7 +686,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The workflow and coordinator should get purged, and the bundle parent should get purged --> all will get purged
      * There are more coordinator children than the limit
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChild3MoreThanLimit() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -772,7 +772,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The subworkflow should get purged, but the workflow parent shouldn't get purged --> neither will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubWF1() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
@@ -792,7 +792,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The subworkflow shouldn't get purged, but the workflow parent should get purged --> neither will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubWF2() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -813,7 +813,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflows shouldn't get purged, but the workflow parent should get purged --> none will get purged
      * There are more subworkflow children than the limit
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubWF2MoreThanLimit() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -864,7 +864,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubWF3() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -890,7 +890,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
      * There are more subworkflow children than the limit
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubWF3MoreThanLimit() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -943,7 +943,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      *        the subworkflow should get purged,
      *        the workflow parent should get purged --> neither will get purged
      *
-     * @throws Exception if unable to create workflow job or action bean
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubSubWF1() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -970,7 +970,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      *        the subworkflow shouldn't get purged,
      *        the workflow parent should get purged --> neither will get purged
      *
-     * @throws Exception if unable to create workflow job or action bean
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubSubWF2() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -997,7 +997,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      *        the subworkflow should get purged,
      *        the workflow parent should get purged --> all will get purged
      *
-     * @throws Exception if unable to create workflow job or action bean
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithSubSubWF3() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1142,7 +1142,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
      * Subworkflow has terminated, last modified time is known, but end time is null
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeWFWithEndedSubWFWithNullEndTimeValidLastModifiedTime() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -1189,7 +1189,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow and workflow should get purged, but the coordinator parent shouldn't get purged --> none will get
      * purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChildWithSubWF1() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -1215,7 +1215,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow and workflow should not get purged, but the coordinator parent should get purged --> none will get
      * purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChildWithSubWF2() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -1241,7 +1241,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow and workflow should get purged, and the coordinator parent should get purged --> all will get
      * purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChildWithSubWF3() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -1271,7 +1271,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Coordinator parent finished Workflow and its subworkflow have terminated, last modified time is known, but end time is null
      * for workflow and subworkflow
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeCoordWithWFChildWithSubWFNullEndTimeValidLastModifiedTime() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -1312,7 +1312,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow, workflow, and coordinator should get purged, but the bundle parent shouldn't get purged --> none will
      * get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChildWithSubWF1() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -1343,7 +1343,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow, workflow, and coordinator should not get purged, but the bundle parent should get purged --> none
      * will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChildWithSubWF2() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -1375,7 +1375,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * Test : The subworkflow, workflow, and coordinator should get purged, and the bundle parent should get purged --> all
      * will get purged
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeBundleWithCoordChildWithWFChildWithSubWF3() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
@@ -1405,7 +1405,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : Test purging a lot of jobs (with different parent-child relationships and purge-eligibility) in one go
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeLotsOfJobs() throws Exception {
         assertNotNull(jpaService);
