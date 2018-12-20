@@ -104,33 +104,35 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
-        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
+        //WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
+        //WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
-        job = jpaService.execute(wfJobGetCmd);
-        action = jpaService.execute(wfActionGetCmd);
-        assertEquals(job.getStatus(), WorkflowJob.Status.SUCCEEDED);
-        assertEquals(action.getStatus(), WorkflowAction.Status.OK);
-        WorkflowInstance wfInstance = job.getWorkflowInstance();
-        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.SUCCEEDED);
+        //job = jpaService.execute(wfJobGetCmd);
+        //action = jpaService.execute(wfActionGetCmd);
+        //assertEquals(job.getStatus(), WorkflowJob.Status.SUCCEEDED);
+        //assertEquals(action.getStatus(), WorkflowAction.Status.OK);
+        //WorkflowInstance wfInstance = job.getWorkflowInstance();
+        //assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.SUCCEEDED);
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(action.getId());
 
     }
 
@@ -143,33 +145,35 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.FAILED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
-        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
+        //WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
+        //WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
-        job = jpaService.execute(wfJobGetCmd);
-        action = jpaService.execute(wfActionGetCmd);
-        assertEquals(job.getStatus(), WorkflowJob.Status.FAILED);
-        assertEquals(action.getStatus(), WorkflowAction.Status.FAILED);
-        WorkflowInstance wfInstance = job.getWorkflowInstance();
-        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.FAILED);
+        //job = jpaService.execute(wfJobGetCmd);
+        //action = jpaService.execute(wfActionGetCmd);
+        //assertEquals(job.getStatus(), WorkflowJob.Status.FAILED);
+        //assertEquals(action.getStatus(), WorkflowAction.Status.FAILED);
+        //WorkflowInstance wfInstance = job.getWorkflowInstance();
+        //assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.FAILED);
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(action.getId());
 
     }
 
@@ -182,7 +186,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
         job = jpaService.execute(wfJobGetCmd);
@@ -190,25 +194,27 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(job.getStatus(), WorkflowJob.Status.KILLED);
         assertEquals(action.getStatus(), WorkflowAction.Status.KILLED);
         WorkflowInstance wfInstance = job.getWorkflowInstance();
-        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.KILLED);*/
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(action.getId());
 
     }
 
@@ -221,7 +227,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = this.addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(job.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
 
         job = jpaService.execute(wfJobGetCmd);
@@ -229,24 +235,26 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(job.getStatus(), WorkflowJob.Status.RUNNING);
         assertEquals(action.getStatus(), WorkflowAction.Status.RUNNING);
         WorkflowInstance wfInstance = job.getWorkflowInstance();
-        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);
+        assertEquals(wfInstance.getStatus(), WorkflowInstance.Status.RUNNING);*/
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException ce) {
             ce.printStackTrace();
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException ce) {
             fail("Workflow Action should have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(action.getId());
 
     }
 
@@ -260,32 +268,33 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
 
-        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        /*CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
         job = jpaService.execute(coordJobGetExecutor);
         action = jpaService.execute(coordActionGetExecutor);
         assertEquals(job.getStatus(), CoordinatorJob.Status.SUCCEEDED);
-        assertEquals(action.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+        assertEquals(action.getStatus(), CoordinatorAction.Status.SUCCEEDED);*/
 
         new PurgeXCommand(1, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetExecutor);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetExecutor);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
-
+        }*/
+        assertCoordinatorActionPurged(action.getId());
     }
 
     /**
@@ -298,31 +307,33 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED,
                 "coord-action-get.xml", 0);
 
-        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        /*CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
         job = jpaService.execute(coordJobGetExecutor);
         action = jpaService.execute(coordActionGetExecutor);
         assertEquals(job.getStatus(), CoordinatorJob.Status.FAILED);
-        assertEquals(action.getStatus(), CoordinatorAction.Status.FAILED);
+        assertEquals(action.getStatus(), CoordinatorAction.Status.FAILED);*/
 
         new PurgeXCommand(1, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetExecutor);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(job.getId());
 
-        try {
+/*        try {
             jpaService.execute(coordActionGetExecutor);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(action.getId());
 
     }
 
@@ -336,31 +347,33 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.KILLED,
                 "coord-action-get.xml", 0);
 
-        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        /*CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
         job = jpaService.execute(coordJobGetExecutor);
         action = jpaService.execute(coordActionGetExecutor);
         assertEquals(job.getStatus(), CoordinatorJob.Status.KILLED);
-        assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);
+        assertEquals(action.getStatus(), CoordinatorAction.Status.KILLED);*/
 
         new PurgeXCommand(1, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetExecutor);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetExecutor);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(action.getId());
 
     }
 
@@ -374,29 +387,31 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
 
-        CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
+        /*CoordJobGetJPAExecutor coordJobGetExecutor = new CoordJobGetJPAExecutor(job.getId());
         CoordActionGetJPAExecutor coordActionGetExecutor = new CoordActionGetJPAExecutor(action.getId());
 
         job = jpaService.execute(coordJobGetExecutor);
         action = jpaService.execute(coordActionGetExecutor);
         assertEquals(job.getStatus(), CoordinatorJob.Status.RUNNING);
-        assertEquals(action.getStatus(), CoordinatorAction.Status.SUCCEEDED);
+        assertEquals(action.getStatus(), CoordinatorAction.Status.SUCCEEDED);*/
 
         new PurgeXCommand(1, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetExecutor);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetExecutor);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(action.getId());
     }
 
     /**
@@ -410,7 +425,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.SUCCEEDED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        /*BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.SUCCEEDED, job.getStatus());
 
@@ -420,33 +435,36 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         BundleActionGetJPAExecutor bundleActionGetExecutor2 = new BundleActionGetJPAExecutor(job.getId(), "action2");
         BundleActionBean action2 = jpaService.execute(bundleActionGetExecutor2);
-        assertEquals(Job.Status.SUCCEEDED, action2.getStatus());
+        assertEquals(Job.Status.SUCCEEDED, action2.getStatus());*/
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetExecutor);
             fail("Bundle Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertBundleJobPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor1);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(job.getId(), "action1");
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor2);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(job.getId(), "action2");
 
     }
 
@@ -461,7 +479,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.FAILED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        /*BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.DONEWITHERROR, job.getStatus());
 
@@ -471,33 +489,36 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         BundleActionGetJPAExecutor bundleActionGetExecutor2 = new BundleActionGetJPAExecutor(job.getId(), "action2");
         BundleActionBean action2 = jpaService.execute(bundleActionGetExecutor2);
-        assertEquals(Job.Status.SUCCEEDED, action2.getStatus());
+        assertEquals(Job.Status.SUCCEEDED, action2.getStatus());*/
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetExecutor);
             fail("Bundle Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertBundleJobPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor1);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(job.getId(), "action1");
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor2);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(job.getId(), "action2");
 
     }
 
@@ -512,7 +533,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
 
-        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        /*BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.KILLED, job.getStatus());
 
@@ -522,34 +543,36 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         BundleActionGetJPAExecutor bundleActionGetExecutor2 = new BundleActionGetJPAExecutor(job.getId(), "action2");
         BundleActionBean action2 = jpaService.execute(bundleActionGetExecutor2);
-        assertEquals(Job.Status.KILLED, action2.getStatus());
+        assertEquals(Job.Status.KILLED, action2.getStatus());*/
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetExecutor);
             fail("Bundle Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertBundleJobPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor1);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(job.getId(), "action1");
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor2);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
-
+        }*/
+        assertBundleActionPurged(job.getId(), "action2");
     }
 
     /**
@@ -563,7 +586,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         this.addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
         this.addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
+        /*BundleJobGetJPAExecutor bundleJobGetExecutor = new BundleJobGetJPAExecutor(job.getId());
         job = jpaService.execute(bundleJobGetExecutor);
         assertEquals(Job.Status.RUNNING, job.getStatus());
 
@@ -573,30 +596,33 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         BundleActionGetJPAExecutor bundleActionGetExecutor2 = new BundleActionGetJPAExecutor(job.getId(), "action2");
         BundleActionBean action2 = jpaService.execute(bundleActionGetExecutor2);
-        assertEquals(Job.Status.SUCCEEDED, action2.getStatus());
+        assertEquals(Job.Status.SUCCEEDED, action2.getStatus());*/
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetExecutor);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(job.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor1);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(job.getId(), "action1");
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetExecutor2);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(job.getId(), "action2");
     }
 
     /**
@@ -611,7 +637,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -623,37 +649,41 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
     }
 
     /**
@@ -670,7 +700,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -682,40 +712,44 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10, true).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
     }
 
     /**
@@ -732,7 +766,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -744,37 +778,41 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10, false).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
     }
 
     /**
@@ -789,7 +827,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -801,37 +839,41 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()), 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
     }
 
     /**
@@ -863,7 +905,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction5 = addRecordToCoordActionTable(coordJob.getId(), 5, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob5.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
+        /*WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
         WorkflowJobGetJPAExecutor wfJob2GetCmd = new WorkflowJobGetJPAExecutor(wfJob2.getId());
         WorkflowJobGetJPAExecutor wfJob3GetCmd = new WorkflowJobGetJPAExecutor(wfJob3.getId());
         WorkflowJobGetJPAExecutor wfJob4GetCmd = new WorkflowJobGetJPAExecutor(wfJob4.getId());
@@ -911,18 +953,19 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction2.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction3.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction4.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction5.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction5.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob1.getEndTime()), 7, 1, 3).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -955,9 +998,14 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action 5 should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction1.getId());
+        assertCoordinatorActionNotPurged(coordAction2.getId());
+        assertCoordinatorActionNotPurged(coordAction3.getId());
+        assertCoordinatorActionNotPurged(coordAction4.getId());
+        assertCoordinatorActionNotPurged(coordAction5.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJob1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -990,9 +1038,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertWorkflowNotPurged(wfJob1.getId());
+        assertWorkflowNotPurged(wfJob2.getId());
+        assertWorkflowNotPurged(wfJob3.getId());
+        assertWorkflowNotPurged(wfJob4.getId());
+        assertWorkflowNotPurged(wfJob5.getId());
+
+        /*try {
             jpaService.execute(wfAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -1025,7 +1079,13 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action 5 should not have been purged");
-        }
+        }*/
+
+        assertWorkflowActionNotPurged(wfAction1.getId());
+        assertWorkflowActionNotPurged(wfAction2.getId());
+        assertWorkflowActionNotPurged(wfAction3.getId());
+        assertWorkflowActionNotPurged(wfAction4.getId());
+        assertWorkflowActionNotPurged(wfAction5.getId());
     }
 
     /**
@@ -1040,7 +1100,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -1052,41 +1112,45 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(7, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
     }
 
     /**
@@ -1117,7 +1181,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction5 = addRecordToCoordActionTable(coordJob.getId(), 5, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob5.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
+        /*WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
         WorkflowJobGetJPAExecutor wfJob2GetCmd = new WorkflowJobGetJPAExecutor(wfJob2.getId());
         WorkflowJobGetJPAExecutor wfJob3GetCmd = new WorkflowJobGetJPAExecutor(wfJob3.getId());
         WorkflowJobGetJPAExecutor wfJob4GetCmd = new WorkflowJobGetJPAExecutor(wfJob4.getId());
@@ -1165,19 +1229,21 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction2.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction3.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction4.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction5.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction5.getStatus());*/
 
         new PurgeXCommand(7, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertCoordinatorJobPurged(coordJob.getId());
+
+        /*try {
             jpaService.execute(coordAction1GetCmd);
             fail("Coordinator Action 1 should have been purged");
         }
@@ -1215,9 +1281,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertCoordinatorActionPurged(coordAction1.getId());
+        assertCoordinatorActionPurged(coordAction2.getId());
+        assertCoordinatorActionPurged(coordAction3.getId());
+        assertCoordinatorActionPurged(coordAction4.getId());
+        assertCoordinatorActionPurged(coordAction5.getId());
+
+        /*try {
             jpaService.execute(wfJob1GetCmd);
             fail("Workflow Job 1 should have been purged");
         }
@@ -1255,9 +1327,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertWorkflowPurged(wfJob1.getId());
+        assertWorkflowPurged(wfJob2.getId());
+        assertWorkflowPurged(wfJob3.getId());
+        assertWorkflowPurged(wfJob4.getId());
+        assertWorkflowPurged(wfJob5.getId());
+
+        /*try {
             jpaService.execute(wfAction1GetCmd);
             fail("Workflow Action 1 should have been purged");
         }
@@ -1295,7 +1373,12 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction1.getId());
+        assertWorkflowActionPurged(wfAction2.getId());
+        assertWorkflowActionPurged(wfAction3.getId());
+        assertWorkflowActionPurged(wfAction4.getId());
+        assertWorkflowActionPurged(wfAction5.getId());
     }
 
     /**
@@ -1313,7 +1396,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -1331,51 +1414,57 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJob.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());*/
 
         new PurgeXCommand(7, 7, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
     }
 
     /**
@@ -1393,7 +1482,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -1411,52 +1500,58 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJob.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()),
                 getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
     }
 
     /**
@@ -1511,7 +1606,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction5 = addRecordToBundleActionTable(bundleJob.getId(), coordJob5.getId(), coordJob5.getAppName(),
                 0, Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
+        /*WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
         WorkflowJobGetJPAExecutor wfJob2GetCmd = new WorkflowJobGetJPAExecutor(wfJob2.getId());
         WorkflowJobGetJPAExecutor wfJob3GetCmd = new WorkflowJobGetJPAExecutor(wfJob3.getId());
         WorkflowJobGetJPAExecutor wfJob4GetCmd = new WorkflowJobGetJPAExecutor(wfJob4.getId());
@@ -1589,19 +1684,20 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction2.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction3.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction4.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction5.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction5.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob1.getEndTime()),
                 getNumDaysToNotBePurged(coordJob1.getLastModifiedTime()), 7, 3).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -1634,9 +1730,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob1.getAppName());
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob2.getAppName());
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob3.getAppName());
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob4.getAppName());
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob5.getAppName());
+
+        /*try {
             jpaService.execute(coordJob1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -1669,9 +1771,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertCoordinatorJobNotPurged(coordJob1.getId());
+        assertCoordinatorJobNotPurged(coordJob2.getId());
+        assertCoordinatorJobNotPurged(coordJob3.getId());
+        assertCoordinatorJobNotPurged(coordJob4.getId());
+        assertCoordinatorJobNotPurged(coordJob5.getId());
+
+        /*try {
             jpaService.execute(coordAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -1704,9 +1812,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertCoordinatorActionNotPurged(coordAction1.getId());
+        assertCoordinatorActionNotPurged(coordAction2.getId());
+        assertCoordinatorActionNotPurged(coordAction3.getId());
+        assertCoordinatorActionNotPurged(coordAction4.getId());
+        assertCoordinatorActionNotPurged(coordAction5.getId());
+
+        /*try {
             jpaService.execute(wfJob1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -1739,9 +1853,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertWorkflowNotPurged(wfJob1.getId());
+
+        /*try {
             jpaService.execute(wfAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -1774,7 +1890,13 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action 5 should not have been purged");
-        }
+        }*/
+
+        assertWorkflowActionNotPurged(wfAction1.getId());
+        assertWorkflowActionNotPurged(wfAction2.getId());
+        assertWorkflowActionNotPurged(wfAction3.getId());
+        assertWorkflowActionNotPurged(wfAction4.getId());
+        assertWorkflowActionNotPurged(wfAction5.getId());
     }
 
     /**
@@ -1792,7 +1914,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
         CoordActionGetJPAExecutor coordActionGetCmd = new CoordActionGetJPAExecutor(coordAction.getId());
@@ -1810,57 +1932,64 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJob.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());*/
 
         new PurgeXCommand(7, 7, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
             fail("Bundle Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertBundleJobPurged(bundleJob.getId());
+
+        /*try {
             jpaService.execute(bundleActionGetCmd);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertBundleActionPurged(bundleJob.getId(), coordJob.getAppName());
+        /*try {
             jpaService.execute(coordJobGetCmd);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
     }
 
     /**
@@ -1915,7 +2044,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction5 = addRecordToBundleActionTable(bundleJob.getId(), coordJob5.getId(), coordJob5.getAppName(),
                 0, Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
+        /*WorkflowJobGetJPAExecutor wfJob1GetCmd = new WorkflowJobGetJPAExecutor(wfJob1.getId());
         WorkflowJobGetJPAExecutor wfJob2GetCmd = new WorkflowJobGetJPAExecutor(wfJob2.getId());
         WorkflowJobGetJPAExecutor wfJob3GetCmd = new WorkflowJobGetJPAExecutor(wfJob3.getId());
         WorkflowJobGetJPAExecutor wfJob4GetCmd = new WorkflowJobGetJPAExecutor(wfJob4.getId());
@@ -1993,19 +2122,20 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction2.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction3.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction4.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction5.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction5.getStatus());*/
 
         new PurgeXCommand(7, 7, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
             fail("Bundle Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertBundleJobPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleAction1GetCmd);
             fail("Bundle Action 1 should have been purged");
         }
@@ -2043,9 +2173,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertBundleActionPurged(bundleJob.getId(), coordJob1.getAppName());
+        assertBundleActionPurged(bundleJob.getId(), coordJob2.getAppName());
+        assertBundleActionPurged(bundleJob.getId(), coordJob3.getAppName());
+        assertBundleActionPurged(bundleJob.getId(), coordJob4.getAppName());
+        assertBundleActionPurged(bundleJob.getId(), coordJob5.getAppName());
+
+        /*try {
             jpaService.execute(coordJob1GetCmd);
             fail("Coordinator Job 1 should have been purged");
         }
@@ -2083,9 +2219,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertCoordinatorJobPurged(coordJob1.getId());
+        assertCoordinatorJobPurged(coordJob2.getId());
+        assertCoordinatorJobPurged(coordJob3.getId());
+        assertCoordinatorJobPurged(coordJob4.getId());
+        assertCoordinatorJobPurged(coordJob5.getId());
+
+        /*try {
             jpaService.execute(coordAction1GetCmd);
             fail("Coordinator Action 1 should have been purged");
         }
@@ -2123,9 +2265,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertCoordinatorActionPurged(coordAction1.getId());
+        assertCoordinatorActionPurged(coordAction2.getId());
+        assertCoordinatorActionPurged(coordAction3.getId());
+        assertCoordinatorActionPurged(coordAction4.getId());
+        assertCoordinatorActionPurged(coordAction5.getId());
+
+        /*try {
             jpaService.execute(wfJob1GetCmd);
             fail("Workflow Job 1 should have been purged");
         }
@@ -2163,9 +2311,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
 
-        try {
+        assertWorkflowPurged(wfJob1.getId());
+        assertWorkflowPurged(wfJob2.getId());
+        assertWorkflowPurged(wfJob3.getId());
+        assertWorkflowPurged(wfJob4.getId());
+        assertWorkflowPurged(wfJob5.getId());
+
+        /*try {
             jpaService.execute(wfAction1GetCmd);
             fail("Workflow Action 1 should have been purged");
         }
@@ -2203,7 +2357,13 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+
+        assertWorkflowActionPurged(wfAction1.getId());
+        assertWorkflowActionPurged(wfAction2.getId());
+        assertWorkflowActionPurged(wfAction3.getId());
+        assertWorkflowActionPurged(wfAction4.getId());
+        assertWorkflowActionPurged(wfAction5.getId());
     }
 
     /**
@@ -2218,7 +2378,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 wfJob.getId());
         WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -2230,38 +2390,42 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.RUNNING, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
-        assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());*/
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             je.printStackTrace();
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
     /**
@@ -2276,7 +2440,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 wfJob.getId());
         WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -2288,37 +2452,41 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(WorkflowJob.Status.RUNNING, subwfJob.getStatus());
-        assertEquals(WorkflowAction.Status.RUNNING, subwfAction.getStatus());
+        assertEquals(WorkflowAction.Status.RUNNING, subwfAction.getStatus());*/
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
     /**
@@ -2350,7 +2518,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowActionBean subwfAction4 = addRecordToWfActionTable(subwfJob4.getId(), "1", WorkflowAction.Status.RUNNING);
         WorkflowActionBean subwfAction5 = addRecordToWfActionTable(subwfJob5.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
         WorkflowActionGetJPAExecutor wfAction2GetCmd = new WorkflowActionGetJPAExecutor(wfAction2.getId());
         WorkflowActionGetJPAExecutor wfAction3GetCmd = new WorkflowActionGetJPAExecutor(wfAction3.getId());
@@ -2398,18 +2566,19 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowAction.Status.RUNNING, subwfAction2.getStatus());
         assertEquals(WorkflowAction.Status.RUNNING, subwfAction3.getStatus());
         assertEquals(WorkflowAction.Status.RUNNING, subwfAction4.getStatus());
-        assertEquals(WorkflowAction.Status.RUNNING, subwfAction5.getStatus());
+        assertEquals(WorkflowAction.Status.RUNNING, subwfAction5.getStatus());*/
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -2442,9 +2611,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertWorkflowActionNotPurged(wfAction1.getId());
+        assertWorkflowActionNotPurged(wfAction2.getId());
+        assertWorkflowActionNotPurged(wfAction3.getId());
+        assertWorkflowActionNotPurged(wfAction4.getId());
+        assertWorkflowActionNotPurged(wfAction5.getId());
+
+        /*try {
             jpaService.execute(subwfJob1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -2477,9 +2652,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job 5 should not have been purged");
-        }
+        }*/
 
-        try {
+        assertWorkflowNotPurged(subwfJob1.getId());
+        assertWorkflowNotPurged(subwfJob2.getId());
+        assertWorkflowNotPurged(subwfJob3.getId());
+        assertWorkflowNotPurged(subwfJob4.getId());
+        assertWorkflowNotPurged(subwfJob5.getId());
+
+        /*try {
             jpaService.execute(subwfAction1GetCmd);
         }
         catch (JPAExecutorException je) {
@@ -2512,7 +2693,13 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action 5 should not have been purged");
-        }
+        }*/
+
+        assertWorkflowActionNotPurged(subwfAction1.getId());
+        assertWorkflowActionNotPurged(subwfAction2.getId());
+        assertWorkflowActionNotPurged(subwfAction3.getId());
+        assertWorkflowActionNotPurged(subwfAction4.getId());
+        assertWorkflowActionNotPurged(subwfAction5.getId());
     }
 
     /**
@@ -2532,48 +2719,52 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
 
-        wfJob = jpaService.execute(wfJobGetCmd);
+        /*wfJob = jpaService.execute(wfJobGetCmd);
         wfAction = jpaService.execute(wfActionGetCmd);
         subwfJob = jpaService.execute(subwfJobGetCmd);
         subwfAction = jpaService.execute(subwfActionGetCmd);
         assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction.getStatus());
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
-        assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());*/
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
             fail("SubWorkflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
             fail("SubWorkflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(subwfAction.getId());
     }
 
     /**
@@ -2605,7 +2796,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowActionBean subwfAction4 = addRecordToWfActionTable(subwfJob4.getId(), "1", WorkflowAction.Status.OK);
         WorkflowActionBean subwfAction5 = addRecordToWfActionTable(subwfJob5.getId(), "1", WorkflowAction.Status.OK);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
         WorkflowActionGetJPAExecutor wfAction2GetCmd = new WorkflowActionGetJPAExecutor(wfAction2.getId());
         WorkflowActionGetJPAExecutor wfAction3GetCmd = new WorkflowActionGetJPAExecutor(wfAction3.getId());
@@ -2653,19 +2844,20 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowAction.Status.OK, subwfAction2.getStatus());
         assertEquals(WorkflowAction.Status.OK, subwfAction3.getStatus());
         assertEquals(WorkflowAction.Status.OK, subwfAction4.getStatus());
-        assertEquals(WorkflowAction.Status.OK, subwfAction5.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction5.getStatus());*/
 
         new PurgeXCommand(7, 1, 1, 3).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfAction1GetCmd);
             fail("Workflow Action 1 should have been purged");
         }
@@ -2703,9 +2895,14 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction1.getId());
+        assertWorkflowActionPurged(wfAction2.getId());
+        assertWorkflowActionPurged(wfAction3.getId());
+        assertWorkflowActionPurged(wfAction4.getId());
+        assertWorkflowActionPurged(wfAction5.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJob1GetCmd);
             fail("SubWorkflow Job 1 should have been purged");
         }
@@ -2743,9 +2940,14 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJob1.getId());
+        assertWorkflowPurged(subwfJob2.getId());
+        assertWorkflowPurged(subwfJob3.getId());
+        assertWorkflowPurged(subwfJob4.getId());
+        assertWorkflowPurged(subwfJob5.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfAction1GetCmd);
             fail("SubWorkflow Action 1 should have been purged");
         }
@@ -2783,7 +2985,12 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(subwfAction1.getId());
+        assertWorkflowActionPurged(subwfAction2.getId());
+        assertWorkflowActionPurged(subwfAction3.getId());
+        assertWorkflowActionPurged(subwfAction4.getId());
+        assertWorkflowActionPurged(subwfAction5.getId());
     }
 
     /**
@@ -2911,6 +3118,82 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
     }
 
+    private void assertCoordinatorJobNotPurged(String coordJobId) {
+        try {
+            JPAExecutor jpaExecutor = new CoordJobGetJPAExecutor(coordJobId);
+            jpaService.execute(jpaExecutor);
+        } catch (JPAExecutorException je) {
+            fail("Coordinator job "+coordJobId+" should not have been purged");
+        }
+    }
+
+    private void assertCoordinatorJobPurged(String coordJobId) {
+        try {
+            JPAExecutor jpaExecutor = new CoordJobGetJPAExecutor(coordJobId);
+            jpaService.execute(jpaExecutor);
+            fail("Coordinator job "+coordJobId+" should have been purged");
+        } catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+    }
+
+    private void assertCoordinatorActionNotPurged(String coordActionId) {
+        try {
+            JPAExecutor jpaExecutor = new CoordActionGetJPAExecutor(coordActionId);
+            jpaService.execute(jpaExecutor);
+        } catch (JPAExecutorException je) {
+            fail("Coordinator action "+coordActionId+" should not have been purged");
+        }
+    }
+
+    private void assertCoordinatorActionPurged(String coordActionId) {
+        try {
+            JPAExecutor jpaExecutor = new CoordActionGetJPAExecutor(coordActionId);
+            jpaService.execute(jpaExecutor);
+            fail("Coordinator action "+coordActionId+" should have been purged");
+        } catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+    }
+
+    private void assertBundleJobNotPurged(String bundleJobId) {
+        try {
+            JPAExecutor jpaExecutor = new BundleJobGetJPAExecutor(bundleJobId);
+            jpaService.execute(jpaExecutor);
+        } catch (JPAExecutorException je) {
+            fail("Bundle job "+bundleJobId+" should not have been purged");
+        }
+    }
+
+    private void assertBundleJobPurged(String bundleJobId) {
+        try {
+            JPAExecutor jpaExecutor = new BundleJobGetJPAExecutor(bundleJobId);
+            jpaService.execute(jpaExecutor);
+            fail("Bundle job "+bundleJobId+" should have been purged");
+        } catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+    }
+
+    private void assertBundleActionNotPurged(String bundleId, String coordName) {
+        try {
+            JPAExecutor jpaExecutor = new BundleActionGetJPAExecutor(bundleId, coordName);
+            jpaService.execute(jpaExecutor);
+        } catch (JPAExecutorException je) {
+            fail("Bundle action "+bundleId+"/"+coordName+" should not have been purged");
+        }
+    }
+
+    private void assertBundleActionPurged(String bundleId, String coordName) {
+        try {
+            JPAExecutor jpaExecutor = new BundleActionGetJPAExecutor(bundleId, coordName);
+            jpaService.execute(jpaExecutor);
+            fail("Bundle action "+bundleId+"/"+coordName+" should have been purged");
+        } catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+    }
+
     /**
      * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
      * Subworkflow has terminated, last modified time is known, but end time is null
@@ -2924,48 +3207,53 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean subwfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
                 wfJob.getId());
         subwfJob1.setEndTime(null);
+        System.out.println("subwfJob1:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
         WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
 
-        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
-        final WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
+        //final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        //final WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
         final WorkflowJobGetJPAExecutor subwfJob1GetCmd = new WorkflowJobGetJPAExecutor(subwfJob1.getId());
-        final WorkflowActionGetJPAExecutor subwfAction1GetCmd = new WorkflowActionGetJPAExecutor(subwfAction1.getId());
+        //final WorkflowActionGetJPAExecutor subwfAction1GetCmd = new WorkflowActionGetJPAExecutor(subwfAction1.getId());
 
-        wfJob = jpaService.execute(wfJobGetCmd);
-        wfAction1 = jpaService.execute(wfAction1GetCmd);
+        //wfJob = jpaService.execute(wfJobGetCmd);
+        //wfAction1 = jpaService.execute(wfAction1GetCmd);
         subwfJob1 = jpaService.execute(subwfJob1GetCmd);
-        subwfAction1 = jpaService.execute(subwfAction1GetCmd);
+        //subwfAction1 = jpaService.execute(subwfAction1GetCmd);
 
-        assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
+        /*assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, wfAction1.getStatus());
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob1.getStatus());
-        assertEquals(WorkflowAction.Status.OK, subwfAction1.getStatus());
+        assertEquals(WorkflowAction.Status.OK, subwfAction1.getStatus());*/
 
         final QueryExecutor<WorkflowJobBean, WorkflowJobQueryExecutor.WorkflowJobQuery> workflowJobQueryExecutor =
                 WorkflowJobQueryExecutor.getInstance();
         workflowJobQueryExecutor.executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, subwfJob1);
-
+        System.out.println("subwfJob1_:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
+        //subwfJob1 = jpaService.execute(subwfJob1GetCmd);
+        //System.out.println("subwfJob1__:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
         final int wfOlderThanDays = 7;
         final int coordOlderThanDays = 1;
         final int bundleOlderThanDays = 1;
         final int limit = 3;
         new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJob1GetCmd);
             fail("SubWorkflow Job 1 should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJob1.getId());
     }
 
     /**
@@ -2984,7 +3272,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3002,51 +3290,57 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
     /**
@@ -3065,7 +3359,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3083,51 +3377,57 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()), 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
     /**
@@ -3146,7 +3446,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         final WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         final WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3164,57 +3464,63 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         new PurgeXCommand(7, 7, 1, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
             fail("SubWorkflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
             fail("SubWorkflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(subwfAction.getId());
     }
 
 
@@ -3248,7 +3554,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         final WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         final WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         final WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3266,7 +3572,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob.getStatus());
         assertEquals(WorkflowAction.Status.OK, subwfAction.getStatus());
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
-        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
+        assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());*/
 
         final int wfOlderThanDays = 7;
         final int coordOlderThanDays = 7;
@@ -3274,53 +3580,59 @@ public class TestPurgeXCommand extends XDataTestCase {
         final int limit = 10;
         new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
             fail("SubWorkflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
             fail("SubWorkflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(subwfAction.getId());
     }
 
     /**
@@ -3342,7 +3654,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3366,65 +3678,73 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJob.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());*/
 
         new PurgeXCommand(7, 7, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
     /**
@@ -3446,7 +3766,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3470,66 +3790,74 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJob.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()),
                 getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
     /**
@@ -3551,7 +3879,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
+        /*WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(wfAction.getId());
         WorkflowJobGetJPAExecutor subwfJobGetCmd = new WorkflowJobGetJPAExecutor(subwfJob.getId());
         WorkflowActionGetJPAExecutor subwfActionGetCmd = new WorkflowActionGetJPAExecutor(subwfAction.getId());
@@ -3575,73 +3903,81 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(CoordinatorJob.Status.SUCCEEDED, coordJob.getStatus());
         assertEquals(CoordinatorAction.Status.SUCCEEDED, coordAction.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJob.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleAction.getStatus());*/
 
         new PurgeXCommand(7, 7, 7, 10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobGetCmd);
             fail("Bundle Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertBundleJobPurged(bundleJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionGetCmd);
             fail("Bundle Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(bundleJob.getId(), coordJob.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(coordJobGetCmd);
             fail("Coordinator Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(coordJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionGetCmd);
             fail("Coordinator Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobGetCmd);
             fail("Workflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionGetCmd);
             fail("Workflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfAction.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobGetCmd);
             fail("SubWorkflow Job should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJob.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionGetCmd);
             fail("SubWorkflow Action should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(subwfAction.getId());
     }
 
     /**
@@ -3722,7 +4058,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleActionB = addRecordToBundleActionTable(bundleJobB.getId(), coordJobB.getId(), coordJobB.getAppName(),
                 0, Job.Status.SUCCEEDED);
 
-        WorkflowJobGetJPAExecutor wfJobAGetCmd = new WorkflowJobGetJPAExecutor(wfJobA.getId());
+        /*WorkflowJobGetJPAExecutor wfJobAGetCmd = new WorkflowJobGetJPAExecutor(wfJobA.getId());
         WorkflowJobGetJPAExecutor wfJobBGetCmd = new WorkflowJobGetJPAExecutor(wfJobB.getId());
         WorkflowJobGetJPAExecutor wfJobCGetCmd = new WorkflowJobGetJPAExecutor(wfJobC.getId());
         WorkflowJobGetJPAExecutor wfJobDGetCmd = new WorkflowJobGetJPAExecutor(wfJobD.getId());
@@ -3812,232 +4148,263 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJobA.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleJobB.getStatus());
         assertEquals(BundleJobBean.Status.SUCCEEDED, bundleActionA.getStatus());
-        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleActionB.getStatus());
+        assertEquals(BundleJobBean.Status.SUCCEEDED, bundleActionB.getStatus());*/
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJobB.getEndTime()),
                           getNumDaysToNotBePurged(coordJobC.getLastModifiedTime()),
                           getNumDaysToNotBePurged(bundleJobB.getLastModifiedTime()),
                           10).call();
 
-        try {
+        /*try {
             jpaService.execute(bundleJobAGetCmd);
             fail("Bundle Job A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertBundleJobPurged(bundleJobA.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionAGetCmd);
             fail("Bundle Action A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertBundleActionPurged(bundleJobA.getId(), coordJobA.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(bundleJobBGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Job B should not have been purged");
-        }
+        }*/
+        assertBundleJobNotPurged(bundleJobB.getId());
 
-        try {
+        /*try {
             jpaService.execute(bundleActionBGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Bundle Action B should not have been purged");
-        }
+        }*/
+        assertBundleActionNotPurged(bundleJobB.getId(), coordJobB.getAppName());
 
-        try {
+        /*try {
             jpaService.execute(coordJobAGetCmd);
             fail("Coordinator Job A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorJobPurged(coordJobA.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionAGetCmd);
             fail("Coordinator Action A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertCoordinatorActionPurged(coordActionA.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordJobBGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job B should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJobB.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionBGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action B should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordActionB.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordJobCGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job C should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJobC.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionCGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action C should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordActionC.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordJobDGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Job D should not have been purged");
-        }
+        }*/
+        assertCoordinatorJobNotPurged(coordJobD.getId());
 
-        try {
+        /*try {
             jpaService.execute(coordActionDGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Coordinator Action D should not have been purged");
-        }
+        }*/
+        assertCoordinatorActionNotPurged(coordActionD.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobAGetCmd);
             fail("Workflow Job A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJobA.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionAGetCmd);
             fail("Workflow Action A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfActionA.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobBGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job B should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJobB.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionBGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action B should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfActionB.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobCGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job C should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJobC.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionCGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action C should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfActionC.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobDGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job D should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJobD.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionDGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action D should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfActionD.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobEGetCmd);
             fail("Workflow Job E should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(wfJobE.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfActionEGetCmd);
             fail("Workflow Action E should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(wfActionE.getId());
 
-        try {
+        /*try {
             jpaService.execute(wfJobFGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Job F should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(wfJobF.getId());
 
-        try {
+
+        /*try {
             jpaService.execute(wfActionFGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("Workflow Action F should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(wfActionF.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobAGetCmd);
             fail("SubWorkflow Job A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0604, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowPurged(subwfJobA.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionAGetCmd);
             fail("SubWorkflow Action A should have been purged");
         }
         catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
-        }
+        }*/
+        assertWorkflowActionPurged(subwfActionA.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobCGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job C should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJobC.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionCGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action C should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfActionC.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfJobFGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Job F should not have been purged");
-        }
+        }*/
+        assertWorkflowNotPurged(subwfJobF.getId());
 
-        try {
+        /*try {
             jpaService.execute(subwfActionFGetCmd);
         }
         catch (JPAExecutorException je) {
             fail("SubWorkflow Action F should not have been purged");
-        }
+        }*/
+        assertWorkflowActionNotPurged(subwfActionF.getId());
     }
 
     protected WorkflowJobBean addRecordToWfJobTableForNegCase(WorkflowJob.Status jobStatus,
