@@ -98,7 +98,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      * same job to make it qualify for the purge criteria. Calls the purge
      * command, and ensure the job does not exist in the system.
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testSucJobPurgeXCommand() throws Exception {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -113,7 +113,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge failed wf job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testFailJobPurgeXCommand() throws Exception {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
@@ -128,7 +128,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
     * Test : purge killed wf job and action successfully
     *
-    * @throws Exception
+    * @throws Exception if cannot insert records to the database
     */
     public void testKillJobPurgeXCommand() throws Exception {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
@@ -143,7 +143,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge wf job and action failed
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testPurgeXCommandFailed() throws Exception {
         WorkflowJobBean job = addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
@@ -158,7 +158,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge succeeded coord job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testSucCoordPurgeXCommand() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
@@ -174,7 +174,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge failed coord job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testFailCoordPurgeXCommand() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.FAILED, false, false);
@@ -190,7 +190,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge killed coord job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testKillCoordPurgeXCommand() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
@@ -206,7 +206,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge coord job and action failed
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testCoordPurgeXCommandFailed() throws Exception {
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
@@ -222,7 +222,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge succeeded bundle job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testSucBundlePurgeXCommand() throws Exception {
         BundleJobBean job = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
@@ -245,7 +245,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge failed bundle job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testFailBundlePurgeXCommand() throws Exception {
         BundleJobBean job = addRecordToBundleJobTable(Job.Status.DONEWITHERROR, DateUtils.parseDateOozieTZ(
@@ -269,7 +269,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge killed bundle job and action successfully
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testKillBundlePurgeXCommand() throws Exception {
         BundleJobBean job = addRecordToBundleJobTable(Job.Status.KILLED, DateUtils.parseDateOozieTZ(
@@ -292,7 +292,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     /**
      * Test : purge bundle job and action failed
      *
-     * @throws Exception
+     * @throws Exception if cannot insert records to the database
      */
     public void testBundlePurgeXCommandFailed() throws Exception {
         BundleJobBean job = addRecordToBundleJobTable(Job.Status.RUNNING, DateUtils.parseDateOozieTZ(
