@@ -50,9 +50,14 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.service.CoordMaterializeTriggerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.service.PauseTransitService;
+import org.apache.oozie.service.PurgeService;
+import org.apache.oozie.service.RecoveryService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
@@ -69,24 +74,23 @@ import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestPurgeXCommand extends XDataTestCase {
-    private Services services;
     private JPAService jpaService;
-    private String[] excludedServices = { "org.apache.oozie.service.StatusTransitService",
-            "org.apache.oozie.service.PauseTransitService", "org.apache.oozie.service.PurgeService",
-            "org.apache.oozie.service.CoordMaterializeTriggerService", "org.apache.oozie.service.RecoveryService" };
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
-        services.init();
+        new Services().init();
+        Services.get().get(StatusTransitService.class).destroy();
+        Services.get().get(PauseTransitService.class).destroy();
+        Services.get().get(PurgeService.class).destroy();
+        Services.get().get(CoordMaterializeTriggerService.class).destroy();
+        Services.get().get(RecoveryService.class).destroy();
         jpaService = Services.get().get(JPAService.class);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        services.destroy();
+        Services.get().destroy();
         super.tearDown();
     }
 
