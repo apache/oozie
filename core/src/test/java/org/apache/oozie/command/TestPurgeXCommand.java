@@ -241,7 +241,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobPurged(job);
-
         assertBundleActionPurged(bundleAction1);
         assertBundleActionPurged(bundleAction2);
     }
@@ -265,7 +264,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobPurged(job);
-
         assertBundleActionPurged(bundleAction1);
         assertBundleActionPurged(bundleAction2);
     }
@@ -288,7 +286,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobPurged(job);
-
         assertBundleActionPurged(bundleAction1);
         assertBundleActionPurged(bundleAction2);
     }
@@ -407,48 +404,22 @@ public class TestPurgeXCommand extends XDataTestCase {
      */
     public void testPurgeCoordWithWFChild2MoreThanLimit() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob3.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob4.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob5.getId(), "1", WorkflowAction.Status.OK);
-        CoordinatorActionBean coordAction1 = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob1.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction2 = addRecordToCoordActionTable(coordJob.getId(), 2, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob2.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction3 = addRecordToCoordActionTable(coordJob.getId(), 3, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob3.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction4 = addRecordToCoordActionTable(coordJob.getId(), 4, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob4.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction5 = addRecordToCoordActionTable(coordJob.getId(), 5, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob5.getId(), "SUCCEEDED", 0);
+        WorkflowJobBean[] wfJobs = new WorkflowJobBean[TEST_CHILD_NUM];
+        WorkflowActionBean[] wfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        CoordinatorActionBean[] coordActions = new CoordinatorActionBean[TEST_CHILD_NUM];
+        for (int i=0; i<TEST_CHILD_NUM; ++i) {
+            wfJobs[i] = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+            wfActions[i] = addRecordToWfActionTable(wfJobs[i].getId(), "1", WorkflowAction.Status.OK);
+            coordActions[i] = addRecordToCoordActionTable(coordJob.getId(), i, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-action-get.xml", wfJobs[i].getId(), "SUCCEEDED", 0);
+        }
 
-        new PurgeXCommand(getNumDaysToNotBePurged(wfJob1.getEndTime()), 7, 1, 3).call();
+        new PurgeXCommand(getNumDaysToNotBePurged(wfJobs[0].getEndTime()), 7, 1, 3).call();
 
         assertCoordinatorJobNotPurged(coordJob);
-
-        assertCoordinatorActionNotPurged(coordAction1);
-        assertCoordinatorActionNotPurged(coordAction2);
-        assertCoordinatorActionNotPurged(coordAction3);
-        assertCoordinatorActionNotPurged(coordAction4);
-        assertCoordinatorActionNotPurged(coordAction5);
-
-        assertWorkflowJobNotPurged(wfJob1);
-        assertWorkflowJobNotPurged(wfJob2);
-        assertWorkflowJobNotPurged(wfJob3);
-        assertWorkflowJobNotPurged(wfJob4);
-        assertWorkflowJobNotPurged(wfJob5);
-
-        assertWorkflowActionNotPurged(wfAction1);
-        assertWorkflowActionNotPurged(wfAction2);
-        assertWorkflowActionNotPurged(wfAction3);
-        assertWorkflowActionNotPurged(wfAction4);
-        assertWorkflowActionNotPurged(wfAction5);
+        assertCoordinatorActionsNotPurged(coordActions);
+        assertWorkflowJobsNotPurged(wfJobs);
+        assertWorkflowActionsNotPurged(wfActions);
     }
 
     /**
@@ -478,48 +449,22 @@ public class TestPurgeXCommand extends XDataTestCase {
      */
     public void testPurgeCoordWithWFChild3MoreThanLimit() throws Exception {
         CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob3.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob4.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob5.getId(), "1", WorkflowAction.Status.OK);
-        CoordinatorActionBean coordAction1 = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob1.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction2 = addRecordToCoordActionTable(coordJob.getId(), 2, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob2.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction3 = addRecordToCoordActionTable(coordJob.getId(), 3, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob3.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction4 = addRecordToCoordActionTable(coordJob.getId(), 4, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob4.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction5 = addRecordToCoordActionTable(coordJob.getId(), 5, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob5.getId(), "SUCCEEDED", 0);
+        WorkflowJobBean[] wfJobs = new WorkflowJobBean[TEST_CHILD_NUM];
+        WorkflowActionBean[] wfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        CoordinatorActionBean[] coordActions = new CoordinatorActionBean[TEST_CHILD_NUM];
+        for (int i=0; i<TEST_CHILD_NUM; ++i) {
+            wfJobs[i] = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+            wfActions[i] = addRecordToWfActionTable(wfJobs[i].getId(), "1", WorkflowAction.Status.OK);
+            coordActions[i] = addRecordToCoordActionTable(coordJob.getId(), i, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-action-get.xml", wfJobs[i].getId(), "SUCCEEDED", 0);
+        }
 
         new PurgeXCommand(7, 7, 1, 10).call();
 
         assertCoordinatorJobPurged(coordJob);
-
-        assertCoordinatorActionPurged(coordAction1);
-        assertCoordinatorActionPurged(coordAction2);
-        assertCoordinatorActionPurged(coordAction3);
-        assertCoordinatorActionPurged(coordAction4);
-        assertCoordinatorActionPurged(coordAction5);
-
-        assertWorkflowJobPurged(wfJob1);
-        assertWorkflowJobPurged(wfJob2);
-        assertWorkflowJobPurged(wfJob3);
-        assertWorkflowJobPurged(wfJob4);
-        assertWorkflowJobPurged(wfJob5);
-
-        assertWorkflowActionPurged(wfAction1);
-        assertWorkflowActionPurged(wfAction2);
-        assertWorkflowActionPurged(wfAction3);
-        assertWorkflowActionPurged(wfAction4);
-        assertWorkflowActionPurged(wfAction5);
+        assertCoordinatorActionsPurged(coordActions);
+        assertWorkflowJobsPurged(wfJobs);
+        assertWorkflowActionsPurged(wfActions);
     }
 
     /**
@@ -581,84 +526,34 @@ public class TestPurgeXCommand extends XDataTestCase {
      */
     public void testPurgeBundleWithCoordChildWithWFChild2MoreThanLimit() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
-        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob2.setAppName("coord2");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob2);
-        CoordinatorJobBean coordJob3 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob3.setAppName("coord3");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob3);
-        CoordinatorJobBean coordJob4 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob4.setAppName("coord4");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob4);
-        CoordinatorJobBean coordJob5 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob5.setAppName("coord5");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob5);
-        WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob3.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob4.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob5.getId(), "1", WorkflowAction.Status.OK);
-        CoordinatorActionBean coordAction1 = addRecordToCoordActionTable(coordJob1.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob1.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction2 = addRecordToCoordActionTable(coordJob2.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob2.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction3 = addRecordToCoordActionTable(coordJob3.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob3.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction4 = addRecordToCoordActionTable(coordJob4.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob4.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction5 = addRecordToCoordActionTable(coordJob5.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob5.getId(), "SUCCEEDED", 0);
-        BundleActionBean bundleAction1 = addRecordToBundleActionTable(bundleJob.getId(), coordJob1.getId(), coordJob1.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction2 = addRecordToBundleActionTable(bundleJob.getId(), coordJob2.getId(), coordJob2.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction3 = addRecordToBundleActionTable(bundleJob.getId(), coordJob3.getId(), coordJob3.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction4 = addRecordToBundleActionTable(bundleJob.getId(), coordJob4.getId(), coordJob4.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction5 = addRecordToBundleActionTable(bundleJob.getId(), coordJob5.getId(), coordJob5.getAppName(),
-                0, Job.Status.SUCCEEDED);
+        CoordinatorJobBean[] coordJobs = new CoordinatorJobBean[TEST_CHILD_NUM];
+        WorkflowJobBean[] wfJobs = new WorkflowJobBean[TEST_CHILD_NUM];
+        WorkflowActionBean[] wfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        CoordinatorActionBean[] coordActions = new CoordinatorActionBean[TEST_CHILD_NUM];
+        BundleActionBean[] bundleActions = new BundleActionBean[TEST_CHILD_NUM];
+        for (int i=0; i<TEST_CHILD_NUM; ++i) {
+            coordJobs[i] = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+            coordJobs[i].setAppName("coord" + i);
+            CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJobs[i]);
+            wfJobs[i] = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+            wfActions[i] = addRecordToWfActionTable(wfJobs[i].getId(), "1", WorkflowAction.Status.OK);
+            coordActions[i] = addRecordToCoordActionTable(coordJobs[i].getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-action-get.xml", wfJobs[i].getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(getNumDaysToNotBePurged(wfJob1.getEndTime()),
-                getNumDaysToNotBePurged(coordJob1.getLastModifiedTime()), 7, 3).call();
+            bundleActions[i] = addRecordToBundleActionTable(bundleJob.getId(), coordJobs[i].getId(), coordJobs[i].getAppName(),
+                    0, Job.Status.SUCCEEDED);
+        }
+
+        new PurgeXCommand(getNumDaysToNotBePurged(wfJobs[0].getEndTime()),
+                getNumDaysToNotBePurged(coordJobs[0].getLastModifiedTime()), 7, 3).call();
 
         assertBundleJobNotPurged(bundleJob);
+        assertBundleActionsNotPurged(bundleActions);
+        assertCoordinatorJobsNotPurged(coordJobs);
+        assertCoordinatorActionsNotPurged(coordActions);
+        assertWorkflowJobsNotPurged(wfJobs);
+        assertWorkflowActionsNotPurged(wfActions);
 
-        assertBundleActionNotPurged(bundleAction1);
-        assertBundleActionNotPurged(bundleAction2);
-        assertBundleActionNotPurged(bundleAction3);
-        assertBundleActionNotPurged(bundleAction4);
-        assertBundleActionNotPurged(bundleAction5);
-
-        assertCoordinatorJobNotPurged(coordJob1);
-        assertCoordinatorJobNotPurged(coordJob2);
-        assertCoordinatorJobNotPurged(coordJob3);
-        assertCoordinatorJobNotPurged(coordJob4);
-        assertCoordinatorJobNotPurged(coordJob5);
-
-        assertCoordinatorActionNotPurged(coordAction1);
-        assertCoordinatorActionNotPurged(coordAction2);
-        assertCoordinatorActionNotPurged(coordAction3);
-        assertCoordinatorActionNotPurged(coordAction4);
-        assertCoordinatorActionNotPurged(coordAction5);
-
-        assertWorkflowJobNotPurged(wfJob1);
-        assertWorkflowJobNotPurged(wfJob2);
-        assertWorkflowJobNotPurged(wfJob3);
-        assertWorkflowJobNotPurged(wfJob4);
-        assertWorkflowJobNotPurged(wfJob5);
-
-        assertWorkflowActionNotPurged(wfAction1);
-        assertWorkflowActionNotPurged(wfAction2);
-        assertWorkflowActionNotPurged(wfAction3);
-        assertWorkflowActionNotPurged(wfAction4);
-        assertWorkflowActionNotPurged(wfAction5);
     }
 
     /**
@@ -694,83 +589,31 @@ public class TestPurgeXCommand extends XDataTestCase {
      */
     public void testPurgeBundleWithCoordChildWithWFChild3MoreThanLimit() throws Exception {
         BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ("2011-01-01T01:00Z"));
-        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob2.setAppName("coord2");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob2);
-        CoordinatorJobBean coordJob3 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob3.setAppName("coord3");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob3);
-        CoordinatorJobBean coordJob4 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob4.setAppName("coord4");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob4);
-        CoordinatorJobBean coordJob5 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
-        coordJob5.setAppName("coord5");
-        CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJob5);
-        WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob2 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob4 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowJobBean wfJob5 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob1.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob2.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob3.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction4 = addRecordToWfActionTable(wfJob4.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean wfAction5 = addRecordToWfActionTable(wfJob5.getId(), "1", WorkflowAction.Status.OK);
-        CoordinatorActionBean coordAction1 = addRecordToCoordActionTable(coordJob1.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob1.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction2 = addRecordToCoordActionTable(coordJob2.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob2.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction3 = addRecordToCoordActionTable(coordJob3.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob3.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction4 = addRecordToCoordActionTable(coordJob4.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob4.getId(), "SUCCEEDED", 0);
-        CoordinatorActionBean coordAction5 = addRecordToCoordActionTable(coordJob5.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
-                "coord-action-get.xml", wfJob5.getId(), "SUCCEEDED", 0);
-        BundleActionBean bundleAction1 = addRecordToBundleActionTable(bundleJob.getId(), coordJob1.getId(), coordJob1.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction2 = addRecordToBundleActionTable(bundleJob.getId(), coordJob2.getId(), coordJob2.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction3 = addRecordToBundleActionTable(bundleJob.getId(), coordJob3.getId(), coordJob3.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction4 = addRecordToBundleActionTable(bundleJob.getId(), coordJob4.getId(), coordJob4.getAppName(),
-                0, Job.Status.SUCCEEDED);
-        BundleActionBean bundleAction5 = addRecordToBundleActionTable(bundleJob.getId(), coordJob5.getId(), coordJob5.getAppName(),
-                0, Job.Status.SUCCEEDED);
+        CoordinatorJobBean[] coordJobs = new CoordinatorJobBean[TEST_CHILD_NUM];
+        WorkflowJobBean[] wfJobs = new WorkflowJobBean[TEST_CHILD_NUM];
+        WorkflowActionBean[] wfActions = new WorkflowActionBean[TEST_CHILD_NUM];
+        CoordinatorActionBean[] coordActions = new CoordinatorActionBean[TEST_CHILD_NUM];
+        BundleActionBean[] bundleActions = new BundleActionBean[TEST_CHILD_NUM];
+        for (int i=0; i<TEST_CHILD_NUM; ++i) {
+            coordJobs[i] = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+            coordJobs[i].setAppName("coord" + i);
+            CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, coordJobs[i]);
+            wfJobs[i] = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+            wfActions[i] = addRecordToWfActionTable(wfJobs[i].getId(), "1", WorkflowAction.Status.OK);
+            coordActions[i] = addRecordToCoordActionTable(coordJobs[i].getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-action-get.xml", wfJobs[i].getId(), "SUCCEEDED", 0);
+            bundleActions[i] = addRecordToBundleActionTable(bundleJob.getId(), coordJobs[i].getId(), coordJobs[i].getAppName(),
+                    0, Job.Status.SUCCEEDED);
+        }
 
         new PurgeXCommand(7, 7, 7, 10).call();
 
         assertBundleJobPurged(bundleJob);
-
-        assertBundleActionPurged(bundleAction1);
-        assertBundleActionPurged(bundleAction2);
-        assertBundleActionPurged(bundleAction3);
-        assertBundleActionPurged(bundleAction4);
-        assertBundleActionPurged(bundleAction5);
-
-        assertCoordinatorJobPurged(coordJob1);
-        assertCoordinatorJobPurged(coordJob2);
-        assertCoordinatorJobPurged(coordJob3);
-        assertCoordinatorJobPurged(coordJob4);
-        assertCoordinatorJobPurged(coordJob5);
-
-        assertCoordinatorActionPurged(coordAction1);
-        assertCoordinatorActionPurged(coordAction2);
-        assertCoordinatorActionPurged(coordAction3);
-        assertCoordinatorActionPurged(coordAction4);
-        assertCoordinatorActionPurged(coordAction5);
-
-        assertWorkflowJobPurged(wfJob1);
-        assertWorkflowJobPurged(wfJob2);
-        assertWorkflowJobPurged(wfJob3);
-        assertWorkflowJobPurged(wfJob4);
-        assertWorkflowJobPurged(wfJob5);
-
-        assertWorkflowActionPurged(wfAction1);
-        assertWorkflowActionPurged(wfAction2);
-        assertWorkflowActionPurged(wfAction3);
-        assertWorkflowActionPurged(wfAction4);
-        assertWorkflowActionPurged(wfAction5);
+        assertBundleActionsPurged(bundleActions);
+        assertCoordinatorJobsPurged(coordJobs);
+        assertCoordinatorActionsPurged(coordActions);
+        assertWorkflowJobsPurged(wfJobs);
+        assertWorkflowActionsPurged(wfActions);
     }
 
     /**
@@ -997,9 +840,39 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertWorkflowActionPurged(subsub2wfAction);
     }
 
+    private void assertBundleActionsPurged(BundleActionBean... bundleActionBeans) {
+        for (BundleActionBean bean : bundleActionBeans) {
+            assertBundleActionPurged(bean);
+        }
+    }
+
+    private void assertBundleActionsNotPurged(BundleActionBean... bundleActionBeans) {
+        for (BundleActionBean bean : bundleActionBeans) {
+            assertBundleActionNotPurged(bean);
+        }
+    }
+
+    private void assertCoordinatorJobsPurged(CoordinatorJobBean... coordinatorJobBeans) {
+        for (CoordinatorJobBean bean : coordinatorJobBeans) {
+            assertCoordinatorJobPurged(bean);
+        }
+    }
+
+    private void assertCoordinatorJobsNotPurged(CoordinatorJobBean... coordinatorJobBeans) {
+        for (CoordinatorJobBean bean : coordinatorJobBeans) {
+            assertCoordinatorJobNotPurged(bean);
+        }
+    }
+
     private void assertCoordinatorActionsPurged(CoordinatorActionBean... coordinatorActionBeans) {
         for (CoordinatorActionBean bean : coordinatorActionBeans) {
             assertCoordinatorActionPurged(bean);
+        }
+    }
+
+    private void assertCoordinatorActionsNotPurged(CoordinatorActionBean... coordinatorActionBeans) {
+        for (CoordinatorActionBean bean : coordinatorActionBeans) {
+            assertCoordinatorActionNotPurged(bean);
         }
     }
 
