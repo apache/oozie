@@ -43,7 +43,6 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
-import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.QueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
@@ -1021,7 +1020,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
     private void assertWorkflowJobNotPurged(WorkflowJobBean workflowJobBean) {
         try {
-            JPAExecutor jpaExecutor = new WorkflowJobGetJPAExecutor(workflowJobBean.getId());
+            WorkflowJobGetJPAExecutor jpaExecutor = new WorkflowJobGetJPAExecutor(workflowJobBean.getId());
             jpaService.execute(jpaExecutor);
         } catch (JPAExecutorException je) {
             fail("Workflow job "+workflowJobBean.getId()+" should not have been purged");
@@ -1147,7 +1146,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 wfJob.getId());
         subwfJob1.setEndTime(null);
         System.out.println("subwfJob1:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
-        WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
+        //WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
 
         //final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
         //final WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
@@ -1561,7 +1560,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         workflow.setStatus(jobStatus);
         workflow.setRun(0);
         workflow.setUser(conf.get(OozieClient.USER_NAME));
-        workflow.setGroup(conf.get(OozieClient.GROUP_NAME));
         workflow.setWorkflowInstance(wfInstance);
         workflow.setStartTime(DateUtils.parseDateOozieTZ("2009-12-18T01:00Z"));
         workflow.setEndTime(DateUtils.parseDateOozieTZ("2009-12-18T03:00Z"));
