@@ -231,15 +231,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         coordJob1.setAppName("action1");
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob2.setAppName("action2");
-        addRecordToBundleActionTable(job.getId(), coordJob1.getAppName(), 0, Job.Status.SUCCEEDED);
-        addRecordToBundleActionTable(job.getId(), coordJob2.getAppName(), 0, Job.Status.SUCCEEDED);
+        BundleActionBean bundleAction1 = addRecordToBundleActionTable(job.getId(), coordJob1.getAppName(), 0, Job.Status.SUCCEEDED);
+        BundleActionBean bundleAction2 = addRecordToBundleActionTable(job.getId(), coordJob2.getAppName(), 0, Job.Status.SUCCEEDED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobPurged(job);
 
-        assertBundleActionPurged(job, coordJob1);
-        assertBundleActionPurged(job, coordJob2);
+        assertBundleActionPurged(bundleAction1);
+        assertBundleActionPurged(bundleAction2);
     }
 
     /**
@@ -255,15 +255,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob2.setAppName("action2");
 
-        addRecordToBundleActionTable(job.getId(), coordJob1.getAppName(), 0, Job.Status.FAILED);
-        addRecordToBundleActionTable(job.getId(), coordJob2.getAppName(), 0, Job.Status.SUCCEEDED);
+        BundleActionBean bundleAction1 = addRecordToBundleActionTable(job.getId(), coordJob1.getAppName(), 0, Job.Status.FAILED);
+        BundleActionBean bundleAction2 = addRecordToBundleActionTable(job.getId(), coordJob2.getAppName(), 0, Job.Status.SUCCEEDED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobPurged(job);
 
-        assertBundleActionPurged(job, coordJob1);
-        assertBundleActionPurged(job, coordJob2);
+        assertBundleActionPurged(bundleAction1);
+        assertBundleActionPurged(bundleAction2);
     }
 
     /**
@@ -278,15 +278,15 @@ public class TestPurgeXCommand extends XDataTestCase {
         coordJob1.setAppName("action1");
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.KILLED, false, false);
         coordJob2.setAppName("action2");
-        addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
-        addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
+        BundleActionBean bundleAction1 = addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
+        BundleActionBean bundleAction2 = addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobPurged(job);
 
-        assertBundleActionPurged(job, coordJob1);
-        assertBundleActionPurged(job, coordJob2);
+        assertBundleActionPurged(bundleAction1);
+        assertBundleActionPurged(bundleAction2);
     }
 
     /**
@@ -301,14 +301,14 @@ public class TestPurgeXCommand extends XDataTestCase {
         coordJob1.setAppName("action1");
         CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
         coordJob2.setAppName("action2");
-        addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
-        addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
+        BundleActionBean bundleActionBean1 = addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
+        BundleActionBean bundleActionBean2 = addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
         new PurgeXCommand(1, 1, 7, 10).call();
 
         assertBundleJobNotPurged(job);
-        assertBundleActionNotPurged(job, coordJob1);
-        assertBundleActionNotPurged(job, coordJob2);
+        assertBundleActionNotPurged(bundleActionBean1);
+        assertBundleActionNotPurged(bundleActionBean2);
     }
 
     /**
@@ -536,7 +536,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(7, 7, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), 10).call();
 
         assertBundleJobNotPurged(bundleJob);
-        assertBundleActionNotPurged(bundleJob, coordJob);
+        assertBundleActionNotPurged(bundleAction);
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
         assertWorkflowJobNotPurged(wfJob);
@@ -562,7 +562,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 7, 10).call();
 
         assertBundleJobNotPurged(bundleJob);
-        assertBundleActionNotPurged(bundleJob, coordJob);
+        assertBundleActionNotPurged(bundleAction);
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
         assertWorkflowJobNotPurged(wfJob);
@@ -626,11 +626,11 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertBundleJobNotPurged(bundleJob);
 
-        assertBundleActionNotPurged(bundleJob, coordJob1);
-        assertBundleActionNotPurged(bundleJob, coordJob2);
-        assertBundleActionNotPurged(bundleJob, coordJob3);
-        assertBundleActionNotPurged(bundleJob, coordJob4);
-        assertBundleActionNotPurged(bundleJob, coordJob5);
+        assertBundleActionNotPurged(bundleAction1);
+        assertBundleActionNotPurged(bundleAction2);
+        assertBundleActionNotPurged(bundleAction3);
+        assertBundleActionNotPurged(bundleAction4);
+        assertBundleActionNotPurged(bundleAction5);
 
         assertCoordinatorJobNotPurged(coordJob1);
         assertCoordinatorJobNotPurged(coordJob2);
@@ -675,7 +675,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(7, 7, 7, 10).call();
 
         assertBundleJobPurged(bundleJob);
-        assertBundleActionPurged(bundleJob, coordJob);
+        assertBundleActionPurged(bundleAction);
         assertCoordinatorJobPurged(coordJob);
         assertCoordinatorActionPurged(coordAction);
         assertWorkflowJobPurged(wfJob);
@@ -738,11 +738,11 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertBundleJobPurged(bundleJob);
 
-        assertBundleActionPurged(bundleJob, coordJob1);
-        assertBundleActionPurged(bundleJob, coordJob2);
-        assertBundleActionPurged(bundleJob, coordJob3);
-        assertBundleActionPurged(bundleJob, coordJob4);
-        assertBundleActionPurged(bundleJob, coordJob5);
+        assertBundleActionPurged(bundleAction1);
+        assertBundleActionPurged(bundleAction2);
+        assertBundleActionPurged(bundleAction3);
+        assertBundleActionPurged(bundleAction4);
+        assertBundleActionPurged(bundleAction5);
 
         assertCoordinatorJobPurged(coordJob1);
         assertCoordinatorJobPurged(coordJob2);
@@ -1119,20 +1119,20 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
     }
 
-    private void assertBundleActionNotPurged(BundleJobBean bundleJobBean, CoordinatorJobBean coordinatorJobBean) {
+    private void assertBundleActionNotPurged(BundleActionBean bundleActionBean) {
         try {
-            JPAExecutor jpaExecutor = new BundleActionGetJPAExecutor(bundleJobBean.getId(), coordinatorJobBean.getAppName());
+            JPAExecutor jpaExecutor = new BundleActionGetJPAExecutor(bundleActionBean.getBundleId(), bundleActionBean.getCoordName());
             jpaService.execute(jpaExecutor);
         } catch (JPAExecutorException je) {
-            fail("Bundle action "+bundleJobBean.getId()+"/"+coordinatorJobBean.getAppName()+" should not have been purged");
+            fail("Bundle action "+bundleActionBean.getBundleActionId()+" should not have been purged");
         }
     }
 
-    private void assertBundleActionPurged(BundleJobBean bundleJobBean, CoordinatorJobBean coordinatorJobBean) {
+    private void assertBundleActionPurged(BundleActionBean bundleActionBean) {
         try {
-            JPAExecutor jpaExecutor = new BundleActionGetJPAExecutor(bundleJobBean.getId(), coordinatorJobBean.getAppName());
+            JPAExecutor jpaExecutor = new BundleActionGetJPAExecutor(bundleActionBean.getBundleId(), bundleActionBean.getCoordName());
             jpaService.execute(jpaExecutor);
-            fail("Bundle action "+bundleJobBean.getId()+"/"+coordinatorJobBean.getAppName()+" should have been purged");
+            fail("Bundle action "+bundleActionBean.getBundleActionId()+" should have been purged");
         } catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
         }
@@ -1330,7 +1330,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(7, 7, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), 10).call();
 
         assertBundleJobNotPurged(bundleJob);
-        assertBundleActionNotPurged(bundleJob, coordJob);
+        assertBundleActionNotPurged(bundleAction);
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
         assertWorkflowJobNotPurged(wfJob);
@@ -1362,7 +1362,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 7, 10).call();
 
         assertBundleJobNotPurged(bundleJob);
-        assertBundleActionNotPurged(bundleJob, coordJob);
+        assertBundleActionNotPurged(bundleAction);
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
         assertWorkflowJobNotPurged(wfJob);
@@ -1393,7 +1393,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(7, 7, 7, 10).call();
 
         assertBundleJobPurged(bundleJob);
-        assertBundleActionPurged(bundleJob, coordJob);
+        assertBundleActionPurged(bundleAction);
         assertCoordinatorJobPurged(coordJob);
         assertCoordinatorActionPurged(coordAction);
         assertWorkflowJobPurged(wfJob);
@@ -1486,9 +1486,9 @@ public class TestPurgeXCommand extends XDataTestCase {
                           10).call();
 
         assertBundleJobPurged(bundleJobA);
-        assertBundleActionPurged(bundleJobA, coordJobA);
+        assertBundleActionPurged(bundleActionA);
         assertBundleJobNotPurged(bundleJobB);
-        assertBundleActionNotPurged(bundleJobB, coordJobB);
+        assertBundleActionNotPurged(bundleActionB);
         assertCoordinatorJobPurged(coordJobA);
         assertCoordinatorActionPurged(coordActionA);
         assertCoordinatorJobNotPurged(coordJobB);
