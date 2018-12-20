@@ -1515,7 +1515,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertWorkflowActionNotPurged(subwfActionF);
     }
 
-    protected WorkflowJobBean addRecordToWfJobTableForNegCase(WorkflowJob.Status jobStatus,
+    private WorkflowJobBean addRecordToWfJobTableForNegCase(WorkflowJob.Status jobStatus,
             WorkflowInstance.Status instanceStatus) throws Exception {
         WorkflowApp app =
             new LiteWorkflowApp("testApp", "<workflow-app/>",
