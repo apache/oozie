@@ -1145,34 +1145,14 @@ public class TestPurgeXCommand extends XDataTestCase {
     public void testPurgeWFWithEndedSubWFWithNullEndTimeValidLastModifiedTime() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-
         WorkflowJobBean subwfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
                 wfJob.getId());
+        subwfJob1.setLastModifiedTime(wfJob.getEndTime());
         subwfJob1.setEndTime(null);
-        System.out.println("subwfJob1:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
-        //WorkflowActionBean subwfAction1 = addRecordToWfActionTable(subwfJob1.getId(), "1", WorkflowAction.Status.OK);
-
-        //final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(wfJob.getId());
-        //final WorkflowActionGetJPAExecutor wfAction1GetCmd = new WorkflowActionGetJPAExecutor(wfAction1.getId());
-        final WorkflowJobGetJPAExecutor subwfJob1GetCmd = new WorkflowJobGetJPAExecutor(subwfJob1.getId());
-        //final WorkflowActionGetJPAExecutor subwfAction1GetCmd = new WorkflowActionGetJPAExecutor(subwfAction1.getId());
-
-        //wfJob = jpaService.execute(wfJobGetCmd);
-        //wfAction1 = jpaService.execute(wfAction1GetCmd);
-        subwfJob1 = jpaService.execute(subwfJob1GetCmd);
-        //subwfAction1 = jpaService.execute(subwfAction1GetCmd);
-
-        /*assertEquals(WorkflowJob.Status.SUCCEEDED, wfJob.getStatus());
-        assertEquals(WorkflowAction.Status.OK, wfAction1.getStatus());
-        assertEquals(WorkflowJob.Status.SUCCEEDED, subwfJob1.getStatus());
-        assertEquals(WorkflowAction.Status.OK, subwfAction1.getStatus());*/
-
         final QueryExecutor<WorkflowJobBean, WorkflowJobQueryExecutor.WorkflowJobQuery> workflowJobQueryExecutor =
                 WorkflowJobQueryExecutor.getInstance();
         workflowJobQueryExecutor.executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, subwfJob1);
-        System.out.println("subwfJob1_:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
-        //subwfJob1 = jpaService.execute(subwfJob1GetCmd);
-        //System.out.println("subwfJob1__:"+subwfJob1.getLastModifiedTime()+" "+wfJob.getLastModifiedTime()+" "+subwfJob1.getEndTime());
+
         final int wfOlderThanDays = 7;
         final int coordOlderThanDays = 1;
         final int bundleOlderThanDays = 1;
@@ -1180,6 +1160,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
         assertWorkflowJobPurged(wfJob);
+        assertWorkflowActionPurged(wfAction1);
         assertWorkflowJobPurged(subwfJob1);
     }
 
