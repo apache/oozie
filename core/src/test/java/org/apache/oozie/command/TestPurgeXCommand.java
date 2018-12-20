@@ -106,7 +106,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowPurged(job.getId());
+        assertWorkflowJobPurged(job.getId());
         assertWorkflowActionPurged(action.getId());
     }
 
@@ -121,7 +121,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowPurged(job.getId());
+        assertWorkflowJobPurged(job.getId());
         assertWorkflowActionPurged(action.getId());
     }
 
@@ -136,7 +136,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowPurged(job.getId());
+        assertWorkflowJobPurged(job.getId());
         assertWorkflowActionPurged(action.getId());
     }
 
@@ -151,7 +151,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowNotPurged(job.getId());
+        assertWorkflowJobNotPurged(job.getId());
         assertWorkflowActionNotPurged(action.getId());
     }
 
@@ -310,7 +310,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
     }
 
@@ -332,7 +332,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionPurged(coordAction.getId());
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
     }
 
@@ -354,7 +354,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
     }
 
@@ -374,7 +374,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
     }
 
@@ -417,11 +417,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertCoordinatorActionNotPurged(coordAction4.getId());
         assertCoordinatorActionNotPurged(coordAction5.getId());
 
-        assertWorkflowNotPurged(wfJob1.getId());
-        assertWorkflowNotPurged(wfJob2.getId());
-        assertWorkflowNotPurged(wfJob3.getId());
-        assertWorkflowNotPurged(wfJob4.getId());
-        assertWorkflowNotPurged(wfJob5.getId());
+        assertWorkflowJobNotPurged(wfJob1.getId());
+        assertWorkflowJobNotPurged(wfJob2.getId());
+        assertWorkflowJobNotPurged(wfJob3.getId());
+        assertWorkflowJobNotPurged(wfJob4.getId());
+        assertWorkflowJobNotPurged(wfJob5.getId());
 
         assertWorkflowActionNotPurged(wfAction1.getId());
         assertWorkflowActionNotPurged(wfAction2.getId());
@@ -446,7 +446,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobPurged(coordJob.getId());
         assertCoordinatorActionPurged(coordAction.getId());
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
     }
 
@@ -488,11 +488,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertCoordinatorActionPurged(coordAction4.getId());
         assertCoordinatorActionPurged(coordAction5.getId());
 
-        assertWorkflowPurged(wfJob1.getId());
-        assertWorkflowPurged(wfJob2.getId());
-        assertWorkflowPurged(wfJob3.getId());
-        assertWorkflowPurged(wfJob4.getId());
-        assertWorkflowPurged(wfJob5.getId());
+        assertWorkflowJobPurged(wfJob1.getId());
+        assertWorkflowJobPurged(wfJob2.getId());
+        assertWorkflowJobPurged(wfJob3.getId());
+        assertWorkflowJobPurged(wfJob4.getId());
+        assertWorkflowJobPurged(wfJob5.getId());
 
         assertWorkflowActionPurged(wfAction1.getId());
         assertWorkflowActionPurged(wfAction2.getId());
@@ -522,7 +522,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
     }
 
@@ -548,7 +548,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
     }
 
@@ -627,11 +627,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertCoordinatorActionNotPurged(coordAction4.getId());
         assertCoordinatorActionNotPurged(coordAction5.getId());
 
-        assertWorkflowNotPurged(wfJob1.getId());
-        assertWorkflowNotPurged(wfJob2.getId());
-        assertWorkflowNotPurged(wfJob3.getId());
-        assertWorkflowNotPurged(wfJob4.getId());
-        assertWorkflowNotPurged(wfJob5.getId());
+        assertWorkflowJobNotPurged(wfJob1.getId());
+        assertWorkflowJobNotPurged(wfJob2.getId());
+        assertWorkflowJobNotPurged(wfJob3.getId());
+        assertWorkflowJobNotPurged(wfJob4.getId());
+        assertWorkflowJobNotPurged(wfJob5.getId());
 
         assertWorkflowActionNotPurged(wfAction1.getId());
         assertWorkflowActionNotPurged(wfAction2.getId());
@@ -661,7 +661,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertBundleActionPurged(bundleJob.getId(), coordJob.getAppName());
         assertCoordinatorJobPurged(coordJob.getId());
         assertCoordinatorActionPurged(coordAction.getId());
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
     }
 
@@ -739,11 +739,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertCoordinatorActionPurged(coordAction4.getId());
         assertCoordinatorActionPurged(coordAction5.getId());
 
-        assertWorkflowPurged(wfJob1.getId());
-        assertWorkflowPurged(wfJob2.getId());
-        assertWorkflowPurged(wfJob3.getId());
-        assertWorkflowPurged(wfJob4.getId());
-        assertWorkflowPurged(wfJob5.getId());
+        assertWorkflowJobPurged(wfJob1.getId());
+        assertWorkflowJobPurged(wfJob2.getId());
+        assertWorkflowJobPurged(wfJob3.getId());
+        assertWorkflowJobPurged(wfJob4.getId());
+        assertWorkflowJobPurged(wfJob5.getId());
 
         assertWorkflowActionPurged(wfAction1.getId());
         assertWorkflowActionPurged(wfAction2.getId());
@@ -766,9 +766,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
@@ -786,9 +786,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
@@ -823,7 +823,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
 
         assertWorkflowActionNotPurged(wfAction1.getId());
         assertWorkflowActionNotPurged(wfAction2.getId());
@@ -831,11 +831,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertWorkflowActionNotPurged(wfAction4.getId());
         assertWorkflowActionNotPurged(wfAction5.getId());
 
-        assertWorkflowNotPurged(subwfJob1.getId());
-        assertWorkflowNotPurged(subwfJob2.getId());
-        assertWorkflowNotPurged(subwfJob3.getId());
-        assertWorkflowNotPurged(subwfJob4.getId());
-        assertWorkflowNotPurged(subwfJob5.getId());
+        assertWorkflowJobNotPurged(subwfJob1.getId());
+        assertWorkflowJobNotPurged(subwfJob2.getId());
+        assertWorkflowJobNotPurged(subwfJob3.getId());
+        assertWorkflowJobNotPurged(subwfJob4.getId());
+        assertWorkflowJobNotPurged(subwfJob5.getId());
 
         assertWorkflowActionNotPurged(subwfAction1.getId());
         assertWorkflowActionNotPurged(subwfAction2.getId());
@@ -863,9 +863,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
-        assertWorkflowPurged(subwfJob.getId());
+        assertWorkflowJobPurged(subwfJob.getId());
         assertWorkflowActionPurged(subwfAction.getId());
     }
 
@@ -900,7 +900,7 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 3).call();
 
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
 
         assertWorkflowActionPurged(wfAction1.getId());
         assertWorkflowActionPurged(wfAction2.getId());
@@ -908,11 +908,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertWorkflowActionPurged(wfAction4.getId());
         assertWorkflowActionPurged(wfAction5.getId());
 
-        assertWorkflowPurged(subwfJob1.getId());
-        assertWorkflowPurged(subwfJob2.getId());
-        assertWorkflowPurged(subwfJob3.getId());
-        assertWorkflowPurged(subwfJob4.getId());
-        assertWorkflowPurged(subwfJob5.getId());
+        assertWorkflowJobPurged(subwfJob1.getId());
+        assertWorkflowJobPurged(subwfJob2.getId());
+        assertWorkflowJobPurged(subwfJob3.getId());
+        assertWorkflowJobPurged(subwfJob4.getId());
+        assertWorkflowJobPurged(subwfJob5.getId());
 
         assertWorkflowActionPurged(subwfAction1.getId());
         assertWorkflowActionPurged(subwfAction2.getId());
@@ -940,11 +940,11 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
-        assertWorkflowNotPurged(subsubwfJob.getId());
+        assertWorkflowJobNotPurged(subsubwfJob.getId());
         assertWorkflowActionNotPurged(subsubwfAction.getId());
     }
 
@@ -967,11 +967,11 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
-        assertWorkflowNotPurged(subsubwfJob.getId());
+        assertWorkflowJobNotPurged(subsubwfJob.getId());
         assertWorkflowActionNotPurged(subsubwfAction.getId());
     }
 
@@ -997,17 +997,17 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         new PurgeXCommand(7, 1, 1, 10).call();
 
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
-        assertWorkflowPurged(subwfJob.getId());
+        assertWorkflowJobPurged(subwfJob.getId());
         assertWorkflowActionPurged(subwfAction.getId());
-        assertWorkflowPurged(subsub1wfJob.getId());
-        assertWorkflowPurged(subsub2wfJob.getId());
+        assertWorkflowJobPurged(subsub1wfJob.getId());
+        assertWorkflowJobPurged(subsub2wfJob.getId());
         assertWorkflowActionPurged(subsub1wfAction.getId());
         assertWorkflowActionPurged(subsub2wfAction.getId());
     }
 
-    private void assertWorkflowNotPurged(String workflowId) {
+    private void assertWorkflowJobNotPurged(String workflowId) {
         try {
             JPAExecutor jpaExecutor = new WorkflowJobGetJPAExecutor(workflowId);
             jpaService.execute(jpaExecutor);
@@ -1016,7 +1016,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
     }
 
-    private void assertWorkflowPurged(String workflowId) {
+    private void assertWorkflowJobPurged(String workflowId) {
         try {
             JPAExecutor jpaExecutor = new WorkflowJobGetJPAExecutor(workflowId);
             jpaService.execute(jpaExecutor);
@@ -1164,8 +1164,8 @@ public class TestPurgeXCommand extends XDataTestCase {
         final int limit = 3;
         new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
-        assertWorkflowPurged(wfJob.getId());
-        assertWorkflowPurged(subwfJob1.getId());
+        assertWorkflowJobPurged(wfJob.getId());
+        assertWorkflowJobPurged(subwfJob1.getId());
     }
 
     /**
@@ -1188,9 +1188,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
@@ -1214,9 +1214,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
@@ -1240,9 +1240,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobPurged(coordJob.getId());
         assertCoordinatorActionPurged(coordAction.getId());
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
-        assertWorkflowPurged(subwfJob.getId());
+        assertWorkflowJobPurged(subwfJob.getId());
         assertWorkflowActionPurged(subwfAction.getId());
     }
 
@@ -1285,9 +1285,9 @@ public class TestPurgeXCommand extends XDataTestCase {
 
         assertCoordinatorJobPurged(coordJob.getId());
         assertCoordinatorActionPurged(coordAction.getId());
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
-        assertWorkflowPurged(subwfJob.getId());
+        assertWorkflowJobPurged(subwfJob.getId());
         assertWorkflowActionPurged(subwfAction.getId());
     }
 
@@ -1316,9 +1316,9 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
@@ -1348,9 +1348,9 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertBundleActionNotPurged(bundleJob.getId(), coordJob.getAppName());
         assertCoordinatorJobNotPurged(coordJob.getId());
         assertCoordinatorActionNotPurged(coordAction.getId());
-        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowJobNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
-        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowJobNotPurged(subwfJob.getId());
         assertWorkflowActionNotPurged(subwfAction.getId());
     }
 
@@ -1379,9 +1379,9 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertBundleActionPurged(bundleJob.getId(), coordJob.getAppName());
         assertCoordinatorJobPurged(coordJob.getId());
         assertCoordinatorActionPurged(coordAction.getId());
-        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowJobPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
-        assertWorkflowPurged(subwfJob.getId());
+        assertWorkflowJobPurged(subwfJob.getId());
         assertWorkflowActionPurged(subwfAction.getId());
     }
 
@@ -1480,23 +1480,23 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertCoordinatorActionNotPurged(coordActionC.getId());
         assertCoordinatorJobNotPurged(coordJobD.getId());
         assertCoordinatorActionNotPurged(coordActionD.getId());
-        assertWorkflowPurged(wfJobA.getId());
+        assertWorkflowJobPurged(wfJobA.getId());
         assertWorkflowActionPurged(wfActionA.getId());
-        assertWorkflowNotPurged(wfJobB.getId());
+        assertWorkflowJobNotPurged(wfJobB.getId());
         assertWorkflowActionNotPurged(wfActionB.getId());
-        assertWorkflowNotPurged(wfJobC.getId());
+        assertWorkflowJobNotPurged(wfJobC.getId());
         assertWorkflowActionNotPurged(wfActionC.getId());
-        assertWorkflowNotPurged(wfJobD.getId());
+        assertWorkflowJobNotPurged(wfJobD.getId());
         assertWorkflowActionNotPurged(wfActionD.getId());
-        assertWorkflowPurged(wfJobE.getId());
+        assertWorkflowJobPurged(wfJobE.getId());
         assertWorkflowActionPurged(wfActionE.getId());
-        assertWorkflowNotPurged(wfJobF.getId());
+        assertWorkflowJobNotPurged(wfJobF.getId());
         assertWorkflowActionNotPurged(wfActionF.getId());
-        assertWorkflowPurged(subwfJobA.getId());
+        assertWorkflowJobPurged(subwfJobA.getId());
         assertWorkflowActionPurged(subwfActionA.getId());
-        assertWorkflowNotPurged(subwfJobC.getId());
+        assertWorkflowJobNotPurged(subwfJobC.getId());
         assertWorkflowActionNotPurged(subwfActionC.getId());
-        assertWorkflowNotPurged(subwfJobF.getId());
+        assertWorkflowJobNotPurged(subwfJobF.getId());
         assertWorkflowActionNotPurged(subwfActionF.getId());
     }
 
