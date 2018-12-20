@@ -1421,7 +1421,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         return coordJob;
     }
 
-    protected BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, Date lastModifiedTime) throws Exception {
+    private BundleJobBean addRecordToBundleJobTable(Job.Status jobStatus, Date lastModifiedTime) throws Exception {
         BundleJobBean bundle = createBundleJob(jobStatus, false);
         bundle.setLastModifiedTime(lastModifiedTime);
         try {
@@ -1441,12 +1441,12 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @param jobDate The date that the job was last modified
      * @return 5 + the number of days from today to jobDate
      */
-    public static int getNumDaysToNotBePurged(Date jobDate) {
+    private static int getNumDaysToNotBePurged(Date jobDate) {
         int days = (int) (((new Date()).getTime() - jobDate.getTime()) / 1000 / 60 / 60 / 24);
         return days + 5;
     }
 
-    public static CoordinatorJobBean setLastModifiedTime(CoordinatorJobBean job, String date) throws Exception {
+    private static void setLastModifiedTime(CoordinatorJobBean job, String date) throws Exception {
         job.setLastModifiedTime(DateUtils.parseDateOozieTZ(date));
         try {
             CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, job);
@@ -1456,10 +1456,9 @@ public class TestPurgeXCommand extends XDataTestCase {
             fail("Unable to update coord job last modified time");
             throw je;
         }
-        return job;
     }
 
-    public static WorkflowJobBean setEndTime(WorkflowJobBean job, String date) throws Exception {
+    private static void setEndTime(WorkflowJobBean job, String date) throws Exception {
         job.setEndTime(DateUtils.parseDateOozieTZ(date));
         try {
             WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW_STATUS_INSTANCE_MOD_END, job);
@@ -1469,6 +1468,5 @@ public class TestPurgeXCommand extends XDataTestCase {
             fail("Unable to update workflow job last modified time");
             throw je;
         }
-        return job;
     }
 }
