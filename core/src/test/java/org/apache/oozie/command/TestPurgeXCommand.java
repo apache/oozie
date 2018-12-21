@@ -729,13 +729,13 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Tbe subsubworkflow shouldn't get purged,
+     * Test : The subsubworkflow shouldn't get purged,
      *        the subworkflow should get purged,
      *        the workflow parent should get purged --> neither will get purged
      *
      * @throws Exception if cannot insert records to the database
      */
-    public void testPurgeWFWithSubSubWF1() throws Exception {
+    public void testPurgeWFWithPurgeableSubWFNonPurgeableSubSubWF() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
@@ -756,13 +756,13 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Tbe subsubworkflow should get purged,
+     * Test : The subsubworkflow should get purged,
      *        the subworkflow shouldn't get purged,
      *        the workflow parent should get purged --> neither will get purged
      *
      * @throws Exception if cannot insert records to the database
      */
-    public void testPurgeWFWithSubSubWF2() throws Exception {
+    public void testPurgeWFWithNonPurgeableSubWFPurgeableSubSubWF() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
@@ -783,13 +783,13 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Tbe subsubworkflows should get purged,
+     * Test : The subsubworkflows should get purged,
      *        the subworkflow should get purged,
      *        the workflow parent should get purged --> all will get purged
      *
      * @throws Exception if cannot insert records to the database
      */
-    public void testPurgeWFWithSubSubWF3() throws Exception {
+    public void testPurgeWFWithPurgeableSubWFPurgeableSubSubWF() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
