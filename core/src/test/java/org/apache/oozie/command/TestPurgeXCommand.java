@@ -2868,7 +2868,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      *
      * @throws Exception if unable to create workflow job or action bean
      */
-    public void testPurgeWFWithSubSubWF1() throws Exception {
+    public void testPurgeWFWithPurgeableSubWFNonPurgeableSubSubWF() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
@@ -2895,7 +2895,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      *
      * @throws Exception if unable to create workflow job or action bean
      */
-    public void testPurgeWFWithSubSubWF2() throws Exception {
+    public void testPurgeWFWithNonPurgeableSubWFPurgeableSubSubWF() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
@@ -2922,7 +2922,7 @@ public class TestPurgeXCommand extends XDataTestCase {
      *
      * @throws Exception if unable to create workflow job or action bean
      */
-    public void testPurgeWFWithSubSubWF3() throws Exception {
+    public void testPurgeWFWithPurgeableSubWFPurgeableSubSubWF() throws Exception {
         WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
