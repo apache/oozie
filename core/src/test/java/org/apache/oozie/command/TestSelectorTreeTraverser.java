@@ -62,28 +62,32 @@ public class TestSelectorTreeTraverser {
 
     @Test
     public void testSingleWorkflow() throws JPAExecutorException {
-        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A", noChildren, noneSelector);
+        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A",
+                noChildren, noneSelector);
         List<String> descendants = traverser.findAllDescendantNodesIfSelectable();
         assertEquals(Collections.singletonList("A"), descendants);
     }
 
     @Test
     public void testOneDepthTreeNotSelectedChildren() throws JPAExecutorException {
-        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A", simpleTree, noneSelector);
+        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A",
+                simpleTree, noneSelector);
         List<String> descendants = traverser.findAllDescendantNodesIfSelectable();
         assertEquals(Collections.<String>emptyList(), descendants);
     }
 
     @Test
     public void testOneDepthTreeSelectedChildren() throws JPAExecutorException {
-        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A", simpleTree, allSelector);
+        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A",
+                simpleTree, allSelector);
         List<String> descendants = traverser.findAllDescendantNodesIfSelectable();
         assertEquals(Arrays.asList("A", "B", "C"), descendants);
     }
 
     @Test
     public void testInvalidTree() throws JPAExecutorException {
-        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A", invalidTree, allSelector);
+        PurgeXCommand.SelectorTreeTraverser<String, String> traverser = new PurgeXCommand.SelectorTreeTraverser<>("A",
+                invalidTree, allSelector);
         expectedException.expect(JPAExecutorException.class);
         traverser.findAllDescendantNodesIfSelectable();
     }
