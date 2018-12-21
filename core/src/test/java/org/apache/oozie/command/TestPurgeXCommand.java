@@ -1441,12 +1441,12 @@ public class TestPurgeXCommand extends XDataTestCase {
      * @param jobDate The date that the job was last modified
      * @return 5 + the number of days from today to jobDate
      */
-    private static int getNumDaysToNotBePurged(Date jobDate) {
+    public static int getNumDaysToNotBePurged(Date jobDate) {
         int days = (int) (((new Date()).getTime() - jobDate.getTime()) / 1000 / 60 / 60 / 24);
         return days + 5;
     }
 
-    private static void setLastModifiedTime(CoordinatorJobBean job, String date) throws Exception {
+    public static CoordinatorJobBean setLastModifiedTime(CoordinatorJobBean job, String date) throws Exception {
         job.setLastModifiedTime(DateUtils.parseDateOozieTZ(date));
         try {
             CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME, job);
@@ -1456,6 +1456,7 @@ public class TestPurgeXCommand extends XDataTestCase {
             fail("Unable to update coord job last modified time");
             throw je;
         }
+        return job;
     }
 
     private static void setEndTime(WorkflowJobBean job, String date) throws Exception {
