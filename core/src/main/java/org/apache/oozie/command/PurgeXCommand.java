@@ -18,6 +18,7 @@
 
 package org.apache.oozie.command;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
@@ -44,8 +45,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class is used to purge workflows, coordinators, and bundles.  It takes into account the relationships between workflows and
@@ -68,6 +71,45 @@ public class PurgeXCommand extends XCommand<Void> {
     private int coordActionDel;
     private int bundleDel;
     private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+    @FunctionalInterface
+    interface JPAFunction<T, R> {
+        R apply(T t) throws JPAExecutorException;
+    }
+
+    @VisibleForTesting
+    static class SelectorTreeTraverser<T, U> {
+        T rootWorkflowId;
+        JPAFunction<T, List<U>> childrenFinder;
+        JPAFunction<List<U>, List<T>> selector;
+
+        SelectorTreeTraverser(T rootWorkflowId, JPAFunction<T, List<U>> childrenFinder, JPAFunction<List<U>, List<T>> selector) {
+            this.rootWorkflowId = rootWorkflowId;
+            this.childrenFinder = childrenFinder;
+            this.selector = selector;
+        }
+
+        List<T> findAllDescendantNodesIfSelectable() throws JPAExecutorException {
+            List<T> descendantNodes = new ArrayList<>();
+            descendantNodes.add(rootWorkflowId);
+            int nextIndexToCheck = 0;
+            while (nextIndexToCheck < descendantNodes.size()) {
+                T id = descendantNodes.get(nextIndexToCheck);
+                System.out.println("checking:"+id);
+                List<U> childrenNodes = childrenFinder.apply(id);
+                List<T> selectedChildren = selector.apply(childrenNodes);
+                System.out.println("s1:"+selectedChildren.size()+" "+childrenNodes.size());
+                if (selectedChildren.size() == childrenNodes.size()) {
+                    descendantNodes.addAll(selectedChildren);
+                }
+                else {
+                    return new ArrayList<>();
+                }
+                ++nextIndexToCheck;
+            }
+            return descendantNodes;
+        }
+    }
 
     public PurgeXCommand(int wfOlderThan, int coordOlderThan, int bundleOlderThan, int limit) {
         this(wfOlderThan, coordOlderThan, bundleOlderThan, limit, false);
@@ -206,30 +248,14 @@ public class PurgeXCommand extends XCommand<Void> {
     private List<String> findPurgeableWorkflows(List<String> workflows) throws JPAExecutorException {
         List<String> purgeableWorkflows = new ArrayList<>();
         for (String workflowId : workflows) {
-            purgeableWorkflows.addAll(findAllDescendantWorkflowsIfPurgeable(workflowId));
+            SelectorTreeTraverser<String, WorkflowJobBean> selectorTreeTraverser = new SelectorTreeTraverser<>(workflowId,
+                    this::getSubWorkflowJobBeans, this::fetchTerminatedWorkflow);
+            purgeableWorkflows.addAll(selectorTreeTraverser.findAllDescendantNodesIfSelectable());
         }
         return purgeableWorkflows;
     }
 
-    private List<String> findAllDescendantWorkflowsIfPurgeable(String workflowId) throws JPAExecutorException {
-        List<String> descendantWorkflows = new ArrayList<>();
-        descendantWorkflows.add(workflowId);
-        int nextWorkflowIndex = 0;
-        while (nextWorkflowIndex < descendantWorkflows.size()) {
-            String wfId = descendantWorkflows.get(nextWorkflowIndex);
-            List<WorkflowJobBean> subWorkflows = getSubWorkflowJobBeans(wfId);
-            // Checking if sub workflow is ready to purge
-            List<String> terminatedSubWorkflows = fetchTerminatedWorkflow(subWorkflows);
-            if (terminatedSubWorkflows.size() == subWorkflows.size()) {
-                descendantWorkflows.addAll(terminatedSubWorkflows);
-            }
-            else {
-                return new ArrayList<>();
-            }
-            ++nextWorkflowIndex;
-        }
-        return descendantWorkflows;
-    }
+
 
     private List<WorkflowJobBean> getSubWorkflowJobBeans(String wfId) throws JPAExecutorException {
         int size;
@@ -251,19 +277,26 @@ public class PurgeXCommand extends XCommand<Void> {
         List<String> children = new ArrayList<String>();
         long wfOlderThanMS = System.currentTimeMillis() - (wfOlderThan * DAY_IN_MS);
         for (WorkflowJobBean wfjBean : wfBeanList) {
-            final Date wfEndTime = wfjBean.getEndTime();
-            final boolean isFinished = wfjBean.inTerminalState();
-            if (isFinished && wfEndTime != null && wfEndTime.getTime() < wfOlderThanMS) {
-                    children.add(wfjBean.getId());
-            }
-            else {
-                final Date lastModificationTime = wfjBean.getLastModifiedTime();
-                if (isFinished && lastModificationTime != null && lastModificationTime.getTime() < wfOlderThanMS) {
-                    children.add(wfjBean.getId());
-                }
+            if (isWorkflowPurgeable(wfjBean, wfOlderThanMS)) {
+                children.add(wfjBean.getId());
             }
         }
         return children;
+    }
+
+    private boolean isWorkflowPurgeable(WorkflowJobBean wfjBean, long wfOlderThanMS) {
+        final Date wfEndTime = wfjBean.getEndTime();
+        final boolean isFinished = wfjBean.inTerminalState();
+        if (isFinished && wfEndTime != null && wfEndTime.getTime() < wfOlderThanMS) {
+            return true;
+        }
+        else {
+            final Date lastModificationTime = wfjBean.getLastModifiedTime();
+            if (isFinished && lastModificationTime != null && lastModificationTime.getTime() < wfOlderThanMS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
