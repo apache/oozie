@@ -79,35 +79,39 @@ public class PurgeXCommand extends XCommand<Void> {
 
     @VisibleForTesting
     static class SelectorTreeTraverser<T, U> {
-        T rootWorkflowId;
+        T rootNode;
         JPAFunction<T, List<U>> childrenFinder;
         JPAFunction<List<U>, List<T>> selector;
 
-        SelectorTreeTraverser(T rootWorkflowId, JPAFunction<T, List<U>> childrenFinder, JPAFunction<List<U>, List<T>> selector) {
-            this.rootWorkflowId = rootWorkflowId;
+        SelectorTreeTraverser(T rootNode, JPAFunction<T, List<U>> childrenFinder, JPAFunction<List<U>, List<T>> selector) {
+            this.rootNode = rootNode;
             this.childrenFinder = childrenFinder;
             this.selector = selector;
         }
 
         List<T> findAllDescendantNodesIfSelectable() throws JPAExecutorException {
-            List<T> descendantNodes = new ArrayList<>();
-            descendantNodes.add(rootWorkflowId);
+            List<T> descendantNodesList = new ArrayList<>();
+            Set<T> descendantNodesSet = new HashSet<>();
+            descendantNodesList.add(rootNode);
+            descendantNodesSet.add(rootNode);
             int nextIndexToCheck = 0;
-            while (nextIndexToCheck < descendantNodes.size()) {
-                T id = descendantNodes.get(nextIndexToCheck);
-                System.out.println("checking:"+id);
+            while (nextIndexToCheck < descendantNodesList.size()) {
+                T id = descendantNodesList.get(nextIndexToCheck);
                 List<U> childrenNodes = childrenFinder.apply(id);
                 List<T> selectedChildren = selector.apply(childrenNodes);
-                System.out.println("s1:"+selectedChildren.size()+" "+childrenNodes.size());
                 if (selectedChildren.size() == childrenNodes.size()) {
-                    descendantNodes.addAll(selectedChildren);
+                    descendantNodesList.addAll(selectedChildren);
+                    descendantNodesSet.addAll(selectedChildren);
+                    if (descendantNodesList.size() != descendantNodesSet.size()) {
+                        throw new JPAExecutorException(ErrorCode.E0613, rootNode);
+                    }
                 }
                 else {
                     return new ArrayList<>();
                 }
                 ++nextIndexToCheck;
             }
-            return descendantNodes;
+            return descendantNodesList;
         }
     }
 
