@@ -2862,7 +2862,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Tbe subsubworkflow shouldn't get purged,
+     * Test : The subsubworkflow shouldn't get purged,
      *        the subworkflow should get purged,
      *        the workflow parent should get purged --> neither will get purged
      *
@@ -2889,7 +2889,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Tbe subsubworkflow should get purged,
+     * Test : The subsubworkflow should get purged,
      *        the subworkflow shouldn't get purged,
      *        the workflow parent should get purged --> neither will get purged
      *
@@ -2916,7 +2916,7 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
-     * Test : Tbe subsubworkflows should get purged,
+     * Test : The subsubworkflows should get purged,
      *        the subworkflow should get purged,
      *        the workflow parent should get purged --> all will get purged
      *
