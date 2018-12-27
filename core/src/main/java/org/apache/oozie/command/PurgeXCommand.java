@@ -72,10 +72,23 @@ public class PurgeXCommand extends XCommand<Void> {
     private int bundleDel;
     private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-    @FunctionalInterface
     interface JPAFunction<T, R> {
         R apply(T t) throws JPAExecutorException;
     }
+
+    final JPAFunction<String, List<WorkflowJobBean>> getSubWorkflowJobBeansFunction = new JPAFunction<String, List<WorkflowJobBean>>() {
+        @Override
+        public List<WorkflowJobBean> apply(String wfId) throws JPAExecutorException {
+            return PurgeXCommand.this.getSubWorkflowJobBeans(wfId);
+        }
+    };
+
+    final JPAFunction<List<WorkflowJobBean>, List<String>> fetchTerminatedWorflowFunction = new JPAFunction<List<WorkflowJobBean>, List<String>>() {
+        @Override
+        public List<String> apply(List<WorkflowJobBean> wfBeanList) throws JPAExecutorException {
+            return PurgeXCommand.this.fetchTerminatedWorkflow(wfBeanList);
+        }
+    };
 
     @VisibleForTesting
     static class SelectorTreeTraverser<T, U> {
@@ -254,7 +267,7 @@ public class PurgeXCommand extends XCommand<Void> {
         List<String> purgeableWorkflows = new ArrayList<>();
         for (String workflowId : workflows) {
             SelectorTreeTraverser<String, WorkflowJobBean> selectorTreeTraverser = new SelectorTreeTraverser<>(workflowId,
-                    this::getSubWorkflowJobBeans, this::fetchTerminatedWorkflow);
+                    getSubWorkflowJobBeansFunction, fetchTerminatedWorflowFunction);
             purgeableWorkflows.addAll(selectorTreeTraverser.findAllDescendantNodesIfSelectable());
         }
         return purgeableWorkflows;
