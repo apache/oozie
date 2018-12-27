@@ -104,19 +104,19 @@ public class PurgeXCommand extends XCommand<Void> {
         }
 
         List<T> findAllDescendantNodesIfSelectable() throws JPAExecutorException {
-            List<T> descendantNodesList = new ArrayList<>();
-            Set<T> descendantNodesSet = new HashSet<>();
-            descendantNodesList.add(rootNode);
-            descendantNodesSet.add(rootNode);
+            List<T> allDescendantNodes = new ArrayList<>();
+            Set<T> uniqueDescendantNodes = new HashSet<>();
+            allDescendantNodes.add(rootNode);
+            uniqueDescendantNodes.add(rootNode);
             int nextIndexToCheck = 0;
-            while (nextIndexToCheck < descendantNodesList.size()) {
-                T id = descendantNodesList.get(nextIndexToCheck);
+            while (nextIndexToCheck < allDescendantNodes.size()) {
+                T id = allDescendantNodes.get(nextIndexToCheck);
                 List<U> childrenNodes = childrenFinder.apply(id);
                 List<T> selectedChildren = selector.apply(childrenNodes);
                 if (selectedChildren.size() == childrenNodes.size()) {
-                    descendantNodesList.addAll(selectedChildren);
-                    descendantNodesSet.addAll(selectedChildren);
-                    if (descendantNodesList.size() != descendantNodesSet.size()) {
+                    allDescendantNodes.addAll(selectedChildren);
+                    uniqueDescendantNodes.addAll(selectedChildren);
+                    if (allDescendantNodes.size() != uniqueDescendantNodes.size()) {
                         throw new JPAExecutorException(ErrorCode.E0613, rootNode);
                     }
                 }
@@ -125,7 +125,7 @@ public class PurgeXCommand extends XCommand<Void> {
                 }
                 ++nextIndexToCheck;
             }
-            return descendantNodesList;
+            return allDescendantNodes;
         }
     }
 
