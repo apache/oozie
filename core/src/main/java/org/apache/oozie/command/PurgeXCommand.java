@@ -79,11 +79,12 @@ public class PurgeXCommand extends XCommand<Void> {
 
     @VisibleForTesting
     static class SelectorTreeTraverser<T, U> {
-        T rootNode;
-        JPAFunction<T, List<U>> childrenFinder;
-        JPAFunction<List<U>, List<T>> selector;
+        final T rootNode;
+        final JPAFunction<T, List<U>> childrenFinder;
+        final JPAFunction<List<U>, List<T>> selector;
 
-        SelectorTreeTraverser(T rootNode, JPAFunction<T, List<U>> childrenFinder, JPAFunction<List<U>, List<T>> selector) {
+        SelectorTreeTraverser(final T rootNode, final JPAFunction<T, List<U>> childrenFinder,
+                              final JPAFunction<List<U>, List<T>> selector) {
             this.rootNode = rootNode;
             this.childrenFinder = childrenFinder;
             this.selector = selector;

@@ -2878,7 +2878,11 @@ public class TestPurgeXCommand extends XDataTestCase {
                 subwfJob.getId());
         WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
         assertWorkflowNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
@@ -2905,7 +2909,11 @@ public class TestPurgeXCommand extends XDataTestCase {
                 subwfJob.getId());
         WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.OK);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
         assertWorkflowNotPurged(wfJob.getId());
         assertWorkflowActionNotPurged(wfAction.getId());
@@ -2935,8 +2943,11 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowActionBean subsub1wfAction = addRecordToWfActionTable(subsub1wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowActionBean subsub2wfAction = addRecordToWfActionTable(subsub2wfJob.getId(), "1", WorkflowAction.Status.OK);
 
-
-        new PurgeXCommand(7, 1, 1, 10).call();
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
 
         assertWorkflowPurged(wfJob.getId());
         assertWorkflowActionPurged(wfAction.getId());
