@@ -72,37 +72,51 @@ public class PurgeXCommand extends XCommand<Void> {
     private int bundleDel;
     private static final long DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-    @FunctionalInterface
     interface JPAFunction<T, R> {
         R apply(T t) throws JPAExecutorException;
     }
 
+    final JPAFunction<String, List<WorkflowJobBean>> getSubWorkflowJobBeansFunction = new JPAFunction<String, List<WorkflowJobBean>>() {
+        @Override
+        public List<WorkflowJobBean> apply(String wfId) throws JPAExecutorException {
+            return PurgeXCommand.this.getSubWorkflowJobBeans(wfId);
+        }
+    };
+
+    final JPAFunction<List<WorkflowJobBean>, List<String>> fetchTerminatedWorflowFunction = new JPAFunction<List<WorkflowJobBean>, List<String>>() {
+        @Override
+        public List<String> apply(List<WorkflowJobBean> wfBeanList) throws JPAExecutorException {
+            return PurgeXCommand.this.fetchTerminatedWorkflow(wfBeanList);
+        }
+    };
+
     @VisibleForTesting
     static class SelectorTreeTraverser<T, U> {
-        T rootNode;
-        JPAFunction<T, List<U>> childrenFinder;
-        JPAFunction<List<U>, List<T>> selector;
+        final T rootNode;
+        final JPAFunction<T, List<U>> childrenFinder;
+        final JPAFunction<List<U>, List<T>> selector;
 
-        SelectorTreeTraverser(T rootNode, JPAFunction<T, List<U>> childrenFinder, JPAFunction<List<U>, List<T>> selector) {
+        SelectorTreeTraverser(final T rootNode, final JPAFunction<T, List<U>> childrenFinder,
+                              final JPAFunction<List<U>, List<T>> selector) {
             this.rootNode = rootNode;
             this.childrenFinder = childrenFinder;
             this.selector = selector;
         }
 
         List<T> findAllDescendantNodesIfSelectable() throws JPAExecutorException {
-            List<T> descendantNodesList = new ArrayList<>();
-            Set<T> descendantNodesSet = new HashSet<>();
-            descendantNodesList.add(rootNode);
-            descendantNodesSet.add(rootNode);
+            List<T> allDescendantNodes = new ArrayList<>();
+            Set<T> uniqueDescendantNodes = new HashSet<>();
+            allDescendantNodes.add(rootNode);
+            uniqueDescendantNodes.add(rootNode);
             int nextIndexToCheck = 0;
-            while (nextIndexToCheck < descendantNodesList.size()) {
-                T id = descendantNodesList.get(nextIndexToCheck);
+            while (nextIndexToCheck < allDescendantNodes.size()) {
+                T id = allDescendantNodes.get(nextIndexToCheck);
                 List<U> childrenNodes = childrenFinder.apply(id);
                 List<T> selectedChildren = selector.apply(childrenNodes);
                 if (selectedChildren.size() == childrenNodes.size()) {
-                    descendantNodesList.addAll(selectedChildren);
-                    descendantNodesSet.addAll(selectedChildren);
-                    if (descendantNodesList.size() != descendantNodesSet.size()) {
+                    allDescendantNodes.addAll(selectedChildren);
+                    uniqueDescendantNodes.addAll(selectedChildren);
+                    if (allDescendantNodes.size() != uniqueDescendantNodes.size()) {
                         throw new JPAExecutorException(ErrorCode.E0613, rootNode);
                     }
                 }
@@ -111,7 +125,7 @@ public class PurgeXCommand extends XCommand<Void> {
                 }
                 ++nextIndexToCheck;
             }
-            return descendantNodesList;
+            return allDescendantNodes;
         }
     }
 
@@ -253,7 +267,7 @@ public class PurgeXCommand extends XCommand<Void> {
         List<String> purgeableWorkflows = new ArrayList<>();
         for (String workflowId : workflows) {
             SelectorTreeTraverser<String, WorkflowJobBean> selectorTreeTraverser = new SelectorTreeTraverser<>(workflowId,
-                    this::getSubWorkflowJobBeans, this::fetchTerminatedWorkflow);
+                    getSubWorkflowJobBeansFunction, fetchTerminatedWorflowFunction);
             purgeableWorkflows.addAll(selectorTreeTraverser.findAllDescendantNodesIfSelectable());
         }
         return purgeableWorkflows;

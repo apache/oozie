@@ -34,30 +34,51 @@ public class TestSelectorTreeTraverser {
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
-    private PurgeXCommand.JPAFunction<String, List<String>> noChildren = (String wId) -> new ArrayList<>();
-    private PurgeXCommand.JPAFunction<List<String>, List<String>> noneSelector = (List<String> jobBeans) -> new ArrayList<>();
-    private PurgeXCommand.JPAFunction<List<String>, List<String>> allSelector = (List<String> jobBeans) -> jobBeans;
-    private PurgeXCommand.JPAFunction<String, List<String>> simpleTree = (String wId) -> {
-        switch (wId) {
-            case "A":
-                return Arrays.asList("B", "C");
-            case "B:":
-            case "C":
-                return new ArrayList<>();
+    private PurgeXCommand.JPAFunction<String, List<String>> noChildren = new PurgeXCommand.JPAFunction<String, List<String>>() {
+        @Override
+        public List<String> apply(String wId) {
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
     };
-    private PurgeXCommand.JPAFunction<String, List<String>> invalidTree = (String wId) -> {
-        switch (wId) {
-            case "A":
-                return Arrays.asList("B", "C", "D");
-            case "B:":
-            case "C":
-                return new ArrayList<>();
-            case "D":
-                return Collections.singletonList("A");
+    private PurgeXCommand.JPAFunction<List<String>, List<String>> noneSelector = new PurgeXCommand.JPAFunction<List<String>, List<String>>() {
+        @Override
+        public List<String> apply(List<String> jobBeans) {
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
+    };
+    private PurgeXCommand.JPAFunction<List<String>, List<String>> allSelector = new PurgeXCommand.JPAFunction<List<String>, List<String>>() {
+        @Override
+        public List<String> apply(List<String> jobBeans) {
+            return jobBeans;
+        }
+    };
+    private PurgeXCommand.JPAFunction<String, List<String>> simpleTree = new PurgeXCommand.JPAFunction<String, List<String>>() {
+        @Override
+        public List<String> apply(String wId) {
+            switch (wId) {
+                case "A":
+                    return Arrays.asList("B", "C");
+                case "B:":
+                case "C":
+                    return new ArrayList<>();
+            }
+            return new ArrayList<>();
+        }
+    };
+    private PurgeXCommand.JPAFunction<String, List<String>> invalidTree = new PurgeXCommand.JPAFunction<String, List<String>>() {
+        @Override
+        public List<String> apply(String wId)  {
+            switch (wId) {
+                case "A":
+                    return Arrays.asList("B", "C", "D");
+                case "B:":
+                case "C":
+                    return new ArrayList<>();
+                case "D":
+                    return Collections.singletonList("A");
+            }
+            return new ArrayList<>();
+        }
     };
 
     @Test
