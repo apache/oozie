@@ -76,14 +76,16 @@ public class PurgeXCommand extends XCommand<Void> {
         R apply(T t) throws JPAExecutorException;
     }
 
-    final JPAFunction<String, List<WorkflowJobBean>> getSubWorkflowJobBeansFunction = new JPAFunction<String, List<WorkflowJobBean>>() {
+    final JPAFunction<String, List<WorkflowJobBean>> getSubWorkflowJobBeansFunction = new JPAFunction<String,
+            List<WorkflowJobBean>>() {
         @Override
         public List<WorkflowJobBean> apply(String wfId) throws JPAExecutorException {
             return PurgeXCommand.this.getSubWorkflowJobBeans(wfId);
         }
     };
 
-    final JPAFunction<List<WorkflowJobBean>, List<String>> fetchTerminatedWorflowFunction = new JPAFunction<List<WorkflowJobBean>, List<String>>() {
+    final JPAFunction<List<WorkflowJobBean>, List<String>> fetchTerminatedWorflowFunction = new JPAFunction<List<WorkflowJobBean>,
+            List<String>>() {
         @Override
         public List<String> apply(List<WorkflowJobBean> wfBeanList) throws JPAExecutorException {
             return PurgeXCommand.this.fetchTerminatedWorkflow(wfBeanList);

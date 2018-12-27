@@ -40,13 +40,15 @@ public class TestSelectorTreeTraverser {
             return new ArrayList<>();
         }
     };
-    private PurgeXCommand.JPAFunction<List<String>, List<String>> noneSelector = new PurgeXCommand.JPAFunction<List<String>, List<String>>() {
+    private PurgeXCommand.JPAFunction<List<String>, List<String>> noneSelector = new PurgeXCommand.JPAFunction<List<String>,
+            List<String>>() {
         @Override
         public List<String> apply(List<String> jobBeans) {
             return new ArrayList<>();
         }
     };
-    private PurgeXCommand.JPAFunction<List<String>, List<String>> allSelector = new PurgeXCommand.JPAFunction<List<String>, List<String>>() {
+    private PurgeXCommand.JPAFunction<List<String>, List<String>> allSelector = new PurgeXCommand.JPAFunction<List<String>,
+            List<String>>() {
         @Override
         public List<String> apply(List<String> jobBeans) {
             return jobBeans;
