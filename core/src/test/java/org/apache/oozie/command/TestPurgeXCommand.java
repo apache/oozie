@@ -75,7 +75,15 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestPurgeXCommand extends XDataTestCase {
     private JPAService jpaService;
-    private static final int TEST_CHILD_NUM=5;
+    private static final int TEST_CHILD_NUM = 5;
+    private static final int WF_OLDER_THAN_7_DAYS = 7;
+    private static final int WF_OLDER_THAN_1_DAY = 1;
+    private static final int COORD_OLDER_THAN_7_DAYS = 7;
+    private static final int COORD_OLDER_THAN_1_DAY = 1;
+    private static final int BUNDLE_OLDER_THAN_7_DAYS = 7;
+    private static final int BUNDLE_OLDER_THAN_1_DAY = 1;
+    private static final int LIMIT_10_ITEMS = 10;
+    private static final int LIMIT_3_ITEMS = 3;
 
     @Override
     protected void setUp() throws Exception {
@@ -108,7 +116,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.OK);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobPurged(job);
         assertWorkflowActionPurged(action);
@@ -123,7 +131,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
         WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.FAILED);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobPurged(job);
         assertWorkflowActionPurged(action);
@@ -138,7 +146,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.KILLED, WorkflowInstance.Status.KILLED);
         WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.KILLED);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobPurged(job);
         assertWorkflowActionPurged(action);
@@ -153,7 +161,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowJobBean job = addRecordToWfJobTableForNegCase(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobNotPurged(job);
         assertWorkflowActionNotPurged(action);
@@ -169,7 +177,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
 
-        new PurgeXCommand(1, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(job);
         assertCoordinatorActionPurged(action);
@@ -185,7 +193,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.FAILED,
                 "coord-action-get.xml", 0);
 
-        new PurgeXCommand(1, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(job);
         assertCoordinatorActionPurged(action);
@@ -201,7 +209,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.KILLED,
                 "coord-action-get.xml", 0);
 
-        new PurgeXCommand(1, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(job);
         assertCoordinatorActionPurged(action);
@@ -217,7 +225,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean action = addRecordToCoordActionTable(job.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", 0);
 
-        new PurgeXCommand(1, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobNotPurged(job);
         assertCoordinatorActionNotPurged(action);
@@ -238,7 +246,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction1 = addRecordToBundleActionTable(job.getId(), coordJob1.getAppName(), 0, Job.Status.SUCCEEDED);
         BundleActionBean bundleAction2 = addRecordToBundleActionTable(job.getId(), coordJob2.getAppName(), 0, Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(1, 1, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(job);
         assertBundleActionPurged(bundleAction1);
@@ -261,7 +269,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction1 = addRecordToBundleActionTable(job.getId(), coordJob1.getAppName(), 0, Job.Status.FAILED);
         BundleActionBean bundleAction2 = addRecordToBundleActionTable(job.getId(), coordJob2.getAppName(), 0, Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(1, 1, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(job);
         assertBundleActionPurged(bundleAction1);
@@ -283,7 +291,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction1 = addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.KILLED);
         BundleActionBean bundleAction2 = addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.KILLED);
 
-        new PurgeXCommand(1, 1, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(job);
         assertBundleActionPurged(bundleAction1);
@@ -305,7 +313,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleActionBean1 = addRecordToBundleActionTable(job.getId(), "action1", 0, Job.Status.RUNNING);
         BundleActionBean bundleActionBean2 = addRecordToBundleActionTable(job.getId(), "action2", 0, Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(1, 1, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_1_DAY, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobNotPurged(job);
         assertBundleActionNotPurged(bundleActionBean1);
@@ -324,7 +332,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
@@ -346,7 +354,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10, true).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS, true).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionPurged(coordAction);
@@ -368,7 +376,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10, false).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS, false).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
@@ -388,7 +396,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()), 7, 1, 10).call();
+        new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()), COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
@@ -414,7 +422,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                     "coord-action-get.xml", wfJobs[i].getId(), "SUCCEEDED", 0);
         }
 
-        new PurgeXCommand(getNumDaysToNotBePurged(wfJobs[0].getEndTime()), 7, 1, 3).call();
+        new PurgeXCommand(getNumDaysToNotBePurged(wfJobs[0].getEndTime()), COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY,  LIMIT_3_ITEMS).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionsNotPurged(coordActions);
@@ -434,7 +442,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(7, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(coordJob);
         assertCoordinatorActionPurged(coordAction);
@@ -459,7 +467,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                     "coord-action-get.xml", wfJobs[i].getId(), "SUCCEEDED", 0);
         }
 
-        new PurgeXCommand(7, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(coordJob);
         assertCoordinatorActionsPurged(coordActions);
@@ -482,7 +490,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(7, 7, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), LIMIT_10_ITEMS).call();
 
         assertBundleJobNotPurged(bundleJob);
         assertBundleActionNotPurged(bundleAction);
@@ -508,7 +516,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 Job.Status.SUCCEEDED);
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()),
-                getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 7, 10).call();
+                getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobNotPurged(bundleJob);
         assertBundleActionNotPurged(bundleAction);
@@ -545,7 +553,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         }
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJobs[0].getEndTime()),
-                getNumDaysToNotBePurged(coordJobs[0].getLastModifiedTime()), 7, 3).call();
+                getNumDaysToNotBePurged(coordJobs[0].getLastModifiedTime()), BUNDLE_OLDER_THAN_7_DAYS,  LIMIT_3_ITEMS).call();
 
         assertBundleJobNotPurged(bundleJob);
         assertBundleActionsNotPurged(bundleActions);
@@ -553,7 +561,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertCoordinatorActionsNotPurged(coordActions);
         assertWorkflowJobsNotPurged(wfJobs);
         assertWorkflowActionsNotPurged(wfActions);
-
     }
 
     /**
@@ -571,7 +578,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(7, 7, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(bundleJob);
         assertBundleActionPurged(bundleAction);
@@ -606,7 +613,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                     0, Job.Status.SUCCEEDED);
         }
 
-        new PurgeXCommand(7, 7, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(bundleJob);
         assertBundleActionsPurged(bundleActions);
@@ -628,7 +635,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 wfJob.getId());
         WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobNotPurged(wfJob);
         assertWorkflowActionNotPurged(wfAction);
@@ -648,7 +655,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 wfJob.getId());
         WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobNotPurged(wfJob);
         assertWorkflowActionNotPurged(wfAction);
@@ -674,7 +681,7 @@ public class TestPurgeXCommand extends XDataTestCase {
             subwfActions[i] = addRecordToWfActionTable(subwfJobs[i].getId(), String.format("action%d",i), WorkflowAction.Status.RUNNING);
         }
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobNotPurged(wfJob);
         assertWorkflowActionsNotPurged(wfActions);
@@ -694,7 +701,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 wfJob.getId());
         WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
 
-        new PurgeXCommand(7, 1, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobPurged(wfJob);
         assertWorkflowActionPurged(wfAction);
@@ -720,7 +727,7 @@ public class TestPurgeXCommand extends XDataTestCase {
             subwfActions[i] = addRecordToWfActionTable(subwfJobs[i].getId(), "1", WorkflowAction.Status.OK);
         }
 
-        new PurgeXCommand(7, 1, 1, 3).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY,  LIMIT_3_ITEMS).call();
 
         assertWorkflowJobPurged(wfJob);
         assertWorkflowActionsPurged(wfActions);
@@ -745,11 +752,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 subwfJob.getId());
         WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        final int wfOlderThanDays = 7;
-        final int coordOlderThanDays = 1;
-        final int bundleOlderThanDays = 1;
-        final int limit = 10;
-        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobNotPurged(wfJob);
         assertWorkflowActionNotPurged(wfAction);
@@ -776,11 +779,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 subwfJob.getId());
         WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.OK);
 
-        final int wfOlderThanDays = 7;
-        final int coordOlderThanDays = 1;
-        final int bundleOlderThanDays = 1;
-        final int limit = 10;
-        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobNotPurged(wfJob);
         assertWorkflowActionNotPurged(wfAction);
@@ -810,11 +809,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         WorkflowActionBean subsub1wfAction = addRecordToWfActionTable(subsub1wfJob.getId(), "1", WorkflowAction.Status.OK);
         WorkflowActionBean subsub2wfAction = addRecordToWfActionTable(subsub2wfJob.getId(), "1", WorkflowAction.Status.OK);
 
-        final int wfOlderThanDays = 7;
-        final int coordOlderThanDays = 1;
-        final int bundleOlderThanDays = 1;
-        final int limit = 10;
-        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertWorkflowJobPurged(wfJob);
         assertWorkflowActionPurged(wfAction);
@@ -1017,11 +1012,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 WorkflowJobQueryExecutor.getInstance();
         workflowJobQueryExecutor.executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, subwfJob1);
 
-        final int wfOlderThanDays = 7;
-        final int coordOlderThanDays = 1;
-        final int bundleOlderThanDays = 1;
-        final int limit = 3;
-        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_3_ITEMS).call();
 
         assertWorkflowJobPurged(wfJob);
         assertWorkflowActionPurged(wfAction1);
@@ -1044,7 +1035,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(7, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
@@ -1070,7 +1061,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()), 7, 1, 10).call();
+        new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()), COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobNotPurged(coordJob);
         assertCoordinatorActionNotPurged(coordAction);
@@ -1096,7 +1087,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        new PurgeXCommand(7, 7, 1, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(coordJob);
         assertCoordinatorActionPurged(coordAction);
@@ -1137,11 +1128,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
                 "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
 
-        final int wfOlderThanDays = 7;
-        final int coordOlderThanDays = 7;
-        final int bundleOlderThanDays = 1;
-        final int limit = 10;
-        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
 
         assertCoordinatorJobPurged(coordJob);
         assertCoordinatorActionPurged(coordAction);
@@ -1170,7 +1157,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(7, 7, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, getNumDaysToNotBePurged(bundleJob.getLastModifiedTime()), LIMIT_10_ITEMS).call();
 
         assertBundleJobNotPurged(bundleJob);
         assertBundleActionNotPurged(bundleAction);
@@ -1202,7 +1189,7 @@ public class TestPurgeXCommand extends XDataTestCase {
                 Job.Status.SUCCEEDED);
 
         new PurgeXCommand(getNumDaysToNotBePurged(wfJob.getEndTime()),
-                getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), 7, 10).call();
+                getNumDaysToNotBePurged(coordJob.getLastModifiedTime()), BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobNotPurged(bundleJob);
         assertBundleActionNotPurged(bundleAction);
@@ -1233,7 +1220,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         BundleActionBean bundleAction = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(), coordJob.getAppName(), 0,
                 Job.Status.SUCCEEDED);
 
-        new PurgeXCommand(7, 7, 7, 10).call();
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_7_DAYS, BUNDLE_OLDER_THAN_7_DAYS, LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(bundleJob);
         assertBundleActionPurged(bundleAction);
@@ -1326,7 +1313,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         new PurgeXCommand(getNumDaysToNotBePurged(wfJobB.getEndTime()),
                           getNumDaysToNotBePurged(coordJobC.getLastModifiedTime()),
                           getNumDaysToNotBePurged(bundleJobB.getLastModifiedTime()),
-                          10).call();
+                LIMIT_10_ITEMS).call();
 
         assertBundleJobPurged(bundleJobA);
         assertBundleActionPurged(bundleActionA);
