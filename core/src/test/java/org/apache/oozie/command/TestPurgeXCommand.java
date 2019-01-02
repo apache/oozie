@@ -43,6 +43,7 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.QueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
@@ -70,6 +71,7 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
 
 public class TestPurgeXCommand extends XDataTestCase {
     private Services services;
+    private JPAService jpaService;
     private String[] excludedServices = { "org.apache.oozie.service.StatusTransitService",
             "org.apache.oozie.service.PauseTransitService", "org.apache.oozie.service.PurgeService",
             "org.apache.oozie.service.CoordMaterializeTriggerService", "org.apache.oozie.service.RecoveryService" };
@@ -80,6 +82,7 @@ public class TestPurgeXCommand extends XDataTestCase {
         services = new Services();
         setClassesToBeExcluded(services.getConf(), excludedServices);
         services.init();
+        jpaService = Services.get().get(JPAService.class);
     }
 
     @Override
@@ -2854,6 +2857,142 @@ public class TestPurgeXCommand extends XDataTestCase {
             fail("SubWorkflow Action 5 should have been purged");
         }
         catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0605, je.getErrorCode());
+        }
+    }
+
+    /**
+     * Test : The subsubworkflow shouldn't get purged,
+     *        the subworkflow should get purged,
+     *        the workflow parent should get purged --> neither will get purged
+     *
+     * @throws Exception if unable to create workflow job or action bean
+     */
+    public void testPurgeWFWithPurgeableSubWFNonPurgeableSubSubWF() throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                subwfJob.getId());
+        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+
+        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowActionNotPurged(wfAction.getId());
+        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowActionNotPurged(subwfAction.getId());
+        assertWorkflowNotPurged(subsubwfJob.getId());
+        assertWorkflowActionNotPurged(subsubwfAction.getId());
+    }
+
+    /**
+     * Test : The subsubworkflow should get purged,
+     *        the subworkflow shouldn't get purged,
+     *        the workflow parent should get purged --> neither will get purged
+     *
+     * @throws Exception if unable to create workflow job or action bean
+     */
+    public void testPurgeWFWithNonPurgeableSubWFPurgeableSubSubWF() throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
+        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                subwfJob.getId());
+        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.OK);
+
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+
+        assertWorkflowNotPurged(wfJob.getId());
+        assertWorkflowActionNotPurged(wfAction.getId());
+        assertWorkflowNotPurged(subwfJob.getId());
+        assertWorkflowActionNotPurged(subwfAction.getId());
+        assertWorkflowNotPurged(subsubwfJob.getId());
+        assertWorkflowActionNotPurged(subsubwfAction.getId());
+    }
+
+    /**
+     * Test : The subsubworkflows should get purged,
+     *        the subworkflow should get purged,
+     *        the workflow parent should get purged --> all will get purged
+     *
+     * @throws Exception if unable to create workflow job or action bean
+     */
+    public void testPurgeWFWithPurgeableSubWFPurgeableSubSubWF() throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subsub1wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                subwfJob.getId());
+        WorkflowJobBean subsub2wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                subwfJob.getId());
+        WorkflowActionBean subsub1wfAction = addRecordToWfActionTable(subsub1wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowActionBean subsub2wfAction = addRecordToWfActionTable(subsub2wfJob.getId(), "1", WorkflowAction.Status.OK);
+
+        final int wfOlderThanDays = 7;
+        final int coordOlderThanDays = 1;
+        final int bundleOlderThanDays = 1;
+        final int limit = 10;
+        new PurgeXCommand(wfOlderThanDays, coordOlderThanDays, bundleOlderThanDays, limit).call();
+
+        assertWorkflowPurged(wfJob.getId());
+        assertWorkflowActionPurged(wfAction.getId());
+        assertWorkflowPurged(subwfJob.getId());
+        assertWorkflowActionPurged(subwfAction.getId());
+        assertWorkflowPurged(subsub1wfJob.getId());
+        assertWorkflowPurged(subsub2wfJob.getId());
+        assertWorkflowActionPurged(subsub1wfAction.getId());
+        assertWorkflowActionPurged(subsub2wfAction.getId());
+    }
+
+    private void assertWorkflowNotPurged(String workflowId) {
+        try {
+            JPAExecutor jpaExecutor = new WorkflowJobGetJPAExecutor(workflowId);
+            jpaService.execute(jpaExecutor);
+        } catch (JPAExecutorException je) {
+            fail("Workflow job "+workflowId+" should not have been purged");
+        }
+    }
+
+    private void assertWorkflowPurged(String workflowId) {
+        try {
+            JPAExecutor jpaExecutor = new WorkflowJobGetJPAExecutor(workflowId);
+            jpaService.execute(jpaExecutor);
+            fail("Workflow job "+workflowId+" should have been purged");
+        } catch (JPAExecutorException je) {
+            assertEquals(ErrorCode.E0604, je.getErrorCode());
+        }
+    }
+
+    private void assertWorkflowActionNotPurged(String workflowActionId) {
+        try {
+            JPAExecutor jpaExecutor = new WorkflowActionGetJPAExecutor(workflowActionId);
+            jpaService.execute(jpaExecutor);
+        } catch (JPAExecutorException je) {
+            fail("Workflow action "+workflowActionId+" should not have been purged");
+        }
+    }
+
+    private void assertWorkflowActionPurged(String workflowActionId) {
+        try {
+            JPAExecutor jpaExecutor = new WorkflowActionGetJPAExecutor(workflowActionId);
+            jpaService.execute(jpaExecutor);
+            fail("Workflow job "+workflowActionId+" should have been purged");
+        } catch (JPAExecutorException je) {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
         }
     }
