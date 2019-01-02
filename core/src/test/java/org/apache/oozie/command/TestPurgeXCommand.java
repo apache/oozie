@@ -41,6 +41,7 @@ import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.JPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.QueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
@@ -730,92 +731,6 @@ public class TestPurgeXCommand extends XDataTestCase {
         assertWorkflowActionsPurged(subwfActions);
     }
 
-    /**
-     * Test : The subsubworkflow shouldn't get purged,
-     *        the subworkflow should get purged,
-     *        the workflow parent should get purged --> neither will get purged
-     *
-     * @throws Exception if cannot insert records to the database
-     */
-    public void testPurgeWFWithPurgeableSubWFNonPurgeableSubSubWF() throws Exception {
-        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                subwfJob.getId());
-        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
-
-        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
-
-        assertWorkflowJobNotPurged(wfJob);
-        assertWorkflowActionNotPurged(wfAction);
-        assertWorkflowJobNotPurged(subwfJob);
-        assertWorkflowActionNotPurged(subwfAction);
-        assertWorkflowJobNotPurged(subsubwfJob);
-        assertWorkflowActionNotPurged(subsubwfAction);
-    }
-
-    /**
-     * Test : The subsubworkflow should get purged,
-     *        the subworkflow shouldn't get purged,
-     *        the workflow parent should get purged --> neither will get purged
-     *
-     * @throws Exception if cannot insert records to the database
-     */
-    public void testPurgeWFWithNonPurgeableSubWFPurgeableSubSubWF() throws Exception {
-        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
-                wfJob.getId());
-        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
-        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                subwfJob.getId());
-        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.OK);
-
-        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
-
-        assertWorkflowJobNotPurged(wfJob);
-        assertWorkflowActionNotPurged(wfAction);
-        assertWorkflowJobNotPurged(subwfJob);
-        assertWorkflowActionNotPurged(subwfAction);
-        assertWorkflowJobNotPurged(subsubwfJob);
-        assertWorkflowActionNotPurged(subsubwfAction);
-    }
-
-    /**
-     * Test : The subsubworkflows should get purged,
-     *        the subworkflow should get purged,
-     *        the workflow parent should get purged --> all will get purged
-     *
-     * @throws Exception if cannot insert records to the database
-     */
-    public void testPurgeWFWithPurgeableSubWFPurgeableSubSubWF() throws Exception {
-        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
-        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                wfJob.getId());
-        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowJobBean subsub1wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                subwfJob.getId());
-        WorkflowJobBean subsub2wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
-                subwfJob.getId());
-        WorkflowActionBean subsub1wfAction = addRecordToWfActionTable(subsub1wfJob.getId(), "1", WorkflowAction.Status.OK);
-        WorkflowActionBean subsub2wfAction = addRecordToWfActionTable(subsub2wfJob.getId(), "1", WorkflowAction.Status.OK);
-
-        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
-
-        assertWorkflowJobPurged(wfJob);
-        assertWorkflowActionPurged(wfAction);
-        assertWorkflowJobPurged(subwfJob);
-        assertWorkflowActionPurged(subwfAction);
-        assertWorkflowJobPurged(subsub1wfJob);
-        assertWorkflowJobPurged(subsub2wfJob);
-        assertWorkflowActionPurged(subsub1wfAction);
-        assertWorkflowActionPurged(subsub2wfAction);
-    }
-
     private void assertBundleActionsPurged(BundleActionBean... bundleActionBeans) {
         for (BundleActionBean bean : bundleActionBeans) {
             assertBundleActionPurged(bean);
@@ -989,6 +904,93 @@ public class TestPurgeXCommand extends XDataTestCase {
             assertEquals(ErrorCode.E0605, je.getErrorCode());
         }
     }
+
+    /**
+     * Test : The subsubworkflow shouldn't get purged,
+     *        the subworkflow should get purged,
+     *        the workflow parent should get purged --> neither will get purged
+     *
+     * @throws Exception if unable to create workflow job or action bean
+     */
+    public void testPurgeWFWithPurgeableSubWFNonPurgeableSubSubWF() throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                subwfJob.getId());
+        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
+
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
+
+        assertWorkflowJobNotPurged(wfJob);
+        assertWorkflowActionNotPurged(wfAction);
+        assertWorkflowJobNotPurged(subwfJob);
+        assertWorkflowActionNotPurged(subwfAction);
+        assertWorkflowJobNotPurged(subsubwfJob);
+        assertWorkflowActionNotPurged(subsubwfAction);
+    }
+
+    /**
+     * Test : The subsubworkflow should get purged,
+     *        the subworkflow shouldn't get purged,
+     *        the workflow parent should get purged --> neither will get purged
+     *
+     * @throws Exception if unable to create workflow job or action bean
+     */
+    public void testPurgeWFWithNonPurgeableSubWFPurgeableSubSubWF() throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.RUNNING);
+        WorkflowJobBean subsubwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                subwfJob.getId());
+        WorkflowActionBean subsubwfAction = addRecordToWfActionTable(subsubwfJob.getId(), "1", WorkflowAction.Status.OK);
+
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
+
+        assertWorkflowJobNotPurged(wfJob);
+        assertWorkflowActionNotPurged(wfAction);
+        assertWorkflowJobNotPurged(subwfJob);
+        assertWorkflowActionNotPurged(subwfAction);
+        assertWorkflowJobNotPurged(subsubwfJob);
+        assertWorkflowActionNotPurged(subsubwfAction);
+    }
+
+    /**
+     * Test : The subsubworkflows should get purged,
+     *        the subworkflow should get purged,
+     *        the workflow parent should get purged --> all will get purged
+     *
+     * @throws Exception if unable to create workflow job or action bean
+     */
+    public void testPurgeWFWithPurgeableSubWFPurgeableSubSubWF() throws Exception {
+        WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subwfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                wfJob.getId());
+        WorkflowActionBean subwfAction = addRecordToWfActionTable(subwfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowJobBean subsub1wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                subwfJob.getId());
+        WorkflowJobBean subsub2wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED,
+                subwfJob.getId());
+        WorkflowActionBean subsub1wfAction = addRecordToWfActionTable(subsub1wfJob.getId(), "1", WorkflowAction.Status.OK);
+        WorkflowActionBean subsub2wfAction = addRecordToWfActionTable(subsub2wfJob.getId(), "1", WorkflowAction.Status.OK);
+
+        new PurgeXCommand(WF_OLDER_THAN_7_DAYS, COORD_OLDER_THAN_1_DAY, BUNDLE_OLDER_THAN_1_DAY, LIMIT_10_ITEMS).call();
+
+        assertWorkflowJobPurged(wfJob);
+        assertWorkflowActionPurged(wfAction);
+        assertWorkflowJobPurged(subwfJob);
+        assertWorkflowActionPurged(subwfAction);
+        assertWorkflowJobPurged(subsub1wfJob);
+        assertWorkflowJobPurged(subsub2wfJob);
+        assertWorkflowActionPurged(subsub1wfAction);
+        assertWorkflowActionPurged(subsub2wfAction);
+    }
+
 
     /**
      * Test : The subworkflow should get purged, and the workflow parent should get purged --> both will get purged
