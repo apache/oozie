@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3341 [docs] Fix difference between command line help and documentation (asalamon74 via andras.piros)
 OOZIE-3400 [core] Fix PurgeService sub-sub-workflow checking (asalamon74 via andras.piros)
 OOZIE-3410 [build] Deploy fluent-job and oozie-sharelib-git artifacts (andras.piros via gezapeti)
 OOZIE-3397 amend Improve logging in NotificationXCommand (asalamon74 via andras.piros)
