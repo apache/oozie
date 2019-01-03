@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -39,7 +40,6 @@ import java.net.URI;
 import java.util.List;
 
 import static org.apache.oozie.tools.OozieSharelibCLI.EXTRALIBS_SHARELIB_KEY_VALUE_SEPARATOR;
-
 
 public class IntegrationTestOozieSharelibCLI extends XTestCase {
 
@@ -147,7 +147,21 @@ public class IntegrationTestOozieSharelibCLI extends XTestCase {
                  InputStream copiedFileStream = fileSystem.open(new Path(libPath, f.getName()))) {
                 assertTrue("The content of the files must be equal", IOUtils.contentEquals(originalFileStream, copiedFileStream));
             }
+            checkFilePermission(libPath, f);
         }
+    }
+
+    private void checkFilePermission(Path libPath, File file) throws Exception {
+        if (file.isDirectory()) {
+            checkPermission(libPath, file, new FsPermission(OozieSharelibCLI.DIRECTORY_PERMISSION));
+        } else {
+            checkPermission(libPath, file, new FsPermission(OozieSharelibCLI.FILE_PERMISSION));
+        }
+    }
+
+    private void checkPermission(Path libPath, File file, FsPermission expectedPermission) throws Exception {
+        FsPermission actualFilePermission = getTargetFileSysyem().getFileStatus(new Path(libPath, file.getName())).getPermission();
+        assertEquals("File/Directory permission shall match with the expected one.", expectedPermission, actualFilePermission);
     }
 
     private FileSystem getTargetFileSysyem() throws Exception {
