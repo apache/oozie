@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3067 [core] Remove duplicate logic from ZKJobsConcurrencyService (dionusos via andras.piros)
 OOZIE-3186 [core] Oozie is unable to use configuration linked using jceks://file/ (dionusos via andras.piros)
 OOZIE-3194 [tools] Oozie should set proper permissions to sharelib after upload (dionusos via andras.piros)
 OOZIE-3341 [docs] Fix difference between command line help and documentation (asalamon74 via andras.piros)

@@ -197,18 +197,8 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      */
     @Override
     public Map<String, String> getOtherServerUrls() {
-        Map<String, String> urls = new HashMap<String, String>();
-        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
-        for (ServiceInstance<Map> oozie : oozies) {
-            Map<String, String> metadata = oozie.getPayload();
-            String id = metadata.get(ZKUtils.ZKMetadataKeys.OOZIE_ID);
-
-            if (id.equals(zk.getZKId())) {
-                continue;
-            }
-            String url = metadata.get(ZKUtils.ZKMetadataKeys.OOZIE_URL);
-            urls.put(id, url);
-        }
+        Map<String, String> urls = getServerUrls();
+        urls.remove(zk.getZKId());
         return urls;
     }
 
