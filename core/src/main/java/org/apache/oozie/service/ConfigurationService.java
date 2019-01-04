@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 
 import com.google.common.base.Strings;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ConfigUtils;
@@ -98,6 +99,8 @@ public class ConfigurationService implements Service, Instrumentable {
 
     private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
     private static final Set<String> MASK_PROPS = new HashSet<String>();
+    public static final String HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH = "hadoop.security.credential.provider.path";
+    public static final String JCEKS_FILE_PREFIX = "jceks://file/";
     private static Map<String,String> defaultConfigs = new HashMap<String,String>();
 
     static {
@@ -247,6 +250,7 @@ public class ConfigurationService implements Service, Instrumentable {
             else {
                 inputStream = new FileInputStream(configFile);
                 XConfiguration siteConfiguration = loadConfig(inputStream, false);
+                fixJceksUrl(siteConfiguration);
                 XConfiguration.injectDefaults(configuration, siteConfiguration);
                 configuration = siteConfiguration;
             }
@@ -631,5 +635,19 @@ public class ConfigurationService implements Service, Instrumentable {
     public static Map<String, String> getValByRegex(final String regex) {
         final Configuration conf = Services.get().getConf();
         return conf.getValByRegex(regex);
+    }
+
+    private void fixJceksUrl(Configuration siteConfiguration) {
+        String jceksUrl = siteConfiguration.get(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH);
+        if (Strings.isNullOrEmpty(jceksUrl)) {
+            return;
+        }
+        if (jceksUrl.startsWith(JCEKS_FILE_PREFIX)) {
+            siteConfiguration.set(
+                    HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH,
+                    jceksUrl.replaceFirst("jceks", "localjceks"));
+            log.info(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH + " is changed to " +
+                    siteConfiguration.get(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH));
+        }
     }
 }

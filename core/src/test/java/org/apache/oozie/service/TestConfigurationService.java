@@ -28,6 +28,7 @@ import org.apache.oozie.command.wf.JobXCommand;
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.event.listener.ZKConnectionListener;
 import org.apache.oozie.executor.jpa.CoordActionGetForInfoJPAExecutor;
+import static org.apache.oozie.service.ConfigurationService.HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH;
 import org.apache.oozie.servlet.AuthFilter;
 import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.sla.service.SLAService;
@@ -306,6 +307,38 @@ public class TestConfigurationService extends XTestCase {
 
         prepareOozieConfDir("oozie-site-documentbuilderfactory-empty.xml");
         verifyDocumentBuilderFactoryClass(null, dbfClass);
+    }
+
+    public void testJceksUrlReplacement() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-jceks.xml",
+                "localjceks://file/somewhere/on/local/filesystem");
+    }
+
+    public void testJceksLocaljceksUrlReplacement() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-localjceks.xml",
+                "localjceks://file/somewhere/on/local/filesystem");
+    }
+
+    public void testJceksUrlReplacementWithNonFileContinuation() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-jceks-nonfile.xml",
+                "jceks://something/somewhere/on/local/filesystem");
+    }
+
+    public void testJceksUrlReplacementWithFilesomethingContinuation() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-jceks-filesomething.xml",
+                "jceks://filesomething/somewhere/on/local/filesystem");
+    }
+
+    private void assertForJceksReplacement(String siteXml, String expectedResult) throws Exception{
+        prepareOozieConfDir(siteXml);
+        ConfigurationService cl = new ConfigurationService();
+        cl.init(null);
+        assertEquals(expectedResult, cl.getConf().get(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH));
+        cl.destroy();
     }
 
     private void verifyDocumentBuilderFactoryClass(String expectedPropertyValue, Class<?> expectedClass) throws Exception {
