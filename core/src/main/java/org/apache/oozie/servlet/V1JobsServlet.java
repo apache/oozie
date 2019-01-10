@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -148,9 +149,6 @@ public class V1JobsServlet extends BaseJobsServlet {
         if (!findAppPathsWithFileNames(appPath, "workflow.xml").isEmpty()) {
             appPathsWithFileNames = findAppPathsWithFileNames(appPath, "workflow.xml");
         }
-        else if (!findAppPathsWithFileNames(conf.get(OozieClient.LIBPATH), "workflow.xml").isEmpty()) {
-            appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.LIBPATH), "workflow.xml");
-        }
         else if (!findAppPathsWithFileNames(conf.get(OozieClient.COORDINATOR_APP_PATH), "coordinator.xml").isEmpty()) {
             appPathsWithFileNames = findAppPathsWithFileNames(conf.get(OozieClient.COORDINATOR_APP_PATH), "coordinator.xml");
         }
@@ -166,14 +164,16 @@ public class V1JobsServlet extends BaseJobsServlet {
             }
         }
 
+        final String sourceContent = conf.get(OozieClient.CONFIG_KEY_GENERATED_XML);
+        if (sourceContent == null) {
+            final String xmlFiles = StringUtils.join(appPathsWithFileNames, ",");
+            final String errorMessage = String.format("XML file [%s] does not exist and " +
+                            "app definition cannot be created because of missing config value [%s]",
+                    xmlFiles,  OozieClient.CONFIG_KEY_GENERATED_XML);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, errorMessage);
+        }
+
         for (final String appPathWithFileName : appPathsWithFileNames) {
-            final String sourceContent = conf.get(OozieClient.CONFIG_KEY_GENERATED_XML);
-            if (sourceContent == null) {
-                final String errorMessage = String.format("App directory [%s] does not exist and " +
-                        "app definition cannot be created because of missing config value [%s]",
-                        appPath,  OozieClient.CONFIG_KEY_GENERATED_XML);
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0307, errorMessage);
-            }
             if (tryCreateOnDFS(userName, appPathWithFileName, sourceContent)) {
                 return;
             }

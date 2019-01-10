@@ -127,14 +127,12 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         }
 
         if (Strings.isNullOrEmpty(configuration.get(OozieClient.APP_PATH))
-                && Strings.isNullOrEmpty(configuration.get(OozieClient.LIBPATH))
                 && Strings.isNullOrEmpty(configuration.get(OozieClient.COORDINATOR_APP_PATH))
                 && Strings.isNullOrEmpty(configuration.get(OozieClient.BUNDLE_APP_PATH))) {
             final String generatedJobApplicationPath = ConfigurationService.get("oozie.fluent-job-api.generated.path")
                     + File.separator + "gen_app_" + new Date().getTime();
-            LOG.debug("Parameters [{0}], [{1}], [{2}], and [{3}] were all missing, setting to generated path [{4}]",
+            LOG.debug("Parameters [{0}], [{1}], and [{2}] were all missing, setting to generated path [{3}]",
                     OozieClient.APP_PATH,
-                    OozieClient.LIBPATH,
                     OozieClient.COORDINATOR_APP_PATH,
                     OozieClient.BUNDLE_APP_PATH,
                     generatedJobApplicationPath);

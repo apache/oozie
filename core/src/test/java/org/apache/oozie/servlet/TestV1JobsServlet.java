@@ -136,12 +136,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             obj.get(JsonTags.JOB_ID));
-                assertFalse(MockDagEngineService.started.get(wfCount));
-                wfCount++;
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
 
                 Path libPath2 = new Path(getFsTestCaseDir(), "libpath2");
                 fs.mkdirs(libPath2);
@@ -156,12 +151,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             obj.get(JsonTags.JOB_ID));
-                assertFalse(MockDagEngineService.started.get(wfCount));
-                wfCount++;
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
 
                 return null;
             }
