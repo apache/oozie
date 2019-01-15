@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3421 [tests] GitServer lifecycle fixes (andras.piros via kmarton)
 OOZIE-3415 [core] libpath cannot be used together with coord.application.path and bundle.application.path (asalamon74 via andras.piros)
 OOZIE-3407 [tests] Cleanup TestPurgeXCommand (asalamon74 via andras.piros)
 OOZIE-3067 [core] Remove duplicate logic from ZKJobsConcurrencyService (dionusos via andras.piros)

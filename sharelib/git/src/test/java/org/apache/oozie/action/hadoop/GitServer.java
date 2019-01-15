@@ -62,6 +62,12 @@ class GitServer {
     }
 
     void start() throws IOException {
+        if (this.server != null && this.server.isRunning()) {
+            LOG.warn("Git server has already been started on port {0}, not trying to start again",
+                    this.server.getAddress().getPort());
+            return;
+        }
+
         LOG.info("Starting Git server on port {0}", this.localPort);
 
         this.server = new Daemon(new InetSocketAddress(this.localPort));
@@ -86,6 +92,11 @@ class GitServer {
 
     void stopAndCleanupReposServer() {
         cleanUpRepos();
+        if (this.server == null || !this.server.isRunning()) {
+            LOG.warn("Git server is not running, not trying to stop");
+            return;
+        }
+
         this.server.stop();
     }
 
