@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ package org.apache.oozie.fluentjob.api;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.engine.GraphvizException;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.parse.Parser;
 import org.apache.commons.io.FilenameUtils;
@@ -99,22 +100,60 @@ public class GraphVisualization {
     }
 
     public static void graphToPng(final Graph graph, final String fileName) throws IOException {
+        if (!isProperJDKVersion()) {
+            System.err.println("JDK version is not correct, omitting generating PNG from graph.");
+            return;
+        }
+
         final MutableGraph mg = Parser.read(graphToDot(graph));
         mg.setName(fileName);
 
-        Graphviz.fromGraph(mg)
-                .width(PNG_WIDTH)
-                .render(Format.PNG)
-                .toFile(new File(PARENT_FOLDER_NAME, FilenameUtils.getName(fileName)));
+        try {
+            Graphviz.fromGraph(mg)
+                    .width(PNG_WIDTH)
+                    .render(Format.PNG)
+                    .toFile(new File(PARENT_FOLDER_NAME, FilenameUtils.getName(fileName)));
+        }
+        catch (final GraphvizException e) {
+            throw new GraphvizException(String.format("Java version is %s", System.getProperty("java.version")), e);
+        }
     }
 
     public static void workflowToPng(final Workflow workflow, final String fileName) throws IOException {
+        if (!isProperJDKVersion()) {
+            System.err.println("JDK version is not correct, omitting generating PNG from workflow.");
+            return;
+        }
+
         final MutableGraph mg = Parser.read(workflowToDot(workflow));
         mg.setName(fileName);
 
-        Graphviz.fromGraph(mg)
-                .width(PNG_WIDTH)
-                .render(Format.PNG)
-                .toFile(new File(PARENT_FOLDER_NAME, FilenameUtils.getName(fileName)));
+        try {
+            Graphviz.fromGraph(mg)
+                    .width(PNG_WIDTH)
+                    .render(Format.PNG)
+                    .toFile(new File(PARENT_FOLDER_NAME, FilenameUtils.getName(fileName)));
+        }
+        catch (final GraphvizException e) {
+            throw new GraphvizException(String.format("Java version is %s", System.getProperty("java.version")), e);
+        }
+    }
+
+    /**
+     * Due to {@code guru.nidi:graphviz-java} >= 0.5.1 we need to check whether we have the proper minor version when running on
+     * JDK8.
+     * @see <a href="https://github.com/nidi3/graphviz-java/commit/b7cf5761f97f1491d3bdc65367ec00e38d66291d">this commit</a>
+     */
+    private static boolean isProperJDKVersion() {
+        final String version = System.getProperty("java.version");
+        if (version.startsWith("1.8.0_")) {
+            try {
+                return Integer.parseInt(version.substring(6)) >= 40;
+            } catch (final NumberFormatException ignored) {
+                return false;
+            }
+        } else {
+            return true;
+        }
     }
 }
