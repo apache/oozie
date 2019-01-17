@@ -62,21 +62,6 @@
                             <goal>resources</goal>
                         </goals>
                     </execution>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${basedir}/spark/target/test-classes</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>spark/src/main/resources</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
