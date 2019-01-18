@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3414 Oozie master does not compile with -Dhadoop.version=2.8.5 (asalamon74 via kmarton)
 OOZIE-3401 [test] fix TestPySpark failure (kmarton, asalamon74)
 OOZIE-3419 [fluent-job] GraphVisualization fails before JDK 1.8.0_u40 (andras.piros via kmarton)
 OOZIE-3422 [client] Enhance logging of Oozie client connecting to the Oozie server (asalamon74 via andras.piros)
