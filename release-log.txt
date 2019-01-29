@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3243 [tests] Flaky test TestCoordActionsKillXCommand#testActionKillCommandDate (asalamon74 via kmarton)
 OOZIE-3419 amend [fluent-job] GraphVisualization fails before JDK 1.8.0_u40 (asalamon74 via kmarton)
 OOZIE-3420 [action] pom.xml fixes (andras.piros via kmarton)
 OOZIE-3414 Oozie master does not compile with -Dhadoop.version=2.8.5 (asalamon74 via kmarton)
