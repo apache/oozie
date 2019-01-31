@@ -255,7 +255,7 @@ public class V1JobsServlet extends BaseJobsServlet {
             return true;
         }
         catch (final URISyntaxException | IOException | HadoopAccessorException e) {
-            LOG.warn("Could not write XML [%s] to HDFS. Error message: %s", appPathWithFileName, e.getMessage());
+            LOG.warn("Could not write XML [{0}] to HDFS. Error message: {1}", appPathWithFileName, e.getMessage());
             return false;
         }
     }
