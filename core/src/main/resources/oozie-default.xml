@@ -3419,6 +3419,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.sqoop.shellsplitter</name>
+        <value>false</value>
+        <description>
+            Whether to use shell splitter instead of the space-based tokenizer during sqoop command splitting.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.fluent-job-api.generated.path</name>
         <value>/user/${user.name}/oozie-fluent-job-api-generated</value>
         <description>

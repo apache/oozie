@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-2949 Escape quotes whitespaces in Sqoop <command> field (asalamon74 via kmarton)	
 OOZIE-3426 [core] V1JobsServlet should log HDFS related error when trying to save workflow definition (asalamon74 via andras.piros)
 OOZIE-3417 [FS Action] Refactor and optimize FsActionExecutor.java decision making part (nobigo via asalamon74, kmarton)
 OOZIE-3243 [tests] Flaky test TestCoordActionsKillXCommand#testActionKillCommandDate (asalamon74 via kmarton)

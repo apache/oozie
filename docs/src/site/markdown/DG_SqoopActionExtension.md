@@ -91,12 +91,18 @@ properties that are passed to the Sqoop job.
 The Sqoop command can be specified either using the `command` element or multiple `arg`
 elements.
 
-When using the `command` element, Oozie will split the command on every space
-into multiple arguments.
+When using the `command` element, Oozie will split the command into multiple arguments. There are two command splitting algorithms
+in Oozie.
+
+If `oozie.action.sqoop.shellsplitter` property is set to `false` Oozie will split the command on every space.
+
+If `oozie.action.sqoop.shellsplitter` property is set to `true` Oozie will split the command like `bash` splits the commands.
+In this case it's possible to group strings together using quotes. For instance oozie will split `--query "select * from employee"`
+into two tokens: `--query` and `select * from employee`.
+
+The default value of the `oozie.action.sqoop.shellsplitter` property is `false`.
 
 When using the `arg` elements, Oozie will pass each argument value as an argument to Sqoop.
-
-The `arg` variant should be used when there are spaces within a single argument.
 
 Consult the Sqoop documentation for a complete list of valid Sqoop commands.
 

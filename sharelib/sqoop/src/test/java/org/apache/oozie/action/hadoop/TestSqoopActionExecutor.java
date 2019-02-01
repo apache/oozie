@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
@@ -47,6 +48,9 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
     private static final String SQOOP_IMPORT_COMMAND =
             "import --connect {0} --table TT --target-dir {1} -m 1";
+
+    private static final String SQOOP_IMPORT_COMMAND_WITH_QUERY =
+            "import --connect {0} --username sa --password \"\" --verbose --query {1} --target-dir {2} --split-by I";
 
     private static final String SQOOP_ACTION_COMMAND_XML =
             "<sqoop xmlns=\"uri:oozie:sqoop-action:0.1\">" +
@@ -155,6 +159,20 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
                 "dummy", "dummyValue", command);
     }
 
+    private String getImportWithQueryActionXml(boolean useNewShellSplitter) {
+        String command = MessageFormat.format(SQOOP_IMPORT_COMMAND_WITH_QUERY, getActionJdbcUri(),
+                "\"select TT.I, TT.S from TT where $CONDITIONS\"", getSqoopOutputDir());
+        return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getJobTrackerUri(), getNameNodeUri(),
+                SqoopActionExecutor.OOZIE_ACTION_SQOOP_SHELLSPLITTER, useNewShellSplitter, command);
+    }
+
+    private String getInvalidImportWithQueryActionXml(boolean useNewShellSplitter) {
+        String command = MessageFormat.format(SQOOP_IMPORT_COMMAND_WITH_QUERY, getActionJdbcUri(),
+                "\"select TT.I, TT.S from TT where $CONDITIONS'", getSqoopOutputDir());
+        return MessageFormat.format(SQOOP_ACTION_COMMAND_XML, getJobTrackerUri(), getNameNodeUri(),
+                SqoopActionExecutor.OOZIE_ACTION_SQOOP_SHELLSPLITTER, useNewShellSplitter, command);
+    }
+
     private String getActionXmlEval() {
       String query = "select TT.I, TT.S from TT";
       return MessageFormat.format(SQOOP_ACTION_EVAL_XML, getJobTrackerUri(), getNameNodeUri(),
@@ -166,6 +184,12 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getJobTrackerUri(), getNameNodeUri(),
                                     (redundant ? "<arg>sqoop</arg>" : "") + "<arg>import</arg>",
                                     getActionJdbcUri(), query, getSqoopOutputDir());
+    }
+
+    private String getArgsActionXmlFreeFromQueryInQuotes(String quote) {
+        String query = "select TT.I, TT.S from TT where $CONDITIONS";
+        return MessageFormat.format(SQOOP_ACTION_ARGS_XML, getJobTrackerUri(), getNameNodeUri(),
+               "<arg>import</arg>", getActionJdbcUri(), quote + query + quote, getSqoopOutputDir());
     }
 
     private String getBadArgsActionXml() {
@@ -190,6 +214,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     /**
      * Tests a bad command of 'sqoop --username ...' style.
      * Test asserts that the job will fail.
+     * @throws java.lang.Exception
      */
     public void testSqoopActionWithBadCommand() throws Exception {
         runSqoopActionWithBadCommand(getBadCommandActionXml());
@@ -216,6 +241,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
     /**
      * Tests a normal command of 'import --username ...'.
+     * @throws java.lang.Exception
      */
     public void testSqoopAction() throws Exception {
         runSqoopAction(getActionXml());
@@ -224,6 +250,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     /**
      * Tests a redundant command of 'sqoop import --username ...'.
      * The test guarantees a success, since the redundant 'sqoop' must get removed.
+     * @throws java.lang.Exception
      */
     public void testSqoopActionWithRedundantPrefix() throws Exception {
         runSqoopAction(getRedundantCommandActionXml());
@@ -290,6 +317,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     /**
      * Runs a job with arg-style command of 'sqoop --username ...' form that's invalid.
      * The test ensures it fails.
+     * @throws java.lang.Exception
      */
     public void testSqoopActionWithBadRedundantArgsAndFreeFormQuery() throws Exception {
         runSqoopActionWithBadCommand(getBadArgsActionXml());
@@ -298,6 +326,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     /**
      * Runs a job with the arg-style command of 'sqoop import --username ...'.
      * The test guarantees that the redundant 'sqoop' is auto-removed (job passes).
+     * @throws java.lang.Exception
      */
     public void testSqoopActionWithRedundantArgsAndFreeFormQuery() throws Exception {
         runSqoopActionFreeFormQuery(getArgsActionXmlFreeFromQuery(true));
@@ -305,9 +334,36 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
 
     /**
      * Runs a job with the normal arg-style command of 'import --username ...'.
+     * @throws java.lang.Exception
      */
     public void testSqoopActionWithArgsAndFreeFormQuery() throws Exception {
         runSqoopActionFreeFormQuery(getArgsActionXmlFreeFromQuery(false));
+    }
+
+    /**
+     * Runs a job with the normal arg-style command of 'import --username ...'.
+     * This is meant to be a sanity check for when --query argument has
+     * double quotes around it.
+     * @throws java.lang.Exception
+     */
+    public void testSqoopActionWithArgsAndFreeFormQueryInDoubleQuotes() throws Exception {
+        runSqoopActionFreeFormQuery(getArgsActionXmlFreeFromQueryInQuotes("\""));
+    }
+
+    public void testSqoopActionWithCommandAndFreeFormQuery() throws Exception {
+        boolean useNewShellSplitter = true;
+        runSqoopActionFreeFormQuery(getImportWithQueryActionXml(useNewShellSplitter));
+    }
+
+    public void testInvalidSqoopActionWithCommandAndFreeFormQuery() throws Exception {
+        try {
+            boolean useNewShellSplitter = true;
+            runSqoopActionFreeFormQuery(getInvalidImportWithQueryActionXml(useNewShellSplitter));
+            fail("Expected ActionExecutorException");
+        }
+        catch (ActionExecutorException e) {
+            assertTrue(String.format("Invalid error message: [%s]", e.getMessage()), e.getMessage().startsWith("SQOOP002"));
+        }
     }
 
     private void runSqoopActionFreeFormQuery(String actionXml) throws Exception {
@@ -353,7 +409,6 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertEquals(3, count);
     }
 
-
     private String submitAction(Context context) throws Exception {
         SqoopActionExecutor ae = new SqoopActionExecutor();
 
@@ -392,7 +447,7 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
     }
 
     private String[] copyDbToHdfs() throws Exception {
-        List<String> files = new ArrayList<String>();
+        List<String> files = new ArrayList<>();
         String[] exts = {".script", ".properties"};
         for (String ext : exts) {
             String file = getDbPath() + ext;

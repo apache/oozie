@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -42,9 +43,13 @@ import org.jdom.Namespace;
 public class SqoopActionExecutor extends JavaActionExecutor {
 
   public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
+  @VisibleForTesting
+  static final String OOZIE_ACTION_SQOOP_SHELLSPLITTER = "oozie.action.sqoop.shellsplitter";
+  private static final boolean SHELLSPLITTER_DEFAULT = false;
   private static final String SQOOP_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SqoopMain";
   static final String SQOOP_ARGS = "oozie.sqoop.args";
   private static final String SQOOP = "sqoop";
+  private ShellSplitter shellSplitter = new ShellSplitter();
 
     public SqoopActionExecutor() {
         super(SQOOP);
@@ -85,14 +90,11 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             throw convertException(ex);
         }
 
-        final List<String> argList = new ArrayList<>();
+        List<String> argList = new ArrayList<>();
         // Build a list of arguments from either a tokenized <command> string or a list of <arg>
         if (actionXml.getChild("command", ns) != null) {
             String command = actionXml.getChild("command", ns).getTextTrim();
-            StringTokenizer st = new StringTokenizer(command, " ");
-            while (st.hasMoreTokens()) {
-                argList.add(st.nextToken());
-            }
+            argList = splitCommand(actionConf, command);
         }
         else {
             @SuppressWarnings("unchecked")
@@ -113,9 +115,34 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                     "Found a redundant 'sqoop' prefixing the command. Removing it.");
             argList.remove(0);
         }
-
         setSqoopCommand(actionConf, argList.toArray(new String[argList.size()]));
         return actionConf;
+    }
+
+    private List<String> splitCommand(Configuration actionConf, String command) throws ActionExecutorException {
+        List<String> argList;
+        boolean useShellSplitter = actionConf.getBoolean(OOZIE_ACTION_SQOOP_SHELLSPLITTER, SHELLSPLITTER_DEFAULT);
+        if (useShellSplitter) {
+            try {
+                argList = shellSplitter.split(command);
+            } catch (ShellSplitterException e) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "SQOOP002",
+                        "Cannot parse sqoop command: [{0}]", command, e);
+            }
+        }
+        else {
+            argList = splitBySpace(command);
+        }
+        return argList;
+    }
+
+    private List<String> splitBySpace(final String command) {
+        List<String> tokens = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(command, " ");
+        while (st.hasMoreTokens()) {
+            tokens.add(st.nextToken());
+        }
+        return tokens;
     }
 
     private void setSqoopCommand(Configuration conf, String[] args) {
