@@ -46,8 +46,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -113,6 +113,7 @@ public class TestEmbeddedOozieServer {
 
         embeddedOozieServer.setup();
         verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+        verify(oozieFilterMapper).addFilters();
 
         // trustore parameters will have to be set even in case of an insecure setup
         Assert.assertEquals(confTruststoreFile, System.getProperty("javax.net.ssl.trustStore"));
@@ -130,6 +131,7 @@ public class TestEmbeddedOozieServer {
 
         embeddedOozieServer.setup();
         verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+        verify(oozieFilterMapper).addFilters();
 
         Assert.assertEquals(truststorePath2, System.getProperty("javax.net.ssl.trustStore"));
         verify(mockConfiguration, never()).get(EmbeddedOozieServer.OOZIE_HTTPS_TRUSTSTORE_FILE);
@@ -148,6 +150,7 @@ public class TestEmbeddedOozieServer {
         embeddedOozieServer.setup();
 
         verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+        verify(oozieFilterMapper).addFilters();
         verify(mockSSLServerConnectorFactory).createSecureServerConnector(
                 isA(Integer.class), isA(Configuration.class), isA(Server.class));
         Assert.assertEquals(confTruststoreFile, System.getProperty("javax.net.ssl.trustStore"));

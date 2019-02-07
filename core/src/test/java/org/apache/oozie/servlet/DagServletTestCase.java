@@ -87,8 +87,9 @@ public abstract class DagServletTestCase extends XDataTestCase {
             for (int i = 0; i < servletPath.length; i++) {
                 container.addServletEndpoint(servletPath[i], servletClass[i]);
             }
-            container.addFilter("*", HostnameFilter.class);
-            container.addFilter("*", AuthFilter.class);
+            container.addFilter("/*", HostnameFilter.class);
+            container.addFilter("/*", AuthFilter.class);
+            container.addFilter("/*", HttpResponseHeaderFilter.class);
             setSystemProperty("user.name", getTestUser());
             container.start();
             assertions.call();

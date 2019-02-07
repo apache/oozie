@@ -271,6 +271,11 @@
         <filter-class>org.apache.oozie.servlet.AuthFilter</filter-class>
     </filter>
 
+    <filter>
+        <filter-name>httpresponseFilter</filter-name>
+        <filter-class>org.apache.oozie.servlet.HttpResponseHeaderFilter</filter-class>
+    </filter>
+
     <filter-mapping>
         <filter-name>hostnameFilter</filter-name>
         <url-pattern>/*</url-pattern>
@@ -314,6 +319,11 @@
     <filter-mapping>
         <filter-name>authenticationfilter</filter-name>
         <url-pattern>/docs/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>httpresponseFilter</filter-name>
+        <url-pattern>/*</url-pattern>
     </filter-mapping>
 
 </web-app>

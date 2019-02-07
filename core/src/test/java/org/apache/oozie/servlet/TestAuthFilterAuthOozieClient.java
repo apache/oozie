@@ -104,8 +104,9 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
             container.addServletEndpoint("/versions", HeaderTestingVersionServlet.class);
             String version = "/v" + XOozieClient.WS_PROTOCOL_VERSION;
             container.addServletEndpoint(version + "/admin/*", V1AdminServlet.class);
-            container.addFilter("*", HostnameFilter.class);
+            container.addFilter("/*", HostnameFilter.class);
             container.addFilter("/*", AuthFilter.class);
+            container.addFilter("/*", HttpResponseHeaderFilter.class);
             container.start();
             assertions.call();
             return getCacheFile(container.getContextURL());
