@@ -30,6 +30,8 @@ $(document).ready(function() {
     }
 });
 
+Ext.BLANK_IMAGE_URL = 'blank.gif';
+
 Ext.override(Ext.Component, {
     saveState : function() {
         if (Ext.state.Manager && this.stateful !== false) {
