@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3261 [build] Set up mvn clean to delete the "build" directory as well (nobigo via kmarton)
 OOZIE-3431 [web UI] Oozie web UI should not serve image from http://extjs.com/s.gif (jtolar via asalamon74)
 OOZIE-3427 [core] Use best practices in HTTP response headers (asalamon74 via andras.piros)
 OOZIE-2949 Escape quotes whitespaces in Sqoop <command> field (asalamon74 via kmarton)	
