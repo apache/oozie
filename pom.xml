@@ -1807,11 +1807,11 @@
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.0.0</version>
                     <configuration>
-0                       <filesets>
+                       <filesets>
                             <fileset>
                                 <directory>build</directory>
                             </fileset>
-                        </filesets>
+                       </filesets>
                     </configuration>
                 </plugin>
                 <plugin>
