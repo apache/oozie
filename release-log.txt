@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3439 Hive2 action is not parsing application ID for TEZ from log file properly (shubham.chhabra via kmarton)
 OOZIE-3261 amend [build] Set up mvn clean to delete the "build" directory as well (nobigo via kmarton)
 OOZIE-3261 [build] Set up mvn clean to delete the "build" directory as well (nobigo via kmarton)
 OOZIE-3431 [web UI] Oozie web UI should not serve image from http://extjs.com/s.gif (jtolar via asalamon74)
