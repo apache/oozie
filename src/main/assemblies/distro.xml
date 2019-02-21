@@ -83,7 +83,6 @@
                 <includes>
                     <include>oozie-server*.jar</include>
                     <include>**/jetty*-${jetty.version}.jar</include>
-                    <include>**/*jsp*.jar</include>
                     <include>**/mail*.jar</include>
                     <include>**/apache*.jar</include>
                     <include>**/commons-el*.jar</include>
