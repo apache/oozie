@@ -39,7 +39,7 @@
             <includes>
                 <include>LICENSE.txt</include>
                 <include>NOTICE.txt</include>
-                <include>README.txt</include>
+                <include>README.md</include>
                 <include>release-log.txt</include>
             </includes>
         </fileSet>
