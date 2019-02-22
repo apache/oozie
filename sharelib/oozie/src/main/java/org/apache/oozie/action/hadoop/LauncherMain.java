@@ -95,6 +95,9 @@ public abstract class LauncherMain {
      */
     private static final String DEFAULT_LOG4J_LOCATION = "default-log4j.properties";
 
+    @VisibleForTesting
+    static SystemEnvironment sysenv = new SystemEnvironment();
+
     protected Properties log4jProperties = new Properties();
 
     protected static void run(Class<? extends LauncherMain> klass, String[] args) throws Exception {
@@ -333,7 +336,7 @@ public abstract class LauncherMain {
      * @return path given environment returns file path
      */
     protected static String getFilePathFromEnv(String env) {
-        String path = System.getenv(env);
+        String path = sysenv.getenv(env);
         if (path != null && Shell.WINDOWS) {
             // In Windows, file paths are enclosed in \" so remove them here
             // to avoid path errors

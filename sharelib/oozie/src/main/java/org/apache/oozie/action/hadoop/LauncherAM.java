@@ -91,6 +91,9 @@ public class LauncherAM {
     public static final String ACTION_DATA_FINAL_STATUS = "final.status";
     public static final String OOZIE_SUBMITTER_USER = "oozie.submitter.user";
 
+    @VisibleForTesting
+    private static final SystemEnvironment sysenv = new SystemEnvironment();
+
     private final AMRMClientAsyncFactory amrmClientAsyncFactory;
     private final HdfsOperations hdfsOperations;
     private final LocalFsOperations localFsOperations;
@@ -148,7 +151,7 @@ public class LauncherAM {
                         new PrepareActionsHandler(new LauncherURIHandlerFactory(null)),
                         new LauncherAMCallbackNotifierFactory(),
                         new LauncherSecurityManager(),
-                        System.getenv(ApplicationConstants.Environment.CONTAINER_ID.name()),
+                        sysenv.getenv(ApplicationConstants.Environment.CONTAINER_ID.name()),
                         launcherConf);
                     launcher.run();
                     return null;
@@ -321,7 +324,7 @@ public class LauncherAM {
         System.out.println();
 
         System.out.println("Environment variables");
-        Map<String, String> env = System.getenv();
+        Map<String, String> env = sysenv.getenv();
         System.out.println("------------------------");
         for (Map.Entry<String, String> entry : env.entrySet()) {
             System.out.println(entry.getKey() + "=" + entry.getValue());

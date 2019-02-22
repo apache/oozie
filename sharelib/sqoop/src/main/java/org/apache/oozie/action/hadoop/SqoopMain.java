@@ -20,8 +20,6 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +41,7 @@ public class SqoopMain extends LauncherMain {
     };
 
     private static final String SQOOP_LOG4J_PROPS = "sqoop-log4j.properties";
+    public static final String TEZ_CREDENTIALS_PATH = "tez.credentials.path";
 
     public static void main(String[] args) throws Exception {
         run(SqoopMain.class, args);
@@ -52,10 +51,11 @@ public class SqoopMain extends LauncherMain {
         // loading action conf prepared by Oozie
         Configuration sqoopConf = new Configuration(false);
 
-        String actionXml = System.getProperty("oozie.action.conf.xml");
+        String actionXml = System.getProperty(LauncherAM.OOZIE_ACTION_CONF_XML);
 
         if (actionXml == null) {
-            throw new RuntimeException("Missing Java System Property [oozie.action.conf.xml]");
+            throw new RuntimeException(String.format("Missing Java System Property [%s]",
+                    LauncherAM.OOZIE_ACTION_CONF_XML));
         }
         if (!new File(actionXml).exists()) {
             throw new RuntimeException("Action Configuration XML file [" + actionXml + "] does not exist");
@@ -68,10 +68,15 @@ public class SqoopMain extends LauncherMain {
         if (delegationToken != null) {
             sqoopConf.setBoolean("sqoop.hbase.security.token.skip", true);
             sqoopConf.set("mapreduce.job.credentials.binary", delegationToken);
+            sqoopConf.set(TEZ_CREDENTIALS_PATH, delegationToken);
             System.out.println("------------------------");
             System.out.println("Setting env property for mapreduce.job.credentials.binary to: " + delegationToken);
             System.out.println("------------------------");
             System.setProperty("mapreduce.job.credentials.binary", delegationToken);
+            System.out.println("------------------------");
+            System.out.println("Setting env property for tez.credentials.path to: " + delegationToken);
+            System.out.println("------------------------");
+            System.setProperty(TEZ_CREDENTIALS_PATH, delegationToken);
         } else {
             System.out.println("Non-Kerberos execution");
         }

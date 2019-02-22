@@ -17,12 +17,16 @@
  */
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.test.XTestCase;
+import org.junit.Assert;
 
 public class TestSqoopMain extends XTestCase {
 
@@ -45,5 +49,33 @@ public class TestSqoopMain extends XTestCase {
         expected.add("job_002");
         expected.add("job_003");
         assertEquals(expected, jobIds);
+    }
+
+    public void testIfDelegationTokenForTezAdded() throws Exception {
+        final File actionXml = new File(LauncherAM.ACTION_CONF_XML);
+        LauncherMain.sysenv = new MockedSystemEnvironment();
+        setSystemProperty(LauncherAM.OOZIE_ACTION_CONF_XML, LauncherAM.ACTION_CONF_XML);
+
+        try {
+            actionXml.createNewFile();
+            final Configuration conf = SqoopMain.setUpSqoopSite();
+            Assert.assertNotNull(
+                    String.format("Property [%s] shall be part of configuration", SqoopMain.TEZ_CREDENTIALS_PATH),
+                    conf.get(SqoopMain.TEZ_CREDENTIALS_PATH));
+        } finally {
+            actionXml.delete();
+            // sqoop-site.xml stays there after test run so that shall be cleaned up explicitly
+            new File(SqoopMain.SQOOP_SITE_CONF).delete();
+        }
+    }
+
+    class MockedSystemEnvironment extends SystemEnvironment {
+        @Override
+        public String getenv(final String name) {
+            if(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION.equals(name)) {
+                return UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+            }
+            return super.getenv(name);
+        }
     }
 }
