@@ -119,6 +119,9 @@
          <kyro.version>2.22</kyro.version>
          <javax.servlet.api.version>3.0.1</javax.servlet.api.version>
          <jgit.version>5.0.1.201806211838-r</jgit.version>
+         <spotbugs.annotations.version>3.1.11</spotbugs.annotations.version>
+         <spotbugs-maven-plugin.version>3.1.11</spotbugs-maven-plugin.version>
+         <spotbugs.version>3.1.11</spotbugs.version>
     </properties>
 
     <modules>
@@ -1621,9 +1624,16 @@
                 <version>3.0</version>
             </dependency>
             <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>annotations</artifactId>
-                <version>3.0.0</version>
+                <groupId>net.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>1.0</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${spotbugs.annotations.version}</version>
+                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
@@ -1793,9 +1803,9 @@
                     <version>3.5.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>findbugs-maven-plugin</artifactId>
-                    <version>3.0.5</version>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -1838,25 +1848,24 @@
                 </configuration>
             </plugin>
 
-            <!-- findbugs plugin. Execute 'mvn verify' and look for target/findbugs/findbugsXml.html under each module -->
+            <!-- spotbugs plugin. Execute 'mvn verify' and look for target/spotbugs/spotbugsXml.html under each module -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
                 <configuration>
                     <excludeSubProjects>false</excludeSubProjects>
                     <xmlOutput>true</xmlOutput>
-                    <findbugsXmlOutput>true</findbugsXmlOutput>
-                    <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
+                    <spotbugsXmlOutput>true</spotbugsXmlOutput>
                     <effort>Max</effort>
                     <failOnError>false</failOnError>
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
-                    <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+                    <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs</spotbugsXmlOutputDirectory>
                     <plugins>
                         <plugin>
                             <groupId>com.h3xstream.findsecbugs</groupId>
                             <artifactId>findsecbugs-plugin</artifactId>
-                            <version>1.7.1</version>
+                            <version>1.8.0</version>
                         </plugin>
                     </plugins>
                 </configuration>
@@ -1864,7 +1873,7 @@
                     <dependency>
                         <groupId>com.github.spotbugs</groupId>
                         <artifactId>spotbugs</artifactId>
-                        <version>3.1.1</version>
+                        <version>${spotbugs.version}</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -1877,7 +1886,7 @@
                  </execution>
              </executions>
             </plugin>
-            <!-- xml plugin is used for transforming the findbugs xml output into a friendlier html page -->
+            <!-- xml plugin is used for transforming the spotbugs xml output into a friendlier html page -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>xml-maven-plugin</artifactId>
@@ -1885,8 +1894,8 @@
                     <excludeSubProjects>false</excludeSubProjects>
                     <transformationSets>
                         <transformationSet>
-                            <dir>${project.build.directory}/findbugs</dir>
-                            <outputDir>${project.build.directory}/findbugs</outputDir>
+                            <dir>${project.build.directory}/spotbugs</dir>
+                            <outputDir>${project.build.directory}/spotbugs</outputDir>
                             <stylesheet>fancy-hist.xsl</stylesheet>
                             <excludes>
                                 <exclude>**/findsecbugs*.jar</exclude>
@@ -1910,9 +1919,9 @@
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>com.google.code.findbugs</groupId>
-                        <artifactId>findbugs</artifactId>
-                        <version>3.0.1</version>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs</artifactId>
+                        <version>${spotbugs.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

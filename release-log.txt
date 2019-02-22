@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3395 [build] Migration from FindBugs to SpotBugs (kmarton via asalamon74)
 OOZIE-3438 Copy only apache-jsp server dependencies to distro (asalamon74 via kmarton)
 OOZIE-3437 Missing README from distro (nobigo via asalamon74)
 OOZIE-3439 Hive2 action is not parsing application ID for TEZ from log file properly (shubham.chhabra via kmarton)

@@ -72,12 +72,12 @@
 
     <build>
         <plugins>
-            <!-- findbugs plugin. Execute 'mvn verify' and look for target/findbugs/findbugsXml.html under each module -->
+            <!-- spotbugs plugin. Execute 'mvn verify' and look for target/spotbugs/spotbugsXml.html under each module -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
                 <configuration>
-                    <excludeFilterFile>${basedir}/findbugs-filter.xml</excludeFilterFile>
+                    <excludeFilterFile>${basedir}/spotbugs-filter.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
