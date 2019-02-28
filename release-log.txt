@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3440 [action] Oozie Spark action replaces path symlink # to %23 (dionusos via asalamon74)
 OOZIE-3409 Oozie Server : Memory leak in EL evaluation (asalamon74 via kmarton)
 OOZIE-3441 Upgrade jackson version to 2.6.5 (nobigo via asalamon74)
 OOZIE-3326 [action] Sqoop Action should support tez delegation tokens for hive-import (bgoerlitz, dionusos via asalamon74)

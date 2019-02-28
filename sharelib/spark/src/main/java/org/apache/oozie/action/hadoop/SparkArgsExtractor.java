@@ -318,7 +318,7 @@ class SparkArgsExtractor {
             jarFilter.filter();
             jarPath = jarFilter.getApplicationJar();
 
-            final String cachedFiles = StringUtils.join(fixedFileUris, OPT_VALUE_SEPARATOR);
+            final String cachedFiles = StringUtils.join(decodeUriPaths(fixedFileUris), OPT_VALUE_SEPARATOR);
             if (cachedFiles != null && !cachedFiles.isEmpty()) {
                 sparkArgs.add(FILES_OPTION);
                 sparkArgs.add(cachedFiles);
@@ -326,7 +326,7 @@ class SparkArgsExtractor {
             final Map<String, URI> fixedArchiveUrisMap = SparkMain.fixFsDefaultUrisAndFilterDuplicates(DistributedCache.
                     getCacheArchives(actionConf));
             addUserDefined(userArchives.toString(), fixedArchiveUrisMap);
-            final String cachedArchives = StringUtils.join(fixedArchiveUrisMap.values(), OPT_VALUE_SEPARATOR);
+            final String cachedArchives = StringUtils.join(decodeUriPaths(fixedArchiveUrisMap.values()), OPT_VALUE_SEPARATOR);
             if (cachedArchives != null && !cachedArchives.isEmpty()) {
                 sparkArgs.add(ARCHIVES_OPTION);
                 sparkArgs.add(cachedArchives);
@@ -486,6 +486,23 @@ class SparkArgsExtractor {
                 }
             }
         }
+    }
+
+    @VisibleForTesting
+    Collection<String> decodeUriPaths(final Collection<URI> uris) {
+        if (uris == null || uris.isEmpty()) {
+            return new ArrayList<>();
+        }
+        final Collection<String> result = new ArrayList<>(uris.size());
+        for (final URI uri : uris) {
+            final String uriString = uri.toString();
+            if (!uri.getPath().equals(uri.getRawPath())) {
+                result.add(uriString.replace(uri.getRawPath(), uri.getPath()));
+            } else {
+                result.add(uriString);
+            }
+        }
+        return result;
     }
 
     /*
