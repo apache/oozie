@@ -18,14 +18,14 @@
 
 package org.apache.oozie.util;
 
-import org.apache.oozie.test.XTestCase;
+import junit.framework.TestCase;
 
-import javax.servlet.jsp.el.ELException;
+import javax.el.ELException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestELEvaluator extends XTestCase {
+public class TestELEvaluator extends TestCase {
 
     public static String functionA() {
         assertEquals("A", ELEvaluator.getCurrent().getVariable("a"));
@@ -170,33 +170,5 @@ public class TestELEvaluator extends XTestCase {
         catch (ELEvaluationException ex) {
             //nop
         }
-        catch (ELException ex) {
-            fail();
-        }
     }
-
-    public void testCheckForExistence() throws Exception {
-        ELEvaluator.Context support = new ELEvaluator.Context();
-        support.setVariable("a", "A");
-        support.addFunction("a", "a", functionA);
-        support.addFunction("a", "d", functionD);
-        ELEvaluator evaluator = new ELEvaluator(support);
-        assertNull(ELEvaluator.getCurrent());
-        assertEquals("a", evaluator.evaluate("${a:a()}", String.class));
-        assertEquals("a,a", evaluator.evaluate("${a:a()},${a:a()}", String.class));
-        try {
-            evaluator.evaluate("${a:a(), a:a()}", String.class);
-            fail("Evaluated bad expression");
-        } catch (ELException ignore) { }
-        assertTrue(evaluator.checkForExistence("${a:a()}${a:a()}!", "!"));
-        assertTrue(evaluator.checkForExistence("${a:a()},${a:a()}", ","));
-        assertFalse(evaluator.checkForExistence("${a:d('foo', 'bar')}", ","));
-        try {
-            evaluator.checkForExistence("${a:a(), a:a()}", ",");
-            fail("Parsed bad expression");
-        } catch (ELException ignore) { }
-
-        assertNull(ELEvaluator.getCurrent());
-    }
-
 }

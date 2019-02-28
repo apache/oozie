@@ -82,6 +82,7 @@ import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.ParameterVerifier;
 import org.apache.oozie.util.ParameterVerifierException;
 import org.apache.oozie.util.PropertiesUtils;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Attribute;
@@ -143,7 +144,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private ELEvaluator evalNofuncs = null;
     private ELEvaluator evalData = null;
     private ELEvaluator evalInst = null;
-    private ELEvaluator evalAction = null;
     private ELEvaluator evalSla = null;
     private ELEvaluator evalTimeout = null;
     private ELEvaluator evalInitialInstance = null;
@@ -391,8 +391,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     instanceValue = instance.getContent(0).toString();
                     boolean isInvalid = false;
                     try {
-                        isInvalid = evalAction.checkForExistence(instanceValue, ",");
-                    } catch (Exception e) {
+                        isInvalid = StringUtils.checkStaticExistence(instanceValue, ",");
+                    }
+                    catch (Exception e) {
                         handleELParseException(eventType, dataType, instanceValue);
                     }
                     if (isInvalid) { // reaching this block implies instance is not empty i.e. length > 0
@@ -413,8 +414,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     instanceValue = instance.getContent(0).toString();
                     boolean isInvalid = false;
                     try {
-                        isInvalid = evalAction.checkForExistence(instanceValue, ",");
-                    } catch (Exception e) {
+                        isInvalid = StringUtils.checkStaticExistence(instanceValue, ",");
+                    }
+                    catch (Exception e) {
                         handleELParseException(eventType, dataType, instanceValue);
                     }
                     if (isInvalid) { // reaching this block implies start instance is not empty i.e. length > 0
@@ -434,8 +436,9 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
                     instanceValue = instance.getContent(0).toString();
                     boolean isInvalid = false;
                     try {
-                        isInvalid = evalAction.checkForExistence(instanceValue, ",");
-                    } catch (Exception e) {
+                        isInvalid = StringUtils.checkStaticExistence(instanceValue, ",");
+                    }
+                    catch (Exception e) {
                         handleELParseException(eventType, dataType, instanceValue);
                     }
                     if (isInvalid) { // reaching this block implies instance is not empty i.e. length > 0
@@ -450,9 +453,10 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
     private void handleELParseException(String eventType, String dataType, String instanceValue)
             throws CoordinatorJobException {
         String correctAction = null;
-        if(dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
+        if (dataType.equals(COORD_INPUT_EVENTS_DATA_IN)) {
             correctAction = "Coordinator app definition should have valid <instance> tag for data-in";
-        } else if(dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
+        }
+        else if (dataType.equals(COORD_OUTPUT_EVENTS_DATA_OUT)) {
             correctAction = "Coordinator app definition should have valid <instance> tag for data-out";
         }
         throw new CoordinatorJobException(ErrorCode.E1021, eventType + " instance '" + instanceValue
@@ -661,7 +665,6 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
         evalFreq = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-freq");
         evalNofuncs = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-nofuncs");
         evalInst = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-instances");
-        evalAction = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-action-start");
         evalTimeout = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-wait-timeout");
         evalInitialInstance = CoordELEvaluator.createELEvaluatorForGroup(conf, "coord-job-submit-initial-instance");
     }

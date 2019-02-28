@@ -122,6 +122,16 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-runtime</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -266,12 +276,6 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-el</groupId>
-            <artifactId>commons-el</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.jdom</groupId>
             <artifactId>jdom</artifactId>
             <scope>compile</scope>
@@ -321,12 +325,6 @@
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
             <version>${javax.servlet.api.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -517,6 +515,15 @@
             <artifactId>spotbugs-annotations</artifactId>
             <scope>provided</scope>
         </dependency>
+
+
+        <dependency>
+            <groupId>org.mortbay.jasper</groupId>
+            <artifactId>apache-jsp</artifactId>
+            <version>${apache.jsp.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

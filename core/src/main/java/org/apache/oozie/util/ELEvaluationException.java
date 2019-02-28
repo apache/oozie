@@ -23,6 +23,10 @@ package org.apache.oozie.util;
  */
 public class ELEvaluationException extends Exception {
 
+    public ELEvaluationException(String message) {
+        super(message);
+    }
+
     /**
      * Create a EL evaluation exception.
      *

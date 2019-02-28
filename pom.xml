@@ -106,6 +106,7 @@
          <tez.version>0.8.4</tez.version>
 
          <jetty.version>9.3.20.v20170531</jetty.version>
+         <apache.jsp.version>8.0.33</apache.jsp.version>
 
          <jline.version>0.9.94</jline.version>
          <openjpa.version>2.4.2</openjpa.version>

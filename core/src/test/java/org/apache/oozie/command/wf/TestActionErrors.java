@@ -259,9 +259,8 @@ public class TestActionErrors extends XDataTestCase {
     public void testKillNodeErrorMessageError() throws Exception {
         WorkflowActionBean killAction = _testKillNodeErrorMessage("wf-test-kill-node-message-error.xml");
         assertEquals("E0756", killAction.getErrorCode());
-        assertEquals("E0756: Exception parsing Kill node message [Encountered \"{\", expected one of [<INTEGER_LITERAL>, " +
-                        "<FLOATING_POINT_LITERAL>, <STRING_LITERAL>, \"true\", \"false\", \"null\", \"(\", \"-\", \"not\", " +
-                        "\"!\", \"empty\", <IDENTIFIER>]]", killAction.getErrorMessage());
+        assertTrue("Incorrect error message",
+                killAction.getErrorMessage().startsWith("E0756: Exception parsing Kill node message"));
         assertEquals(WorkflowAction.Status.ERROR, killAction.getStatus());
     }
 

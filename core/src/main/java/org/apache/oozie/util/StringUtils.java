@@ -49,5 +49,58 @@ public class StringUtils {
         }
         return str.intern();
     }
+
+    /**
+     * Check if the input expression contains sequence statically. for example
+     * identify if "," is present outside of a function invocation in the given
+     * expression. Ex "${func('abc')},${func('def'}",
+     *
+     * @param expr - Expression string
+     * @param sequence - char sequence to check in the input expression
+     * @return true if present
+     */
+    public static boolean checkStaticExistence(String expr, String sequence) throws ELEvaluationException {
+        int curlyBracketDept = 0;
+        int functionDepth = 0;
+        int index = 0;
+        boolean foundSequence = false;
+        while (index < expr.length()) {
+            String substring = expr.substring(index);
+            if (substring.startsWith("${")) {
+                ++curlyBracketDept;
+            }
+            else if (substring.startsWith("}")) {
+                --curlyBracketDept;
+                if (curlyBracketDept < 0) {
+                    throw new ELEvaluationException("Invalid curly bracket closing");
+                }
+            }
+            if (curlyBracketDept > 0) {
+                if (substring.startsWith("(")) {
+                    ++functionDepth;
+                }
+                else if (substring.startsWith(")")) {
+                    --functionDepth;
+                    if (functionDepth < 0) {
+                        throw new ELEvaluationException("Invalid function closing");
+                    }
+                }
+            }
+            if (curlyBracketDept == 0 && substring.startsWith(sequence)) {
+                foundSequence = true;
+            }
+            if (curlyBracketDept > 0 && functionDepth == 0 && substring.startsWith(sequence)) {
+                foundSequence = true;
+            }
+            ++index;
+        }
+        if (curlyBracketDept != 0) {
+            throw new ELEvaluationException("Unclosed curly brackets");
+        }
+        if (functionDepth != 0) {
+            throw new ELEvaluationException("Unfinished function calling");
+        }
+        return foundSequence;
+    }
 }
 
