@@ -111,7 +111,7 @@
          <openjpa.version>2.4.2</openjpa.version>
          <xerces.version>2.11.0</xerces.version>
          <curator.version>2.5.0</curator.version>
-         <jackson.version>2.4.2</jackson.version>
+         <jackson.version>2.6.5</jackson.version>
          <log4j.version>1.2.17</log4j.version>
          <activemq.version>5.15.3</activemq.version>
          <httpcore.version>4.3.3</httpcore.version>
@@ -327,11 +327,17 @@
                 <version>1.0</version>
             </dependency>
 
-          <dependency>
-              <groupId>org.slf4j</groupId>
-              <artifactId>slf4j-simple</artifactId>
-              <version>1.6.6</version>
-          </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>1.6.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-scala_${spark.scala.binary.version}</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>

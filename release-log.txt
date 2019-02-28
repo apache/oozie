@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3441 Upgrade jackson version to 2.6.5 (nobigo via asalamon74)
 OOZIE-3326 [action] Sqoop Action should support tez delegation tokens for hive-import (bgoerlitz, dionusos via asalamon74)
 OOZIE-3395 [build] Migration from FindBugs to SpotBugs (kmarton via asalamon74)
 OOZIE-3438 Copy only apache-jsp server dependencies to distro (asalamon74 via kmarton)
