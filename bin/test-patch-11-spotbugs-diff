@@ -39,8 +39,6 @@ FINDBUGS_DIFF_XML=findbugs-new.xml
 cleanup_and_exit() {
   remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}"
   remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
-  remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum"
-
   exit "$1"
 }
 
@@ -182,29 +180,22 @@ download_and_check_findbugs_diff_jar() {
   echo "[TRACE] FindBugs diff JAR downloaded"
 
   if hash md5 2>/dev/null; then
-    md5 -q "${DIFF_DIR}/${FINDBUGS_JAR}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+    echo "[TRACE] Calculating md5 content using md5"
+    md5Content="$(md5 -q "${DIFF_DIR}/${FINDBUGS_JAR}")"
   elif hash md5sum 2>/dev/null; then
-    md5Content="$(md5sum "${DIFF_DIR}/${FINDBUGS_JAR}")"
-    echo "${md5Content}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum"
+    echo "[TRACE] Calculating md5 content using md5sum"
+    md5Content="$(md5sum "${DIFF_DIR}/${FINDBUGS_JAR}" | awk '{ print $1 }')"
   else
     echo "[ERROR] Neither md5 nor md5sum are present, cannot check FindBugs diff JAR"
     summary_both "{color:red}-1{color} Neither md5 nor md5sum are present, cannot check FindBugs diff JAR."
     cleanup_and_exit 1
   fi
+  echo "${md5Content}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
 
-  if hash md5 2>/dev/null; then
-    jarMd5DiffCount=$(grep -cFxvf "${BASH_DIR}/${FINDBUGS_JAR}.md5" "${DIFF_DIR}/${FINDBUGS_JAR}.md5")
-  elif hash md5sum 2>/dev/null; then
-    jarMd5DiffCount=$(grep -cFxvf "${BASH_DIR}/${FINDBUGS_JAR}.md5sum" "${DIFF_DIR}/${FINDBUGS_JAR}.md5sum")
-  fi
+  jarMd5DiffCount=$(diff "${BASH_DIR}"/${FINDBUGS_JAR}.md5 "${DIFF_DIR}"/${FINDBUGS_JAR}.md5 | wc -l)
 
   if [ "${jarMd5DiffCount}" -gt "0" ]; then
-    if hash md5 2>/dev/null; then
-      echo "[TRACE] md5 of FindBugs diff jar is $(cat "${DIFF_DIR}"/${FINDBUGS_JAR}.md5)"
-    elif hash md5sum 2>/dev/null; then
-      echo "[TRACE] md5sum of FindBugs diff jar is $(cat "${DIFF_DIR}"/${FINDBUGS_JAR}.md5sum)"
-    fi
-
+    echo "[TRACE] md5 hash of FindBugs diff jar is $(cat "${DIFF_DIR}"/${FINDBUGS_JAR}.md5)"
     echo "[ERROR] FindBugs diff JAR has a weird MD5 sum, rejecting"
     summary_both "{color:red}-1{color} FindBugs diff JAR has a weird MD5 sum, rejecting."
     cleanup_and_exit 1
