@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
         Namespace ns = actionXml.getNamespace();
 
         String exec = actionXml.getChild("exec", ns).getTextTrim();
-        String execName = new Path(exec).getName();
+        String execName = resolveExecutable(exec);
         actionConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, execName);
 
         // Setting Shell command's arguments
@@ -95,7 +95,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
      * @throws ActionExecutorException
      */
     protected void setListInConf(String tag, Element actionXml, Configuration actionConf, String key,
-            boolean checkKeyValue) throws ActionExecutorException {
+                                 boolean checkKeyValue) throws ActionExecutorException {
         String[] strTagValue = null;
         Namespace ns = actionXml.getNamespace();
         @SuppressWarnings("unchecked")
@@ -114,6 +114,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
 
     /**
      * Check if the key=value pair is appropriately formatted
+     *
      * @param pair
      * @throws ActionExecutorException
      */
@@ -148,6 +149,26 @@ public class ShellActionExecutor extends JavaActionExecutor {
             LOG.debug("action conf is updated with default value for property " + propertyName + ", old value :"
                     + conf.get(propertyName, "") + ", new value :" + val);
         }
+    }
+
+    /**
+     * This method extract the exec name from exec tag.
+     *
+     * @param exec
+     * @return
+     */
+    private String resolveExecutable(String exec) {
+        String localFilePrefix = "file://";
+        String execName;
+
+        // When exec starts with 'file://' refer it as local file.
+        if (exec.startsWith(localFilePrefix)) {
+            execName = exec.substring(localFilePrefix.length());
+        } else {
+            execName = new Path(exec).getName();
+        }
+        return execName;
+
     }
 
 }
