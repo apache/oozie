@@ -63,7 +63,7 @@ public abstract class SqlStatement {
          * Move the Result Set to next record
          *
          * @return true if there is a next record
-         * @throws SQLException in case of error
+         * @throws SQLException if a database access error occurs or this method is called on a closed result set
          */
         public boolean next() throws SQLException {
             return rSet.next();
@@ -72,7 +72,7 @@ public abstract class SqlStatement {
         /**
          * Close the Result Set
          *
-         * @throws SQLException in case of error
+         * @throws SQLException if a database access error occurs
          */
         public void close() throws SQLException {
             rSet.close();
@@ -85,7 +85,8 @@ public abstract class SqlStatement {
          * @param clazz Class of the Type
          * @param col Column name
          * @return Column data
-         * @throws SQLException in case of error
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         @SuppressWarnings("unchecked")
         public <T> T get(Class<T> clazz, Column col) throws SQLException {
@@ -108,7 +109,7 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException in case of error
+         * @throws SQLException when accessing binary stream fails
          */
         public byte[] getByteArray(Column col) throws SQLException {
             byte[] bArray = null;
@@ -142,7 +143,8 @@ public abstract class SqlStatement {
          *
          * @param col Column Name
          * @return Column data
-         * @throws SQLException in case of error
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public String getString(Column col) throws SQLException {
             return get(String.class, col);
@@ -153,7 +155,8 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException in case of error
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public Timestamp getTimestamp(Column col) throws SQLException {
             return get(Timestamp.class, col);
@@ -164,7 +167,8 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException in case of error
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public Boolean getBoolean(Column col) throws SQLException {
             return get(Boolean.class, col);
@@ -175,7 +179,8 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException in case of error
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public Long getLong(Column col) throws SQLException {
             return get(Long.class, col);
@@ -832,7 +837,7 @@ public abstract class SqlStatement {
      *
      * @param conn Connection
      * @return Prepared SQL Statement
-     * @throws SQLException in case of error
+     * @throws SQLException when setting prepared statement values fails
      */
     public PreparedStatement prepareAndSetValues(Connection conn) throws SQLException {
         String stmt = toString();
@@ -855,7 +860,7 @@ public abstract class SqlStatement {
      *
      * @param pStmt Prepared Statement
      * @return PreparedStatement with values set
-     * @throws SQLException in case of error
+     * @throws SQLException when setting prepared statement values fails
      */
     public PreparedStatement prepare(PreparedStatement pStmt) throws SQLException {
         int i = 1;
@@ -872,7 +877,7 @@ public abstract class SqlStatement {
      *
      * @param conn Connection
      * @return PreparedStatement
-     * @throws SQLException in case of error
+     * @throws SQLException when creating prepared statement fails
      */
     public PreparedStatement prepare(Connection conn) throws SQLException {
         String stmt = toString();
@@ -887,8 +892,9 @@ public abstract class SqlStatement {
      *
      * @param conn Connection
      * @param values A list of maps that contains the actual values
+     * @param pStmt prepared statement
      * @return Prepared Statement
-     * @throws SQLException in case of error
+     * @throws SQLException when creating prepared statement fails
      */
     public PreparedStatement prepareForBatch(Connection conn, List<? extends Map<Object, Object>> values,
                                              PreparedStatement pStmt) throws SQLException {

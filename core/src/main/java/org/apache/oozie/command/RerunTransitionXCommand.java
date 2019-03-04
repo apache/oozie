@@ -29,7 +29,7 @@ import org.apache.oozie.util.StatusUtils;
  * rerunChildren() : submit or queue commands to rerun children
  * notifyParent() : update the status to upstream if any
  *
- * @param <T>
+ * @param <T> template parameter
  */
 public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
     protected String jobId;

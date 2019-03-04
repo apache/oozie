@@ -37,13 +37,12 @@ import java.util.Set;
  * The ProxyUserService checks if a user of a request has proxyuser privileges.
  * <p>
  * This check is based on the following criteria:
- * <p>
+ * </p>
  * <ul>
  *     <li>The user of the request must be configured as proxy user in Oozie configuration.</li>
  *     <li>The user of the request must be making the request from a whitelisted host.</li>
  *     <li>The user of the request must be making the request on behalf of a user of a whitelisted group.</li>
  * </ul>
- * <p>
  */
 public class ProxyUserService implements Service {
     private static XLog LOG = XLog.getLog(ProxyUserService.class);

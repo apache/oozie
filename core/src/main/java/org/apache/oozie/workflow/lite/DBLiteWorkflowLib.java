@@ -47,8 +47,8 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Save the Workflow Instance for the given Workflow Application.
      *
-     * @param instance
-     * @throws WorkflowException
+     * @param instance workflow instance
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public void insert(WorkflowInstance instance) throws WorkflowException {
@@ -66,9 +66,9 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Loads the Workflow instance with the given ID.
      *
-     * @param id
+     * @param id workflow id
      * @return pInstance returns a workflow instance with the given ID
-     * @throws WorkflowException
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public WorkflowInstance get(String id) throws WorkflowException {
@@ -90,8 +90,8 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Updates the Workflow Instance to DB.
      *
-     * @param instance
-     * @throws WorkflowException
+     * @param instance workflow instance
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public void update(WorkflowInstance instance) throws WorkflowException {
@@ -111,8 +111,8 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Delets the Workflow Instance with the given id.
      *
-     * @param id
-     * @throws WorkflowException
+     * @param id workflow id
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public void delete(String id) throws WorkflowException {

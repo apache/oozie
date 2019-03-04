@@ -354,8 +354,8 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
     /**
      * Get action executor context
-     * @param isRetry
-     * @param isUserRetry
+     * @param isRetry set to true if retry mode
+     * @param isUserRetry set to true is user retry mode
      * @return ActionExecutorContext returns action executor context
      */
     protected ActionExecutorContext getContext(boolean isRetry, boolean isUserRetry) {

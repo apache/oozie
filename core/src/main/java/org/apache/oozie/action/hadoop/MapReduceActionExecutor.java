@@ -319,7 +319,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
      * Return the sharelib name for the action.
      *
      * @return returns <code>streaming</code> if mapreduce-streaming action, <code>NULL</code> otherwise.
-     * @param actionXml
+     * @param actionXml action xml element
      */
     @Override
     protected String getDefaultShareLibName(Element actionXml) {

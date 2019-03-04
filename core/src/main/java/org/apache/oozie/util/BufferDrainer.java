@@ -53,7 +53,7 @@ public class BufferDrainer {
      * buffer is provided for the stream.
      *
      * @return the exit value of the processSettings.
-     * @throws IOException
+     * @throws IOException if IO related issue occurs
      */
     public int drainBuffers() throws IOException {
         if (drainBuffersFinished) {

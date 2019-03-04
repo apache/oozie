@@ -136,7 +136,7 @@ public class SparkActionExecutor extends JavaActionExecutor {
     /**
      * Return the sharelib name for the action.
      *
-     * @param actionXml
+     * @param actionXml action xml element
      * @return returns <code>spark</code>.
      */
     @Override

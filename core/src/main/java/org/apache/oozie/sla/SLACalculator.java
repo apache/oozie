@@ -68,8 +68,8 @@ public interface SLACalculator {
      * Enable sla alert for child jobs.
      * @param parentJobIds the parent job ids
      * @return true if successful
-     * @throws JPAExecutorException
-     * @throws ServiceException
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
      */
     boolean enableChildJobAlert(List<String> parentJobIds) throws JPAExecutorException, ServiceException;
 
@@ -88,8 +88,8 @@ public interface SLACalculator {
      * Disable Sla alert for child jobs.
      * @param parentJobIds the parent job ids
      * @return true if successful
-     * @throws JPAExecutorException
-     * @throws ServiceException
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
      */
     boolean disableChildJobAlert(List<String> parentJobIds) throws JPAExecutorException, ServiceException;
 

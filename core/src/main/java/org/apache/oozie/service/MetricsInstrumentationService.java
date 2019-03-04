@@ -35,7 +35,7 @@ public class MetricsInstrumentationService extends InstrumentationService {
      * Initialize the metrics instrumentation service.
      *
      * @param services services instance.
-     * @throws org.apache.oozie.service.ServiceException
+     * @throws org.apache.oozie.service.ServiceException if logging cannot be initialised
      */
     @Override
     public void init(Services services) throws ServiceException {

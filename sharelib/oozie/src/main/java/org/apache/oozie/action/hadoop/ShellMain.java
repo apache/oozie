@@ -57,7 +57,7 @@ public class ShellMain extends LauncherMain {
 
     /**
      * @param args Invoked from LauncherAMUtils:map()
-     * @throws Exception in case of error
+     * @throws Exception in case of error when running the application
      */
     public static void main(String[] args) throws Exception {
         run(ShellMain.class, args);
@@ -138,7 +138,7 @@ public class ShellMain extends LauncherMain {
      * @param actionConf The action configuration
      * @param envp The environment for the Shell process
      * @param currDir The current working dir
-     * @throws IOException in case of error
+     * @throws IOException in case of error writing config or property file
      */
     private void prepareHadoopConfigs(Configuration actionConf, Map<String, String> envp, File currDir) throws IOException {
         if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, false)) {

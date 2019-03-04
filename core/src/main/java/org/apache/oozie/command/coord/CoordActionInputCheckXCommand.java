@@ -453,6 +453,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * getting the error code of the coord action. (used mainly for unit testing)
+     *
+     * @return error code
      */
     protected String getCoordActionErrorCode() {
         if (coordAction != null) {
@@ -463,6 +465,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * getting the error message of the coord action. (used mainly for unit testing)
+     *
+     * @return error message
      */
     protected String getCoordActionErrorMsg() {
         if (coordAction != null) {

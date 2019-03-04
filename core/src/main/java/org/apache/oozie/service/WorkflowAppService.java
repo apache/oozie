@@ -107,6 +107,7 @@ public abstract class WorkflowAppService implements Service {
      *
      * @param appPath application path.
      * @param user user name.
+     * @param conf configuration
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
      */
@@ -262,9 +263,9 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Parse workflow definition.
      *
-     * @param jobConf
+     * @param jobConf job configuration
      * @return WorkflowApp
-     * @throws WorkflowException
+     * @throws WorkflowException thrown if the workflow application could not be parsed.
      */
     public abstract WorkflowApp parseDef(Configuration jobConf) throws WorkflowException;
 
@@ -275,7 +276,7 @@ public abstract class WorkflowAppService implements Service {
      * @param configDefault config from config-default.xml
      * @return workflow application thrown if the workflow application could not
      *         be parsed
-     * @throws WorkflowException
+     * @throws WorkflowException thrown if the workflow application could not be parsed.
      */
     public abstract WorkflowApp parseDef(Configuration jobConf, Configuration configDefault) throws WorkflowException;
 

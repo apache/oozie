@@ -56,7 +56,6 @@ import java.util.Map;
  * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>. The default
  * value is 10 seconds.
  * <p>
- * <p>
  * Unlike most of the other Services, XLogService isn't easily overridable because Services depends on XLogService being available
  */
 public class XLogService implements Service, Instrumentable {

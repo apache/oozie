@@ -126,40 +126,34 @@ public class V0JobsServlet extends BaseJobsServlet {
 
     /**
      * service implementation to bulk kill jobs
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return nothing, throws UnsupportedOperationException
      */
     @Override
-    protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) {
         throw new UnsupportedOperationException("method not implemented in V0 API");
     }
 
     /**
      * service implementation to bulk suspend jobs
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return nothing, throws UnsupportedOperationException
      */
     @Override
-    protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) {
         throw new UnsupportedOperationException("method not implemented in V0 API");
     }
 
     /**
      * service implementation to bulk resume jobs
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return nothing, throws UnsupportedOperationException
      */
     @Override
-    protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) {
         throw new UnsupportedOperationException("method not implemented in V0 API");
     }
 }

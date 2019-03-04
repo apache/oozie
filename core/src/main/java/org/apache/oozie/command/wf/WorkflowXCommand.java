@@ -30,7 +30,7 @@ import org.apache.oozie.event.WorkflowJobEvent;
 /**
  * Abstract coordinator command class derived from XCommand
  *
- * @param <T>
+ * @param <T> template parameter for XCommand, used as return type of call()
  */
 public abstract class WorkflowXCommand<T> extends XCommand<T> {
 

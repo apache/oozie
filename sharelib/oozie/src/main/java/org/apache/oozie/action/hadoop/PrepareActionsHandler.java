@@ -50,7 +50,7 @@ public class PrepareActionsHandler {
      * @throws IOException if there is an IO error during prepare action
      * @throws SAXException in case of xml parsing error
      * @throws ParserConfigurationException if the parser is not well configured
-     * @throws LauncherException in case of error
+     * @throws LauncherException when accessing resource on uri fails
      */
     void prepareAction(String prepareXML, Configuration conf)
             throws IOException, SAXException, ParserConfigurationException, LauncherException {

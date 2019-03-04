@@ -28,7 +28,7 @@ public class WorkflowActionDeleteJPAExecutor implements JPAExecutor<Void> {
     private final String wfActionId;
 
     /**
-     * @param wfActionId
+     * @param wfActionId WF action id
      */
     public WorkflowActionDeleteJPAExecutor(String wfActionId) {
         ParamChecker.notEmpty(wfActionId, "ActionID");

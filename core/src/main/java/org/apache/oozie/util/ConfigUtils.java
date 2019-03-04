@@ -142,7 +142,7 @@ public class ConfigUtils {
      * @param newValue the new value to assign if {@code performWrite=true} and if configuration value
      * {@code oozie.configuration.check-and-set.*} is set
      * @param toThrow the {@link Exception} to throw when {@code oozie.configuration.check-and-set.*} is unset
-     * @param performWrite
+     * @param performWrite set to true if setting new value needed
      * @param <E> {@link Exception} type
      * @throws E the {@link Exception} to throw when {@code oozie.configuration.check-and-set.*} is unset
      */

@@ -197,8 +197,8 @@ public class OozieSchema {
     /**
      * Generates the create table SQL Statement
      *
-     * @param table
-     * @param dbType
+     * @param table table
+     * @param dbType database type
      * @return SQL Statement to create the table
      */
     public static String generateCreateTableScript(Table table, DBType dbType) {
@@ -208,7 +208,7 @@ public class OozieSchema {
     /**
      * Gets the query that will be used to validate the connection
      *
-     * @param dbName
+     * @param dbName database name
      * @return String returns the query that will be used to validate the connection
      */
     public static String getValidationQuery(String dbName) {
@@ -219,7 +219,7 @@ public class OozieSchema {
     /**
      * Generates the Insert statement to insert the OOZIE_VERSION to table
      *
-     * @param dbName
+     * @param dbName database name
      * @return String returns the Insert statement for the OOZIE_VERSION to a table
      */
     public static String generateInsertVersionScript(String dbName) {

@@ -150,7 +150,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      *
      * @param context the execution context.
      * @param executor the executor instance being used.
-     * @param message
+     * @param message error message
      * @param isStart whether the error was generated while starting or ending an action.
      * @param status the status to be set for the action.
      * @throws CommandException thrown if unable to handle action error
@@ -218,6 +218,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
     /**
      * Execute retry for action if this action is eligible for user-retry
      *
+     * @param context executor context
      * @param action the Workflow action bean
      * @return true if user-retry has to be handled for this action
      * @throws CommandException thrown if unable to fail job
@@ -244,25 +245,35 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         return false;
     }
 
-	/*
-	 * In case of action error increment the error count for instrumentation
-	 */
+    /**
+     * In case of action error increment the error count for instrumentation
+     *
+     * @param type counter type
+     * @param error error type
+     * @param count error count
+     */
     private void incrActionErrorCounter(String type, String error, int count) {
         getInstrumentation().incr(INSTRUMENTATION_GROUP, type + "#ex." + error, count);
     }
 
-	/**
-	 * Increment the action counter in the instrumentation log. indicating how
-	 * many times the action was executed since the start Oozie server
-	 */
+    /**
+     * Increment the action counter in the instrumentation log. indicating how
+     * many times the action was executed since the start Oozie server
+     *
+     * @param type counter type
+     * @param count value to update
+     */
     protected void incrActionCounter(String type, int count) {
         getInstrumentation().incr(INSTRUMENTATION_GROUP, type + "#" + getName(), count);
     }
 
-	/**
-	 * Adding a cron for the instrumentation time for the given Instrumentation
-	 * group
-	 */
+    /**
+     * Adding a cron for the instrumentation time for the given Instrumentation
+     * group
+     *
+     * @param type counter type
+     * @param cron cron instance
+     */
     protected void addActionCron(String type, Instrumentation.Cron cron) {
         getInstrumentation().addCron(INSTRUMENTATION_GROUP, type + "#" + getName(), cron);
     }
@@ -301,6 +312,11 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         /**
          * Constructing the ActionExecutorContext, setting the private members
          * and constructing the proto configuration
+         *
+         * @param workflow workflow
+         * @param action action
+         * @param isRetry set to true if retry mode
+         * @param isUserRetry set to true if user retry mode
          */
         public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry,
                 boolean isUserRetry) {
@@ -355,8 +371,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
 
         /**
          * This is not thread safe, don't use if workflowjob is shared among multiple actions command
-         * @param name
-         * @param value
+         * @param name variable name
+         * @param value variable value
          */
         public void setVarToWorkflow(String name, String value) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;

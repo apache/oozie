@@ -86,6 +86,7 @@ public interface WorkflowInstance {
     /**
      * Start the instance.
      *
+     * @return true if start succeeded
      * @throws WorkflowException thrown if the instance could not be started.
      */
     boolean start() throws WorkflowException;
@@ -96,6 +97,7 @@ public interface WorkflowInstance {
      * @param path execution path of the node that has completed.
      * @param signaValue signal value for the node.
      * @return <code>true</code> if the instance has completed its execution, <code>false</code> otherwise.
+     * @throws WorkflowException if workflow related issue occurs
      */
     boolean signal(String path, String signaValue) throws WorkflowException;
 

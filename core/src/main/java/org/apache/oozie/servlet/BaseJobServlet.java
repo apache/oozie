@@ -421,6 +421,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      *
      * @param request the request
      * @param response the response
+     * @return a json object about the killed job, depends on implementation
      * @throws XServletException in case of any servlet error
      * @throws IOException in case of any I/O error
      */
@@ -444,6 +445,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      * @param request the request
      * @param response the response
      * @param conf the configuration to use
+     * @return a json object about the rerun job, depends on implementation
      * @throws XServletException in case of any servlet error
      * @throws IOException in case of any I/O error
      */
@@ -515,6 +517,7 @@ public abstract class BaseJobServlet extends JsonRestServlet {
      * abstract method to get JMS topic name for a job
      * @param request the request
      * @param response the response
+     * @return the name of the JMS topic
      * @throws XServletException in case of any servlet error
      * @throws IOException in case of any I/O error
      */

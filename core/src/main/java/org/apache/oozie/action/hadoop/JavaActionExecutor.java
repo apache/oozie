@@ -467,7 +467,7 @@ public class JavaActionExecutor extends ActionExecutor {
 
     /**
      * Set root log level property in actionConf
-     * @param actionConf
+     * @param actionConf action configuration
      */
     void setRootLoggerLevel(Configuration actionConf) {
         String oozieActionTypeRootLogger = "oozie.action." + getType() + LauncherAMUtils.ROOT_LOGGER_LEVEL;
@@ -1618,10 +1618,10 @@ public class JavaActionExecutor extends ActionExecutor {
     /**
      * Create job client object
      *
-     * @param context
-     * @param jobConf
+     * @param context executor context
+     * @param jobConf job configuration
      * @return JobClient
-     * @throws HadoopAccessorException
+     * @throws HadoopAccessorException if FS is not accessible
      */
     protected JobClient createJobClient(Context context, Configuration jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
@@ -1631,10 +1631,10 @@ public class JavaActionExecutor extends ActionExecutor {
     /**
      * Create yarn client object
      *
-     * @param context
-     * @param jobConf
+     * @param context executor context
+     * @param jobConf job configuration
      * @return YarnClient
-     * @throws HadoopAccessorException
+     * @throws HadoopAccessorException if FS is not accessible
      */
     protected YarnClient createYarnClient(Context context, Configuration jobConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
@@ -1645,7 +1645,7 @@ public class JavaActionExecutor extends ActionExecutor {
      * Useful for overriding in actions that do subsequent job runs
      * such as the MapReduce Action, where the launcher job is not the
      * actual job that then gets monitored.
-     * @param action
+     * @param action workflow action
      * @return external ID.
      */
     protected String getActualExternalId(WorkflowAction action) {
@@ -1817,7 +1817,7 @@ public class JavaActionExecutor extends ActionExecutor {
      * @param context the execution context
      * @param action the workflow action
      * @return a {@code String} that depicts the application ID of the launcher ApplicationMaster of this action
-     * @throws ActionExecutorException
+     * @throws ActionExecutorException never thrown using current implementation
      */
     protected String findYarnApplicationId(final Context context, final WorkflowAction action)
             throws ActionExecutorException {
@@ -1830,10 +1830,10 @@ public class JavaActionExecutor extends ActionExecutor {
      * @param actionFs the FileSystem object
      * @param action the Workflow action
      * @param context executor context
-     * @throws org.apache.oozie.service.HadoopAccessorException
-     * @throws org.jdom.JDOMException
-     * @throws java.io.IOException
-     * @throws java.net.URISyntaxException
+     * @throws org.apache.oozie.service.HadoopAccessorException if FS is not accessible
+     * @throws org.jdom.JDOMException if XML parsing error occurs
+     * @throws java.io.IOException if IO error occurs
+     * @throws java.net.URISyntaxException if processed uri is not a proper URI
      *
      */
     protected void getActionData(FileSystem actionFs, WorkflowAction action, Context context)
@@ -1997,9 +1997,9 @@ public class JavaActionExecutor extends ActionExecutor {
      *
      * @param context executor context
      * @param actionFs the FileSystem object
-     * @throws java.io.IOException
-     * @throws org.apache.oozie.service.HadoopAccessorException
-     * @throws java.net.URISyntaxException
+     * @throws java.io.IOException if IO error occurs
+     * @throws org.apache.oozie.service.HadoopAccessorException if FS is not accessible
+     * @throws java.net.URISyntaxException if processed uri is not a proper URI
      */
     protected void setActionCompletionData(Context context, FileSystem actionFs) throws IOException,
             HadoopAccessorException, URISyntaxException {

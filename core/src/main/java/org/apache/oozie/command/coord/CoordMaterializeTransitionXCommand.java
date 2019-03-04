@@ -368,6 +368,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      * Create action instances starting from "startMatdTime" to "endMatdTime" and store them into coord action table.
      *
      * @param dryrun if this is a dry run
+     * @return materialized action(s)
      * @throws Exception thrown if failed to materialize actions
      */
     protected String materializeActions(boolean dryrun) throws Exception {

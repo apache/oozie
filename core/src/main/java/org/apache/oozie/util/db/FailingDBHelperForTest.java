@@ -33,7 +33,7 @@ public class FailingDBHelperForTest {
 
     /**
      * change the used predicate value
-     * @param predicate
+     * @param predicate predicate
      */
     @VisibleForTesting
     public static void setDbPredicate (final Predicate predicate) {

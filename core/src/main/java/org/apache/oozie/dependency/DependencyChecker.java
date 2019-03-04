@@ -70,7 +70,7 @@ public class DependencyChecker {
      * @param stopOnFirstMissing Does not continue check for the rest of list if there is a missing
      *        dependency
      * @return ActionDependency which has the list of missing and available dependencies
-     * @throws CommandException in case of error
+     * @throws CommandException when dependency uri is malformed or resource is inaccessible
      */
     public static ActionDependency checkForAvailability(String missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {
@@ -86,7 +86,7 @@ public class DependencyChecker {
      * @param stopOnFirstMissing Does not continue check for the rest of list if there is a missing
      *        dependency
      * @return ActionDependency which has the list of missing and available dependencies
-     * @throws CommandException in case of error
+     * @throws CommandException when dependency uri is malformed or resource is inaccessible
      */
     public static ActionDependency checkForAvailability(List<String> missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {

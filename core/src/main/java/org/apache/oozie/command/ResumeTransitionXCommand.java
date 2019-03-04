@@ -25,7 +25,7 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
     /**
      * Resume all children of the job
      *
-     * @throws CommandException
+     * @throws CommandException if command cannot be completed
      */
     public abstract void resumeChildren() throws CommandException;
 

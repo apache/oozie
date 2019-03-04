@@ -52,7 +52,7 @@ import org.apache.oozie.util.ParamChecker;
  * <p>
  * The "range" can be set with {@link RestConstants#JOB_COORD_SCOPE_DATE} or
  * {@link RestConstants#JOB_COORD_SCOPE_ACTION}.
- * <p>
+ * </p>
  */
 public class CoordActionsKillXCommand extends KillTransitionXCommand<CoordinatorActionInfo> {
 

@@ -29,6 +29,8 @@ public class BinaryBlobValueHandler extends org.apache.openjpa.jdbc.meta.strats.
 
     /**
      * Singleton instance.
+     *
+     * @return singleton instance of BinaryBlobValueHandler
      */
     public static BinaryBlobValueHandler getInstance() {
         return _instance;

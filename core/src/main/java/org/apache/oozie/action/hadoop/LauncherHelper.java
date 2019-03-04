@@ -180,48 +180,35 @@ public class LauncherHelper {
     }
 
     /**
-     * Determine whether action has external child jobs or not
-     * @param actionData
-     * @return true/false
-     * @throws IOException
-     */
-    public static boolean hasExternalChildJobs(Map<String, String> actionData) throws IOException {
-        return actionData.containsKey(LauncherAMUtils.ACTION_DATA_EXTERNAL_CHILD_IDS);
-    }
-
-    /**
      * Determine whether action has output data or not
-     * @param actionData
+     * @param actionData action configuration data
      * @return true/false
-     * @throws IOException
      */
-    public static boolean hasOutputData(Map<String, String> actionData) throws IOException {
+    public static boolean hasOutputData(Map<String, String> actionData) {
         return actionData.containsKey(LauncherAMUtils.ACTION_DATA_OUTPUT_PROPS);
     }
 
     /**
      * Determine whether action has external stats or not
-     * @param actionData
+     * @param actionData action configuration data
      * @return true/false
-     * @throws IOException
      */
-    public static boolean hasStatsData(Map<String, String> actionData) throws IOException{
+    public static boolean hasStatsData(Map<String, String> actionData) {
         return actionData.containsKey(LauncherAMUtils.ACTION_DATA_STATS);
     }
 
     /**
      * Determine whether action has new id (id swap) or not
-     * @param actionData
+     * @param actionData action configuration data
      * @return true/false
-     * @throws IOException
      */
-    public static boolean hasIdSwap(Map<String, String> actionData) throws IOException {
+    public static boolean hasIdSwap(Map<String, String> actionData) {
         return actionData.containsKey(LauncherAMUtils.ACTION_DATA_NEW_ID);
     }
 
     /**
      * Get the sequence file path storing all action data
-     * @param actionDir
+     * @param actionDir directory of action conf
      * @return Path returns sequence file path storing all action data
      */
     public static Path getActionDataSequenceFilePath(Path actionDir) {
@@ -236,8 +223,8 @@ public class LauncherHelper {
      * @param actionDir Path
      * @param conf Configuration
      * @return Map action data
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException if an IO error occurred
+     * @throws InterruptedException if UGI action is interrupted
      */
     public static Map<String, String> getActionData(final FileSystem fs, final Path actionDir, final Configuration conf)
             throws IOException, InterruptedException {

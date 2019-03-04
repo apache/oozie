@@ -252,6 +252,7 @@ public class LocalOozie {
      * {@link org.apache.oozie.client.OozieClient#getHeaders},
      * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
      *
+     * @param user user
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
      */
     public static OozieClient getClientBundle(String user) {

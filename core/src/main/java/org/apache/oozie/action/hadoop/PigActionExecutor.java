@@ -111,7 +111,7 @@ public class PigActionExecutor extends ScriptLanguageActionExecutor {
      * Return the sharelib postfix for the action.
      *
      * @return returns <code>pig</code>.
-     * @param actionXml
+     * @param actionXml action xml element
      */
     @Override
     protected String getDefaultShareLibName(Element actionXml) {

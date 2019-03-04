@@ -60,7 +60,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
     /**
      * Constructor for loading a coordinator job information
      * @param id coord jobId
-     * @param filterMap
+     * @param filterMap filters
      * @param offset starting index in the list of actions belonging to the job
      * @param length number of actions to be returned
      * @param desc boolean for whether the actions returned are in descending order

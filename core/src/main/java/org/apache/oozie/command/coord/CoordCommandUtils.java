@@ -85,10 +85,10 @@ public class CoordCommandUtils {
      * parse a function like coord:latest(n)/future() and return the 'n'.
      * <p>
      *
-     * @param function
-     * @param restArg
+     * @param function function
+     * @param restArg arguments
      * @return int instanceNumber
-     * @throws Exception
+     * @throws Exception when parsing function argument fails
      */
     public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
         int funcType = getFuncType(function);
@@ -106,12 +106,12 @@ public class CoordCommandUtils {
 
     /**
      * Evaluates function for coord-action-create-inst tag
-     * @param event
-     * @param appInst
-     * @param conf
-     * @param function
+     * @param event event
+     * @param appInst application instance
+     * @param conf configuration
+     * @param function function
      * @return evaluation result
-     * @throws Exception
+     * @throws Exception when evaluating function fails, especially when parsing date/time zone
      */
     private static String evaluateInstanceFunction(Element event, SyncCoordAction appInst, Configuration conf,
             String function) throws Exception {
@@ -215,12 +215,12 @@ public class CoordCommandUtils {
     /**
      * Resolve list of &lt;instance&gt; &lt;/instance&gt; tags.
      *
-     * @param event
-     * @param instances
-     * @param actionInst
-     * @param conf
+     * @param event event
+     * @param instances instances
+     * @param actionInst action instance
+     * @param conf configuration
      * @param eval ELEvalautor
-     * @throws Exception
+     * @throws Exception when function evaluation fails
      */
     public static void resolveInstances(Element event, StringBuilder instances, SyncCoordAction actionInst,
             Configuration conf, ELEvaluator eval) throws Exception {
@@ -238,12 +238,12 @@ public class CoordCommandUtils {
      * Resolve &lt;start-instance&gt; &lt;end-insatnce&gt; tag. Don't resolve any
      * latest()/future()
      *
-     * @param event
-     * @param instances
-     * @param appInst
-     * @param conf
+     * @param event event
+     * @param instances instances
+     * @param appInst application instance
+     * @param conf configuration
      * @param eval ELEvalautor
-     * @throws Exception
+     * @throws Exception when function evaluation fails
      */
     public static void resolveInstanceRange(Element event, StringBuilder instances, SyncCoordAction appInst,
             Configuration conf, ELEvaluator eval) throws Exception {
@@ -374,10 +374,10 @@ public class CoordCommandUtils {
      * @param event : &lt;data-in&gt;
      * @param expr : instance like current(-1)
      * @param appInst : application specific info
-     * @param conf
+     * @param conf configuration
      * @param evalInst :ELEvaluator
      * @return materialized date string
-     * @throws Exception
+     * @throws Exception when function evaluation fails
      */
     public static String materializeInstance(Element event, String expr, SyncCoordAction appInst, Configuration conf,
             ELEvaluator evalInst) throws Exception {
@@ -392,9 +392,9 @@ public class CoordCommandUtils {
     /**
      * Create two new tags with &lt;uris&gt; and &lt;unresolved-instances&gt;.
      *
-     * @param event
-     * @param instances
-     * @throws Exception
+     * @param event event
+     * @param instances instances
+     * @throws Exception when function evaluation fails
      */
     private static String separateResolvedAndUnresolved(Element event, StringBuilder instances)
             throws Exception {
@@ -428,7 +428,7 @@ public class CoordCommandUtils {
      * @param unresolvedInstances : list of instance with latest function
      * @param urisWithDoneFlag : list of URIs with the done flag appended
      * @return : list of URIs separated by ";" as a string.
-     * @throws Exception
+     * @throws Exception when function evaluation fails
      */
     public static String createEarlyURIs(Element event, String instances, StringBuilder unresolvedInstances,
             StringBuilder urisWithDoneFlag) throws Exception {
@@ -471,11 +471,11 @@ public class CoordCommandUtils {
     }
 
     /**
-     * @param eAction
-     * @param coordAction
-     * @param conf
+     * @param eAction action xml element
+     * @param coordAction coordinator action
+     * @param conf configuration
      * @return boolean to determine whether the SLA element is present or not
-     * @throws CoordinatorJobException
+     * @throws CoordinatorJobException in case of coordinator problem
      */
     public static boolean materializeSLA(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
             throws CoordinatorJobException {
@@ -520,7 +520,7 @@ public class CoordCommandUtils {
      * @param conf job configuration
      * @param actionBean CoordinatorActionBean to materialize
      * @return one materialized action for specific nominal time
-     * @throws Exception
+     * @throws Exception when materialization fails due to url checks or evaluation
      */
     @SuppressWarnings("unchecked")
     public static String materializeOneInstance(String jobId, boolean dryrun, Element eAction, Date nominalTime,
@@ -598,7 +598,7 @@ public class CoordCommandUtils {
      * @param eAction the actionXml related element
      * @param actionBean the coordinator action bean
      * @return actionXml returns actionXml as String
-     * @throws Exception
+     * @throws Exception when materialization fails due to url checks or evaluation
      */
     static String dryRunCoord(Element eAction, CoordinatorActionBean actionBean) throws Exception {
         String action = XmlUtils.prettyPrint(eAction).toString();
@@ -652,10 +652,10 @@ public class CoordCommandUtils {
      * tags Create uris for resolved instances. Create unresolved instance for
      * latest()/future().
      *
-     * @param events
-     * @param appInst
-     * @param conf
-     * @throws Exception
+     * @param events events
+     * @param appInst application instance
+     * @param conf configuration
+     * @throws Exception when materialization fails due to url checks or evaluation
      */
     private static void materializeOutputDataEvents(List<Element> events, SyncCoordAction appInst, Configuration conf)
             throws Exception {
@@ -770,9 +770,9 @@ public class CoordCommandUtils {
     /**
      * Get resolved string from missDepList
      *
-     * @param missDepList
-     * @param resolved
-     * @param unresolved
+     * @param missDepList missing dependencies
+     * @param resolved resolved dependencies
+     * @param unresolved unresolved dependencies
      * @return resolved string
      */
     public static String getResolvedList(String missDepList, StringBuilder resolved, StringBuilder unresolved) {
@@ -792,9 +792,10 @@ public class CoordCommandUtils {
     /**
      * Get the next action time after a given time
      *
-     * @param targetDate
-     * @param coordJob
+     * @param targetDate target date
+     * @param coordJob coordinator job
      * @return the next valid action time
+     * @throws ParseException if parsing time fails
      */
     public static Date getNextValidActionTimeForCronFrequency(Date targetDate, CoordinatorJobBean coordJob) throws ParseException {
 
@@ -873,8 +874,8 @@ public class CoordCommandUtils {
      * @param coordJob The Coordinator Job
      * @param coordAction The Coordinator Action
      * @return the nominal time of the next action
-     * @throws ParseException
-     * @throws JDOMException
+     * @throws ParseException if parsing time fails
+     * @throws JDOMException in case of xml parsing error
      */
     public static Date computeNextNominalTime(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction)
             throws ParseException, JDOMException {
@@ -947,8 +948,8 @@ public class CoordCommandUtils {
 
         /**
          * @param startIndex dataset index
-         * @param timeUnit
-         * @param datasetTimeZone
+         * @param timeUnit time unit
+         * @param datasetTimeZone time zone of data set
          * @param nominalTime nominal time of action
          */
         public StartInstanceFinder(int startIndex, TimeUnit timeUnit, TimeZone datasetTimeZone, Date nominalTime) {

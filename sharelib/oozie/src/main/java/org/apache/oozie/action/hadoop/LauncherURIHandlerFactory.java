@@ -37,7 +37,7 @@ public class LauncherURIHandlerFactory {
      * Get LauncherURIHandler to perform operations on a URI in the launcher
      * @param uri the target uri
      * @return LauncherURIHandler to perform operations on the URI
-     * @throws LauncherException in case of error
+     * @throws LauncherException if handler cannot be instantiated
      */
     public LauncherURIHandler getURIHandler(URI uri) throws LauncherException {
         LauncherURIHandler handler;

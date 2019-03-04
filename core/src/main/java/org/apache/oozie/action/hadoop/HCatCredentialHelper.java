@@ -49,7 +49,7 @@ public class HCatCredentialHelper {
      * @param launcherConfig - launcher configuration
      * @param principal - principal for HCat server
      * @param server - Serevr URI for HCat server
-     * @throws Exception
+     * @throws Exception in case of HCat client creation or close error
      */
     public void set(Credentials credentials, Configuration launcherConfig, String principal, String server) throws Exception {
         HCatClient client = null;
@@ -78,11 +78,11 @@ public class HCatCredentialHelper {
 
     /**
      * Getting the HCat client.
-     * @param launcherConfig
-     * @param principal
-     * @param server
-     * @return HCatClient
-     * @throws HCatException
+     * @param launcherConfig - launcher configuration
+     * @param principal - principal for HCat server
+     * @param server - Serevr URI for HCat server
+     * @return HCatClient an HCatClient instance
+     * @throws HCatException if creating client fails
      */
     public HCatClient getHCatClient(Configuration launcherConfig,
         String principal, String server) throws HCatException {

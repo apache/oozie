@@ -584,11 +584,12 @@ public class V1JobsServlet extends BaseJobsServlet {
 
     /**
      * service implementation to bulk kill jobs
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return bulkModifyJobs implementation to bulk kill jobs
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if
+     * BundleEngineException or CoordinatorEngineException or DagEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
@@ -598,11 +599,12 @@ public class V1JobsServlet extends BaseJobsServlet {
 
     /**
      * service implementation to bulk suspend jobs
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return bulkModifyJobs implementation to bulk suspend jobs
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if
+     * BundleEngineException or CoordinatorEngineException or DagEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
@@ -612,11 +614,12 @@ public class V1JobsServlet extends BaseJobsServlet {
 
     /**
      * service implementation to bulk resume jobs
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return bulkModifyJobs implementation to bulk resume jobs
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if
+     * BundleEngineException or CoordinatorEngineException or DagEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,

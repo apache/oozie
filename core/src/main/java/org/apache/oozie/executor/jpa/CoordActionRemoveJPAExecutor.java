@@ -35,7 +35,7 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
     /**
      * Constructor which records coordinator action id.
      *
-     * @param coordActionId
+     * @param coordActionId id of coordinator action
      */
     public CoordActionRemoveJPAExecutor(String coordActionId) {
         ParamChecker.notNull(coordActionId, "coordActionId");

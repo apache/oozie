@@ -34,7 +34,7 @@ public class BundleJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
 
     /**
      * Initialize the JPAExecutor using the delete list of BundleJobBeans
-     * @param deleteList
+     * @param deleteList list of jobs to delete
      */
     public BundleJobsDeleteJPAExecutor(Collection<String> deleteList) {
         this.deleteList = deleteList;
@@ -46,7 +46,7 @@ public class BundleJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
     /**
      * Sets the delete list for BundleJobBeans
      *
-     * @param deleteList
+     * @param deleteList list of jobs to delete
      */
     public void setDeleteList(Collection<String> deleteList) {
         this.deleteList = deleteList;

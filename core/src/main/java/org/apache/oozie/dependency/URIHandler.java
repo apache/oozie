@@ -72,7 +72,7 @@ public interface URIHandler {
      *
      * @param uri the URI to get the dependency type from
      * @return dependency type of URI
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     DependencyType getDependencyType(URI uri) throws URIHandlerException;
 
@@ -83,8 +83,7 @@ public interface URIHandler {
      * @param conf Configuration to access the URI
      * @param user name of the user the URI should be accessed as
      * @param actionID The id of action which depends on the availability of the uri
-     *
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     void registerForNotification(URI uri, Configuration conf, String user, String actionID)
             throws URIHandlerException;
@@ -94,6 +93,7 @@ public interface URIHandler {
      *
      * @param uri The URI to be removed from missing dependency
      * @param actionID The id of action which was dependent on the uri.
+     * @return true if unregister succeeded
      */
     boolean unregisterFromNotification(URI uri, String actionID);
 
@@ -107,7 +107,7 @@ public interface URIHandler {
      * @param readOnly indicate if operation is read-only
      * @return Context to access URIs with same scheme and host
      *
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     Context getContext(URI uri, Configuration conf, String user, boolean readOnly) throws URIHandlerException;
 
@@ -120,7 +120,7 @@ public interface URIHandler {
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     boolean exists(URI uri, Context context) throws URIHandlerException;
 
@@ -135,7 +135,7 @@ public interface URIHandler {
      * @return <code>true</code> if the URI exists; <code>false</code> if the
      *         URI does not exist
      *
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     boolean exists(URI uri, Configuration conf, String user) throws URIHandlerException;
 
@@ -144,7 +144,7 @@ public interface URIHandler {
      *
      * @param uri URI
      * @param context Context to access the URI
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     void delete(URI uri, Context context) throws URIHandlerException;
 
@@ -154,7 +154,7 @@ public interface URIHandler {
      * @param uri URI
      * @param conf Configuration to access the URI
      * @param user name of the user the URI should be accessed as
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     void delete(URI uri, Configuration conf, String user) throws URIHandlerException;
 
@@ -166,7 +166,7 @@ public interface URIHandler {
      *
      * @return the final URI with the doneFlag incorporated
      *
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     String getURIWithDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 
@@ -178,7 +178,7 @@ public interface URIHandler {
      *
      * @return the final URI without the doneFlag incorporated
      *
-     * @throws URIHandlerException in case of error
+     * @throws URIHandlerException when dependency uri is malformed or resource is inaccessible
      */
     String getURIWithoutDoneFlag(String uri, String doneFlag) throws URIHandlerException;
 

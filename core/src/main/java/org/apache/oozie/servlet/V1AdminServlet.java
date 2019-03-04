@@ -103,8 +103,7 @@ public class V1AdminServlet extends BaseAdminServlet {
      * @param json the result json object that contains a JSONArray for the callable dump
      *
      * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple
-     * .JSONObject)
+     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple.JSONObject)
      */
     @SuppressWarnings("unchecked")
     @Override

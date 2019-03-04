@@ -63,7 +63,7 @@ public class OozieJobInfo {
      * @param actionConf the action conf
      * @param context the context
      * @param action the action
-     * @throws IOException
+     * @throws IOException if creating XConfiguration fails
      */
     public OozieJobInfo(Configuration actionConf, Context context, WorkflowAction action) throws IOException {
         this.context = context;

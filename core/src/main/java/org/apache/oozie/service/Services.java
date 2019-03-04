@@ -352,6 +352,7 @@ public class Services {
     /**
      * Return a service by its public interface.
      *
+     * @param <T> child type of Service
      * @param serviceKlass service public interface.
      * @return the associated service, or <code>null</code> if not define.
      */

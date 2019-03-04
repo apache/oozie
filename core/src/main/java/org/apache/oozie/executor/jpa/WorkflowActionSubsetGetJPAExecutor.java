@@ -43,9 +43,9 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
      * This Constructor creates the WorkflowActionSubsetGetJPAExecutor object Which gets the List of wrokflow action
      * bean.
      *
-     * @param wfId
-     * @param start
-     * @param length
+     * @param wfId WF id
+     * @param start first result
+     * @param length length
      */
     public WorkflowActionSubsetGetJPAExecutor(String wfId, int start, int length) {
         ParamChecker.notNull(wfId, "wfJobId");

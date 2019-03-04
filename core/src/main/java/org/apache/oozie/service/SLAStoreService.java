@@ -57,6 +57,8 @@ public class SLAStoreService implements Service {
      * Return a SLA store instance with an existing transaction. <p> The SLA store has to be committed and then closed
      * to commit changes, if only close it rolls back.
      *
+     * @param <S> child type of Store
+     * @param store store definition
      * @return a SLA store.
      * @throws StoreException thrown if the SLA store could not be created.
      */

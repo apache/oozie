@@ -368,7 +368,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * @param eSla sla xml element
      * @param evalSla sla evaluator
      * @return sla xml string after evaluation
-     * @throws CommandException
+     * @throws CommandException if command cannot be executed
      */
     public static String resolveSla(Element eSla, ELEvaluator evalSla) throws CommandException {
         // EL evaluation

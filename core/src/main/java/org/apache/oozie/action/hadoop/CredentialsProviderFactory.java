@@ -89,9 +89,9 @@ public class CredentialsProviderFactory {
     /**
      * Create Credential object
      *
-     * @param type
+     * @param type provider type
      * @return Credential object
-     * @throws Exception
+     * @throws Exception if provider cannot be created
      */
     public CredentialsProvider createCredentialsProvider(String type) throws Exception {
         Class<? extends CredentialsProvider> providerClass = providerCache.get(type);
@@ -106,7 +106,7 @@ public class CredentialsProviderFactory {
      * tokens via {@link CredentialsProvider} implementations to ensure that the Kerberos credentials are current and won't expire
      * too soon.
      *
-     * @throws IOException
+     * @throws IOException if login fails
      */
     public static void ensureKerberosLogin() throws IOException {
         LOG.debug("About to relogin from keytab");

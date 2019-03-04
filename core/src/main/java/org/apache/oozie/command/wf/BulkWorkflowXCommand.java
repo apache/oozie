@@ -45,6 +45,7 @@ public class BulkWorkflowXCommand extends WorkflowXCommand<WorkflowsInfo> {
      * @param start starting from this index in the list of workflows matching the filter are killed
      * @param length number of workflows to be killed from the list of workflows matching the filter and starting from
      *        index "start".
+     * @param operation operation type
      */
     public BulkWorkflowXCommand(Map<String, List<String>> filter, int start, int length, OperationType operation) {
         super("bulkkill", "bulkkill", 1, true);

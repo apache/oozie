@@ -58,6 +58,7 @@ public class StringUtils {
      * @param expr - Expression string
      * @param sequence - char sequence to check in the input expression
      * @return true if present
+     * @throws ELEvaluationException if evaluation of expression fails
      */
     public static boolean checkStaticExistence(String expr, String sequence) throws ELEvaluationException {
         int curlyBracketDept = 0;

@@ -77,6 +77,8 @@ public class SLACalcStatus extends SLAEvent {
 
     /**
      * copy constructor
+     *
+     * @param a use this to create a copy from
      */
     public SLACalcStatus(SLACalcStatus a) {
         this();

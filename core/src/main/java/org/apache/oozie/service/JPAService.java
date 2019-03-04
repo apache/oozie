@@ -314,6 +314,7 @@ public class JPAService implements Service, Instrumentable {
     /**
      * Execute a {@link JPAExecutor}.
      *
+     * @param <T> type of executor's result
      * @param executor JPAExecutor to execute.
      * @return return value of the JPAExecutor.
      * @throws JPAExecutorException thrown if an jpa executor failed
@@ -392,7 +393,7 @@ public class JPAService implements Service, Instrumentable {
      * @param query query instance to be executed
      * @param em Entity Manager
      * @return Integer that query returns, which corresponds to the number of rows updated
-     * @throws JPAExecutorException
+     * @throws JPAExecutorException if JPA executor has problem
      */
     public int executeUpdate(final String namedQueryName, final Query query, final EntityManager em) throws JPAExecutorException {
         final Instrumentation.Cron cron = new Instrumentation.Cron();
@@ -483,7 +484,7 @@ public class JPAService implements Service, Instrumentable {
      * @param updateQueryList list of update queries
      * @param deleteBeans list of beans to be deleted
      * @param em Entity Manager
-     * @throws JPAExecutorException
+     * @throws JPAExecutorException if JPA executor has problem
      */
     public void executeBatchInsertUpdateDelete(final Collection<JsonBean> insertBeans, final List<QueryEntry> updateQueryList,
             final Collection<JsonBean> deleteBeans, final EntityManager em) throws JPAExecutorException {
@@ -548,6 +549,7 @@ public class JPAService implements Service, Instrumentable {
      * @param query query instance to be executed
      * @param em Entity Manager
      * @return object that matches the query
+     * @throws JPAExecutorException if JPA executor has problem
      */
     public Object executeGet(final String namedQueryName, final Query query, final EntityManager em) throws JPAExecutorException {
         final Instrumentation.Cron cron = new Instrumentation.Cron();
@@ -588,6 +590,7 @@ public class JPAService implements Service, Instrumentable {
      * @param query query instance to be executed
      * @param em Entity Manager
      * @return list containing results that match the query
+     * @throws JPAExecutorException if JPA executor has problem
      */
     public List<?> executeGetList(final String namedQueryName, final Query query, final EntityManager em)
             throws JPAExecutorException {

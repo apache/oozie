@@ -86,8 +86,9 @@ public class CoordUtils {
      * @param rangeType the rerun type (date, action)
      * @param jobId the coordinator job id
      * @param scope the date scope or action id scope
+     * @param active set to true if non-terminated
      * @return the list of Coordinator actions
-     * @throws CommandException
+     * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
     public static List<CoordinatorActionBean> getCoordActions(String rangeType, String jobId, String scope,
             boolean active) throws CommandException {
@@ -129,6 +130,7 @@ public class CoordUtils {
      *
      * @param jobId coordinator job id
      * @param scope a comma-separated list of date ranges. Each date range element is specified with two dates separated by '::'
+     * @param active set to true if non-terminated
      * @return the list of Coordinator actions for the date range
      * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
@@ -278,11 +280,11 @@ public class CoordUtils {
 
      /**
       * Check if sla alert is disabled for action.
-      * @param actionBean
-      * @param coordName
-      * @param jobConf
+      * @param actionBean the action bean
+      * @param coordName the coordinator name
+      * @param jobConf the job configuration
       * @return true if SLA alert is disabled for action
-      * @throws ParseException
+      * @throws ParseException if date parse fails
       */
     public static boolean isSlaAlertDisabled(CoordinatorActionBean actionBean, String coordName, Configuration jobConf)
             throws ParseException {
@@ -334,7 +336,7 @@ public class CoordUtils {
      * @param jobConf
      * @param slaAlertType
      * @return status of coord action SLA alert
-     * @throws ParseException
+     * @throws ParseException if parsing date is not possible
      */
     private static boolean getCoordActionSLAAlertStatus(CoordinatorActionBean actionBean, String coordName,
             Configuration jobConf, String slaAlertType) throws ParseException {

@@ -54,7 +54,7 @@ public class SLAStore extends Store {
      * Create an SLAEventBeane. It also creates the process instance for the job.
      *
      * @param slaEvent sla event bean
-     * @throws StoreException
+     * @throws StoreException is insertion fails
      */
 
     public void insertSLAEvent(final SLAEventBean slaEvent) throws StoreException {
@@ -73,8 +73,10 @@ public class SLAStore extends Store {
      * clause.
      *
      * @param seqId sequence id
+     * @param limitLen length limit
+     * @param lastSeqId last sequence id
      * @return List of SLA Events
-     * @throws StoreException
+     * @throws StoreException if getting events fails
      */
     public List<SLAEventBean> getSLAEventListNewerSeqLimited(final long seqId, final int limitLen, long[] lastSeqId)
             throws StoreException {

@@ -509,6 +509,7 @@ public class HadoopAccessorService implements Service {
      * Return a JobClient created with the provided user/group.
      *
      *
+     * @param user user
      * @param conf JobConf with all necessary information to create the
      *        JobClient.
      * @return JobClient created with the provided user/group.
@@ -539,6 +540,7 @@ public class HadoopAccessorService implements Service {
      * Return a JobClient created with the provided user/group.
      *
      *
+     * @param user user
      * @param conf Configuration with all necessary information to create the
      *        JobClient.
      * @return JobClient created with the provided user/group.
@@ -633,8 +635,8 @@ public class HadoopAccessorService implements Service {
 
     /**
      * Validate Job tracker
-     * @param jobTrackerUri
-     * @throws HadoopAccessorException
+     * @param jobTrackerUri job tracker uri
+     * @throws HadoopAccessorException if job tracker cannot be reached
      */
     protected void validateJobTracker(String jobTrackerUri) throws HadoopAccessorException {
         validate(jobTrackerUri, jobTrackerWhitelist, ErrorCode.E0900);
@@ -642,8 +644,8 @@ public class HadoopAccessorService implements Service {
 
     /**
      * Validate Namenode list
-     * @param nameNodeUri
-     * @throws HadoopAccessorException
+     * @param nameNodeUri name node uri
+     * @throws HadoopAccessorException if NN cannot be reached
      */
     protected void validateNameNode(String nameNodeUri) throws HadoopAccessorException {
         validate(nameNodeUri, nameNodeWhitelist, ErrorCode.E0901);
@@ -681,6 +683,9 @@ public class HadoopAccessorService implements Service {
     /**
      * checks configuration parameter if filesystem scheme is among the list of supported ones
      * this makes system robust to filesystems other than HDFS also
+     *
+     * @param uri uri
+     * @throws HadoopAccessorException if scheme is not supported
      */
 
     public void checkSupportedFilesystem(URI uri) throws HadoopAccessorException {

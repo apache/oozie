@@ -362,11 +362,11 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     /**
-     * @param path
-     * @param context
-     * @param fsConf
+     * @param path file path
+     * @param context executor context
+     * @param fsConf file system configuration
      * @return FileSystem
-     * @throws HadoopAccessorException
+     * @throws HadoopAccessorException if FS is not accessible
      */
     private FileSystem getFileSystemFor(Path path, Context context, XConfiguration fsConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
@@ -380,10 +380,10 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     /**
-     * @param path
-     * @param user
+     * @param path file path
+     * @param user user
      * @return FileSystem
-     * @throws HadoopAccessorException
+     * @throws HadoopAccessorException if FS is not accessible
      */
     private FileSystem getFileSystemFor(Path path, String user) throws HadoopAccessorException {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
@@ -418,9 +418,9 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Delete path
      *
-     * @param context
-     * @param path
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param path file path
+     * @throws ActionExecutorException if FS error occurs
      */
     public void delete(Context context, Path path) throws ActionExecutorException {
         delete(context, null, null, path, true);
@@ -429,12 +429,12 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Delete path
      *
-     * @param context
-     * @param fsConf
-     * @param nameNodePath
-     * @param path
+     * @param context executor context
+     * @param fsConf file system configuration
+     * @param nameNodePath configured name node path
+     * @param path file path
      * @param skipTrash flag to skip the trash.
-     * @throws ActionExecutorException
+     * @throws ActionExecutorException if FS error occurs
      */
     public void delete(Context context, XConfiguration fsConf, Path nameNodePath, Path path, boolean skipTrash)
             throws ActionExecutorException {
@@ -494,10 +494,10 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Delete path
      *
-     * @param user
-     * @param group
-     * @param path
-     * @throws ActionExecutorException
+     * @param user user
+     * @param group group
+     * @param path file path
+     * @throws ActionExecutorException if FS error occurs
      */
     public void delete(String user, String group, Path path) throws ActionExecutorException {
         try {
@@ -519,11 +519,11 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Move source to target
      *
-     * @param context
-     * @param source
-     * @param target
-     * @param recovery
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param source source path
+     * @param target target path
+     * @param recovery set to true if in recovery mode
+     * @throws ActionExecutorException if FS error occurs
      */
     public void move(Context context, Path source, Path target, boolean recovery) throws ActionExecutorException {
         move(context, null, null, source, target, recovery);
@@ -532,13 +532,13 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Move source to target
      *
-     * @param context
-     * @param fsConf
-     * @param nameNodePath
-     * @param source
-     * @param target
-     * @param recovery
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param fsConf file system configuration
+     * @param nameNodePath configured name node path
+     * @param source source path
+     * @param target target path
+     * @param recovery set to true if in recovery mode
+     * @throws ActionExecutorException if FS error occurs
      */
     public void move(Context context, XConfiguration fsConf, Path nameNodePath, Path source, Path target, boolean recovery)
             throws ActionExecutorException {
@@ -703,11 +703,11 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     /**
-     * @param context
+     * @param context executor context
      * @return Path returns recovery path
-     * @throws HadoopAccessorException
-     * @throws IOException
-     * @throws URISyntaxException
+     * @throws HadoopAccessorException if accessing file system fails
+     * @throws IOException in case of IO error
+     * @throws URISyntaxException if the processed uri is not a valid URI
      */
     public Path getRecoveryPath(Context context) throws HadoopAccessorException, IOException, URISyntaxException {
         return new Path(context.getActionDir(), "fs-" + context.getRecoveryId());

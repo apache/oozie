@@ -34,7 +34,7 @@ public class WorkflowJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
 
     /**
      * Initialize the JPAExecutor using the delete list of WorkflowJobBeans
-     * @param deleteList
+     * @param deleteList list of workflows to be deleted
      */
     public WorkflowJobsDeleteJPAExecutor(Collection<String> deleteList) {
         this.deleteList = deleteList;
@@ -46,7 +46,7 @@ public class WorkflowJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
     /**
      * Sets the delete list for WorkflowJobBeans
      *
-     * @param deleteList
+     * @param deleteList list of workflows to be deleted
      */
     public void setDeleteList(Collection<String> deleteList) {
         this.deleteList = deleteList;

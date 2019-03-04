@@ -39,8 +39,8 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
     private int limit;
 
     /**
-     * @param date
-     * @param limit
+     * @param date date
+     * @param limit limit
      */
     public CoordJobsToBeMaterializedJPAExecutor(Date date, int limit) {
         ParamChecker.notNull(date, "Coord Job Materialization Date");

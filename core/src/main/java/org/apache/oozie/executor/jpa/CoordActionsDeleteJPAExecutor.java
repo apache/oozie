@@ -32,7 +32,7 @@ public class CoordActionsDeleteJPAExecutor implements JPAExecutor<Integer> {
 
     /**
      * Initialize the JPAExecutor using the delete list of CoordinatorActionBeans
-     * @param deleteList
+     * @param deleteList list of jobs to delete
      */
     public CoordActionsDeleteJPAExecutor(Collection<String> deleteList) {
         this.deleteList = deleteList;
@@ -44,7 +44,7 @@ public class CoordActionsDeleteJPAExecutor implements JPAExecutor<Integer> {
     /**
      * Sets the delete list for CoordinatorActionBeans
      *
-     * @param deleteList
+     * @param deleteList list of jobs to delete
      */
     public void setDeleteList(Collection<String> deleteList) {
         this.deleteList = deleteList;

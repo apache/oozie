@@ -103,6 +103,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
      * Get JMS connection Info
      * @param request the request
      * @param response the response
+     * @return connection information in a form of a JsonBean
      * @throws XServletException in case of any servlet error
      * @throws IOException in case of any IO error
      */

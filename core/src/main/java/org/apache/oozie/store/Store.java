@@ -62,6 +62,8 @@ public abstract class Store {
 
     /**
      * Use an existing transaction for cross store operations
+     *
+     * @param store use the EntityManager of given store
      */
     public Store(Store store) {
         entityManager = store.getEntityManager();
@@ -69,6 +71,8 @@ public abstract class Store {
 
     /**
      * Return EntityManager
+     *
+     * @return entity manager
      */
     public EntityManager getEntityManager() {
         return entityManager;

@@ -208,9 +208,9 @@ public abstract class ActionExecutor {
 
         /**
          * @return filesystem handle for the application deployment fs.
-         * @throws IOException
-         * @throws URISyntaxException
-         * @throws HadoopAccessorException
+         * @throws IOException if IO error occurs
+         * @throws URISyntaxException if processed uri is not a proper URI
+         * @throws HadoopAccessorException if accessing hadoop fails
          */
         FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException;
 

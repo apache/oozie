@@ -125,7 +125,7 @@ public class Hive2ActionExecutor extends ScriptLanguageActionExecutor {
      * Return the sharelib name for the action.
      *
      * @return returns <code>hive2</code>.
-     * @param actionXml
+     * @param actionXml action xml element
      */
     @Override
     protected String getDefaultShareLibName(Element actionXml) {

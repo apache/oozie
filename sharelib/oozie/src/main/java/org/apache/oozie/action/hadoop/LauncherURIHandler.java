@@ -34,7 +34,7 @@ public interface LauncherURIHandler {
      * @return <code>true</code> if the URI did not exist and was successfully
      *         created; <code>false</code> if the URI already existed
      *
-     * @throws LauncherException in case of error
+     * @throws LauncherException when creating resource on uri fails
      */
     boolean create(URI uri, Configuration conf) throws LauncherException;
 
@@ -46,7 +46,7 @@ public interface LauncherURIHandler {
      *
      * @return <code>true</code> if the URI exists and was successfully deleted;
      *         <code>false</code> if the URI does not exist
-     * @throws LauncherException in case of error
+     * @throws LauncherException when deleting resource on uri fails
      */
     boolean delete(URI uri, Configuration conf) throws LauncherException;
 

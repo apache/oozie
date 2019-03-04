@@ -173,8 +173,8 @@ public class V1JobServlet extends BaseJobServlet {
      * protected method to change a coordinator job
      * @param request request object
      * @param response response object
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if BundleEngineException or CoordinatorEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected void changeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
@@ -388,7 +388,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void startWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -407,7 +407,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void startBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -425,7 +425,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void resumeWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -444,7 +444,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void resumeBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -462,8 +462,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
-     * @throws CoordinatorEngineException
+     * @throws XServletException in case if CoordinatorEngineException occurs
      */
     private void resumeCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -483,7 +482,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void suspendWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -502,7 +501,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void suspendBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -520,7 +519,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException occurs
      */
     private void suspendCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -539,7 +538,7 @@ public class V1JobServlet extends BaseJobServlet {
      * Kill a wf job
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void killWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -558,7 +557,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException or CommandException occurs
      */
     @SuppressWarnings("unchecked")
     private JSONObject killCoordinator(HttpServletRequest request, HttpServletResponse response) throws XServletException {
@@ -600,7 +599,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void killBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -618,7 +617,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException occurs
      */
     private void changeCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -639,7 +638,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void changeBundleJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -660,7 +659,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @param conf configuration object
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void reRunWorkflowJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
@@ -681,7 +680,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @param conf configration object
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     private void rerunBundleJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
@@ -711,7 +710,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @param conf configuration object
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException or CommandException occurs
      */
     @SuppressWarnings("unchecked")
     private JSONObject reRunCoordinatorActions(HttpServletRequest request, HttpServletResponse response,
@@ -760,7 +759,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowJobBean
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     protected JsonBean getWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean jobBean = getWorkflowJobBean(request, response);
@@ -775,7 +774,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowJobBean
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     protected JsonBean getWorkflowJobBean(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean jobBean;
@@ -834,7 +833,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowActionBean
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     protected JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -865,8 +864,8 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean CoordinatorJobBean
-     * @throws XServletException
-     * @throws BaseEngineException
+     * @throws XServletException in case if CoordinatorEngineException occurs
+     * @throws BaseEngineException if CommandException occurs
      */
     protected JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
@@ -914,11 +913,9 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean bundle job bean
-     * @throws XServletException
-     * @throws BaseEngineException
+     * @throws XServletException in case if BundleEngineException occurs
      */
-    private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            BaseEngineException {
+    private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean jobBean;
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
@@ -939,8 +936,8 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean CoordinatorActionBean
-     * @throws XServletException
-     * @throws BaseEngineException
+     * @throws XServletException in case if CoordinatorEngineException occurs
+     * @throws BaseEngineException if CommandException occurs
      */
     private JsonBean getCoordinatorAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
@@ -964,7 +961,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return String wf definition
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private String getWorkflowJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -987,7 +984,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return String bundle definition
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private String getBundleJobDefinition(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -1008,7 +1005,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return String coord definition
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     private String getCoordinatorJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -1033,8 +1030,8 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if BaseEngineException occurs
+     * @throws IOException in case of parsing error
      */
     private void streamWorkflowJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
@@ -1053,7 +1050,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     private void streamBundleJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
@@ -1072,8 +1069,8 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if BaseEngineException or CommandException occurs
+     * @throws IOException in case of parsing error
      */
     private void streamCoordinatorJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {

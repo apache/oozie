@@ -205,7 +205,7 @@ public class CoordELFunctions {
      * @param offset any number
      * @param unit one of DAY, MONTH, HOUR, MINUTE, MONTH
      * @return the offset date string
-     * @throws Exception in case of error
+     * @throws Exception when getting calendar based on strBaseDate fails
      */
     public static String ph2_coord_dateOffset(String strBaseDate, int offset, String unit) throws Exception {
         Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
@@ -226,7 +226,7 @@ public class CoordELFunctions {
      * @param strBaseDate The base date
      * @param timezone the timezone
      * @return the offset date string
-     * @throws Exception in case of error
+     * @throws Exception when getting calendar based on strBaseDate fails
      */
     public static String ph2_coord_dateTzOffset(String strBaseDate, String timezone) throws Exception {
         Calendar baseCalDate = DateUtils.getCalendar(strBaseDate);
@@ -389,6 +389,7 @@ public class CoordELFunctions {
      * Return Action Id.
      *
      * @return coordinator action Id
+     * @throws Exception if parameter checking fails
      */
     public static String ph2_coord_actionId() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -405,6 +406,7 @@ public class CoordELFunctions {
      * Return Job Name. <p>
      *
      * @return coordinator name
+     * @throws Exception if parameter checking fails
      */
     public static String ph2_coord_name() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -497,9 +499,8 @@ public class CoordELFunctions {
      * @param n instance count domain: n is integer
      * @return date-time in Oozie processing timezone of the n-th instance returns 'null' means n-th instance is
      * earlier than Initial-Instance of DS
-     * @throws Exception
      */
-    public static String ph2_coord_current(int n) throws Exception {
+    public static String ph2_coord_current(int n) {
         if (isSyncDataSet()) { // For Sync Dataset
             return coord_current_sync(n);
         }
@@ -520,9 +521,8 @@ public class CoordELFunctions {
      *        delimited by comma. <p> If the current instance time of the dataset based on the Action Creation Time
      *        is earlier than the Initial-Instance of DS an empty string is returned.
      *        If an instance within the range is earlier than Initial-Instance of DS that instance is ignored
-     * @throws Exception
      */
-    public static String ph2_coord_currentRange(int start, int end) throws Exception {
+    public static String ph2_coord_currentRange(int start, int end) {
         if (isSyncDataSet()) { // For Sync Dataset
             return coord_currentRange_sync(start, end);
         }
@@ -556,9 +556,8 @@ public class CoordELFunctions {
      *
      * @param n instance count <p> domain: n is integer
      * @return number of hours on that day <p> returns -1 means n-th instance is earlier than Initial-Instance of DS
-     * @throws Exception
      */
-    public static int ph2_coord_hoursInDay(int n) throws Exception {
+    public static int ph2_coord_hoursInDay(int n) {
         int datasetFrequency = (int) getDSFrequency();
         // /Calendar nominalInstanceCal =
         // getCurrentInstance(getActionCreationtime());
@@ -587,9 +586,8 @@ public class CoordELFunctions {
      *
      * @param n instance count. domain: n is integer
      * @return number of days in that month <p> returns -1 means n-th instance is earlier than Initial-Instance of DS
-     * @throws Exception
      */
-    public static int ph2_coord_daysInMonth(int n) throws Exception {
+    public static int ph2_coord_daysInMonth(int n) {
         int datasetFrequency = (int) getDSFrequency();// in minutes
         // Calendar nominalInstanceCal =
         // getCurrentInstance(getActionCreationtime());
@@ -607,7 +605,7 @@ public class CoordELFunctions {
         return nominalInstanceCal.getActualMaximum(Calendar.DAY_OF_MONTH);
     }
 
-    public static int ph3_coord_daysInMonth(int n) throws Exception {
+    public static int ph3_coord_daysInMonth(int n) {
         return ph2_coord_daysInMonth(n);
     }
 
@@ -620,7 +618,7 @@ public class CoordELFunctions {
      * @param n :instance count <p> domain: n &lt;= 0, n is integer
      * @return date-time in Oozie processing timezone of the n-th instance <p> returns 'null' means n-th instance is
      * earlier than Initial-Instance of DS
-     * @throws Exception
+     * @throws Exception in case of wrong arguments, or HDFS access errors
      */
     public static String ph3_coord_latest(int n) throws Exception {
         ParamChecker.checkLEZero(n, "latest:n");
@@ -644,7 +642,7 @@ public class CoordELFunctions {
      * @return date-time in Oozie processing timezone of the instances from start to end offsets
      *        delimited by comma. <p> returns 'null' means start offset instance is
      *        earlier than Initial-Instance of DS
-     * @throws Exception
+     * @throws Exception in case of wrong arguments, or HDFS access errors
      */
     public static String ph3_coord_latestRange(int start, int end) throws Exception {
         ParamChecker.checkLEZero(start, "latest:n");
@@ -677,7 +675,7 @@ public class CoordELFunctions {
      * @param eval :EL evaluator
      * @param expr : expression to evaluate
      * @return Resolved expression or echo back the same expression
-     * @throws Exception
+     * @throws Exception if evaluating expression fails
      */
     public static String evalAndWrap(ELEvaluator eval, String expr) throws Exception {
         try {
@@ -949,16 +947,15 @@ public class CoordELFunctions {
 
     // Local methods
     /**
-     * @param n
+     * @param n the required instance position
      * @return n-th instance Date-Time from current instance for data-set <p> return empty string ("") if the
      *         Action_Creation_time or the n-th instance <p> is earlier than the Initial_Instance of dataset.
-     * @throws Exception
      */
-    private static String coord_current_sync(int n) throws Exception {
+    private static String coord_current_sync(int n) {
         return coord_currentRange_sync(n, n);
     }
 
-    private static String coord_currentRange_sync(int start, int end) throws Exception {
+    private static String coord_currentRange_sync(int start, int end) {
         final XLog LOG = XLog.getLog(CoordELFunctions.class);
         int datasetFrequency = getDSFrequency();// in minutes
         TimeUnit dsTimeUnit = getDSTimeUnit();
@@ -998,9 +995,8 @@ public class CoordELFunctions {
      * @param timeUnit TimeUnit for offset n ("MINUTE", "HOUR", "DAY", "MONTH", "YEAR")
      * @return the offset time from the effective nominal time <p> return empty string ("") if the Action_Creation_time or the
      *         offset instance <p> is earlier than the Initial_Instance of dataset.
-     * @throws Exception
      */
-    private static String coord_offset_sync(int n, String timeUnit) throws Exception {
+    private static String coord_offset_sync(int n, String timeUnit) {
         Calendar rawCal = resolveOffsetRawTime(n, TimeUnit.valueOf(timeUnit), null);
         if (rawCal == null) {
             // warning already logged by resolveOffsetRawTime()
@@ -1055,9 +1051,9 @@ public class CoordELFunctions {
     }
 
     /**
-     * @param offset
+     * @param offset offset
      * @return n-th available latest instance Date-Time for SYNC data-set
-     * @throws Exception
+     * @throws Exception in case of wrong arguments, or HDFS access errors
      */
     private static String coord_latest_sync(int offset) throws Exception {
         return coord_latestRange_sync(offset, offset);
@@ -1068,7 +1064,7 @@ public class CoordELFunctions {
     }
 
     /**
-     * @param tm
+     * @param tm calendar
      * @return a new Evaluator to be used for URI-template evaluation
      */
     private static ELEvaluator getUriEvaluator(Calendar tm) {
@@ -1101,8 +1097,8 @@ public class CoordELFunctions {
     /**
      * Check whether a function should be resolved.
      *
-     * @param functionName
-     * @param n
+     * @param functionName name of the function
+     * @param n the function parameter
      * @return null if the functionName needs to be resolved otherwise return the calling function unresolved.
      */
     private static String checkIfResolved(String functionName, String n) {
@@ -1213,6 +1209,8 @@ public class CoordELFunctions {
     /**
      * Find the current instance based on effectiveTime (i.e Action_Creation_Time or Action_Start_Time)
      *
+     * @param effectiveTime effective time
+     * @param instanceCount instance count
      * @return current instance i.e. current(0) returns null if effectiveTime is earlier than Initial Instance time of
      *         the dataset.
      */
@@ -1337,6 +1335,7 @@ public class CoordELFunctions {
     }
 
     /**
+     * @param eval evaluator
      * @return dataset TimeUnit
      */
     public static TimeUnit getDSTimeUnit(ELEvaluator eval) {
@@ -1356,6 +1355,7 @@ public class CoordELFunctions {
     }
 
     /**
+     * @param eval evaluator
      * @return dataset TimeZone
      */
     public static TimeZone getDatasetTZ(ELEvaluator eval) {
@@ -1797,20 +1797,20 @@ public class CoordELFunctions {
         /**
          * Checks whether a dataset is available.
          * @param nominalInstance the nominal instance
-         * @param initInstance
-         * @return
+         * @param initInstance the initial instance
+         * @return true if dataset is available
          */
         protected abstract boolean isAvailable(Calendar nominalInstance, Calendar initInstance);
 
         /**
          * Checks whether it's the first matching for the given evaluation.
-         * @return
+         * @return true if it is the first matching
          */
         protected abstract boolean isFirst();
 
         /**
          * Checks whether it's not the first but a valid matching for the given evaluation.
-         * @return
+         * @return true if description is true
          */
         protected abstract boolean isInBetween();
 
@@ -1842,8 +1842,8 @@ public class CoordELFunctions {
     static class OozieTimeUnitConverter {
         /**
          * Convert {@code millis} given {@code source} to {@link java.util.concurrent.TimeUnit}.
-         * @param millis
-         * @param source
+         * @param millis milliseconds
+         * @param source source time unit
          * @return -1 if no correct {@code source} was given, else the estimated occurrence count of a dataset
          */
         long convertMillis(final long millis, final TimeUnit source) {

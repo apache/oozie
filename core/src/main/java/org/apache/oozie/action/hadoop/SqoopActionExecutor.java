@@ -157,7 +157,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
      *
      * @param context Action context
      * @param action Workflow action
-     * @throws ActionExecutorException
+     * @throws ActionExecutorException thrown if action end execution fails.
      */
     @Override
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
@@ -267,7 +267,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
      * Return the sharelib name for the action.
      *
      * @return returns <code>sqoop</code>.
-     * @param actionXml
+     * @param actionXml action xml element
      */
     @Override
     protected String getDefaultShareLibName(Element actionXml) {

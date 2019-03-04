@@ -44,9 +44,9 @@ public class WorkflowInfoWithActionsSubsetGetJPAExecutor implements JPAExecutor<
      * This will create the WorkflowInfoWithActionsSubsetGetJPAExecutor object. which is responsible for getting the
      * Workflow job with actions in certain range.
      *
-     * @param wfJobId
-     * @param start
-     * @param len
+     * @param wfJobId WF job id
+     * @param start start element of range
+     * @param len length of range
      */
     public WorkflowInfoWithActionsSubsetGetJPAExecutor(String wfJobId, int start, int len) {
         ParamChecker.notNull(wfJobId, "wfJobId");

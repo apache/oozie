@@ -29,6 +29,8 @@ public class StringBlobValueHandler extends org.apache.openjpa.jdbc.meta.strats.
 
     /**
      * Singleton instance.
+     *
+     * @return singleton instance of StringBlobValueHandler
      */
     public static StringBlobValueHandler getInstance() {
         return _instance;

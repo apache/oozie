@@ -99,7 +99,7 @@ public class DistcpActionExecutor extends JavaActionExecutor{
      * Return the sharelib name for the action.
      *
      * @return returns <code>distcp</code>.
-     * @param actionXml
+     * @param actionXml action xml element
      */
     @Override
     protected String getDefaultShareLibName(Element actionXml) {

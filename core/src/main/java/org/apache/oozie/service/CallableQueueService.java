@@ -771,8 +771,11 @@ public class CallableQueueService implements Service, Instrumentable {
 
     /**
      * check the interrupt map for the existence of an interrupt commands if
-     * exist a List of Interrupt Callable for the same lock key will bereturned,
+     * exist a List of Interrupt Callable for the same lock key will be returned,
      * otherwise it will return null
+     *
+     * @param lockKey key to check
+     * @return Set of interrupt callables
      */
     public Set<XCallable<?>> checkInterrupts(String lockKey) {
 
@@ -786,7 +789,7 @@ public class CallableQueueService implements Service, Instrumentable {
      * check if the callable is of an interrupt type and insert it into the map
      * accordingly
      *
-     * @param callable
+     * @param callable callable
      */
     public void checkInterruptTypes(XCallable<?> callable) {
         if ((callable instanceof CompositeCallable) && (((CompositeCallable) callable).getCallables() != null)) {
@@ -805,7 +808,7 @@ public class CallableQueueService implements Service, Instrumentable {
      * insert a new callable in the Interrupt Command Map add a new element to
      * the list or create a new list accordingly
      *
-     * @param callable
+     * @param callable callable
      */
     public void insertCallableIntoInterruptMap(XCallable<?> callable) {
         if (interruptCommandsMap.size() < interruptMapMaxSize) {

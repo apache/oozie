@@ -95,7 +95,7 @@ public class SLAEventsXCommand extends XCommand<List<SLAEventBean>> {
     /**
      * Set lastSeqId
      *
-     * @param lastSeqId
+     * @param lastSeqId last sequence id
      */
     public void setLastSeqId(long lastSeqId) {
         this.lastSeqId = lastSeqId;

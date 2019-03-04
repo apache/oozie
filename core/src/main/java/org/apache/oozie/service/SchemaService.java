@@ -216,9 +216,9 @@ public class SchemaService implements Service {
 
     /**
      * Returns validator for schema
-     * @param schemaName
-     * @return
-     * @throws SAXException
+     * @param schemaName schema name
+     * @return Validator
+     * @throws SAXException if XML parsing fails
      */
     public Validator getValidator(SchemaName schemaName) throws SAXException {
         return getValidator(getSchema(schemaName));
@@ -226,9 +226,9 @@ public class SchemaService implements Service {
 
     /**
      * Returns validator for schema
-     * @param schema
-     * @return
-     * @throws SAXException
+     * @param schema schema
+     * @return Validator
+     * @throws SAXException if XML parsing fails
      */
     public static Validator getValidator(Schema schema) throws SAXException {
         Validator validator = schema.newValidator();

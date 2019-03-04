@@ -142,8 +142,8 @@ public class V2JobServlet extends V1JobServlet {
      * Ignore a coordinator job
      * @param request request object
      * @param response response object
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if CoordinatorEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
@@ -210,7 +210,7 @@ public class V2JobServlet extends V1JobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException or CommandException occurs
      */
     @SuppressWarnings("unchecked")
     private JSONObject ignoreCoordinatorJob(HttpServletRequest request, HttpServletResponse response)

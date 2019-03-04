@@ -37,6 +37,7 @@ public class JMSExceptionListener implements ExceptionListener {
      *
      * @param connInfo Information to connect to the JMS compliant messaging service
      * @param connCtxt The actual connection on which this listener will be registered
+     * @param retry set to true if connection shall be retried after exception
      */
     public JMSExceptionListener(JMSConnectionInfo connInfo, ConnectionContext connCtxt, boolean retry) {
         this.connInfo = connInfo;

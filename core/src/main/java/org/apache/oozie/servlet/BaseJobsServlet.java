@@ -222,11 +222,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to kill jobs based ona filter param. The jobs could be workflow, coordinator or bundle jobs
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JSONObject of all jobs being killed
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -234,11 +234,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to suspend jobs based ona filter param. The jobs could be workflow, coordinator or bundle jobs
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JSONObject of all jobs being suspended
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -246,11 +246,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to resume jobs based ona filter param. The jobs could be workflow, coordinator or bundle jobs
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JSONObject of all jobs being resumed
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -258,11 +258,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
      * abstract method to submit a job, either workflow or coordinator in the case of workflow job, there is an optional
      * flag in request to indicate if want this job to be started immediately or not
      *
-     * @param request
-     * @param conf
+     * @param request the request
+     * @param conf the job configuration
      * @return JSONObject of job id
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject submitJob(HttpServletRequest request, Configuration conf)
     throws XServletException, IOException;
@@ -270,11 +270,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to get a job from external ID
      *
-     * @param request
-     * @param externalId
+     * @param request the request
+     * @param externalId the external id you you want the job id from
      * @return JSONObject for the requested job
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject getJobIdForExternalId(HttpServletRequest request,
             String externalId) throws XServletException, IOException;
@@ -282,10 +282,10 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to get a list of workflow jobs
      *
-     * @param request
+     * @param request the request
      * @return JSONObject of the requested jobs
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject getJobs(HttpServletRequest request)
     throws XServletException, IOException;

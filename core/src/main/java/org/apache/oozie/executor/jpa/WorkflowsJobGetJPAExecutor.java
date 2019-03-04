@@ -56,9 +56,9 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
     /**
      * This JPA Executor gets the workflows info for the range.
      *
-     * @param filter
-     * @param start
-     * @param len
+     * @param filter filter
+     * @param start start element of range
+     * @param len length of range
      */
     public WorkflowsJobGetJPAExecutor(Map<String, List<String>> filter, int start, int len) {
         this.filter = filter;

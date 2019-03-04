@@ -53,9 +53,9 @@ public class FsELFunctions {
      *
      * @param pathUri fs path uri
      * @return file status
-     * @throws URISyntaxException
-     * @throws IOException
-     * @throws Exception
+     * @throws URISyntaxException if pathUri is not a proper URI
+     * @throws IOException in case of file system issue
+     * @throws Exception in case of file system issue
      */
     private static FileStatus getFileStatus(String pathUri) throws Exception {
         URI uri = new URI(pathUri);
@@ -70,7 +70,7 @@ public class FsELFunctions {
      *
      * @param pathUri file system path uri.
      * @return <code>true</code> if the path exists, <code>false</code> if it does not.
-     * @throws Exception
+     * @throws Exception in case of file system issue
      */
     public static boolean fs_exists(String pathUri) throws Exception {
         Path path = new Path(pathUri);
@@ -91,7 +91,7 @@ public class FsELFunctions {
      *
      * @param pathUri fs path uri.
      * @return <code>true</code> if the path exists and it is a directory, <code>false</code> otherwise.
-     * @throws Exception
+     * @throws Exception in case of file system issue
      */
     public static boolean fs_isDir(String pathUri) throws Exception {
         boolean isDir = false;
@@ -107,7 +107,7 @@ public class FsELFunctions {
      *
      * @param pathUri file system path uri.
      * @return the file len in bytes, -1 if the file does not exist or if it is a directory.
-     * @throws Exception
+     * @throws Exception in case of file system issue
      */
     public static long fs_fileSize(String pathUri) throws Exception {
         long len = -1;
@@ -123,7 +123,7 @@ public class FsELFunctions {
      *
      * @param pathUri file system path uri.
      * @return the size of all files in the directory, -1 if the directory does not exist or if it is a file.
-     * @throws Exception
+     * @throws Exception in case of file system issue
      */
     public static long fs_dirSize(String pathUri) throws Exception {
         URI uri = new URI(pathUri);
@@ -155,7 +155,7 @@ public class FsELFunctions {
      *
      * @param pathUri file system path uri.
      * @return the block size of the file in bytes, -1 if the file does not exist or if it is a directory.
-     * @throws Exception
+     * @throws Exception in case of file system issue
      */
     public static long fs_blockSize(String pathUri) throws Exception {
         long blockSize = -1;

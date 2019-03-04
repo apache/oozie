@@ -33,7 +33,10 @@ public class StoreService implements Service {
     /**
      * Return instance of store.
      *
+     * @param <S> child type of Store
+     * @param klass store class for this given Store
      * @return {@link Store}.
+     * @throws StoreException if Store cannot be retrieved
      */
     @SuppressWarnings("unchecked")
     public <S extends Store> S getStore(Class<S> klass) throws StoreException {
@@ -50,7 +53,12 @@ public class StoreService implements Service {
     /**
      * Return instance of store with an EntityManager pointing to an existing Store.
      *
+     * @param <S> child type of Store
+     * @param <T> child type of Store
+     * @param klass store class for this given Store
+     * @param store store instance
      * @return {@link Store}.
+     * @throws StoreException if Store cannot be retrieved
      */
     @SuppressWarnings("unchecked")
     public <S extends Store, T extends Store> S getStore(Class<S> klass, T store) throws StoreException {
@@ -78,6 +86,7 @@ public class StoreService implements Service {
      * Initializes the {@link StoreService}.
      *
      * @param services services instance.
+     * @throws ServiceException if JPAService is not available
      */
     public void init(Services services) throws ServiceException {
         jpaService = Services.get().get(JPAService.class);
@@ -94,6 +103,8 @@ public class StoreService implements Service {
 
     /**
      * Return EntityManager
+     *
+     * @return EntityManager of JPA service
      */
     public EntityManager getEntityManager() {
         return jpaService.getEntityManager();

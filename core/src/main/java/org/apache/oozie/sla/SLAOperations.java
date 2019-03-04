@@ -195,8 +195,8 @@ public class SLAOperations {
     /**
      * Retrieve registration event
      * @param jobId the jobId
-     * @throws CommandException
-     * @throws JPAExecutorException
+     * @throws CommandException update failure
+     * @throws JPAExecutorException if JPA related issue occurs
      */
     public static void updateRegistrationEvent(String jobId) throws CommandException, JPAExecutorException {
         SLAService slaService = Services.get().get(SLAService.class);

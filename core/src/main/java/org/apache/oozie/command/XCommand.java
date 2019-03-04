@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Base class for synchronous and asynchronous commands.
  * <p>
  * It enables by API the following pattern:
- * <p>
+ * </p>
  * <ul>
  * <li>single execution: a command instance can be executed only once</li>
  * <li>eager data loading: loads data for eager precondition check</li>
@@ -54,7 +54,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <li>locking: obtains exclusive lock on key before executing the command</li>
  * <li>execution: command logic</li>
  * </ul>
- * <p>
  * It has built in instrumentation and logging.
  */
 public abstract class XCommand<T> implements XCallable<T> {
@@ -425,6 +424,8 @@ public abstract class XCommand<T> implements XCallable<T> {
      * Subclasses should override this method and load the state needed to do an eager precondition check.
      * <p>
      * A trivial implementation is calling {link #loadState}.
+     *
+     * @throws CommandException thrown if loading state fails
      */
     protected void eagerLoadState() throws CommandException {
     }
@@ -437,6 +438,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * A trivial implementation is calling {link #verifyPrecondition}.
      *
      * @throws CommandException thrown if the precondition is not met.
+     * @throws PreconditionException thrown if precondition does not met
      */
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
     }
@@ -446,6 +448,8 @@ public abstract class XCommand<T> implements XCallable<T> {
      * <p>
      * Subclasses must implement this method and load the state needed to do the precondition check and execute the
      * command.
+     *
+     * @throws CommandException thrown if loading state fails
      */
     protected abstract void loadState() throws CommandException;
 
@@ -454,6 +458,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * <p>
      *
      * @throws CommandException thrown if the precondition is not met.
+     * @throws PreconditionException thrown if precondition does not met
      */
     protected abstract void verifyPrecondition() throws CommandException, PreconditionException;
 

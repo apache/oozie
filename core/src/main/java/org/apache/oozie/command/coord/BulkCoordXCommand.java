@@ -46,6 +46,7 @@ public class BulkCoordXCommand extends XCommand<CoordinatorJobInfo> {
      * @param filter the filter string
      * @param start start location for paging
      * @param length total length to get
+     * @param operation type of operation
      */
     public BulkCoordXCommand(Map<String, List<String>> filter, int start, int length, OperationType operation) {
         super("bulkcoord" + operation, "bulkcoord" + operation, 1);

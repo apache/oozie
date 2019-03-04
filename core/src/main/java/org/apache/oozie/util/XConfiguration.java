@@ -415,7 +415,7 @@ public class XConfiguration extends Configuration {
 
     /**
      * Restrict the parser
-     * @param restrictParser
+     * @param restrictParser set to true if parser restriction needed
      */
     public void setRestrictParser(boolean restrictParser) {
      this.restrictParser = restrictParser;
@@ -426,7 +426,7 @@ public class XConfiguration extends Configuration {
     }
     /**
      * Restrict reading property from System.getProperty()
-     * @param restrictSystemProperties
+     * @param restrictSystemProperties set to true if system property parsing needed
      */
     public void setRestrictSystemProperties(boolean restrictSystemProperties) {
         this.restrictSystemProperties = restrictSystemProperties;

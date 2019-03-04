@@ -87,12 +87,12 @@ public class ShellActionExecutor extends JavaActionExecutor {
      * This method read a list of tag from an XML element and set the
      * Configuration accordingly
      *
-     * @param tag
-     * @param actionXml
-     * @param actionConf
-     * @param key
-     * @param checkKeyValue
-     * @throws ActionExecutorException
+     * @param tag xml tag to read
+     * @param actionXml action xml element
+     * @param actionConf action configuration
+     * @param key environment variable key
+     * @param checkKeyValue set to true to check key=value syntax
+     * @throws ActionExecutorException if environment variable setting is incorrect
      */
     protected void setListInConf(String tag, Element actionXml, Configuration actionConf, String key,
             boolean checkKeyValue) throws ActionExecutorException {
@@ -114,8 +114,8 @@ public class ShellActionExecutor extends JavaActionExecutor {
 
     /**
      * Check if the key=value pair is appropriately formatted
-     * @param pair
-     * @throws ActionExecutorException
+     * @param pair key=value pair
+     * @throws ActionExecutorException if environment variable setting is incorrect
      */
     private void checkPair(String pair) throws ActionExecutorException {
         String[] varValue = pair.split("=");
@@ -133,9 +133,9 @@ public class ShellActionExecutor extends JavaActionExecutor {
     /**
      * Utility method to append the new value to any property.
      *
-     * @param conf
-     * @param propertyName
-     * @param appendValue
+     * @param conf configuration
+     * @param propertyName name of property to update
+     * @param appendValue new value to append to property
      */
     private void updateProperty(Configuration conf, String propertyName, String appendValue) {
         if (conf != null) {

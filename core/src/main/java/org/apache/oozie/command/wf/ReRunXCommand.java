@@ -280,7 +280,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      * Loading the Wfjob and workflow actions. Parses the config and adds the nodes that are to be skipped to the
      * skipped node list
      *
-     * @throws CommandException
+     * @throws CommandException if loading state fails
      */
     @Override
     protected void eagerLoadState() throws CommandException {
@@ -322,7 +322,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      * Checks the pre-conditions that are required for workflow to recover - Last run of Workflow should be completed -
      * The nodes that are to be skipped are to be completed successfully in the base run.
      *
-     * @throws CommandException
+     * @throws CommandException if verification fails
      * @throws PreconditionException On failure of pre-conditions
      */
     @Override
