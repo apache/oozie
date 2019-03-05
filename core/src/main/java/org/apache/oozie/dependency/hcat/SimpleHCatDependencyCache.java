@@ -147,7 +147,7 @@ public class SimpleHCatDependencyCache implements HCatDependencyCache {
                 if (partKeys != null) {
                     partKeys.remove(partKey);
                 }
-                if (partKeys.size() == 0) {
+                if (partKeys != null && partKeys.size() == 0) {
                     partitionMap.remove(tableKey);
                 }
                 if (partitionMap.size() == 0) {
