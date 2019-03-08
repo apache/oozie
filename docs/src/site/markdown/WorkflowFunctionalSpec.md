@@ -2633,6 +2633,60 @@ For example: When using HCatLoader and HCatStorer in pig, `oozie.action.sharelib
 both pig and hcatalog jars.
 
 <a name="UserRetryWFActions"></a>
+
+### 17.2 Action Share Library Exclude (since Oozie 5.2)
+
+Oozie allows to exclude files on its share library directory from being added to the Distributed Cache. This feature is useful to
+prevent the submitted applications from runtime jar conflict issues.
+
+The unwanted files can be left out by setting `oozie.action.sharelib.for.#ACTIONTYPE#.exclude` configuration to a regex pattern.
+Libraries matching the pattern will not be added to the Distributed Cache.
+
+The configuration is supported on action, job, and oozie server configuration level.
+The precedence order is the same as in the previous 17.1 paragraph.
+
+*One should be very careful as it is easy to exclude very basic oozie jars with a wrongly set exclude pattern.*
+
+Examples for using sharelib exclude on a java action:
+Actual share library content:
+
+```
+   /user/oozie/share/lib/lib20180701/oozie/lib-one-1.5.jar
+   /user/oozie/share/lib/lib20180701/oozie/lib-two-1.5.jar
+   /user/oozie/share/lib/lib20180701/java/lib-one-2.6.jar
+   /user/oozie/share/lib/lib20180701/java/lib-two-2.6.jar
+   /user/oozie/share/lib/lib20180701/java/component-connector.jar
+```
+
+If not setting `oozie.action.sharelib.for.java.exclude`, none of the jars will be excluded.
+
+By setting `oozie.action.sharelib.for.java.exclude` to `oozie/lib-one.*` the expected Distributed Cache content is:
+
+```
+   /user/oozie/share/lib/lib20180701/oozie/lib-two-1.5.jar
+   /user/oozie/share/lib/lib20180701/java/lib-one-2.6.jar
+   /user/oozie/share/lib/lib20180701/java/lib-two-2.6.jar
+   /user/oozie/share/lib/lib20180701/java/component-connector.jar
+```
+
+By setting `oozie.action.sharelib.for.java.exclude` to `oozie/lib-one.*|component-connector.jar`
+the expected Distributed Cache content is:
+
+```
+   /user/oozie/share/lib/lib20180701/oozie/lib-two-1.5.jar
+   /user/oozie/share/lib/lib20180701/java/lib-one-2.6.jar
+   /user/oozie/share/lib/lib20180701/java/lib-two-2.6.jar
+```
+
+By setting `oozie.action.sharelib.for.java.exclude` to `oozie/lib-*2.6.*`
+the expected Distributed Cache content is:
+
+```
+   /user/oozie/share/lib/lib20180701/oozie/lib-one-1.5.jar
+   /user/oozie/share/lib/lib20180701/oozie/lib-two-1.5.jar
+   /user/oozie/share/lib/lib20180701/java/component-connector.jar
+```
+
 ## 18 User-Retry for Workflow Actions (since Oozie 3.1)
 
 Oozie provides User-Retry capabilities when an action is in `ERROR` or `FAILED` state.

@@ -618,6 +618,20 @@ public class ShareLibService implements Service, Instrumentable {
     }
 
     /**
+     * Get the latest share lib root path
+     *
+     * @return share lib root Path
+     * @throws IOException Signals that the Oozie share lib root path could not be reached.
+     */
+    public Path getShareLibRootPath() throws IOException {
+        Path shareLibpath = getLatestLibPath(Services.get().get(WorkflowAppService.class).getSystemLibPath(), SHARE_LIB_PREFIX);
+        if (shareLibpath == null){
+            LOG.info("No share lib directory found");
+        }
+        return shareLibpath;
+    }
+
+    /**
      * Update share lib cache. Parse the share lib directory and each sub directory is a action key
      *
      * @param shareLibMap the share lib jar map

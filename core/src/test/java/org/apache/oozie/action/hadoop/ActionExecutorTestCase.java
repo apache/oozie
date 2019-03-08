@@ -43,6 +43,7 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.service.ShareLibService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XHCatTestCase;
@@ -75,6 +76,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Collection;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileInputStream;
+
+import java.text.SimpleDateFormat;
 
 public abstract class ActionExecutorTestCase extends XHCatTestCase {
     protected static final int JOB_TIMEOUT = 100_000;
@@ -494,5 +501,64 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
 
     HadoopAccessorService getHadoopAccessorService() {
         return Services.get().get(HadoopAccessorService.class);
+    }
+
+    void createFiles(Collection<Path> paths) throws Exception{
+        for(Path p : paths){
+            getFileSystem().create(p);
+        }
+    }
+
+    void makeDirs(Path... dirs) throws Exception{
+        for(Path p : dirs){
+            getFileSystem().mkdirs(p);
+        }
+    }
+
+    private void assertContainsJarsOrNot(boolean contains, String cacheFilesStr, Collection<Path> jars) {
+        for (Path jar : jars) {
+            assertEquals("Unexpected distributed cache file content", contains, cacheFilesStr.contains(jar.toString()));
+        }
+    }
+
+    void assertContainsJars(String cacheFilesStr, Collection<Path> jars) {
+        assertContainsJarsOrNot(true, cacheFilesStr, jars);
+    }
+
+    void assertNotContainsJars(String cacheFilesStr, Collection<Path> jars) {
+        assertContainsJarsOrNot(false, cacheFilesStr, jars);
+    }
+
+    protected Context createContext(String actionXml, String group) throws Exception {
+        JavaActionExecutor ae = new JavaActionExecutor();
+
+        Path appJarPath = new Path("lib/test.jar");
+        File jarFile = IOUtils.createJar(new File(getTestCaseDir()), "test.jar", LauncherMainTester.class);
+        InputStream is = new FileInputStream(jarFile);
+        OutputStream os = getFileSystem().create(new Path(getAppPath(), "lib/test.jar"));
+        IOUtils.copyStream(is, os);
+
+        Path appSoPath = new Path("lib/test.so");
+        getFileSystem().create(new Path(getAppPath(), appSoPath)).close();
+
+        XConfiguration protoConf = new XConfiguration();
+        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+        protoConf.setStrings(WorkflowAppService.APP_LIB_PATH_LIST, appJarPath.toString(), appSoPath.toString());
+
+        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
+        if(group != null) {
+            wf.setGroup(group);
+        }
+        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
+        action.setType(ae.getType());
+        action.setConf(actionXml);
+
+        return new Context(wf, action);
+    }
+
+    Path getNewSystemLibPath() {
+        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
+        return new Path(wps.getSystemLibPath(), ShareLibService.SHARE_LIB_PREFIX
+                + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
     }
 }

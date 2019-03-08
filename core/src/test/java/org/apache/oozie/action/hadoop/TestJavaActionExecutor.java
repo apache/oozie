@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,9 +27,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
-import java.net.URI;
-import java.security.PrivilegedExceptionAction;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -37,6 +35,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.net.URI;
+import java.security.PrivilegedExceptionAction;
+
+import org.jdom.Element;
+import org.junit.Assert;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.examples.SleepJob;
@@ -82,12 +85,6 @@ import org.apache.oozie.workflow.WorkflowLib;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
-import org.jdom.Element;
-import org.junit.Assert;
-import org.junit.Test;
-
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
@@ -105,21 +102,27 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
     public void setUp() throws Exception {
         super.setUp();
         helper = new TestWorkflowHelper(getJobTrackerUri(), getNameNodeUri(), getTestCaseDir());
-
     }
+
     @Override
     protected void setSystemProps() throws Exception {
         super.setSystemProps();
+        setHadoopSystemProps();
+        createActionConfDirFiles();
+    }
 
-        setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
-        setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
-                          "*=hadoop-conf," + getJobTrackerUri() + "=action-conf");
-        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getFsTestCaseDir().toUri().getPath() + "/systemlib");
+    private void createActionConfDirFiles() throws IOException {
         new File(getTestCaseConfDir(), "action-conf").mkdir();
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-action-config.xml");
         OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/action-conf", "java.xml"));
         IOUtils.copyStream(is, os);
+    }
 
+    private void setHadoopSystemProps() {
+        setSystemProperty("oozie.service.ActionService.executor.classes", JavaActionExecutor.class.getName());
+        setSystemProperty("oozie.service.HadoopAccessorService.action.configurations",
+                          "*=hadoop-conf," + getJobTrackerUri() + "=action-conf");
+        setSystemProperty(WorkflowAppService.SYSTEM_LIB_PATH, getFsTestCaseDir().toUri().getPath() + "/systemlib");
     }
 
     public void testSetupMethods() throws Exception {
@@ -623,218 +626,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         ae.end(context, context.getAction());
         assertEquals(WorkflowAction.Status.OK, context.getAction().getStatus());
-    }
-
-    public void testLibFileArchives() throws Exception {
-        Path root = new Path(getFsTestCaseDir(), "root");
-
-        Path jar = new Path("jar.jar");
-        getFileSystem().create(new Path(getAppPath(), jar)).close();
-        Path rootJar = new Path(root, "rootJar.jar");
-        getFileSystem().create(rootJar).close();
-
-        Path file = new Path("file");
-        getFileSystem().create(new Path(getAppPath(), file)).close();
-        Path rootFile = new Path(root, "rootFile");
-        getFileSystem().create(rootFile).close();
-
-        Path so = new Path("soFile.so");
-        getFileSystem().create(new Path(getAppPath(), so)).close();
-        Path rootSo = new Path(root, "rootSoFile.so");
-        getFileSystem().create(rootSo).close();
-
-        Path so1 = new Path("soFile.so.1");
-        getFileSystem().create(new Path(getAppPath(), so1)).close();
-        Path rootSo1 = new Path(root, "rootSoFile.so.1");
-        getFileSystem().create(rootSo1).close();
-
-        Path archive = new Path("archive.tar");
-        getFileSystem().create(new Path(getAppPath(), archive)).close();
-        Path rootArchive = new Path(root, "rootArchive.tar");
-        getFileSystem().create(rootArchive).close();
-
-        String actionXml = "<java>" +
-                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "      <name-node>" + getNameNodeUri() + "</name-node>" +
-                "      <main-class>CLASS</main-class>" +
-                "      <file>" + jar.toString() + "</file>\n" +
-                "      <file>" + rootJar.toString() + "</file>\n" +
-                "      <file>" + file.toString() + "</file>\n" +
-                "      <file>" + rootFile.toString() + "</file>\n" +
-                "      <file>" + so.toString() + "</file>\n" +
-                "      <file>" + rootSo.toString() + "</file>\n" +
-                "      <file>" + so1.toString() + "</file>\n" +
-                "      <file>" + rootSo1.toString() + "</file>\n" +
-                "      <archive>" + archive.toString() + "</archive>\n" +
-                "      <archive>" + rootArchive.toString() + "</archive>\n" +
-                "</java>";
-
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-
-        Context context = createContext(actionXml, null);
-
-        Path appPath = getAppPath();
-
-        JavaActionExecutor ae = new JavaActionExecutor();
-
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupActionConf(jobConf, context, eActionXml, appPath);
-        ae.setLibFilesArchives(context, eActionXml, appPath, jobConf);
-
-
-        assertTrue(DistributedCache.getSymlink(jobConf));
-
-        Path[] filesInClasspath = DistributedCache.getFileClassPaths(jobConf);
-        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar}) {
-            boolean found = false;
-            for (Path c : filesInClasspath) {
-                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
-                    found = true;
-                }
-            }
-            assertTrue("file " + p.toUri().getPath() + " not found in classpath", found);
-        }
-        for (Path p : new Path[]{new Path(getAppPath(), file), rootFile, new Path(getAppPath(), so), rootSo,
-                                 new Path(getAppPath(), so1), rootSo1}) {
-            boolean found = false;
-            for (Path c : filesInClasspath) {
-                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
-                    found = true;
-                }
-            }
-            assertFalse("file " + p.toUri().getPath() + " found in classpath", found);
-        }
-
-        URI[] filesInCache = DistributedCache.getCacheFiles(jobConf);
-        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar, new Path(getAppPath(), file), rootFile,
-                                 new Path(getAppPath(), so), rootSo, new Path(getAppPath(), so1), rootSo1}) {
-            boolean found = false;
-            for (URI c : filesInCache) {
-                if (!found && p.toUri().getPath().equals(c.getPath())) {
-                    found = true;
-                }
-            }
-            assertTrue("file " + p.toUri().getPath() + " not found in cache", found);
-        }
-
-        URI[] archivesInCache = DistributedCache.getCacheArchives(jobConf);
-        for (Path p : new Path[]{new Path(getAppPath(), archive), rootArchive}) {
-            boolean found = false;
-            for (URI c : archivesInCache) {
-                if (!found && p.toUri().getPath().equals(c.getPath())) {
-                    found = true;
-                }
-            }
-            assertTrue("archive " + p.toUri().getPath() + " not found in cache", found);
-        }
-    }
-
-    /**
-     * https://issues.apache.org/jira/browse/OOZIE-87
-     * @throws Exception
-     */
-    public void testCommaSeparatedFilesAndArchives() throws Exception {
-        Path root = new Path(getFsTestCaseDir(), "root");
-
-        Path jar = new Path("jar.jar");
-        getFileSystem().create(new Path(getAppPath(), jar)).close();
-        Path rootJar = new Path(root, "rootJar.jar");
-        getFileSystem().create(rootJar).close();
-
-        Path file = new Path("file");
-        getFileSystem().create(new Path(getAppPath(), file)).close();
-        Path rootFile = new Path(root, "rootFile");
-        getFileSystem().create(rootFile).close();
-
-        Path so = new Path("soFile.so");
-        getFileSystem().create(new Path(getAppPath(), so)).close();
-        Path rootSo = new Path(root, "rootSoFile.so");
-        getFileSystem().create(rootSo).close();
-
-        Path so1 = new Path("soFile.so.1");
-        getFileSystem().create(new Path(getAppPath(), so1)).close();
-        Path rootSo1 = new Path(root, "rootSoFile.so.1");
-        getFileSystem().create(rootSo1).close();
-
-        Path archive = new Path("archive.tar");
-        getFileSystem().create(new Path(getAppPath(), archive)).close();
-        Path rootArchive = new Path(root, "rootArchive.tar");
-        getFileSystem().create(rootArchive).close();
-
-        String actionXml = "<java>" +
-                "      <job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "      <name-node>" + getNameNodeUri() + "</name-node>" +
-                "      <main-class>CLASS</main-class>" +
-                "      <file>" + jar.toString() +
-                            "," + rootJar.toString() +
-                            "," + file.toString() +
-                            ", " + rootFile.toString() + // with leading and trailing spaces
-                            "  ," + so.toString() +
-                            "," + rootSo.toString() +
-                            "," + so1.toString() +
-                            "," + rootSo1.toString() + "</file>\n" +
-                "      <archive>" + archive.toString() + ", "
-                            + rootArchive.toString() + " </archive>\n" + // with leading and trailing spaces
-                "</java>";
-
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-
-        Context context = createContext(actionXml, null);
-
-        Path appPath = getAppPath();
-
-        JavaActionExecutor ae = new JavaActionExecutor();
-
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupActionConf(jobConf, context, eActionXml, appPath);
-        ae.setLibFilesArchives(context, eActionXml, appPath, jobConf);
-
-
-        assertTrue(DistributedCache.getSymlink(jobConf));
-
-        Path[] filesInClasspath = DistributedCache.getFileClassPaths(jobConf);
-        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar}) {
-            boolean found = false;
-            for (Path c : filesInClasspath) {
-                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
-                    found = true;
-                }
-            }
-            assertTrue("file " + p.toUri().getPath() + " not found in classpath", found);
-        }
-        for (Path p : new Path[]{new Path(getAppPath(), file), rootFile, new Path(getAppPath(), so), rootSo,
-                                new Path(getAppPath(), so1), rootSo1}) {
-            boolean found = false;
-            for (Path c : filesInClasspath) {
-                if (!found && p.toUri().getPath().equals(c.toUri().getPath())) {
-                    found = true;
-                }
-            }
-            assertFalse("file " + p.toUri().getPath() + " found in classpath", found);
-        }
-
-        URI[] filesInCache = DistributedCache.getCacheFiles(jobConf);
-        for (Path p : new Path[]{new Path(getAppPath(), jar), rootJar, new Path(getAppPath(), file), rootFile,
-                                new Path(getAppPath(), so), rootSo, new Path(getAppPath(), so1), rootSo1}) {
-            boolean found = false;
-            for (URI c : filesInCache) {
-                if (!found && p.toUri().getPath().equals(c.getPath())) {
-                    found = true;
-                }
-            }
-            assertTrue("file " + p.toUri().getPath() + " not found in cache", found);
-        }
-
-        URI[] archivesInCache = DistributedCache.getCacheArchives(jobConf);
-        for (Path p : new Path[]{new Path(getAppPath(), archive), rootArchive}) {
-            boolean found = false;
-            for (URI c : archivesInCache) {
-                if (!found && p.toUri().getPath().equals(c.getPath())) {
-                    found = true;
-                }
-            }
-            assertTrue("archive " + p.toUri().getPath() + " not found in cache", found);
-        }
     }
 
     public void testPrepare() throws Exception {
@@ -1371,179 +1162,6 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertEquals("JAVA-OPT3 JAVA-OPT4 JAVA-OPT1 JAVA-OPT2", conf.get(MAPREDUCE_MAP_JAVA_OPTS));
     }
 
-    public void testActionLibsPath() throws Exception {
-        // Test adding a directory
-        Path actionLibPath = new Path(getFsTestCaseDir(), "actionlibs");
-        getFileSystem().mkdirs(actionLibPath);
-        Path jar1Path = new Path(actionLibPath, "jar1.jar");
-        getFileSystem().create(jar1Path).close();
-        Path jar2Path = new Path(actionLibPath, "jar2.jar");
-        getFileSystem().create(jar2Path).close();
-
-        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" +
-                "<property><name>oozie.launcher.oozie.libpath</name><value>" + actionLibPath + "</value></property>" +
-                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
-                "</java>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        Context context = createContext(actionXml, null);
-
-        JavaActionExecutor ae = new JavaActionExecutor();
-
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
-        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
-
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains(jar1Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar2Path.toString()));
-
-        // Test adding a file
-        Path jar3Path = new Path(getFsTestCaseDir(), "jar3.jar");
-        getFileSystem().create(jar3Path).close();
-
-        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" +
-                "<property><name>oozie.launcher.oozie.libpath</name><value>" + jar3Path + "</value></property>" +
-                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
-                "</java>";
-        eActionXml = XmlUtils.parseXml(actionXml);
-        context = createContext(actionXml, null);
-
-        ae = new JavaActionExecutor();
-
-        jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
-        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
-
-        cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
-
-        // Test adding a directory and a file (comma separated)
-        actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" + "<configuration>" +
-                "<property><name>oozie.launcher.oozie.libpath</name><value>" + actionLibPath + "," + jar3Path +
-                "</value></property>" +
-                "</configuration>" + "<main-class>MAIN-CLASS</main-class>" +
-                "</java>";
-        eActionXml = XmlUtils.parseXml(actionXml);
-        context = createContext(actionXml, null);
-
-        ae = new JavaActionExecutor();
-
-        jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
-        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
-
-        cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains(jar1Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar2Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
-    }
-
-    @Test
-    public void testAddActionShareLib() throws Exception {
-
-        WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-
-        Path systemLibPath = new Path(wps.getSystemLibPath(), ShareLibService.SHARE_LIB_PREFIX
-                + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()).toString());
-
-        Path javaShareLibPath = new Path(systemLibPath, "java");
-        getFileSystem().mkdirs(javaShareLibPath);
-        Path jar1Path = new Path(javaShareLibPath, "jar1.jar");
-        getFileSystem().create(jar1Path).close();
-        Path jar2Path = new Path(javaShareLibPath, "jar2.jar");
-        getFileSystem().create(jar2Path).close();
-
-        Path hcatShareLibPath = new Path(systemLibPath, "hcat");
-        getFileSystem().mkdirs(hcatShareLibPath);
-        Path jar3Path = new Path(hcatShareLibPath, "jar3.jar");
-        getFileSystem().create(jar3Path).close();
-        Path jar4Path = new Path(hcatShareLibPath, "jar4.jar");
-        getFileSystem().create(jar4Path).close();
-
-        Path otherShareLibPath = new Path(systemLibPath, "other");
-        getFileSystem().mkdirs(otherShareLibPath);
-        Path jar5Path = new Path(otherShareLibPath, "jar5.jar");
-        getFileSystem().create(jar5Path).close();
-
-        String actionXml = "<java>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<main-class>MAIN-CLASS</main-class>" +
-                "</java>";
-        Element eActionXml = XmlUtils.parseXml(actionXml);
-        Context context = createContext(actionXml, null);
-
-        Services.get().setService(ShareLibService.class);
-
-        // Test oozie server action sharelib setting
-        WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
-        XConfiguration wfConf = new XConfiguration();
-        wfConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        wfConf.set(OozieClient.APP_PATH, new Path(getAppPath(), "workflow.xml").toString());
-        wfConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
-        workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
-
-        ConfigurationService.set("oozie.action.sharelib.for.java", "java,hcat");
-
-        JavaActionExecutor ae = new JavaActionExecutor();
-
-        Configuration jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
-        try {
-            ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
-            fail();
-        } catch (ActionExecutorException aee) {
-            assertEquals("EJ001", aee.getErrorCode());
-            assertEquals("Could not locate Oozie sharelib", aee.getMessage());
-        }
-        Path launcherPath = new Path(systemLibPath, "oozie");
-        getFileSystem().mkdirs(launcherPath);
-        Path jar6Path = new Path(launcherPath, "jar6.jar");
-        getFileSystem().create(jar6Path).close();
-        Services.get().get(ShareLibService.class).updateShareLib();
-        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
-
-        URI[] cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        String cacheFilesStr = Arrays.toString(cacheFiles);
-        assertTrue(cacheFilesStr.contains(jar1Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar2Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar4Path.toString()));
-        assertFalse(cacheFilesStr.contains(jar5Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar6Path.toString()));
-
-        // Test per workflow action sharelib setting
-        workflow = (WorkflowJobBean) context.getWorkflow();
-        wfConf = new XConfiguration();
-        wfConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-        wfConf.set(OozieClient.APP_PATH, new Path(getAppPath(), "workflow.xml").toString());
-        wfConf.setBoolean(OozieClient.USE_SYSTEM_LIBPATH, true);
-        wfConf.set("oozie.action.sharelib.for.java", "other,hcat");
-        workflow.setConf(XmlUtils.prettyPrint(wfConf).toString());
-
-        ConfigurationService.set("oozie.action.sharelib.for.java", "java");
-        ae = new JavaActionExecutor();
-
-        jobConf = ae.createBaseHadoopConf(context, eActionXml);
-        ae.setupLauncherConf(jobConf, eActionXml, getAppPath(), context);
-        ae.setLibFilesArchives(context, eActionXml, getAppPath(), jobConf);
-
-        cacheFiles = DistributedCache.getCacheFiles(jobConf);
-        cacheFilesStr = Arrays.toString(cacheFiles);
-        // The oozie server setting should have been overridden by workflow setting
-        assertFalse(cacheFilesStr.contains(jar1Path.toString()));
-        assertFalse(cacheFilesStr.contains(jar2Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar3Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar4Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar5Path.toString()));
-        assertTrue(cacheFilesStr.contains(jar6Path.toString()));
-    }
-
     public void testAddShareLibSchemeAndAuthority() throws Exception {
         JavaActionExecutor ae = new JavaActionExecutor() {
             @Override
@@ -1563,8 +1181,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         new Services().init();
         // Create the dir
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
-        Path systemLibPath = new Path(wps.getSystemLibPath(), ShareLibService.SHARE_LIB_PREFIX
-                + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()).toString());
+        Path systemLibPath = getNewSystemLibPath();
         Path javaShareLibPath = new Path(systemLibPath, "java-action-executor");
         getFileSystem().mkdirs(javaShareLibPath);
         Services.get().setService(ShareLibService.class);
@@ -1851,7 +1468,8 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         // Test when server side setting is not enabled
         Configuration launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, actionConf);
-        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED)); // disabled by default
+        // disabled by default
+        assertEquals("false", launcherConf.get(JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED));
 
         ConfigurationService.set("oozie.action.launcher." + JavaActionExecutor.HADOOP_YARN_TIMELINE_SERVICE_ENABLED, "true");
 
@@ -2129,8 +1747,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
 
-        Path systemLibPath = new Path(wps.getSystemLibPath(), ShareLibService.SHARE_LIB_PREFIX
-                + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()).toString());
+        Path systemLibPath = getNewSystemLibPath();
 
         File jarFile = IOUtils.createJar(new File(getTestCaseDir()), "sourcejar.jar", LauncherMainTester.class);
         InputStream is = new FileInputStream(jarFile);
