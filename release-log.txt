@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3207 Update ASF root pom version (asalamon74 via kmarton)
 OOZIE-1624 Exclusion pattern for sharelib JARs (puru, matijhs via asalamon74, andras.piros)
 OOZIE-2693 SimpleHCatDependencyCache.removeMissingDependency can throw NPE (puru via asalamon74)
 OOZIE-3442 Check and eliminate builds/runHudsonCIBuild.sh (nobigo via asalamon74)
