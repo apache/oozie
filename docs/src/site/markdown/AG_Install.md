@@ -941,6 +941,10 @@ included with your JRE. If it's not on your path, you should be able to find it 
     - To include / exclude TLS protocols, set `oozie.https.include.protocols` / `oozie.https.exclude.protocols`.
     **Note:** Exclude is always preferred over include (i.e. if you both include and exclude an entity, it will be excluded).
 
+    **Note:** When SSL is enabled, HTTP Strict-Transport_security (HSTS) is also enabled. The default value for max-age is
+    31536000 (one year). This can be changed by setting `oozie.hsts.max.age.seconds` property.
+    Setting it to `0` or `negative value`, will disable HSTS.
+
 3. Start the Oozie server
 
     **Note:** If using Oozie HA, make sure that each Oozie server has a copy of the .keystore file.

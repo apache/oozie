@@ -19,6 +19,9 @@
 package org.apache.oozie.server;
 
 import org.apache.hadoop.conf.Configuration;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -40,6 +43,7 @@ import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCL
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_FILE;
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_PASS;
 import static org.apache.oozie.util.ConfigUtils.OOZIE_HTTP_PORT;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -77,6 +81,7 @@ public class TestSSLServerConnectorFactory {
 
     @After
     public void tearDown() {
+        testConfig.clear();
         verify(mockSSLContextFactory).setKeyStorePath(anyString());
         verify(mockSSLContextFactory).setKeyManagerPassword(anyString());
         verifyNoMoreInteractions(
@@ -142,5 +147,32 @@ public class TestSSLServerConnectorFactory {
                 "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
                 "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
                 "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA");
+    }
+
+    @Test
+    public void testHSTSDefault() {
+        checkHSTSMaxAge(SSLServerConnectorFactory.OOZIE_DEFAULT_HSTS_MAX_AGE);
+    }
+
+    @Test
+    public void testHSTSDisabled() {
+        long maxAge = -1;
+        testConfig.setLong(SSLServerConnectorFactory.OOZIE_HSTS_MAX_AGE_SECONDS,maxAge);
+        checkHSTSMaxAge(maxAge);
+    }
+
+    @Test
+    public void testHSTSCustomMaxAge() {
+        long maxAge = 3600;
+        testConfig.setLong(SSLServerConnectorFactory.OOZIE_HSTS_MAX_AGE_SECONDS,maxAge);
+        checkHSTSMaxAge(maxAge);
+
+    }
+
+    private void checkHSTSMaxAge(final long expectedMaxAge) {
+        ServerConnector connector = sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
+        HttpConnectionFactory factory = (HttpConnectionFactory)connector.getConnectionFactory(HttpVersion.HTTP_1_1.asString());
+        long actualMaxAge = factory.getHttpConfiguration().getCustomizer(SecureRequestCustomizer.class).getStsMaxAge();
+        assertEquals("HSTS max age mismatch", expectedMaxAge, actualMaxAge);
     }
 }

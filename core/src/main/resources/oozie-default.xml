@@ -2782,6 +2782,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.hsts.max.age.seconds</name>
+        <value>31536000</value>
+        <description>
+            Strict Transport Security max age in seconds if SSL is enabled. Ideally it is set to one year (31536000 sec).
+        </description>
+    </property>
+
+    <property>
         <name>oozie.jsp.tmp.dir</name>
         <value>/tmp</value>
         <description>

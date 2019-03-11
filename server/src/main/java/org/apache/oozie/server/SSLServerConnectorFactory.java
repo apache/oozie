@@ -19,6 +19,7 @@
 package org.apache.oozie.server;
 
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -47,6 +48,9 @@ class SSLServerConnectorFactory {
     public static final String OOZIE_HTTPS_INCLUDE_PROTOCOLS = "oozie.https.include.protocols";
     public static final String OOZIE_HTTPS_INCLUDE_CIPHER_SUITES = "oozie.https.include.cipher.suites";
     public static final String OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES = "oozie.https.exclude.cipher.suites";
+    public static final String OOZIE_HSTS_MAX_AGE_SECONDS = "oozie.hsts.max.age.seconds";
+    @VisibleForTesting
+    static final long OOZIE_DEFAULT_HSTS_MAX_AGE = 31536000;
 
     private SslContextFactory sslContextFactory;
     private Configuration conf;
@@ -144,7 +148,10 @@ class SSLServerConnectorFactory {
     private HttpConfiguration getHttpsConfiguration() {
         HttpConfiguration https = new HttpConfigurationWrapper(conf).getDefaultHttpConfiguration();
         https.setSecureScheme("https");
-        https.addCustomizer(new SecureRequestCustomizer());
+        long htsMaxAgeSeconds = conf.getLong(OOZIE_HSTS_MAX_AGE_SECONDS, OOZIE_DEFAULT_HSTS_MAX_AGE);
+        boolean sniHostCheck = true;
+        boolean stsIncludeSubdomains = false;
+        https.addCustomizer(new SecureRequestCustomizer(sniHostCheck, htsMaxAgeSeconds, stsIncludeSubdomains));
         return https;
     }
 }
