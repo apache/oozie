@@ -24,7 +24,7 @@ import java.io.StringReader;
 import java.util.Date;
 
 import com.google.common.base.Charsets;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;

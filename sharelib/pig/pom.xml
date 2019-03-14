@@ -50,6 +50,7 @@
             <artifactId>jline</artifactId>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>org.python</groupId>
             <artifactId>jython-standalone</artifactId>
@@ -84,7 +85,6 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

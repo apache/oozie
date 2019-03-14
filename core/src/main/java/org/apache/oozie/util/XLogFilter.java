@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.LogLine.MATCHED_PATTERN;
 
@@ -428,7 +428,7 @@ public class XLogFilter {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public Date adjustOffset(Date date, int offset) throws IOException {
-        return org.apache.commons.lang.time.DateUtils.addMinutes(date, offset);
+        return org.apache.commons.lang3.time.DateUtils.addMinutes(date, offset);
     }
 
     public void setFilterPattern(Pattern filterPattern) {

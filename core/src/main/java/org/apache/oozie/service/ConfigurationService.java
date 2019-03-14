@@ -20,7 +20,7 @@ package org.apache.oozie.service;
 
 import com.google.common.base.Strings;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ConfigUtils;

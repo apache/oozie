@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.Callable;
 
-import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;

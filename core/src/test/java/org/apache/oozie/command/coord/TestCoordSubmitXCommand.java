@@ -1408,7 +1408,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set("start", DateUtils.formatDateOozieTZ(new Date()));
-        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), 1)));
         conf.set("frequency", "coord:days(1)");
         conf.set(OozieClient.USER_NAME, getTestUser());
         reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
@@ -1462,8 +1462,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         appPathFile = new File(getTestCaseDir(), "coordinator.xml");
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set("wfAppPath", appPathFile.getPath());
-        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
-        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), -1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), 1)));
 
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("nominal_time", DateUtils.formatDateOozieTZ(otherNominalTime));
@@ -1477,15 +1477,15 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf = new XConfiguration();
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set("wfAppPath", appPathFile.getPath());
-        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
-        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), -1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), 1)));
 
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("nominal_time",
-                DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
+                DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), -1)));
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("nominal_time",
-                DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), -1)));
+                DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), -1)));
         coordId = new CoordSubmitXCommand(conf).call();
         new CoordMaterializeTransitionXCommand(coordId, 3600).call();
         slaCalc = calc.get(coordId + "@" + 1);
@@ -1496,7 +1496,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set("wfAppPath", appPathFile.getPath());
         conf.set("start", DateUtils.formatDateOozieTZ(new Date()));
-        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), 1)));
 
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("nominal_time", DateUtils.formatDateOozieTZ(new Date()));
@@ -1518,8 +1518,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         Writer writer = new FileWriter(appPathFile);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
-        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addDays(new Date(), -1)));
-        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang.time.DateUtils.addMonths(new Date(), 1)));
+        conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addDays(new Date(), -1)));
+        conf.set("end", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addMonths(new Date(), 1)));
         conf.set(OozieClient.USER_NAME, getTestUser());
         reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
         appPathFile = new File(getTestCaseDir(), "workflow.xml");

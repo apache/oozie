@@ -30,8 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.BufferedReader;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.ConfigurationService;
@@ -115,10 +115,10 @@ public class XLogStreamer {
         try {
             if (appendDebug) {
                 if (!StringUtils.isEmpty(logFilter.getTruncatedMessage())) {
-                    writer.write(StringEscapeUtils.escapeHtml(logFilter.getTruncatedMessage()));
+                    writer.write(StringEscapeUtils.escapeHtml4(logFilter.getTruncatedMessage()));
                 }
                 if (logFilter.isDebugMode()) {
-                    writer.write(StringEscapeUtils.escapeHtml(logFilter.getDebugMessage()));
+                    writer.write(StringEscapeUtils.escapeHtml4(logFilter.getDebugMessage()));
                 }
             }
             // Process the entire logs from the reader using the logFilter

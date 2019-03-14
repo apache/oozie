@@ -18,7 +18,7 @@
 
 package org.apache.oozie.util;
 
-import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * Utility class for holding a pair of data

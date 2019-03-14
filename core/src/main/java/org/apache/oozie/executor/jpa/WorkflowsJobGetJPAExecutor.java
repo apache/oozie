@@ -342,21 +342,21 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addDays(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), offset);
                     break;
                 case 'h':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addHours(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addHours(new Date(), offset);
                     break;
                 case 'm':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addMinutes(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addMinutes(new Date(), offset);
                     break;
                 case 'Z':
                     createdTime = DateUtils.parseDateUTC(time);

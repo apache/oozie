@@ -18,7 +18,7 @@
 package org.apache.oozie.workflow.lite;
 
 import com.google.common.base.Strings;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;

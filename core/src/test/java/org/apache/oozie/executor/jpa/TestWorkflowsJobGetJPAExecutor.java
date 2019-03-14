@@ -246,7 +246,7 @@ public class TestWorkflowsJobGetJPAExecutor extends XDataTestCase {
         Date createdTime2 = DateUtils.parseDateUTC("2012-02-01T10:00Z");
         Date createdTime3 = DateUtils.parseDateUTC("2012-03-01T10:00Z");
         Date createdTime4 = DateUtils.parseDateUTC("2012-04-01T10:00Z");
-        Date createdTime5 = org.apache.commons.lang.time.DateUtils.addHours(new Date(), -5);
+        Date createdTime5 = org.apache.commons.lang3.time.DateUtils.addHours(new Date(), -5);
         WorkflowJobBean wrkJob = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
         wrkJob.setCreatedTime(createdTime1);
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, wrkJob);

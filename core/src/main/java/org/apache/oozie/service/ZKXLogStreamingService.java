@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
@@ -104,7 +104,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
     public void streamLog(XLogStreamer logStreamer, Date startTime, Date endTime, Writer writer) throws IOException {
 
         if (!logStreamer.isLogEnabled()) {
-            writer.write(StringEscapeUtils.escapeHtml(logStreamer.getLogDisableMessage()));
+            writer.write(StringEscapeUtils.escapeHtml4(logStreamer.getLogDisableMessage()));
             return;
         }
         // If ALL_SERVERS_PARAM is set to false, then only stream our log
@@ -188,11 +188,11 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
 
             //If log param debug is set, we need to write start date and end date to outputstream.
             if(!StringUtils.isEmpty(logStreamer.getXLogFilter().getTruncatedMessage())){
-                writer.write(StringEscapeUtils.escapeHtml(logStreamer.getXLogFilter().getTruncatedMessage()));
+                writer.write(StringEscapeUtils.escapeHtml4(logStreamer.getXLogFilter().getTruncatedMessage()));
             }
 
             if (logStreamer.getXLogFilter().isDebugMode()) {
-                writer.write(StringEscapeUtils.escapeHtml(logStreamer.getXLogFilter().getDebugMessage()));
+                writer.write(StringEscapeUtils.escapeHtml4(logStreamer.getXLogFilter().getDebugMessage()));
             }
             // Add a message about any servers we couldn't contact
             if (!badOozies.isEmpty()) {
@@ -227,7 +227,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                     // The first entry will be the earliest based on the timestamp (also removes it) from the map
                     TimestampedMessageParser earliestParser = timestampMap.pollFirstEntry().getValue();
                     // Write the message from that parser at that timestamp
-                    writer.write(StringEscapeUtils.escapeHtml(earliestParser.getLastMessage()));
+                    writer.write(StringEscapeUtils.escapeHtml4(earliestParser.getLastMessage()));
                     if (logStreamer.shouldFlushOutput(earliestParser.getLastMessage().length())) {
                         writer.flush();
                     }
@@ -241,7 +241,7 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                 if (timestampMap.size() == 1) {
                     TimestampedMessageParser parser = timestampMap.values().iterator().next();
                     // don't forget the last message read by the parser
-                    writer.write(StringEscapeUtils.escapeHtml(parser.getLastMessage()));
+                    writer.write(StringEscapeUtils.escapeHtml4(parser.getLastMessage()));
                     parser.processRemaining(writer, logStreamer);
                 }
             }

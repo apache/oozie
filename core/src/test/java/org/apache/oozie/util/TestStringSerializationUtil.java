@@ -17,7 +17,7 @@
  */
 package org.apache.oozie.util;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;

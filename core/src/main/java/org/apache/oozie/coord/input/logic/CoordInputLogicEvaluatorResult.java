@@ -18,7 +18,7 @@
 
 package org.apache.oozie.coord.input.logic;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.coord.CoordELFunctions;
 
 public class CoordInputLogicEvaluatorResult {

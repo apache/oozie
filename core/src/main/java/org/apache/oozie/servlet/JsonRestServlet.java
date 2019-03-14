@@ -18,7 +18,7 @@
 
 package org.apache.oozie.servlet;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
@@ -402,7 +402,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             throws IOException {
         response.setHeader(RestConstants.OOZIE_ERROR_CODE, error);
         response.setHeader(RestConstants.OOZIE_ERROR_MESSAGE, message);
-        response.sendError(statusCode, StringEscapeUtils.escapeHtml(message));
+        response.sendError(statusCode, StringEscapeUtils.escapeHtml4(message));
     }
 
     protected void sendJsonResponse(HttpServletResponse response, int statusCode, JSONStreamAware json)

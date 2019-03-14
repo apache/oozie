@@ -158,7 +158,7 @@ public class ELConstantsFunctions {
      * @return the trimmed version of the given string or the empty string if the given string was <code>null</code>
      */
     public static String trim(String input) {
-        return org.apache.commons.lang.StringUtils.trimToEmpty(input);
+        return org.apache.commons.lang3.StringUtils.trimToEmpty(input);
     }
 
     /**

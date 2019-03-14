@@ -150,7 +150,7 @@ public class ClasspathUtils {
 
         String appClassPath = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH);
 
-        if (org.apache.commons.lang.StringUtils.isEmpty(appClassPath)) {
+        if (org.apache.commons.lang3.StringUtils.isEmpty(appClassPath)) {
             addPathToYarnClasspathInConfig(conf, pathStr, StringUtils.join(File.pathSeparator,
                     YarnConfiguration.DEFAULT_YARN_CROSS_PLATFORM_APPLICATION_CLASSPATH));
         } else {
@@ -164,6 +164,6 @@ public class ClasspathUtils {
     }
 
     private static String normalizedLocalFsPath(Path libPath) {
-        return org.apache.commons.lang.StringUtils.replace(libPath.toString(), FSUtils.FILE_SCHEME_PREFIX, "");
+        return org.apache.commons.lang3.StringUtils.replace(libPath.toString(), FSUtils.FILE_SCHEME_PREFIX, "");
     }
 }

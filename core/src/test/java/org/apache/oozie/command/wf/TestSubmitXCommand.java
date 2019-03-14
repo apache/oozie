@@ -27,7 +27,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
