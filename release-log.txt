@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3448 Cleanup of oozie-server copy dependency (nobigo via asalamon74)
 OOZIE-3446 Migrate from commons-lang 2.x to commons-lang 3.x (nobigo via asalamon74)
 OOZIE-3312 Add support for HSTS (kmarton via asalamon74)
 OOZIE-3207 Update ASF root pom version (asalamon74 via kmarton)
