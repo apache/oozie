@@ -22,6 +22,9 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
@@ -38,7 +41,6 @@ import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XConfiguration;
-import org.joda.time.Interval;
 
 public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
     private Services services;
@@ -188,8 +190,7 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
                 final Date secondRetry1EndTime = JsonUtils.parseDateRfc822(retries1List.get(1).get(
                         JsonTags.WORKFLOW_ACTION_END_TIME));
                 assertTrue("action end time should be within ten seconds of second retry end time",
-                        new Interval(secondRetry1EndTime.getTime(), secondRetry1EndTime.getTime() + 10_000)
-                                .contains(action1EndTime.getTime()));
+                        endTimeIsWithinExpectedTime(action1EndTime.toInstant(), secondRetry1EndTime.toInstant().plusSeconds(10)));
             }
         }
 
@@ -202,8 +203,7 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
                 final Date secondRetry2EndTime = JsonUtils.parseDateRfc822(retries2List.get(1).get(
                         JsonTags.WORKFLOW_ACTION_END_TIME));
                 assertTrue("action end time should be within ten seconds of second retry end time",
-                        new Interval(secondRetry2EndTime.getTime(), secondRetry2EndTime.getTime() + 10_000)
-                                .contains(action2EndTime.getTime()));
+                        endTimeIsWithinExpectedTime(action2EndTime.toInstant(), secondRetry2EndTime.toInstant().plusSeconds(10)));
             }
         }
     }
@@ -214,5 +214,9 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
         }
         WorkflowActionRetryInfoXCommand command = new WorkflowActionRetryInfoXCommand(action.getId());
         return command.call();
+    }
+
+    private boolean endTimeIsWithinExpectedTime(Instant endTime, Instant expectedTime) {
+        return ChronoUnit.MILLIS.between(endTime, expectedTime) >= 0;
     }
 }

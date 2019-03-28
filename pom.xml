@@ -104,6 +104,7 @@
          <spark.scala.binary.version>2.10</spark.scala.binary.version>
          <sqoop.classifier>hadoop200</sqoop.classifier>
          <tez.version>0.8.4</tez.version>
+         <joda.time.version>2.9.9</joda.time.version>
 
          <jetty.version>9.3.20.v20170531</jetty.version>
          <apache.jsp.version>8.0.33</apache.jsp.version>
@@ -246,6 +247,12 @@
                  <groupId>org.apache.oozie</groupId>
                 <artifactId>oozie-sharelib-hcatalog</artifactId>
                 <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                            <groupId>joda-time</groupId>
+                            <artifactId>joda-time</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                  <groupId>org.apache.oozie</groupId>
@@ -524,6 +531,10 @@
                     <exclusion>
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-cli</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>joda-time</groupId>
+                        <artifactId>joda-time</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1607,12 +1618,6 @@
                 <groupId>dk.brics.automaton</groupId>
                 <artifactId>automaton</artifactId>
                 <version>1.11-8</version>
-            </dependency>
-
-            <dependency>
-                <groupId>joda-time</groupId>
-                <artifactId>joda-time</artifactId>
-                <version>2.9.9</version>
             </dependency>
 
             <dependency>
