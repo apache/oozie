@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3450 Investigate and clean git sharelib (matijhs via asalamon74)
 OOZIE-3443 Migrate from joda time to java.time (matijhs via asalamon74)
 OOZIE-3448 Cleanup of oozie-server copy dependency (nobigo via asalamon74)
 OOZIE-3446 Migrate from commons-lang 2.x to commons-lang 3.x (nobigo via asalamon74)

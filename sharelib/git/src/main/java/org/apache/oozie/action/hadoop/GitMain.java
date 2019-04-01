@@ -30,9 +30,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-
 import org.apache.oozie.action.hadoop.GitOperations.GitOperationsException;
 
+import com.google.common.base.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
 
 public class GitMain extends LauncherMain {
@@ -172,16 +172,25 @@ public class GitMain extends LauncherMain {
     }
 
     /**
+     * Calls helper function to verify name not null and throw an exception if so.
+     * Otherwise, returns actionConf value
+     * @param name - actionConf value to return
+     */
+    String checkAndGetTrimmed(final Configuration actionConf, String name) {
+        Preconditions.checkNotNull(actionConf.getTrimmed(name), "Action Configuration does not have [%s] property", name);
+        return actionConf.getTrimmed(name);
+    }
+
+    /**
      * Parse action configuration and set configuration variables
      *
      * @param actionConf Oozie action configuration
      * @throws OozieActionConfiguratorException upon any required properties missing
      */
     private void parseActionConfiguration(final Configuration actionConf) throws OozieActionConfiguratorException {
-        final GitActionExecutor.ActionConfVerifier confChecker = new GitActionExecutor.ActionConfVerifier(actionConf);
 
-        nameNode = confChecker.checkAndGetTrimmed(GitActionExecutor.NAME_NODE);
-        destinationUri = confChecker.checkAndGetTrimmed(GitActionExecutor.DESTINATION_URI);
+        nameNode = checkAndGetTrimmed(actionConf, GitActionExecutor.NAME_NODE);
+        destinationUri = checkAndGetTrimmed(actionConf, GitActionExecutor.DESTINATION_URI);
         try {
             final FileSystem fs = FileSystem.get(isValidUri(destinationUri), actionConf);
             destinationUri = fs.makeQualified(new Path(destinationUri)).toString();
@@ -190,7 +199,7 @@ public class GitMain extends LauncherMain {
                     + "a valid filesystem for URI " + GitActionExecutor.DESTINATION_URI + "exception "
                     + e.toString());
         }
-        gitUri = isValidUri(confChecker.checkAndGetTrimmed(GitActionExecutor.GIT_URI)).toString();
+        gitUri = isValidUri(checkAndGetTrimmed(actionConf, GitActionExecutor.GIT_URI)).toString();
         gitBranch = actionConf.get(GitActionExecutor.GIT_BRANCH);
         keyPath = actionConf.get(GitActionExecutor.KEY_PATH);
     }
