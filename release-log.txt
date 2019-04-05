@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3249 [tools] Instrumentation log parser (andras.piros via asalamon74)
 OOZIE-3460 Remove pom files from Oozie sharelibs (nobigo via asalamon74)
 OOZIE-3450 Investigate and clean git sharelib (matijhs via asalamon74)
 OOZIE-3443 Migrate from joda time to java.time (matijhs via asalamon74)
