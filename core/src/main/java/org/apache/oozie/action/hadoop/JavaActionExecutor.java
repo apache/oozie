@@ -22,7 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import com.google.common.primitives.Ints;
 
 import java.io.File;
@@ -1134,7 +1133,7 @@ public class JavaActionExecutor extends ActionExecutor {
         }
         finally {
             if (yarnClient != null) {
-                Closeables.closeQuietly(yarnClient);
+                IOUtils.closeQuietly(yarnClient);
             }
         }
     }
@@ -1919,7 +1918,7 @@ public class JavaActionExecutor extends ActionExecutor {
             try {
                 FileSystem actionFs = context.getAppFileSystem();
                 cleanUpActionDir(actionFs, context);
-                Closeables.closeQuietly(yarnClient);
+                IOUtils.closeQuietly(yarnClient);
             } catch (Exception ex) {
                 LOG.error("Error when cleaning up action dir", ex);
                 throw convertException(ex);

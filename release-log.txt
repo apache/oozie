@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3466 Migrate from com.google.common.io.Closeables to org.apache.commons.io.IOUtils (asalamon74 via kmarton)
 OOZIE-3249 [tools] Instrumentation log parser (andras.piros via asalamon74)
 OOZIE-3460 Remove pom files from Oozie sharelibs (nobigo via asalamon74)
 OOZIE-3450 Investigate and clean git sharelib (matijhs via asalamon74)
