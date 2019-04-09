@@ -20,7 +20,6 @@ package org.apache.oozie.service;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -156,16 +155,16 @@ public class JvmPauseMonitorService implements Service {
 
         @Override
         public void run() {
-            Stopwatch sw = new Stopwatch();
             Map<String, GcTimes> gcTimesBeforeSleep = getGcTimes();
             while (shouldRun) {
-                sw.reset().start();
+                long timeBeforeSleep = System.currentTimeMillis();
                 try {
                     Thread.sleep(SLEEP_INTERVAL_MS);
                 } catch (InterruptedException ie) {
                     return;
                 }
-                long extraSleepTime = sw.elapsedMillis() - SLEEP_INTERVAL_MS;
+                long timeAfterSleep = System.currentTimeMillis();
+                long extraSleepTime = timeAfterSleep - timeBeforeSleep - SLEEP_INTERVAL_MS;
                 Map<String, GcTimes> gcTimesAfterSleep = getGcTimes();
 
                 if (extraSleepTime > warnThresholdMs) {
