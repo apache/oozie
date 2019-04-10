@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Enumeration;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,10 +43,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.SchemaService.SchemaName;
@@ -268,7 +266,7 @@ public class XmlUtils {
      */
     public static void validateXml(Schema schema, String xml) throws SAXException, IOException {
         Validator validator = SchemaService.getValidator(schema);
-        validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes(Charsets.UTF_8))));
+        validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
     }
 
     public static void validateData(String xmlData, SchemaName xsdFile) throws SAXException, IOException {

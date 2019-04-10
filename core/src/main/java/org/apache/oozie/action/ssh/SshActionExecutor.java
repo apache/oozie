@@ -18,17 +18,15 @@
 
 package org.apache.oozie.action.ssh;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.util.StringUtils;
 
@@ -534,9 +532,9 @@ public class SshActionExecutor extends ActionExecutor {
         }
         try {
             IOUtils.copyCharStream(IOUtils.getResourceAsReader("ssh-base.sh", -1), new OutputStreamWriter(
-                    new FileOutputStream(dirLocation + "/ssh-base.sh"), Charsets.UTF_8));
+                    new FileOutputStream(dirLocation + "/ssh-base.sh"), StandardCharsets.UTF_8));
             IOUtils.copyCharStream(IOUtils.getResourceAsReader("ssh-wrapper.sh", -1), new OutputStreamWriter(
-                    new FileOutputStream(dirLocation + "/ssh-wrapper.sh"), Charsets.UTF_8));
+                    new FileOutputStream(dirLocation + "/ssh-wrapper.sh"), StandardCharsets.UTF_8));
         }
         catch (IOException ie) {
             throw new RuntimeException(XLog.format("Not able to copy required scripts file to {0} "

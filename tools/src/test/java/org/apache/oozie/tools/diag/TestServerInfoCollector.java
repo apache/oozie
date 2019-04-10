@@ -27,7 +27,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -119,7 +118,7 @@ public class TestServerInfoCollector {
     }
 
     static void assertFileContains(final File testFile, final String testData) throws IOException {
-        final String str = new String(Files.readAllBytes(testFile.toPath()), StandardCharsets.UTF_8.toString());
+        final String str = new String(Files.readAllBytes(testFile.toPath()), StandardCharsets.UTF_8.name());
         assertTrue(str.contains(testData));
     }
 }

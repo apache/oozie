@@ -18,7 +18,6 @@
 
 package org.apache.oozie.service;
 
-import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -38,6 +37,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,7 +130,7 @@ public abstract class WorkflowAppService implements Service {
                 throw new WorkflowException(ErrorCode.E0736, fsStatus.getLen(), this.maxWFLength);
             }
 
-            Reader reader = new InputStreamReader(fs.open(path), Charsets.UTF_8);
+            Reader reader = new InputStreamReader(fs.open(path), StandardCharsets.UTF_8);
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();

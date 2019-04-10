@@ -24,10 +24,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -302,7 +302,7 @@ public class HiveMain extends LauncherMain {
     private String createScriptFile(String query) throws IOException {
         String filename = "oozie-hive-query-" + System.currentTimeMillis() + ".hql";
         File f = new File(filename);
-        FileUtils.writeStringToFile(f, query, "UTF-8");
+        FileUtils.writeStringToFile(f, query, StandardCharsets.UTF_8.name());
         return filename;
     }
 
@@ -314,7 +314,7 @@ public class HiveMain extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8.name()));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {

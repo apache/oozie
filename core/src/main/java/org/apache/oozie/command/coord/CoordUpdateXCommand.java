@@ -21,9 +21,9 @@ package org.apache.oozie.command.coord;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-import com.google.common.base.Charsets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
@@ -200,12 +200,12 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
      */
     private String getDiffinGitFormat(String string1, String string2) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        RawText rt1 = new RawText(string1.getBytes(Charsets.UTF_8));
-        RawText rt2 = new RawText(string2.getBytes(Charsets.UTF_8));
+        RawText rt1 = new RawText(string1.getBytes(StandardCharsets.UTF_8));
+        RawText rt2 = new RawText(string2.getBytes(StandardCharsets.UTF_8));
         EditList diffList = new EditList();
         diffList.addAll(new HistogramDiff().diff(RawTextComparator.DEFAULT, rt1, rt2));
         new DiffFormatter(out).format(diffList, rt1, rt2);
-        return out.toString(Charsets.UTF_8.name());
+        return out.toString(StandardCharsets.UTF_8.name());
     }
 
     @Override

@@ -25,6 +25,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +35,6 @@ import java.util.Set;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Validator;
 
-import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -297,7 +297,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 appDefPath = path;
             }
 
-            Reader reader = new InputStreamReader(fs.open(appDefPath), Charsets.UTF_8);
+            Reader reader = new InputStreamReader(fs.open(appDefPath), StandardCharsets.UTF_8);
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();

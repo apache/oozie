@@ -18,7 +18,6 @@
 
 package org.apache.oozie.util.graph;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.oozie.client.WorkflowAction;
@@ -32,6 +31,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -141,7 +141,7 @@ public class WorkflowGraphHandler extends DefaultHandler {
         Preconditions.checkState(!Strings.isNullOrEmpty(content), "No output generated from graph.");
 
         try {
-            out.write(content.getBytes(Charsets.UTF_8));
+            out.write(content.getBytes(StandardCharsets.UTF_8));
         } catch (final IOException ioe) {
             throw new SAXException(ioe);
         }

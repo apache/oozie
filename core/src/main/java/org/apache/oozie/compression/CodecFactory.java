@@ -23,6 +23,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public class CodecFactory {
     private static CompressionCodec outputCompressionCodec;
     public static final String COMPRESSION_MAGIC_DATA = "OBJ";
     public static final String COMPRESSION_KEY_HEADER = "codec";
-    public static final String UTF_8_ENCODING = "UTF-8";
+    public static final String UTF_8_ENCODING = StandardCharsets.UTF_8.name();
     private static boolean isEnabled;
     private static XLog LOG = XLog.getLog(CodecFactory.class);
     private static byte[] headerBytes;

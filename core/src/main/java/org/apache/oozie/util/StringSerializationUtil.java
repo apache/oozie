@@ -49,7 +49,7 @@ public final class StringSerializationUtil {
             return;
         }
 
-        byte[] data = value.getBytes(StandardCharsets.UTF_8.name());
+        byte[] data = value.getBytes(StandardCharsets.UTF_8);
         if (data.length > CONVERSION_TRESHOLD) {
             dOut.writeUTF(DATA_VERSION);
             dOut.writeInt(data.length);

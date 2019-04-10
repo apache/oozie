@@ -21,6 +21,7 @@ package org.apache.oozie.util;
 import org.apache.hadoop.conf.Configuration;
 import org.json.simple.JSONValue;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Date;
@@ -179,7 +180,7 @@ public class ELConstantsFunctions {
      * @return the encoded <code>String</code>
      */
     public static String urlEncode(String input) {
-        final String encoding = "UTF-8";
+        final String encoding = StandardCharsets.UTF_8.name();
         try {
             return (input == null) ? "" : URLEncoder.encode(input, encoding);
         }

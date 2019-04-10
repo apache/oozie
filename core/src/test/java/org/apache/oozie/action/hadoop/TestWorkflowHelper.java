@@ -19,8 +19,6 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.test.MiniOozieTestCase;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class TestWorkflowHelper {
@@ -68,7 +67,7 @@ public class TestWorkflowHelper {
                 "<end name=\"end\"/>" +
                 "</workflow-app>";
         final File f = new File(URI.create(workflowUri));
-        final ByteArrayInputStream inputStream = new ByteArrayInputStream(appXml.getBytes("UTF-8"));
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(appXml.getBytes(StandardCharsets.UTF_8));
         IOUtils.copyStream(inputStream, new FileOutputStream(f));
         return workflowUri;
     }

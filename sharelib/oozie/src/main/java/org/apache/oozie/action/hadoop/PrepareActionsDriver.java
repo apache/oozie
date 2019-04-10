@@ -21,6 +21,7 @@ package org.apache.oozie.action.hadoop;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
 import org.xml.sax.SAXException;
@@ -61,7 +62,7 @@ public class PrepareActionsDriver {
         docBuilderFactory.setExpandEntityReferences(false);
         docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-        InputStream is = new ByteArrayInputStream(prepareXML.getBytes("UTF-8"));
+        InputStream is = new ByteArrayInputStream(prepareXML.getBytes(StandardCharsets.UTF_8));
         return docBuilder.parse(is);
     }
 

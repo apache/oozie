@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
@@ -263,7 +264,7 @@ public class PigMain extends LauncherMain {
             System.out.println(type + " Pig script [" + name + "] content: ");
             System.out.println("-----------------------------------------------------------");
             fin = new FileInputStream(script);
-            inReader = new InputStreamReader(fin, "UTF-8");
+            inReader = new InputStreamReader(fin, StandardCharsets.UTF_8.name());
             bufReader = new BufferedReader(inReader);
             String line = bufReader.readLine();
             while (line != null) {
@@ -294,7 +295,8 @@ public class PigMain extends LauncherMain {
         System.err.println("Pig logfile dump:");
         System.err.println();
         try {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pigLog), "UTF-8"))) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(new FileInputStream(pigLog), StandardCharsets.UTF_8.name()))) {
                 String line = reader.readLine();
                 while (line != null) {
                     System.err.println(line);
@@ -359,7 +361,7 @@ public class PigMain extends LauncherMain {
     private static void writeExternalData(String data, File f) throws IOException {
         BufferedWriter out = null;
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8.name()));
             out.write(data);
         }
         finally {

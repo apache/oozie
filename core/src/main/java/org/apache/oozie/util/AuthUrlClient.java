@@ -26,10 +26,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
-import com.google.common.base.Charsets;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
@@ -129,7 +129,7 @@ public class AuthUrlClient {
                     BufferedReader reader = null;
                     if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                         InputStream is = conn.getInputStream();
-                        reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                        reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                     }
                     return reader;
                 }
@@ -152,7 +152,7 @@ public class AuthUrlClient {
                 String value = params.get(key)[0]; // We don't support multi value.
                 stringBuilder.append(key);
                 stringBuilder.append("=");
-                stringBuilder.append(URLEncoder.encode(value,Charsets.UTF_8.name()));
+                stringBuilder.append(URLEncoder.encode(value,StandardCharsets.UTF_8.name()));
             }
         }
         return stringBuilder.toString();

@@ -162,7 +162,7 @@ class AppInfoCollector {
 
     private void storeOozieLauncherLog(final File outputDir, final WorkflowAction action, final String user) {
         try (PrintStream fw = new PrintStream(new File(outputDir, "launcher_" + action.getName() + ".log"),
-                StandardCharsets.UTF_8.toString())) {
+                StandardCharsets.UTF_8.name())) {
 
             final ApplicationId appId = ConverterUtils.toApplicationId(action.getExternalId());
             oozieLauncherLogFetcher.dumpAllContainersLogs(appId, user, fw);
@@ -342,7 +342,7 @@ class AppInfoCollector {
 
     private void persistJobLog(final File outputDir, final String jobId) throws FileNotFoundException,
             UnsupportedEncodingException, OozieClientException {
-        try (PrintStream ps = new PrintStream(new File(outputDir, "log.txt"), StandardCharsets.UTF_8.toString())) {
+        try (PrintStream ps = new PrintStream(new File(outputDir, "log.txt"), StandardCharsets.UTF_8.name())) {
             client.getJobLog(jobId, null, null, null, ps);
         }
     }

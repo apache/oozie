@@ -22,8 +22,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedExceptionAction;
@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -67,7 +66,7 @@ public class LauncherHelper {
 
         if (fs.exists(recoveryFile)) {
             InputStream is = fs.open(recoveryFile);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
             jobId = reader.readLine();
             reader.close();
         }
@@ -157,7 +156,7 @@ public class LauncherHelper {
 
     public static String getTag(String launcherTag) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("MD5");
-        digest.update(launcherTag.getBytes(Charsets.UTF_8), 0, launcherTag.length());
+        digest.update(launcherTag.getBytes(StandardCharsets.UTF_8), 0, launcherTag.length());
         return "oozie-" + new BigInteger(1, digest.digest()).toString(16);
     }
 
@@ -254,12 +253,12 @@ public class LauncherHelper {
                             Path path = fileStatus.getPath();
                             if (path.equals(new Path(actionDir, "externalChildIds.properties"))) {
                                 is = fs.open(path);
-                                reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                                reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                                 ret.put(LauncherAMUtils.ACTION_DATA_EXTERNAL_CHILD_IDS,
                                         IOUtils.getReaderAsString(reader, -1));
                             } else if (path.equals(new Path(actionDir, "newId.properties"))) {
                                 is = fs.open(path);
-                                reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                                reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                                 props = PropertiesUtils.readProperties(reader, -1);
                                 ret.put(LauncherAMUtils.ACTION_DATA_NEW_ID, props.getProperty("id"));
                             }
@@ -267,7 +266,7 @@ public class LauncherHelper {
                                 int maxOutputData = conf.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA,
                                         2 * 1024);
                                 is = fs.open(path);
-                                reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                                reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                                 ret.put(LauncherAMUtils.ACTION_DATA_OUTPUT_PROPS, PropertiesUtils
                                         .propertiesToString(PropertiesUtils.readProperties(reader, maxOutputData)));
                             }
@@ -275,13 +274,13 @@ public class LauncherHelper {
                                 int statsMaxOutputData = conf.getInt(LauncherAMUtils.CONF_OOZIE_EXTERNAL_STATS_MAX_SIZE,
                                         Integer.MAX_VALUE);
                                 is = fs.open(path);
-                                reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                                reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                                 ret.put(LauncherAMUtils.ACTION_DATA_STATS, PropertiesUtils
                                         .propertiesToString(PropertiesUtils.readProperties(reader, statsMaxOutputData)));
                             }
                             else if (path.equals(new Path(actionDir, LauncherAMUtils.ACTION_DATA_ERROR_PROPS))) {
                                 is = fs.open(path);
-                                reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                                reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                                 ret.put(LauncherAMUtils.ACTION_DATA_ERROR_PROPS, IOUtils.getReaderAsString(reader, -1));
                             }
                         }

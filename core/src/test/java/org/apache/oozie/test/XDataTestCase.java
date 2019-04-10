@@ -28,6 +28,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -595,7 +596,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         FileSystem fs = getFileSystem();
 
         Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
-        byte[] bytes = appXml.getBytes("UTF-8");
+        byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         Reader reader2 = new InputStreamReader(bais);
         IOUtils.copyCharStream(reader2, writer);
@@ -617,7 +618,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         FileSystem fs = getFileSystem();
 
         Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
-        byte[] bytes = appXml.getBytes("UTF-8");
+        byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         Reader reader2 = new InputStreamReader(bais);
         IOUtils.copyCharStream(reader2, writer);

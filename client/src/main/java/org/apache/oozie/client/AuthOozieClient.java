@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FilenameUtils;
@@ -247,7 +246,7 @@ public class AuthOozieClient extends XOozieClient {
         if (authTokenCacheFile.exists()) {
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(authTokenCacheFile),
-                        Charsets.UTF_8));
+                        StandardCharsets.UTF_8));
                 String line = reader.readLine();
                 reader.close();
                 if (line != null) {
@@ -277,7 +276,7 @@ public class AuthOozieClient extends XOozieClient {
                     new File(System.getProperty("user.home")));
             // just to be safe, if something goes wrong delete tmp file eventually
             tmpTokenFile.deleteOnExit();
-            Writer writer = new OutputStreamWriter(new FileOutputStream(tmpTokenFile), Charsets.UTF_8);
+            Writer writer = new OutputStreamWriter(new FileOutputStream(tmpTokenFile), StandardCharsets.UTF_8);
             writer.write(authToken.toString());
             writer.close();
             Files.move(tmpTokenFile.toPath(), authTokenCacheFile.toPath(), StandardCopyOption.ATOMIC_MOVE);

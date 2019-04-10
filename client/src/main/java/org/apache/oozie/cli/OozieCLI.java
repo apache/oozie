@@ -19,7 +19,6 @@
 package org.apache.oozie.cli;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -856,7 +855,7 @@ public class OozieCLI {
                 throw new IOException("configuration file [" + configFile + "] not found");
             }
             if (configFile.endsWith(".properties")) {
-                conf.load(new InputStreamReader(new FileInputStream(file), Charsets.UTF_8));
+                conf.load(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
             }
             else if (configFile.endsWith(".xml")) {
                 parse(new FileInputStream(configFile), conf);

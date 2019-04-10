@@ -19,13 +19,13 @@
 package org.apache.oozie.action.hadoop;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.io.Charsets;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -141,7 +141,7 @@ public class ShellContentWriter {
     }
 
     private void writeLine(OutputStream stream, String s) throws IOException {
-        writeLine(stream, s.getBytes(Charsets.UTF_8));
+        writeLine(stream, s.getBytes(StandardCharsets.UTF_8));
     }
 
     private void writeLine(OutputStream stream, byte[] arr) throws IOException {

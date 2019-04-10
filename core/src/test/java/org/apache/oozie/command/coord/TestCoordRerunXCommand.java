@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -983,7 +984,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         FileSystem fs = getFileSystem();
 
         Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
-        byte[] bytes = appXml.getBytes("UTF-8");
+        byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         Reader reader2 = new InputStreamReader(bais);
         IOUtils.copyCharStream(reader2, writer);

@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3463 Migrate from com.google.common.base.Charsets to java.nio.charset.StandardCharsets (nobigo via kmarton)
 OOZIE-3467 Migrate from com.google.common.base.Stopwatch (asalamon74 via kmarton)
 OOZIE-3466 Migrate from com.google.common.io.Closeables to org.apache.commons.io.IOUtils (asalamon74 via kmarton)
 OOZIE-3249 [tools] Instrumentation log parser (andras.piros via asalamon74)

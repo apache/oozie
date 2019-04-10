@@ -19,11 +19,11 @@
 package org.apache.oozie.util;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public class BufferDrainer {
 
@@ -68,8 +68,10 @@ public class BufferDrainer {
 
         boolean processEnded = false;
 
-        try (final BufferedReader ir = new BufferedReader(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
-             final BufferedReader er = new BufferedReader(new InputStreamReader(process.getErrorStream(), Charsets.UTF_8))) {
+        try (final BufferedReader ir =
+                     new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+             final BufferedReader er =
+                     new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
             // Here we do some kind of busy waiting, checking whether the process has finished by calling Process#exitValue().
             // If not yet finished, an IllegalThreadStateException is thrown and ignored, the progress on stdout and stderr read,
             // and retried until the process has ended.

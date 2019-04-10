@@ -18,12 +18,12 @@
 
 package org.apache.oozie;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Servlet that keeps track of the last query string it recieved
@@ -32,8 +32,8 @@ public class QueryServlet extends HttpServlet {
 
     public static String lastQueryString = null;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        lastQueryString = URLDecoder.decode(request.getQueryString(), "UTF-8");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        lastQueryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8.name());
         response.setStatus(HttpServletResponse.SC_OK);
     }
 

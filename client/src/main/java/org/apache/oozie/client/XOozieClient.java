@@ -24,9 +24,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
-import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.oozie.cli.OozieCLI;
@@ -83,7 +83,7 @@ public class XOozieClient extends OozieClient {
         BufferedReader br = null;
         try {
             br = new BufferedReader(new InputStreamReader(new FileInputStream(
-                    FilenameUtils.getFullPath(script) + FilenameUtils.getName(script)), Charsets.UTF_8));
+                    FilenameUtils.getFullPath(script) + FilenameUtils.getName(script)), StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
@@ -279,7 +279,8 @@ public class XOozieClient extends OozieClient {
             conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
             writeToXml(conf, conn.getOutputStream());
             if (conn.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(), Charsets.UTF_8));
+                JSONObject json = (JSONObject) JSONValue.parse(
+                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
                 return (String) json.get(JsonTags.JOB_ID);
             }
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {

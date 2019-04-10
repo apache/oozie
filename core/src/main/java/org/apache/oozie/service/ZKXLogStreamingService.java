@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -170,7 +171,8 @@ public class ZKXLogStreamingService extends XLogStreamingService implements Serv
                         }
                         String urlWithoutdoAs = null;
                         if (value != null && value.length > 0 && value[0] != null && value[0].length() > 0) {
-                            urlWithoutdoAs = url.replace("&" + key + "=" + URLEncoder.encode(value[0], "UTF-8"), "");
+                            urlWithoutdoAs = url.replace("&" + key + "=" + URLEncoder.encode(value[0],
+                                    StandardCharsets.UTF_8.name()), "");
                         }
                         else {
                             urlWithoutdoAs = url;

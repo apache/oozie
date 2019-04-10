@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -494,7 +495,7 @@ public class ShareLibService implements Service, Instrumentable {
                         // that they are kept sacred during the decoding
                         // process.
                         toReturn = toReturn.replaceAll("\\+", "%2B");
-                        toReturn = URLDecoder.decode(toReturn, "UTF-8");
+                        toReturn = URLDecoder.decode(toReturn, StandardCharsets.UTF_8.name());
                         toReturn = toReturn.replaceAll("!.*$", "");
                         return toReturn;
                     }

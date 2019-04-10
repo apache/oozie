@@ -18,13 +18,12 @@
 
 package org.apache.oozie.service;
 
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
 /**
@@ -114,7 +113,8 @@ public class CallbackService implements Service {
      */
     public String getActionId(String callback) {
         try {
-            return URLDecoder.decode(getParam(ParamChecker.notEmpty(callback, "callback"), ID_PARAM), "UTF-8");
+            return URLDecoder.decode(getParam(ParamChecker.notEmpty(callback, "callback"), ID_PARAM),
+                    StandardCharsets.UTF_8.name());
         }
         catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
@@ -129,7 +129,8 @@ public class CallbackService implements Service {
      */
     public String getExternalStatus(String callback) {
         try {
-            return URLDecoder.decode(getParam(ParamChecker.notEmpty(callback, "callback"), STATUS_PARAM), "UTF-8");
+            return URLDecoder.decode(getParam(ParamChecker.notEmpty(callback, "callback"), STATUS_PARAM),
+                    StandardCharsets.UTF_8.name());
         }
         catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);

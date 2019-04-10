@@ -21,6 +21,7 @@ package org.apache.oozie.action.hadoop;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import com.google.common.base.Charsets;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -260,7 +260,7 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
                     // do not store the action stats
                     if (Boolean.parseBoolean(evaluateConfigurationProperty(actionXml,
                             OOZIE_ACTION_EXTERNAL_STATS_WRITE, "false"))
-                            && (statsJsonString.getBytes(Charsets.UTF_8).length <= getMaxExternalStatsSize())) {
+                            && (statsJsonString.getBytes(StandardCharsets.UTF_8).length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
                         log.debug(
                                 "Printing stats for Map-Reduce action as a JSON string : [{0}]", statsJsonString);

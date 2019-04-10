@@ -26,20 +26,21 @@ import org.apache.hadoop.security.token.Token;
 import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.util.XLog;
 
+import java.nio.charset.StandardCharsets;
+
 public class InsertTestToken implements CredentialsProvider {
     public static String DUMMY_SECRET_KEY = "DummySecretKey";
     public InsertTestToken() {
     }
 
     @Override
-    public void updateCredentials(Credentials  credentials, Configuration config, CredentialsProperties props, Context context)
-            throws Exception {
+    public void updateCredentials(Credentials  credentials, Configuration config,
+                                  CredentialsProperties props, Context context) {
         try {
             Token<DelegationTokenIdentifier> abctoken = new Token<DelegationTokenIdentifier>();
             credentials.addToken(new Text("ABC Token"), abctoken);
             XLog.getLog(getClass()).debug("Added the ABC token in job conf");
-
-            credentials.addSecretKey(new Text(DUMMY_SECRET_KEY), DUMMY_SECRET_KEY.getBytes("UTF-8"));
+            credentials.addSecretKey(new Text(DUMMY_SECRET_KEY), DUMMY_SECRET_KEY.getBytes(StandardCharsets.UTF_8));
             XLog.getLog(getClass()).debug("Added the " + DUMMY_SECRET_KEY + " in job conf");
         }
         catch (Exception e) {

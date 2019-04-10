@@ -18,7 +18,6 @@
 
 package org.apache.oozie.servlet;
 
-import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -45,6 +44,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class V2ValidateServlet extends JsonRestServlet {
@@ -82,14 +82,14 @@ public class V2ValidateServlet extends JsonRestServlet {
                 FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
                 Path path = new Path(uri.getPath());
-                IOUtils.copyCharStream(new InputStreamReader(fs.open(path), Charsets.UTF_8), stringWriter);
+                IOUtils.copyCharStream(new InputStreamReader(fs.open(path), StandardCharsets.UTF_8), stringWriter);
             } catch (Exception e) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0505,
                         "File does not exist, "+ file);
             }
         }
         else {
-            IOUtils.copyCharStream(new InputStreamReader(request.getInputStream(), Charsets.UTF_8), stringWriter);
+            IOUtils.copyCharStream(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8), stringWriter);
         }
         try {
             validate(stringWriter.toString());

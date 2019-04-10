@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -258,14 +259,15 @@ public class Hive2Main extends LauncherMain {
     private String createScriptFile(String query) throws IOException {
         String filename = "oozie-hive2-query-" + System.currentTimeMillis() + ".hql";
         File f = new File(filename);
-        FileUtils.writeStringToFile(f, query, "UTF-8");
+        FileUtils.writeStringToFile(f, query, StandardCharsets.UTF_8.name());
         return filename;
     }
 
     private void runBeeline(String[] args, String logFile) throws Exception {
         // We do this instead of calling BeeLine.main so we can duplicate the error stream for harvesting Hadoop child job IDs
         BeeLine beeLine = new BeeLine();
-        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile)), false, "UTF-8"));
+        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile)),
+                false, StandardCharsets.UTF_8.name()));
         int status = beeLine.begin(args, null);
         beeLine.close();
         if (status != 0) {
@@ -277,7 +279,7 @@ public class Hive2Main extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8.name()));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {

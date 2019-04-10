@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,11 +53,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class JsonRestServlet extends HttpServlet {
 
-    static final String JSON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    private static final String UTF_8_ENCODING = StandardCharsets.UTF_8.name();
 
-    protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    static final String JSON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\""+UTF_8_ENCODING+"\"";
 
-    protected static final String TEXT_UTF8 = RestConstants.TEXT_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\""+UTF_8_ENCODING+"\"";
+
+    protected static final String TEXT_UTF8 = RestConstants.TEXT_CONTENT_TYPE + "; charset=\""+UTF_8_ENCODING+"\"";
 
     protected static final String AUDIT_OPERATION = "audit.operation";
     protected static final String AUDIT_PARAM = "audit.param";

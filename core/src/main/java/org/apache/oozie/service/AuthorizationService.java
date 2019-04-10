@@ -24,13 +24,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -193,7 +193,7 @@ public class AuthorizationService implements Service {
             if (file.exists()) {
                 try {
                     BufferedReader br = new BufferedReader(
-                            new InputStreamReader(new FileInputStream(file), Charsets.UTF_8));
+                            new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
                     try {
                         String line = br.readLine();
                         while (line != null) {

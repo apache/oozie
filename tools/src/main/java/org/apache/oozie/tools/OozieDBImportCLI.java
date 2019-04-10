@@ -18,7 +18,6 @@
 
 package org.apache.oozie.tools;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -54,6 +53,7 @@ import javax.persistence.metamodel.Metamodel;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -222,7 +222,7 @@ public class OozieDBImportCLI {
             final ZipEntry sysInfoEntry = mainZipFile.getEntry(OOZIEDB_SYS_INFO_JSON);
 
             try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(mainZipFile.getInputStream(sysInfoEntry), Charsets.UTF_8))) {
+                    new InputStreamReader(mainZipFile.getInputStream(sysInfoEntry), StandardCharsets.UTF_8))) {
                 String line;
                 final Gson gson = new Gson();
                 while ((line = reader.readLine()) != null) {
@@ -315,7 +315,7 @@ public class OozieDBImportCLI {
         if (importEntry != null) {
             long lineIndex = 1L;
             try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(mainZipFile.getInputStream(importEntry), Charsets.UTF_8))) {
+                    new InputStreamReader(mainZipFile.getInputStream(importEntry), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     final E newEntity = gson.fromJson(line, entityClass);

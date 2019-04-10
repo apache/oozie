@@ -44,7 +44,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -75,8 +75,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         if (parameters.size() > 0) {
             String separator = "?";
             for (Map.Entry<String, String> param : parameters.entrySet()) {
-                sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=")
-                        .append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                sb.append(separator).append(URLEncoder.encode(param.getKey(), StandardCharsets.UTF_8.name())).append("=")
+                        .append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.name()));
                 separator = "&";
             }
         }
@@ -349,7 +349,7 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
     private static String writeTokenCache(long expirationTime, File cacheFile) throws Exception {
         AuthenticationToken authToken = new AuthenticationToken(getOozieUser(), getOozieUser(), "simple");
         authToken.setExpires(expirationTime);
-        String signedTokenStr = computeSignature(SECRET.getBytes(Charset.forName("UTF-8")), authToken.toString());
+        String signedTokenStr = computeSignature(SECRET.getBytes(StandardCharsets.UTF_8), authToken.toString());
         signedTokenStr = authToken.toString() + "&s=" + signedTokenStr;
         PrintWriter pw = new PrintWriter(cacheFile);
         pw.write(signedTokenStr);

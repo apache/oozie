@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -178,7 +179,7 @@ public class OozieDBExportCLI {
         Gson gson = new Gson();
         ZipEntry zipEntry = new ZipEntry(filename);
         zipOutputStream.putNextEntry(zipEntry);
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, "UTF-8"));
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8.name()));
         query.setMaxResults(LIMIT);
         int exported = 0;
         List<?> list = query.getResultList();

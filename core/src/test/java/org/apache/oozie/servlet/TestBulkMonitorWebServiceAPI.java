@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -93,8 +94,8 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         if (parameters.size() > 0) {
             String separator = "?";
             for (Map.Entry<String, String> param : parameters.entrySet()) {
-                sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=")
-                        .append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                sb.append(separator).append(URLEncoder.encode(param.getKey(), StandardCharsets.UTF_8.name())).append("=")
+                        .append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.name()));
                 separator = "&";
             }
         }

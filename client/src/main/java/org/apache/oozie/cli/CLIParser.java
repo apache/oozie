@@ -18,7 +18,6 @@
 
 package org.apache.oozie.cli;
 
-import com.google.common.base.Charsets;
 import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.GnuParser;
@@ -27,8 +26,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -168,7 +167,7 @@ public class CLIParser {
      * @param commandLine the command line
      */
     public void showHelp(CommandLine commandLine) {
-        Writer writer = new OutputStreamWriter(System.out, Charsets.UTF_8);
+        Writer writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
         PrintWriter pw = new PrintWriter(writer);
         pw.println("usage: ");
         for (String s : cliHelp) {

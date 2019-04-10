@@ -19,6 +19,7 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 
@@ -26,7 +27,6 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
@@ -225,7 +225,7 @@ public class V1JobServlet extends BaseJobServlet {
         ServletInputStream is = request.getInputStream();
         byte[] b = new byte[101];
         while (is.readLine(b, 0, 100) != -1) {
-            XLog.getLog(getClass()).warn("Printing :" + new String(b, Charsets.UTF_8));
+            XLog.getLog(getClass()).warn("Printing :" + new String(b, StandardCharsets.UTF_8));
         }
 
         JsonBean jobBean;

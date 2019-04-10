@@ -43,7 +43,7 @@ public class DiagBundleEntryWriter implements Closeable {
 
     private DiagBundleEntryWriter(final OutputStream ous) {
         try {
-            this.writer = new OutputStreamWriter(ous, StandardCharsets.UTF_8.toString());
+            this.writer = new OutputStreamWriter(ous, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }

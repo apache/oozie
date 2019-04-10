@@ -32,7 +32,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -122,7 +121,7 @@ public class TestMetricsCollector {
         metricsCollector.storeMetrics(testOut);
 
         final File metricsOut = new File(testOut, "metrics.txt");
-        final String str = new String(Files.readAllBytes(metricsOut.toPath()), StandardCharsets.UTF_8.toString());
+        final String str = new String(Files.readAllBytes(metricsOut.toPath()), StandardCharsets.UTF_8.name());
 
         assertTrue(str.contains("CoordJobsGetPendingJPAExecutor"));
     }
@@ -211,7 +210,7 @@ public class TestMetricsCollector {
         final File instrumentationFile = new File(testOut, "instrumentation.txt");
         assertTrue(instrumentationFile.exists());
 
-        final String str = new String(Files.readAllBytes(instrumentationFile.toPath()), StandardCharsets.UTF_8.toString());
+        final String str = new String(Files.readAllBytes(instrumentationFile.toPath()), StandardCharsets.UTF_8.name());
         assertTrue(str.contains("45776800"));
     }
 
