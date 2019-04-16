@@ -148,6 +148,7 @@ public class PurgeXCommand extends XCommand<Void> {
         bundleList = new ArrayList<String>();
         wfDel = 0;
         coordDel = 0;
+        coordActionDel = 0;
         bundleDel = 0;
     }
 
@@ -425,7 +426,7 @@ public class PurgeXCommand extends XCommand<Void> {
      * @throws JPAExecutorException If a JPA executor has a problem
      */
     private void purgeCoordActions(List<String> coordActions) throws JPAExecutorException {
-        coordActionDel = coordActions.size();
+        coordActionDel += coordActions.size();
         for (int startIndex = 0; startIndex < coordActions.size(); ) {
             int endIndex = (startIndex + limit < coordActions.size()) ? (startIndex + limit) : coordActions.size();
             List<String> coordActionsForDelete = coordActions.subList(startIndex, endIndex);
