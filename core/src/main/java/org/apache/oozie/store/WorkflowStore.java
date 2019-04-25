@@ -178,7 +178,7 @@ public class WorkflowStore extends Store {
      */
     public int getWorkflowCountWithStatusInLastNSeconds(final String status, final int secs) throws StoreException {
         ParamChecker.notEmpty(status, "status");
-        ParamChecker.notEmpty(status, "secs");
+        ParamChecker.checkGTZero(secs, "secs");
         Integer cnt = doOperation("getWorkflowCountWithStatusInLastNSecs", new Callable<Integer>() {
             public Integer call() throws SQLException {
                 Query q = entityManager.createNamedQuery("GET_WORKFLOWS_COUNT_WITH_STATUS_IN_LAST_N_SECS");
