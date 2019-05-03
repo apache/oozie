@@ -395,7 +395,7 @@ public class MetricsInstrumentation extends Instrumentation {
      * @return the MetricRegistry
      */
     @VisibleForTesting
-    MetricRegistry getMetricRegistry() {
+    public MetricRegistry getMetricRegistry() {
         return metricRegistry;
     }
 

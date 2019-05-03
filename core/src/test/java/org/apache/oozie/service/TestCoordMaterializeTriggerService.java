@@ -21,7 +21,7 @@ package org.apache.oozie.service;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Date;
-import java.util.List;
+import java.util.SortedMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -30,22 +30,21 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
-import org.apache.oozie.client.Job;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetActionsJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetRunningActionsCountJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.CoordMaterializeTriggerService.CoordMaterializeTriggerRunnable;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.MetricsInstrumentation;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
+
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
 
 public class TestCoordMaterializeTriggerService extends XDataTestCase {
     private Services services;
@@ -192,6 +191,29 @@ public class TestCoordMaterializeTriggerService extends XDataTestCase {
                 return !coordJob.getLastModifiedTime().equals(lastModifiedDate);
             }
         });
+    }
+
+    /**
+     * Test coord materialize job latency from Instrumentation, like mat_queue_size and mat_delayed_size
+     * @throws Exception
+     */
+    public void testCoordMaterializeTriggerService4() throws Exception {
+        Date start = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-02-20T23:59Z");
+        final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, start, end, false, false, 0);
+
+        waitForStatus(30000, job, CoordinatorJob.Status.PREP);
+        Runnable runnable = new CoordMaterializeTriggerRunnable(3600, 300);
+        runnable.run();
+        waitForStatus(10000, job, CoordinatorJob.Status.RUNNING);
+
+        MetricsInstrumentation instr  = (MetricsInstrumentation) Services.get().get(InstrumentationService.class).get();
+        String group = "coord_job_mat";
+        String matQueueSizeKey = MetricRegistry.name(group, "mat_queue_size");
+        String matDelayedSizeKey = MetricRegistry.name(group, "mat_delayed_size");
+        SortedMap<String, Gauge> gaugeSortedMap = instr.getMetricRegistry().getGauges();
+        assertNotNull("The metric of mat_queue_size should be not null, but not.", gaugeSortedMap.get(matQueueSizeKey));
+        assertNotNull("The metric of mat_delayed_size should be not null, but not.", gaugeSortedMap.get(matDelayedSizeKey));
     }
 
     public void testMaxMatThrottleNotPickedMultipleJobs() throws Exception {

@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3393 Add Oozie instrumentation delayed metric in CoordMaterializeTriggerService (zuston via asalamon74)
 OOZIE-3477 Fix parameter checking in WorkflowStore.getWorkflowCountWithStatusInLastNSeconds (zuston via asalamon74)
 OOZIE-3470 PurgeXCommand coordActionDel variable assignment should be standardized (zuston via asalamon74)
 OOZIE-3463 Migrate from com.google.common.base.Charsets to java.nio.charset.StandardCharsets (nobigo via kmarton)
