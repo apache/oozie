@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3478 Oozie needs execute permission on the submitting users home directory (asalamon74 via gezapeti, pbacsko, kmarton)
 OOZIE-3393 Add Oozie instrumentation delayed metric in CoordMaterializeTriggerService (zuston via asalamon74)
 OOZIE-3477 Fix parameter checking in WorkflowStore.getWorkflowCountWithStatusInLastNSeconds (zuston via asalamon74)
 OOZIE-3470 PurgeXCommand coordActionDel variable assignment should be standardized (zuston via asalamon74)
