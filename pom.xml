@@ -106,7 +106,7 @@
          <tez.version>0.8.4</tez.version>
          <joda.time.version>2.9.9</joda.time.version>
 
-         <jetty.version>9.3.20.v20170531</jetty.version>
+         <jetty.version>9.3.27.v20190418</jetty.version>
          <apache.jsp.version>8.0.33</apache.jsp.version>
 
          <jline.version>0.9.94</jline.version>

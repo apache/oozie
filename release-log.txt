@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3481 Upgrade Jetty to 9.3.27 (asalamon74 via kmarton)
 OOZIE-3464 Use UTF8 charset instead of default one (nobigo via asalamon74)
 OOZIE-3478 Oozie needs execute permission on the submitting users home directory (asalamon74 via gezapeti, pbacsko, kmarton)
 OOZIE-3393 Add Oozie instrumentation delayed metric in CoordMaterializeTriggerService (zuston via asalamon74)
