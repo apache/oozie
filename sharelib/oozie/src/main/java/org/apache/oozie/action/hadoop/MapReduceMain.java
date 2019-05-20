@@ -24,6 +24,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.io.FileOutputStream;
@@ -81,7 +82,7 @@ public class MapReduceMain extends LauncherMain {
     protected void writeJobIdFile(File idFile, String jobId) throws IOException {
         // propagating job id back to Oozie
         OutputStream os = new FileOutputStream(idFile);
-        os.write(jobId.getBytes());
+        os.write(jobId.getBytes(StandardCharsets.UTF_8));
         os.close();
     }
 

@@ -73,7 +73,7 @@ import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -81,6 +81,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -118,7 +119,8 @@ public class TestRecoveryService extends XDataTestCase {
      */
     public void testWorkflowActionRecoveryService() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "workflow.xml")), StandardCharsets.UTF_8);
         createTestCaseSubDir("lib");
         IOUtils.copyCharStream(reader, writer);
 
@@ -770,7 +772,7 @@ public class TestRecoveryService extends XDataTestCase {
         File wf = new File(appPath, "workflow.xml");
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(content);
         }
         catch (IOException iex) {
@@ -910,7 +912,7 @@ public class TestRecoveryService extends XDataTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         FileSystem fs = getFileSystem();
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();

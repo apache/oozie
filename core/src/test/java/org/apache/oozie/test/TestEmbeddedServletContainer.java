@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,7 +84,8 @@ public class TestEmbeddedServletContainer extends XTestCase {
         final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.connect();
         assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+                StandardCharsets.UTF_8));
         assertEquals("ping", reader.readLine());
         assertEquals(null, reader.readLine());
         assertTrue(PingServlet.FILTER_INIT);

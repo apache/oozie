@@ -34,9 +34,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class TestGraphGenerator extends XTestCase {
     private static final XLog LOG = XLog.getLog(TestGraphGenerator.class);
@@ -135,7 +136,8 @@ public class TestGraphGenerator extends XTestCase {
             final GraphGenerator g = new GraphGenerator(content, jsonWFJob, true, new GraphvizRenderer());
             g.write(new FileOutputStream(outputDot), OutputFormat.DOT);
 
-            final BufferedReader dotReader = new BufferedReader(new FileReader(outputDot));
+            final BufferedReader dotReader = new BufferedReader(
+                    new InputStreamReader(new FileInputStream(outputDot), StandardCharsets.UTF_8));
             Assert.assertTrue("Rendered and written graph output file is not a DOT file",
                     dotReader.readLine().equals("digraph {"));
         }
@@ -168,7 +170,8 @@ public class TestGraphGenerator extends XTestCase {
             final GraphGenerator g = new GraphGenerator(content, jsonWFJob, true, new GraphvizRenderer());
             g.write(new FileOutputStream(outputDot), OutputFormat.SVG);
 
-            final BufferedReader svgReader = new BufferedReader(new FileReader(outputDot));
+            final BufferedReader svgReader = new BufferedReader(
+                    new InputStreamReader(new FileInputStream(outputDot), StandardCharsets.UTF_8));
             Assert.assertTrue("Rendered and written graph output file is not an SVG file",
                     svgReader.readLine().startsWith("<svg "));
         }

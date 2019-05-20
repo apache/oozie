@@ -19,13 +19,15 @@
 package org.apache.oozie.coord.input.logic;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -866,7 +868,8 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
         content = content.replace("=input-logic=", inputLogic);
         content = content.replace("=input-events=", inputEvent);
 
-        Writer writer = new FileWriter(new URI(appPath).getPath());
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new URI(appPath).getPath()),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(new StringReader(content), writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -914,7 +917,7 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iex) {
@@ -1001,7 +1004,7 @@ public class TestCoordinatorInputLogic extends XDataTestCase {
     private String setupCoord(Configuration conf, String coordFile) throws CommandException, IOException {
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
         Reader reader = IOUtils.getResourceAsReader(coordFile, -1);
-        Writer writer = new FileWriter(appPathFile);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);

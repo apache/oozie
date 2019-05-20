@@ -19,10 +19,12 @@
 package org.apache.oozie.command.coord;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
@@ -356,7 +358,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 1: Failure case i.e. multiple data-in instances
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-instance1.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "coordinator.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -375,7 +378,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         // CASE 2: Multiple data-in instances specified as separate <instance> tags, but one or more tags are empty.
         // Check works for whitespace in the tags too
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance2.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -391,7 +394,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 3: Success case i.e. Multiple data-in instances specified correctly as separate <instance> tags
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance3.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -404,7 +407,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 4: Success case i.e. Single instances for input and single instance for output, but both with ","
         reader = IOUtils.getResourceAsReader("coord-multiple-input-instance4.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -428,7 +431,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 1: Failure case i.e. multiple data-in start-instances
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-start-instance1.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "coordinator.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -447,7 +451,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 2: Success case i.e. Single start instances for input and single start instance for output, but both with ","
         reader = IOUtils.getResourceAsReader("coord-multiple-input-start-instance2.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -471,7 +475,9 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 1: Failure case i.e. multiple data-in start-instances
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-end-instance1.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "coordinator.xml")), StandardCharsets.UTF_8);
+
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -490,7 +496,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 2: Success case i.e. Single end instances for input and single end instance for output, but both with ","
         reader = IOUtils.getResourceAsReader("coord-multiple-input-end-instance2.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -514,7 +520,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 1: Failure case i.e. multiple data-out instances
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-output-instance1.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "coordinator.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
@@ -533,7 +540,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 2: Data-out instance tag is empty. Check works for whitespace in the tag too
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance2.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -550,7 +557,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         // CASE 3: Multiple <instance> tags within data-out should fail coordinator schema validation -
         // different error than above is expected
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance3.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -566,7 +573,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 4: Success case, where only one instance is configured, but expression has a ","
         reader = IOUtils.getResourceAsReader("coord-multiple-output-instance4.xml", -1);
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         sc = new CoordSubmitXCommand(conf);
 
@@ -585,7 +592,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
         Reader reader = IOUtils.getResourceAsReader("coord-el-dataset-4.xml", -1);
-        Writer writer = new FileWriter(new URI(appPath).getPath());
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new URI(appPath).getPath()),
+                StandardCharsets.UTF_8);
 
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
@@ -1050,7 +1058,8 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
         Reader reader = IOUtils.getResourceAsReader("coord-dataset-initial-instance.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "coordinator.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
@@ -1404,7 +1413,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 1: Failure case i.e. multiple data-in instances
         Reader reader = IOUtils.getResourceAsReader("coord-action-sla.xml", -1);
-        Writer writer = new FileWriter(appPathFile);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set("start", DateUtils.formatDateOozieTZ(new Date()));
@@ -1413,7 +1422,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
         appPathFile = new File(getTestCaseDir(), "workflow.xml");
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set("wfAppPath", appPathFile.getPath());
         Date nominalTime = new Date();
@@ -1515,7 +1524,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
 
         // CASE 1: Failure case i.e. multiple data-in instances
         Reader reader = IOUtils.getResourceAsReader("coord-action-sla.xml", -1);
-        Writer writer = new FileWriter(appPathFile);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set("start", DateUtils.formatDateOozieTZ(org.apache.commons.lang3.time.DateUtils.addDays(new Date(), -1)));
@@ -1523,7 +1532,7 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
         conf.set(OozieClient.USER_NAME, getTestUser());
         reader = IOUtils.getResourceAsReader("wf-credentials.xml", -1);
         appPathFile = new File(getTestCaseDir(), "workflow.xml");
-        writer = new FileWriter(appPathFile);
+        writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set("wfAppPath", appPathFile.getPath());
         Date nominalTime = new Date();

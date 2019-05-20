@@ -22,15 +22,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -147,7 +147,8 @@ public abstract class LauncherMain {
             System.err.println("Log file: " + logFile + "  not present. Therefore no Hadoop job IDs found.");
         }
         else {
-            try (BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(logFile),
+                    StandardCharsets.UTF_8))) {
                 String line = br.readLine();
                 while (line != null) {
                     extractJobIDs(line, patterns, jobIds);
@@ -183,7 +184,7 @@ public abstract class LauncherMain {
         if (jobIds != null) {
             File externalChildIdsFile = new File(System.getProperty(EXTERNAL_CHILD_IDS));
             try (OutputStream externalChildIdsStream = new FileOutputStream(externalChildIdsFile)) {
-                externalChildIdsStream.write(jobIds.getBytes());
+                externalChildIdsStream.write(jobIds.getBytes(StandardCharsets.UTF_8));
                 System.out.println("Hadoop Job IDs executed by " + name + ": " + jobIds);
                 System.out.println();
             } catch (IOException e) {
@@ -483,11 +484,12 @@ public abstract class LauncherMain {
           propagationConf.set(MAPREDUCE_JOB_TAGS, actionConf.get(CHILD_MAPREDUCE_JOB_TAGS));
       }
 
-      try (Writer writer = new FileWriter(PROPAGATION_CONF_XML)) {
+      try (Writer writer = new OutputStreamWriter(new FileOutputStream(
+              new File(PROPAGATION_CONF_XML)), StandardCharsets.UTF_8)) {
         propagationConf.writeXml(writer);
       }
 
-      Configuration.dumpConfiguration(propagationConf, new OutputStreamWriter(System.out));
+      Configuration.dumpConfiguration(propagationConf, new OutputStreamWriter(System.out, StandardCharsets.UTF_8));
       Configuration.addDefaultResource(PROPAGATION_CONF_XML);
     }
 

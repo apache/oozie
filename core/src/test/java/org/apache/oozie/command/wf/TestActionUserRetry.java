@@ -19,10 +19,12 @@
 package org.apache.oozie.command.wf;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -200,7 +202,7 @@ public class TestActionUserRetry extends XDataTestCase {
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iex) {

@@ -21,13 +21,14 @@ package org.apache.oozie.test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -168,7 +169,7 @@ public abstract class XTestCase extends TestCase {
                 System.out.println("Loading test system properties from: " + file.getAbsolutePath());
                 System.out.println();
                 Properties props = new Properties();
-                props.load(new FileReader(file));
+                props.load(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
                 for (Map.Entry entry : props.entrySet()) {
                     if (!System.getProperties().containsKey(entry.getKey())) {
                         System.setProperty((String) entry.getKey(), (String) entry.getValue());

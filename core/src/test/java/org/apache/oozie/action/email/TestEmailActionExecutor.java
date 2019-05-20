@@ -20,12 +20,13 @@ package org.apache.oozie.action.email;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import javax.mail.BodyPart;
@@ -295,10 +296,12 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         String content1 = "this is attachment content in file1";
         File attachFile2 = new File(getTestCaseDir() + File.separator + "attachment2.txt");
         String content2 = "this is attachment content in file2";
-        BufferedWriter output = new BufferedWriter(new FileWriter(attachFile1));
+        BufferedWriter output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attachFile1),
+                StandardCharsets.UTF_8));
         output.write(content1);
         output.close();
-        output = new BufferedWriter(new FileWriter(attachFile2));
+        output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attachFile2),
+                StandardCharsets.UTF_8));
         output.write(content2);
         output.close();
         StringBuilder tag = new StringBuilder();
@@ -321,10 +324,10 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         Path path2 = new Path(getFsTestCaseDir(), file2);
         String content2 = "this is attachment content in file2";
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(path1, true));
+        Writer writer = new OutputStreamWriter(fs.create(path1, true), StandardCharsets.UTF_8);
         writer.write(content1);
         writer.close();
-        writer = new OutputStreamWriter(fs.create(path2, true));
+        writer = new OutputStreamWriter(fs.create(path2, true), StandardCharsets.UTF_8);
         writer.write(content2);
         writer.close();
         StringBuilder tag = new StringBuilder();

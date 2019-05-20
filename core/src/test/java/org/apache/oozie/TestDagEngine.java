@@ -35,13 +35,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.io.StringReader;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class TestDagEngine extends XTestCase {
     private EmbeddedServletContainer container;
@@ -89,7 +90,8 @@ public class TestDagEngine extends XTestCase {
     public void testSubmit() throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         OutputStream os = new FileOutputStream(new File(getTestCaseDir(), "config-default.xml"));
@@ -147,7 +149,8 @@ public class TestDagEngine extends XTestCase {
     public void testJobDefinition() throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow" +
+                ".xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
@@ -169,7 +172,8 @@ public class TestDagEngine extends XTestCase {
     public void testGetJobs() throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow" +
+                ".xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());

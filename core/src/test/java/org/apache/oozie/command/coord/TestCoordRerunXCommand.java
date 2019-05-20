@@ -983,10 +983,11 @@ public class TestCoordRerunXCommand extends XDataTestCase {
 
         FileSystem fs = getFileSystem();
 
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")),
+                StandardCharsets.UTF_8);
         byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        Reader reader2 = new InputStreamReader(bais);
+        Reader reader2 = new InputStreamReader(bais,StandardCharsets.UTF_8.name());
         IOUtils.copyCharStream(reader2, writer);
 
         CoordinatorJobBean coordJob = new CoordinatorJobBean();

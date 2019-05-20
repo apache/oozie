@@ -48,6 +48,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.Writer;
 
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -176,7 +177,7 @@ public class TestSparkActionExecutor extends ActionExecutorTestCase {
     public void testSparkAction() throws Exception {
         FileSystem fs = getFileSystem();
         Path file = new Path(getAppPath(), SPARK_FILENAME);
-        Writer scriptWriter = new OutputStreamWriter(fs.create(file));
+        Writer scriptWriter = new OutputStreamWriter(fs.create(file), StandardCharsets.UTF_8);
         scriptWriter.write("1,2,3");
         scriptWriter.write("\n");
         scriptWriter.write("2,3,4");

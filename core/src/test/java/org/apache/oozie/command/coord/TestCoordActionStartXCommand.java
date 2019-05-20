@@ -20,7 +20,7 @@ package org.apache.oozie.command.coord;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,6 +28,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -201,7 +202,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         IOUtils.copyStream(is, os);
         Path input = new Path(wfAppPath, "input");
         fs.mkdirs(input);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 
@@ -211,12 +213,14 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 "</workflow-app>";
         String subWorkflowAppPath = new Path(wfAppPath, "subwf").toString();
         fs.mkdirs(new Path(wfAppPath, "subwf"));
-        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         writer2.write(APP1);
         writer2.close();
 
         Reader reader = IOUtils.getResourceAsReader("wf-url-template.xml", -1);
-        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")));
+        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer1);
 
         Properties jobConf = new Properties();
@@ -369,7 +373,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         File wf = new File(appPath, "workflow.xml");
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(content);
         }
         catch (IOException iex) {

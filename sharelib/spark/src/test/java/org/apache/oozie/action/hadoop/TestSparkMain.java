@@ -25,19 +25,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
-import com.google.common.collect.Lists;
 
 public class TestSparkMain extends MainTestCase {
 
@@ -51,7 +50,7 @@ public class TestSparkMain extends MainTestCase {
 
         FileSystem fs = getFileSystem();
         Path file = new Path(getFsTestCaseDir(), "input.txt");
-        Writer scriptWriter = new OutputStreamWriter(fs.create(file));
+        Writer scriptWriter = new OutputStreamWriter(fs.create(file), StandardCharsets.UTF_8);
         scriptWriter.write("1,2,3");
         scriptWriter.write("\n");
         scriptWriter.write("2,3,4");

@@ -21,9 +21,9 @@ package org.apache.oozie.util.db;
 import static org.apache.oozie.util.db.SqlStatement.*;
 import static org.apache.oozie.util.db.TestSchema.TestColumns.*;
 import static org.apache.oozie.util.db.TestSchema.TestTable.*;
-import org.apache.oozie.service.StoreService;
 import org.apache.oozie.service.Services;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -217,7 +217,7 @@ public class TestSqlStatement extends XTestCase {
         values.put("2", names[i]);
         values.put("3", true);
         values.put("4", currTime);
-        values.put("5", names[i].getBytes());
+        values.put("5", names[i].getBytes(StandardCharsets.UTF_8));
         PreparedStatement pstmt = stmt.prepare(conn);
         stmt.getNewStatementWithValues(values).prepare(pstmt).executeUpdate();
         assertEquals(5, myGetCount(TEST_TABLE));
@@ -232,7 +232,7 @@ public class TestSqlStatement extends XTestCase {
         assertEquals(String.format("yyyyy-mm-dd hh:mm", currTime), String.format("yyyyy-mm-dd hh:mm", rsReader
                 .getTimestamp(TEST_TIMESTAMP)));
         assertEquals(true, rsReader.getBoolean(TEST_BOOLEAN).booleanValue());
-        assertEquals(names[4], new String(rsReader.getByteArray(TEST_BLOB)));
+        assertEquals(names[4], new String(rsReader.getByteArray(TEST_BLOB), StandardCharsets.UTF_8));
         rsReader.close();
     }
 

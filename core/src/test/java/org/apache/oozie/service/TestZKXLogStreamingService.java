@@ -19,9 +19,11 @@ package org.apache.oozie.service;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -269,7 +271,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(),
                                 Services.get().get(XLogService.class).getOozieLogName());
         logFile.getParentFile().mkdirs();
-        FileWriter logWriter = new FileWriter(logFile);
+        Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
         // local logs
         logWriter.append("2013-06-10 10:25:44,008 WARN HiveActionExecutor:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] "
                 + "APP[hive-wf] JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] "
@@ -393,7 +395,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(), Services.get()
                 .get(XLogService.class).getOozieLogName());
         logFile.getParentFile().mkdirs();
-        FileWriter logWriter = new FileWriter(logFile);
+        Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
         // local logs
         StringBuffer bf = new StringBuffer();
         bf.append(
@@ -509,7 +511,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         File logFile = new File(Services.get().get(XLogService.class).getOozieErrorLogPath(), Services.get()
                 .get(XLogService.class).getOozieErrorLogName());
         logFile.getParentFile().mkdirs();
-        FileWriter logWriter = new FileWriter(logFile);
+        Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
         // local logs
         StringBuffer bf = new StringBuffer();
         bf.append(

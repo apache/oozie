@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -176,7 +177,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(contentType));
-                String output = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream()), 1000);
+                String output = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8), 1000);
                 assertEquals(response, output);
                 assertEquals(show, MockCoordinatorEngineService.did);
 
@@ -214,7 +216,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
 
@@ -228,7 +231,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8.name()));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 assertEquals(MockCoordinatorEngineService.offset, new Integer(2));
@@ -244,7 +248,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 assertEquals(MockCoordinatorEngineService.offset, new Integer(1));

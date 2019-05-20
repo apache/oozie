@@ -20,6 +20,7 @@
 package org.apache.oozie.jms;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -183,13 +184,13 @@ public class TestHCatMessageHandler extends XDataTestCase {
             HCatMessageHandler hcatHandler = new HCatMessageHandler("localhost");
             hcatHandler.process(msg);
             //check logs to see appropriate error message
-            String logMsg = out.toString();
+            String logMsg = out.toString(StandardCharsets.UTF_8.name());
             assertTrue(logMsg.contains(HCatEventMessage.EventType.DROP_PARTITION.toString()));
 
             msg.setStringProperty(HCatConstants.HCAT_EVENT, HCatEventMessage.EventType.DROP_TABLE.toString());
             hcatHandler.process(msg);
             //check logs to see appropriate error message
-            logMsg = out.toString();
+            logMsg = out.toString(StandardCharsets.UTF_8.name());
             assertTrue(logMsg.contains(HCatEventMessage.EventType.DROP_TABLE.toString()));
         }
         catch (Exception e) {

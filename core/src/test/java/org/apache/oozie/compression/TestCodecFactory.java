@@ -23,7 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BinaryBlob;
@@ -87,7 +87,8 @@ public class TestCodecFactory extends XTestCase {
         daos.writeUTF(CodecFactory.COMPRESSION_KEY_HEADER);
         daos.writeUTF(GzipCompressionCodec.CODEC_NAME);
         daos.close();
-        assertEquals(new String(baos.toByteArray()), new String(CodecFactory.getHeaderBytes()));
+        assertEquals(new String(baos.toByteArray(), StandardCharsets.UTF_8),
+                new String(CodecFactory.getHeaderBytes(),StandardCharsets.UTF_8));
         Configuration conf = services.getConf();
         conf.set(CodecFactory.COMPRESSION_OUTPUT_CODEC, "none");
         CodecFactory.initialize(conf);

@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,9 +55,9 @@ public class TestLauncherMain {
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
     @Before
-    public void setUpStreams() {
+    public void setUpStreams() throws UnsupportedEncodingException {
         originalStream = System.out;
-        System.setOut(new PrintStream(outContent));
+        System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
     }
 
     @After
@@ -64,11 +66,12 @@ public class TestLauncherMain {
     }
 
     @Test
-    public void testLog4jPropertiesPresentAndReadable() {
+    public void testLog4jPropertiesPresentAndReadable() throws UnsupportedEncodingException {
         final LauncherMain noop = new NoopLauncherMain();
         noop.setupLog4jProperties();
 
-        assertTrue(outContent.toString().contains("INFO: log4j config file log4j.properties loaded successfully."));
+        assertTrue(outContent.toString(StandardCharsets.UTF_8.name()).contains(
+                "INFO: log4j config file log4j.properties loaded successfully."));
         assertEquals(noop.log4jProperties.size(), 5);
     }
 
@@ -81,7 +84,7 @@ public class TestLauncherMain {
     public void testDontCreateStreamIfFileExists() throws IOException {
         File f = tmp.newFile();
         try (FileOutputStream fos = new FileOutputStream(f)) {
-            fos.write("foo".getBytes());
+            fos.write("foo".getBytes(StandardCharsets.UTF_8));
         }
 
         try (FileOutputStream fos = LauncherMain.createStreamIfFileNotExists(f)) {
@@ -98,7 +101,7 @@ public class TestLauncherMain {
             c.set("foo", "bar");
             c.writeXml(fos);
         }
-        String contents = new String(Files.readAllBytes(f.toPath()));
+        String contents = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
         assertTrue(contents.contains("foo"));
         assertTrue(contents.contains("bar"));
         assertTrue(contents.contains("<configuration>"));
@@ -114,7 +117,7 @@ public class TestLauncherMain {
             p.setProperty("foo", "bar");
             p.store(fos, "");
         }
-        String contents = new String(Files.readAllBytes(f.toPath()));
+        String contents = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
         assertTrue(contents.contains("foo=bar"));
     }
 

@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -102,7 +103,7 @@ public class TestFsELFunctions extends XFsTestCase {
         wf.setWorkflowInstance(job);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         protoConf.writeXml(baos);
-        wf.setProtoActionConf(baos.toString());
+        wf.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");

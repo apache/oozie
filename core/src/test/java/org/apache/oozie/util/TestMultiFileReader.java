@@ -20,7 +20,10 @@ package org.apache.oozie.util;
 
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.oozie.test.XTestCase;
@@ -30,7 +33,7 @@ public class TestMultiFileReader extends XTestCase {
     public void testOneFile() throws Exception {
         File dir = new File(getTestCaseDir());
         File f1 = new File(dir, "file1.txt");
-        FileWriter fw = new FileWriter(f1);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(f1), StandardCharsets.UTF_8);
         String str1 = "This is the first line of the only file\nThis is the second line\n";
         fw.write(str1);
         fw.close();
@@ -56,7 +59,7 @@ public class TestMultiFileReader extends XTestCase {
     public void testMultipleFiles() throws Exception {
         File dir = new File(getTestCaseDir());
         File f1 = new File(dir, "file1.txt");
-        FileWriter fw = new FileWriter(f1);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(f1), StandardCharsets.UTF_8);
         String str1 = "This is the first line of the first file\nThis is the second line\n";
         fw.write(str1);
         fw.close();
@@ -64,7 +67,7 @@ public class TestMultiFileReader extends XTestCase {
         String str2 = "This is a gz file with just one line\n";
         TestLogStreamer.writeToGZFile(f2, new StringBuilder(str2));
         File f3 = new File(dir, "file3.txt");
-        fw = new FileWriter(f3);
+        fw = new OutputStreamWriter(new FileOutputStream(f3), StandardCharsets.UTF_8);
         String str3 = "And this is the last file\nwith\n3 lines\n";
         fw.write(str3);
         fw.close();

@@ -36,10 +36,13 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
@@ -235,7 +238,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
             }
         }, conf);
         assertTrue(cacheFile.exists());
-        String currentCache = IOUtils.getReaderAsString(new FileReader(cacheFile), -1);
+        String currentCache = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile),
+                StandardCharsets.UTF_8), -1);
 
         //re-using cache
         setSystemProperty("oozie.auth.token.cache", "true");
@@ -248,7 +252,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
             }
         }, conf);
         assertTrue(cacheFile.exists());
-        String newCache = IOUtils.getReaderAsString(new FileReader(cacheFile), -1);
+        String newCache = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile),
+                StandardCharsets.UTF_8), -1);
         assertEquals(currentCache, newCache);
 
         //re-using cache with token that will expire within 5 minutes
@@ -263,7 +268,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
             }
         }, conf);
         assertTrue(cacheFile.exists());
-        newCache = IOUtils.getReaderAsString(new FileReader(cacheFile), -1);
+        newCache = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile),
+                StandardCharsets.UTF_8), -1);
         assertFalse("Almost expired token should have been updated but was not", currentCache.equals(newCache));
 
         //re-using cache with expired token
@@ -278,7 +284,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
             }
         }, conf);
         assertTrue(cacheFile.exists());
-        newCache = IOUtils.getReaderAsString(new FileReader(cacheFile), -1);
+        newCache = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile),
+                StandardCharsets.UTF_8), -1);
         assertFalse("Expired token should have been updated but was not", currentCache.equals(newCache));
 
         setSystemProperty("oozie.auth.token.cache", "true");
@@ -298,8 +305,10 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         // with the same oozie host and the same contextPath
         File cacheFile_2 = serverRunTest(conf, "oozie_1");
 
-        String currentCache_1 = IOUtils.getReaderAsString(new FileReader(cacheFile_1), -1);
-        String currentCache_2 = IOUtils.getReaderAsString(new FileReader(cacheFile_2), -1);
+        String currentCache_1 = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile_1),
+                StandardCharsets.UTF_8), -1);
+        String currentCache_2 = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile_2),
+                StandardCharsets.UTF_8), -1);
         assertEquals("AuthTokenCache with the same oozieUrl should be same but was not", currentCache_1, currentCache_2);
 
         assertTrue("The cacheFile_2 file should exist but was not", cacheFile_2.exists());
@@ -312,7 +321,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         assertTrue("The cacheFile_3 file should exist but was not", cacheFile_3.exists());
         assertTrue("The cacheFile_1 file should exist but was not", cacheFile_1.exists());
 
-        String currentCache_3 = IOUtils.getReaderAsString(new FileReader(cacheFile_3), -1);
+        String currentCache_3 = IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(cacheFile_3),
+                StandardCharsets.UTF_8), -1);
         assertNotSame("AuthTokenCache with different oozieUrls should be different but was not", currentCache_1, currentCache_3);
 
         // with the different oozie host and the different contextPath, this request will fail
@@ -351,7 +361,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         authToken.setExpires(expirationTime);
         String signedTokenStr = computeSignature(SECRET.getBytes(StandardCharsets.UTF_8), authToken.toString());
         signedTokenStr = authToken.toString() + "&s=" + signedTokenStr;
-        PrintWriter pw = new PrintWriter(cacheFile);
+        PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(cacheFile),
+                StandardCharsets.UTF_8));
         pw.write(signedTokenStr);
         pw.close();
         return signedTokenStr;
@@ -360,7 +371,7 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
     // Borrowed from org.apache.hadoop.security.authentication.util.Signer#computeSignature
     private static String computeSignature(byte[] secret, String str) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA");
-        md.update(str.getBytes());
+        md.update(str.getBytes(StandardCharsets.UTF_8));
         md.update(secret);
         byte[] digest = md.digest();
         return new Base64(0).encodeToString(digest);
@@ -408,7 +419,8 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
             if (Class.forName("org.apache.hadoop.security.authentication.util.FileSignerSecretProvider") != null) {
                 String secretFile = getTestCaseConfDir() + "/auth-secret";
                 conf.set("oozie.authentication.signature.secret.file", secretFile);
-                FileWriter fw =  new FileWriter(secretFile);
+                Writer fw =  new PrintWriter(new OutputStreamWriter(new FileOutputStream(secretFile),
+                        StandardCharsets.UTF_8));
                 fw.write(SECRET);
             }
         } catch (Exception cnfe) {

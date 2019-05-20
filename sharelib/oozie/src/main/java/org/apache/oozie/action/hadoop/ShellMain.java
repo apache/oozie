@@ -23,11 +23,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -173,7 +174,7 @@ public class ShellMain extends LauncherMain {
                 CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT);
         File log4jPropertiesFile = new File(confDir, LOG4J_PROPERTIES);
         FileOutputStream log4jFileOutputStream = new FileOutputStream(log4jPropertiesFile, false);
-        PrintWriter log4jWriter = new PrintWriter(log4jFileOutputStream);
+        PrintWriter log4jWriter = new PrintWriter(new OutputStreamWriter(log4jFileOutputStream, StandardCharsets.UTF_8));
         BufferedReader lineReader = new BufferedReader(new StringReader(log4jContents));
         String line = lineReader.readLine();
         while (line != null) {
@@ -232,8 +233,10 @@ public class ShellMain extends LauncherMain {
      */
     protected Thread[] handleShellOutput(Process p, boolean captureOutput)
             throws IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream(),
+                StandardCharsets.UTF_8));
+        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream(),
+                StandardCharsets.UTF_8));
 
         OutputWriteThread thrStdout = new OutputWriteThread(input, true, captureOutput);
         thrStdout.setDaemon(true);
@@ -269,7 +272,8 @@ public class ShellMain extends LauncherMain {
             try {
                 if (needCaptured) {
                     File file = new File(System.getProperty(OUTPUT_PROPERTIES));
-                    os = new BufferedWriter(new FileWriter(file));
+                    os = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file),
+                            StandardCharsets.UTF_8));
                 }
                 while ((line = reader.readLine()) != null) {
                     if (isStdout) { // For stdout

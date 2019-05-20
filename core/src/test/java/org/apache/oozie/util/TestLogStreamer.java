@@ -20,10 +20,12 @@ package org.apache.oozie.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -72,7 +74,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be included in the list of files for log retrieval, because the modification time lies
         // between the start and end times of the job
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        Writer fw1 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sb1 = new StringBuilder();
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 -" + logStatement + "End workflow state change\n");
         sb1.append("2009-06-24 02:43:13,961 INFO _L2_:317 -" + logStatement
@@ -84,7 +87,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be included in the list of files for log retrieval, provided the modification time lies
         // between the start and end times of the job
-        FileWriter fw2 = new FileWriter(getTestCaseDir() + "/oozie.log.1");
+        Writer fw2 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log.1"),
+                StandardCharsets.UTF_8);
         StringBuilder sb2 = new StringBuilder();
         sb2.append("2009-06-24 02:43:13,986 WARN _L3_:539 -" + logStatement + "Use GenericOptionsParser for parsing " + "the "
                 + "arguments. " + "\n" + "_L3A_Applications "
@@ -98,7 +102,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be included in the list of files for log retrieval, provided, the modification time lies
         // between the start and end times of the job
-        FileWriter fw3 = new FileWriter(getTestCaseDir() + "/oozie.log.2");
+        Writer fw3 = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir() + "/oozie.log.2")), StandardCharsets.UTF_8);
         StringBuilder sb3 = new StringBuilder();
         sb3.append("2009-06-24 02:43:14,505 INFO _L5_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
                 + "ACTION[-] Released Lock\n");
@@ -113,7 +118,8 @@ public class TestLogStreamer extends XTestCase {
         // This file will not be included in the list of files for log retrieval, since the file name neither is equal
         // to nor does begin with the log file pattern specified in log4j properties file. The default value is
         // "oozie.log"
-        FileWriter fwerr = new FileWriter(getTestCaseDir() + "/testerr.log");
+        Writer fwerr = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/testerr.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sberr = new StringBuilder();
         sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323 -" + logStatement + "End workflow state change\n");
         sberr.append("2009-06-24 02:43:13,961 INFO _L2_:317 -" + logStatement
@@ -239,7 +245,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be always included in the list of files for log retrieval, provided the modification time lies
         // between the start and end times of the job
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        Writer fw1 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sb1 = new StringBuilder();
         sb1.append("\n2012-04-24 22:43:13,958 DEBUG _L22_:323 -" + logStatement);
         sb1.append("\n2012-04-24 22:43:13,961 INFO _L23_:317 -" + logStatement
@@ -291,7 +298,8 @@ public class TestLogStreamer extends XTestCase {
 
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
         // checks that this condition is no longer required
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        Writer fw1 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sb1 = new StringBuilder();
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 -" + logStatement + "End workflow state change\n");
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L2_:323 +" + logStatement + "End workflow state change\n");
@@ -341,7 +349,7 @@ public class TestLogStreamer extends XTestCase {
         GZIPOutputStream gzout = new GZIPOutputStream(new FileOutputStream(f));
         String strg = sbr.toString();
         // Write log content to the GZip file
-        byte[] buf = strg.getBytes();
+        byte[] buf = strg.getBytes(StandardCharsets.UTF_8);
         gzout.write(buf, 0, buf.length);
         gzout.close();
     }

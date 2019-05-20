@@ -21,6 +21,7 @@ package org.apache.oozie.action.hadoop;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -118,7 +119,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_CONTENT);
         w.close();
 
@@ -141,7 +142,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT);
         w.write(SHELL_SCRIPT_YARN_CONF_DIR_CONTENT);
         w.write(SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER);
@@ -192,7 +193,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER);
         w.close();
 
@@ -222,7 +223,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_CONTENT_ERROR);
         w.close();
 
@@ -249,7 +250,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create a sample perl script
         Path script = new Path(getAppPath(), "script.pl");
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(PERL_SCRIPT_CONTENT);
         w.close();
         // Create a Sample Shell action using the perl script
@@ -274,7 +275,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_CONTENT_ENVVAR);
         w.close();
 

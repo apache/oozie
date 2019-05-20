@@ -21,8 +21,9 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.apache.oozie.util.XConfiguration;
@@ -34,7 +35,7 @@ public class TestShellMain extends ShellTestCase {
     @Override
     public Void call() throws Exception {
         File script = new File(getTestCaseDir(), scriptName);
-        Writer w = new FileWriter(script);
+        Writer w = new OutputStreamWriter(new FileOutputStream(script), StandardCharsets.UTF_8);
         w.write(scriptContent);
         w.close();
         script.setExecutable(true);

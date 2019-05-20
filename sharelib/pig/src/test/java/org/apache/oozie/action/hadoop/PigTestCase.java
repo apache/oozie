@@ -20,10 +20,11 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 import org.antlr.runtime.ANTLRReaderStream;
@@ -57,7 +58,8 @@ public abstract class PigTestCase extends XFsTestCase implements Callable<Void> 
         MainTestCase.execute(getTestUser(), this);
         String hadoopIdsFile = System.getProperty("oozie.action.externalChildIDs");
         assertTrue(new File(hadoopIdsFile).exists());
-        String externalChildIds = IOUtils.getReaderAsString(new FileReader(hadoopIdsFile), -1);
+        String externalChildIds = IOUtils.getReaderAsString(
+                new InputStreamReader(new FileInputStream(hadoopIdsFile), StandardCharsets.UTF_8), -1);
         assertTrue(externalChildIds.contains("job_"));
 
     }

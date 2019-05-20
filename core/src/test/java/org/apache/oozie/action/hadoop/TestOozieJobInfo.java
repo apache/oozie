@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -186,7 +187,8 @@ public class TestOozieJobInfo extends XDataTestCase {
         IOUtils.copyStream(is, os);
         Path input = new Path(wfAppPath, "input");
         fs.mkdirs(input);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 
@@ -198,7 +200,8 @@ public class TestOozieJobInfo extends XDataTestCase {
                 + "<property><name>oozie.job.info.testing</name><value>test</value></property>" + "</configuration>"
                 + "</map-reduce>" + "<ok to=\"end\"/>" + "<error to=\"k\"/>" + "</action>" + "<kill name=\"k\">"
                 + "<message>kill</message>" + "</kill><end name=\"end\"/>" + "</workflow-app>";
-        Writer writer2 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")));
+        Writer writer2 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         writer2.write(APP1);
         writer2.close();
         jobConf.set(OozieClient.USER_NAME, getTestUser());

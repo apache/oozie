@@ -19,6 +19,7 @@
 package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.log4j.Appender;
@@ -419,12 +420,12 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         String newHCatDependency = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
         String actionId1 = addInitRecords(newHCatDependency);
         new CoordPushDependencyCheckXCommand(actionId1).call();
-        assertTrue(out.toString().contains("ACTION[" + actionId1 + "]"));
+        assertTrue(out.toString(StandardCharsets.UTF_8.name()).contains("ACTION[" + actionId1 + "]"));
         out.reset();
         String actionId2 = addInitRecords(newHCatDependency);
         new CoordPushDependencyCheckXCommand(actionId2).call();
-        assertFalse(out.toString().contains("ACTION[" + actionId1 + "]"));
-        assertTrue(out.toString().contains("ACTION[" + actionId2 + "]"));
+        assertFalse(out.toString(StandardCharsets.UTF_8.name()).contains("ACTION[" + actionId1 + "]"));
+        assertTrue(out.toString(StandardCharsets.UTF_8.name()).contains("ACTION[" + actionId2 + "]"));
     }
 
     @Test

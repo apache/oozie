@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 public class TestStreamingMain extends MainTestCase {
 
@@ -35,7 +36,8 @@ public class TestStreamingMain extends MainTestCase {
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         fs.mkdirs(inputDir);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 

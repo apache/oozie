@@ -20,11 +20,11 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -82,14 +82,16 @@ public class TestHiveMain extends MainTestCase {
 
             Path inputDir = new Path(getFsTestCaseDir(), "input");
             fs.mkdirs(inputDir);
-            Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+            Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                    StandardCharsets.UTF_8);
             writer.write("3\n4\n6\n1\n2\n7\n9\n0\n8\n");
             writer.close();
 
             Path outputDir = new Path(getFsTestCaseDir(), "output");
 
             Path script = new Path(getTestCaseDir(), "script.q");
-            Writer w = new FileWriter(script.toString());
+            Writer w = new OutputStreamWriter(new FileOutputStream(new File(script.toString())),
+                    StandardCharsets.UTF_8);
             w.write(getHiveScript("${IN}", "${OUT}"));
             w.close();
 

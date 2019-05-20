@@ -26,6 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -382,7 +383,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         Path script = new Path(getTestCaseDir(), "script.sh");
         FileSystem fs = FileSystem.getLocal(createJobConf());
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(ECHO_ARGS_SCRIPT);
         w.close();
 
@@ -426,7 +427,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         Path script = new Path(getTestCaseDir(), "script.sh");
         FileSystem fs = FileSystem.getLocal(createJobConf());
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(ECHO_ARGS_SCRIPT);
         w.close();
 
@@ -467,7 +468,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         Path script = new Path(getTestCaseDir(), "script.sh");
         FileSystem fs = FileSystem.getLocal(createJobConf());
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write("echo \"prop1=something\"");
         w.close();
 

@@ -35,6 +35,7 @@ import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class TestHadoopELFunctions extends ActionExecutorTestCase {
@@ -188,7 +189,7 @@ public class TestHadoopELFunctions extends ActionExecutorTestCase {
         workflow.setWorkflowInstance(wi);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         jobConf.writeXml(baos);
-        workflow.setProtoActionConf(baos.toString());
+        workflow.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
 
         final WorkflowActionBean action = new WorkflowActionBean();
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator(

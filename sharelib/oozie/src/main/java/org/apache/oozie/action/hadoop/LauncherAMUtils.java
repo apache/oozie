@@ -22,8 +22,11 @@ import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 
 public class LauncherAMUtils {
 
@@ -61,7 +64,7 @@ public class LauncherAMUtils {
 
     public static String getLocalFileContentStr(File file, String type, int maxLen) throws LauncherException, IOException {
         StringBuffer sb = new StringBuffer();
-        FileReader reader = new FileReader(file);
+        Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
         char[] buffer = new char[2048];
         int read;
         int count = 0;

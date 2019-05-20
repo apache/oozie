@@ -19,7 +19,9 @@
 package org.apache.oozie.client;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -65,7 +67,8 @@ public class TestWorkflowXClient extends DagServletTestCase {
 
 
                 String pigScriptFile = getTestCaseDir() + "/test";
-                BufferedWriter writer = new BufferedWriter(new FileWriter(pigScriptFile));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(pigScriptFile),
+                        StandardCharsets.UTF_8));
                 writer.write("a = load '${INPUT}';\n dump a;");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
@@ -95,7 +98,8 @@ public class TestWorkflowXClient extends DagServletTestCase {
 
                 String hiveScriptFile = getTestCaseDir() + "/test";
                 System.out.println(hiveScriptFile);
-                BufferedWriter writer = new BufferedWriter(new FileWriter(hiveScriptFile));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(hiveScriptFile),
+                        StandardCharsets.UTF_8));
                 writer.write("CREATE EXTERNAL TABLE ${NAME} (a INT);");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,

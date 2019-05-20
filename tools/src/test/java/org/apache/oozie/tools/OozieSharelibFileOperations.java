@@ -19,9 +19,11 @@
 package org.apache.oozie.tools;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +62,7 @@ public final class OozieSharelibFileOperations {
      */
     public static File writeFile(File folder, String filename, String content) throws IOException {
         File file = new File(folder.getAbsolutePath() + File.separator + filename);
-        Writer writer = new FileWriter(file);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         writer.write(content);
         writer.flush();
         writer.close();

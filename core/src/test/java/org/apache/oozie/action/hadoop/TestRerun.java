@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.oozie.service.XLogService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.HashMap;
 
@@ -69,7 +70,8 @@ public class TestRerun extends XFsTestCase {
         Path input = new Path(appPath, "input");
         Path output = new Path(appPath, "output");
         fs.mkdirs(input);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 
@@ -79,12 +81,14 @@ public class TestRerun extends XFsTestCase {
                 "</workflow-app>";
         String subWorkflowAppPath = new Path(appPath, "subwf").toString();
         fs.mkdirs(new Path(appPath, "subwf"));
-        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         writer2.write(APP1);
         writer2.close();
 
         Reader reader = IOUtils.getResourceAsReader("recovery-wf.xml", -1);
-        Writer writer1 = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        Writer writer1 = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer1);
 
         final OozieClient wfClient = LocalOozie.getClient();

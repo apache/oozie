@@ -20,12 +20,13 @@ package org.apache.oozie.command.wf;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -425,7 +426,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iex) {

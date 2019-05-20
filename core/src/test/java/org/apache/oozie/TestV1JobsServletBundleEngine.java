@@ -21,6 +21,7 @@ package org.apache.oozie;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -89,7 +90,8 @@ public class TestV1JobsServletBundleEngine extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
 
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
 
                 assertEquals(Long.valueOf(1L), json.get("total"));
                 JSONArray array = (JSONArray) json.get("bundlejobs");

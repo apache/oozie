@@ -19,12 +19,14 @@
 package org.apache.oozie.coord.input.logic;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -487,7 +489,8 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
             }
         }
 
-        Writer writer = new FileWriter(new URI(appPath).getPath());
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new URI(appPath).getPath()),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(new StringReader(content), writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -520,7 +523,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iOException) {

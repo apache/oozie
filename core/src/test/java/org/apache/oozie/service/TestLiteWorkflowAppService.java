@@ -32,10 +32,12 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.ErrorCode;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,7 +88,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             Configuration conf = new XConfiguration();
@@ -113,7 +116,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             Configuration conf = new XConfiguration();
@@ -153,7 +157,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
@@ -168,7 +173,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             assertEquals("test-wf", app.getName());
 
             reader = IOUtils.getResourceAsReader("wf-schema-invalid.xml", -1);
-            writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             try {
@@ -193,7 +199,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
@@ -208,7 +215,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
             assertEquals("test-wf", app.getName());
 
             reader = IOUtils.getResourceAsReader("wf-ext-schema-invalid.xml", -1);
-            writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
+
             IOUtils.copyCharStream(reader, writer);
 
             try {
@@ -231,7 +240,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             services.init();
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-action-name-too-long.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = services.get(WorkflowAppService.class);
@@ -262,7 +272,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             WorkflowAppService wps = services.get(WorkflowAppService.class);
 
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             Configuration jobConf = new XConfiguration();
@@ -309,18 +320,22 @@ public class TestLiteWorkflowAppService extends XTestCase {
         try {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             createTestCaseSubDir("lib");
-            writer = new FileWriter(new File(getTestCaseDir(), "lib/maputil.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "lib/maputil.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(new File(getTestCaseDir(), "lib/reduceutil.so"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "lib/reduceutil.so")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("scripts");
-            writer = new FileWriter(new File(getTestCaseDir(), "scripts/myscript.sh"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "scripts/myscript.sh")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
@@ -356,18 +371,22 @@ public class TestLiteWorkflowAppService extends XTestCase {
         try {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             createTestCaseSubDir("lib");
-            writer = new FileWriter(new File(getTestCaseDir(), "lib/maputil.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "lib/maputil.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(new File(getTestCaseDir(), "lib/reduceutil.so"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "lib/reduceutil.so")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("libx");
-            writer = new FileWriter(new File(getTestCaseDir(), "libx/maputilx.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "libx/maputilx.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
@@ -405,29 +424,36 @@ public class TestLiteWorkflowAppService extends XTestCase {
         try {
             services.init();
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
-            Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                    "workflow.xml")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             createTestCaseSubDir("lib");
-            writer = new FileWriter(new File(getTestCaseDir(), "lib/maputil.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "lib/maputil.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(new File(getTestCaseDir(), "lib/reduceutil.so"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "lib/reduceutil.so")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("libx");
-            writer = new FileWriter(new File(getTestCaseDir(), "libx/maputil_x.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "libx/maputil_x.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("liby");
-            writer = new FileWriter(new File(getTestCaseDir(), "liby/maputil_y1.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "liby/maputil_y1.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
-            writer = new FileWriter(new File(getTestCaseDir(), "liby/maputil_y2.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "liby/maputil_y2.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
             createTestCaseSubDir("libz");
-            writer = new FileWriter(new File(getTestCaseDir(), "libz/maputil_z.jar"));
+            writer = new OutputStreamWriter(new FileOutputStream(
+                    new File(getTestCaseDir(), "libz/maputil_z.jar")), StandardCharsets.UTF_8);
             writer.write("bla bla");
             writer.close();
 
@@ -608,7 +634,7 @@ public class TestLiteWorkflowAppService extends XTestCase {
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
             String childWFDir = createTestCaseSubDir("child-wf-" + unique);
             File childWFFile = new File(childWFDir, "workflow.xml");
-            Writer writer = new FileWriter(childWFFile);
+            Writer writer = new OutputStreamWriter(new FileOutputStream(childWFFile), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(reader, writer);
 
             WorkflowAppService wps = Services.get().get(WorkflowAppService.class);
@@ -621,7 +647,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
             String childLibDir = createTestCaseSubDir("child-wf-" + unique, "lib");
             for (String childLib : childLibs) {
-                writer = new FileWriter(new File(childLibDir, childLib));
+                writer = new OutputStreamWriter(new FileOutputStream(new File(childLibDir, childLib)),
+                        StandardCharsets.UTF_8);
                 writer.write("bla bla");
                 writer.close();
             }
@@ -629,7 +656,8 @@ public class TestLiteWorkflowAppService extends XTestCase {
             String[] parentLibsFullPaths = new String[parentLibs.length];
             for (int i = 0; i < parentLibs.length; i++) {
                 parentLibsFullPaths[i] = new File(parentLibDir, parentLibs[i]).toString();
-                writer = new FileWriter(parentLibsFullPaths[i]);
+                writer = new OutputStreamWriter(new FileOutputStream(parentLibsFullPaths[i]),
+                        StandardCharsets.UTF_8);
                 writer.write("bla bla");
                 writer.close();
             }

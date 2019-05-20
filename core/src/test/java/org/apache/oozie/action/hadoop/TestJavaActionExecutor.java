@@ -1802,12 +1802,14 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        Writer w = new OutputStreamWriter(getFileSystem().create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(getFileSystem().create(new Path(inputDir, "data.txt")),
+                StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();
 
-        w = new OutputStreamWriter(getFileSystem().create(new Path(inputDir, "id.pig")));
+        w = new OutputStreamWriter(getFileSystem().create(new Path(inputDir, "id.pig")),
+                StandardCharsets.UTF_8);
         w.write("A = load '$INPUT' using PigStorage(':');\n");
         w.write("store B into '$OUTPUT' USING PigStorage();\n");
         w.close();

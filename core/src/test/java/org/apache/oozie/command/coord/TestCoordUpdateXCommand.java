@@ -19,12 +19,14 @@
 package org.apache.oozie.command.coord;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -75,7 +77,7 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
     private String setupCoord(Configuration conf, String coordFile) throws CommandException, IOException {
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
         Reader reader = IOUtils.getResourceAsReader(coordFile, -1);
-        Writer writer = new FileWriter(appPathFile);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile), StandardCharsets.UTF_8);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
         CoordSubmitXCommand sc = new CoordSubmitXCommand(conf);
@@ -116,7 +118,7 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
                 .getChildren("instance", namespace).get(0)).getText();
         assertEquals(text, "${coord:latest(0)}");
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-instance4.xml", -1);
-        Writer writer = new FileWriter(appPathFile1);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile1), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile1.toURI().toString());
         job = getCoordJobs(jobId);
@@ -143,7 +145,7 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
                 .getChildren("instance", namespace).get(0)).getText();
         assertEquals(text, "${coord:latest(0)}");
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-instance1.xml", -1);
-        Writer writer = new FileWriter(appPathFile1);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile1), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile1.toURI().toString());
         job = getCoordJobs(jobId);
@@ -277,7 +279,7 @@ public class TestCoordUpdateXCommand extends XDataTestCase {
         assertEquals(bean.getMissingDependencies(), "!!${coord:latest(0)}#${coord:latest(-1)}");
         CoordinatorJobBean job = getCoordJobs(jobId);
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-input-instance4.xml", -1);
-        Writer writer = new FileWriter(appPathFile1);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(appPathFile1), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile1.toURI().toString());
         new CoordUpdateXCommand(false, conf, jobId).call();

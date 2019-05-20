@@ -32,6 +32,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -130,17 +131,21 @@ public class TestOozieDBCLI extends XTestCase {
         PrintStream oldOut = System.out;
         try {
             // show versions
-            System.setOut(new PrintStream(data));
+            System.setOut(new PrintStream(data, false, StandardCharsets.UTF_8.name()));
             String[] argsVersion = { "version" };
             assertEquals(0, execOozieDBCLICommands(argsVersion));
-            assertTrue(data.toString().contains("db.version: "+ OozieDBCLI.DB_VERSION_FOR_5_0));
+            assertTrue(data.toString(StandardCharsets.UTF_8.name())
+                    .contains("db.version: "+ OozieDBCLI.DB_VERSION_FOR_5_0));
             // show help information
             data.reset();
             String[] argsHelp = { "help" };
             assertEquals(0, execOozieDBCLICommands(argsHelp));
-            assertTrue(data.toString().contains("ooziedb.sh create <OPTIONS> : create Oozie DB schema"));
-            assertTrue(data.toString().contains("ooziedb.sh upgrade <OPTIONS> : upgrade Oozie DB"));
-            assertTrue(data.toString().contains("ooziedb.sh postupgrade <OPTIONS> : post upgrade Oozie DB"));
+            assertTrue(data.toString(StandardCharsets.UTF_8.name())
+                    .contains("ooziedb.sh create <OPTIONS> : create Oozie DB schema"));
+            assertTrue(data.toString(StandardCharsets.UTF_8.name())
+                    .contains("ooziedb.sh upgrade <OPTIONS> : upgrade Oozie DB"));
+            assertTrue(data.toString(StandardCharsets.UTF_8.name())
+                    .contains("ooziedb.sh postupgrade <OPTIONS> : post upgrade Oozie DB"));
             // try run invalid command
             data.reset();
             String[] argsInvalidCommand = { "invalidCommand" };

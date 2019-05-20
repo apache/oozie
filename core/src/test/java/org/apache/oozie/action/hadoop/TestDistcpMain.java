@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,7 +43,8 @@ public class TestDistcpMain extends MainTestCase {
         FileSystem fs = getFileSystem();
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         fs.mkdirs(inputDir);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
         Path outputDir = new Path(getFsTestCaseDir(), "output");

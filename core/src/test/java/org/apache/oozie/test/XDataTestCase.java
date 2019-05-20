@@ -20,7 +20,7 @@ package org.apache.oozie.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -595,10 +595,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         FileSystem fs = getFileSystem();
 
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")),
+                StandardCharsets.UTF_8);
         byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        Reader reader2 = new InputStreamReader(bais);
+        Reader reader2 = new InputStreamReader(bais, StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader2, writer);
         return appXml;
     }
@@ -617,10 +618,11 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
         FileSystem fs = getFileSystem();
 
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")),
+                StandardCharsets.UTF_8);
         byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        Reader reader2 = new InputStreamReader(bais);
+        Reader reader2 = new InputStreamReader(bais, StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader2, writer);
         return appXml;
     }
@@ -1427,7 +1429,8 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected void writeToFile(String content, Path appPath, String fileName) throws IOException {
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, fileName), true));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, fileName), true),
+                StandardCharsets.UTF_8);
         writer.write(content);
         writer.close();
     }
@@ -1522,7 +1525,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         FileSystem fs = getFileSystem();
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();
@@ -1940,7 +1943,8 @@ public abstract class XDataTestCase extends XHCatTestCase {
     protected void writeToFile(String appXml, File appPathFile) throws Exception {
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(appPathFile));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(appPathFile),
+                    StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iex) {

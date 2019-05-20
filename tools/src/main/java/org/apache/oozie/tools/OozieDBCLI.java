@@ -34,7 +34,8 @@ import org.apache.oozie.util.db.CompositeIndex;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
@@ -272,7 +273,8 @@ public class OozieDBCLI {
 
     private void upgradeOozieDBVersion(String sqlFile, boolean run, String version) throws Exception {
         String updateDBVersion = "update OOZIE_SYS set data='" + version + "' where name='db.version'";
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         writer.println(UPDATE_OOZIE_VERSION);
         writer.println(updateDBVersion);
@@ -358,7 +360,8 @@ public class OozieDBCLI {
             "UPDATE COORD_ACTIONS SET MISSING_DEPENDENCIES = REPLACE(CAST(MISSING_DEPENDENCIES AS varchar(MAX)),';','!!')";
 
     private void postUpgradeTasks(String sqlFile, boolean run, boolean force) throws Exception {
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         boolean skipUpdates = getDBVendor().equals("mysql");
         Connection conn = (run) ? createConnection() : null;
@@ -434,7 +437,8 @@ public class OozieDBCLI {
     }
 
     private void postUpgradeTasksFor40(String sqlFile, boolean run) throws Exception {
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         Connection conn = (run) ? createConnection() : null;
         try {
@@ -562,7 +566,8 @@ public class OozieDBCLI {
 
     private void convertClobToBlobInMysql(String sqlFile, Connection conn) throws Exception {
         System.out.println("Converting mediumtext/text columns to mediumblob for all tables");
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         Statement statement = conn != null ? conn.createStatement() : null;
         for (Map.Entry<String, List<String>> tableClobColumnMap : getTableClobColumnMap().entrySet()) {
@@ -591,7 +596,8 @@ public class OozieDBCLI {
         Statement statement = null;
         PrintWriter writer = null;
         try {
-            writer = new PrintWriter(new FileWriter(sqlFile, true));
+            writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                    StandardCharsets.UTF_8));
             writer.println();
             statement = conn != null ? conn.createStatement() : null;
 
@@ -726,7 +732,8 @@ public class OozieDBCLI {
             convertClobToBlobinDerby(conn, startingVersion);
         }
         System.out.println("Dropping discriminator column");
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         ArrayList<String> ddlQueries = new ArrayList<String>();
         ddlQueries.add(getDropColumnQuery("WF_JOBS", DISCRIMINATOR_COLUMN));
@@ -755,7 +762,8 @@ public class OozieDBCLI {
     private void ddlTweaksFor50(final String sqlFile, final boolean run) throws Exception {
         System.out.println("Creating composite indexes");
         try (final Connection conn = createConnection();
-             final PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+             final PrintWriter writer = new PrintWriter(new OutputStreamWriter(
+                     new FileOutputStream(sqlFile,true), StandardCharsets.UTF_8));
              final Statement stmt = conn.createStatement())
         {
             writer.println();
@@ -795,7 +803,8 @@ public class OozieDBCLI {
 
 
     private void ddlTweaks(String sqlFile, boolean run) throws Exception {
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         String dbVendor = getDBVendor();
         ArrayList<String> ddlQueries = new ArrayList<String>();
@@ -1019,7 +1028,8 @@ public class OozieDBCLI {
         // so we need to explicitly create a clustered index for OOZIE_SYS table
         boolean createIndex = getDBVendor().equals("sqlserver");
 
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         writer.println(CREATE_OOZIE_SYS);
         if (createIndex){

@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
@@ -87,7 +88,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testSubWorkflowStart() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -133,7 +135,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -189,7 +191,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -249,7 +251,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -328,7 +330,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -391,7 +393,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         Path subWorkflowAppPath = new Path(getFsTestCaseDir().toString(), "subwf");
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
         Path subwfLibJar = new Path(subWorkflowAppPath, "lib/subwfLibrary.jar");
@@ -429,7 +431,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testSubworkflowDepth() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         // Infinitly recursive workflow
 
         String appStr = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
@@ -590,7 +593,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        try (Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath))) {
+        try (Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath), StandardCharsets.UTF_8)) {
             writer.write(getLazyWorkflow(launchMRAction));
         }
 
@@ -619,7 +622,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             Path subWorkflowAppPath = getFsTestCaseDir();
             FileSystem fs = getFileSystem();
             Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-            Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
+            Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath), StandardCharsets.UTF_8);
             writer.write(getFailingSubWorkflow());
             writer.close();
             String workflowUri = getTestCaseFileUri("workflow.xml");
@@ -855,7 +858,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path subWorkflowPath = new Path(subWorkflowAppPath, fileName);
-        Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath), StandardCharsets.UTF_8);
         writer.write(content);
         writer.close();
         return subWorkflowAppPath;

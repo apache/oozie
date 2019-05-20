@@ -247,7 +247,8 @@ public class V1JobsServlet extends BaseJobsServlet {
             try (final FSDataOutputStream target = dfs.create(path)) {
                 LOG.debug("HDFS path [{0}] created.", path.toString());
 
-                IOUtils.copyCharStream(new StringReader(sourceContent), new OutputStreamWriter(target, StandardCharsets.UTF_8));
+                IOUtils.copyCharStream(new StringReader(sourceContent), new OutputStreamWriter(target,
+                        StandardCharsets.UTF_8));
             }
 
             LOG.debug("XML written to HDFS file [{0}].", path.toString());

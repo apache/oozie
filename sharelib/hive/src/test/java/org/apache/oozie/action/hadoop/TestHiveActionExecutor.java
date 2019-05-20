@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
@@ -140,10 +141,11 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
 
         {
             Path script = new Path(getAppPath(), HIVE_SCRIPT_FILENAME);
-            Writer scriptWriter = new OutputStreamWriter(fs.create(script));
+            Writer scriptWriter = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
             scriptWriter.write(hiveScript);
             scriptWriter.close();
-            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+            Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)),
+                    StandardCharsets.UTF_8);
             dataWriter.write(SAMPLE_DATA_TEXT);
             dataWriter.close();
             Context context = createContext(getActionScriptXml());
@@ -236,11 +238,12 @@ public class TestHiveActionExecutor extends ActionExecutorTestCase {
 
         FileSystem fs = getFileSystem();
         Path script = new Path(getAppPath(), HIVE_SCRIPT_FILENAME);
-        Writer scriptWriter = new OutputStreamWriter(fs.create(script));
+        Writer scriptWriter = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         scriptWriter.write(getHiveScript(inputDir.toString(), outputDir.toString()));
         scriptWriter.close();
 
-        Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)));
+        Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)),
+                StandardCharsets.UTF_8);
         dataWriter.write(SAMPLE_DATA_TEXT);
         dataWriter.close();
 

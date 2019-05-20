@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +67,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(SYSTEM_MODE.NORMAL.toString(), json.get(JsonTags.OOZIE_SYSTEM_MODE));
                 return null;
             }
@@ -81,7 +83,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue("USERNAME, USER or HOME property not found in json",
                         json.containsKey(Shell.WINDOWS ? "USERNAME" : "USER") ||
                                 json.containsKey("HOME")
@@ -99,7 +102,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey("java.version"));
                 return null;
             }
@@ -114,7 +118,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(Services.CONF_SERVICE_CLASSES));
                 return null;
             }
@@ -136,7 +141,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.INSTR_VARIABLES));
                 return null;
             }
@@ -163,7 +169,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                         conn.setRequestMethod("GET");
                         assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                         assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                        JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                        JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                                StandardCharsets.UTF_8.name()));
                         assertTrue(json.containsKey(JsonTags.OOZIE_SYSTEM_MODE));
                         assertEquals(SYSTEM_MODE.NORMAL.toString(), json.get(JsonTags.OOZIE_SYSTEM_MODE));
 
@@ -181,7 +188,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                         conn.setRequestMethod("GET");
                         assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                         assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                        json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                        json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                                StandardCharsets.UTF_8));
                         assertTrue(json.containsKey(JsonTags.OOZIE_SYSTEM_MODE));
                         assertEquals(SYSTEM_MODE.SAFEMODE.toString(), json.get(JsonTags.OOZIE_SYSTEM_MODE));
 
@@ -208,7 +216,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                         conn.setRequestMethod("GET");
                         assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                         assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                        json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                        json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                                StandardCharsets.UTF_8));
                         assertTrue(json.containsKey(JsonTags.OOZIE_SYSTEM_MODE));
                         assertEquals(SYSTEM_MODE.NORMAL.toString(), json.get(JsonTags.OOZIE_SYSTEM_MODE));
 
@@ -256,7 +265,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.QUEUE_DUMP));
                 return null;
             }
@@ -272,7 +282,8 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.AVAILABLE_TIME_ZONES));
                 JSONArray array = (JSONArray) json.get(JsonTags.AVAILABLE_TIME_ZONES);
                 assertFalse(array.isEmpty());

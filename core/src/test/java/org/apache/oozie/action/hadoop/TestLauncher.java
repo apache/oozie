@@ -28,9 +28,11 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 public class TestLauncher extends XFsTestCase {
 
@@ -130,7 +132,7 @@ public class TestLauncher extends XFsTestCase {
     public void testCopyFileMultiplex() throws Exception {
         String contents = "Hello World!\nThis is Oozie";
         File src = new File(getTestCaseDir(), "src.txt");
-        Writer w = new FileWriter(src);
+        Writer w = new OutputStreamWriter(new FileOutputStream(src), StandardCharsets.UTF_8);
         w.write(contents);
         w.close();
 

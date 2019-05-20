@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 public class TestJsonRestServlet extends XTestCase {
@@ -75,7 +76,8 @@ public class TestJsonRestServlet extends XTestCase {
         conn.setRequestMethod(method);
         conn.connect();
         StringBuilder sb = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+                StandardCharsets.UTF_8));
         String line = reader.readLine();
         while (line != null) {
             sb.append(line);

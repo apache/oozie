@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -83,7 +84,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 writeXML(conn.getOutputStream(), xml);
 
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals("Valid workflow-app", obj.get(JsonTags.VALIDATE));
 
                 return null;
@@ -113,7 +115,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 "    <end name=\"end\"/>\n" +
                 "</workflow-app>";
         final Path path = new Path(getFsTestCaseDir(), "workflow.xml");
-        OutputStreamWriter writer = new OutputStreamWriter(getFileSystem().create(path));
+        OutputStreamWriter writer = new OutputStreamWriter(getFileSystem().create(path),
+                StandardCharsets.UTF_8);
         writer.write(xml.toCharArray());
         writer.flush();
         writer.close();
@@ -131,7 +134,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 conn.setDoOutput(true);
 
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals("Valid workflow-app", obj.get(JsonTags.VALIDATE));
 
                 return null;
@@ -329,7 +333,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 "    <end name=\"end\"/>\n" +
                 "</workflow-app>";
         final Path path = new Path(getFsTestCaseDir(), "workflow.xml");
-        OutputStreamWriter writer = new OutputStreamWriter(getFileSystem().create(path));
+        OutputStreamWriter writer = new OutputStreamWriter(getFileSystem().create(path),
+                StandardCharsets.UTF_8);
         writer.write(xml.toCharArray());
         writer.flush();
         writer.close();
@@ -381,7 +386,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 writeXML(conn.getOutputStream(), xml);
 
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals("Valid workflow-app", obj.get(JsonTags.VALIDATE));
 
                 return null;
@@ -492,7 +498,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 writeXML(conn.getOutputStream(), xml);
 
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals("Valid workflow-app", obj.get(JsonTags.VALIDATE));
 
                 return null;
@@ -607,7 +614,8 @@ public class TestV2ValidateServlet extends DagServletTestCase {
                 writeXML(conn.getOutputStream(), xml);
 
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals("Valid workflow-app", obj.get(JsonTags.VALIDATE));
 
                 return null;
@@ -671,7 +679,7 @@ public class TestV2ValidateServlet extends DagServletTestCase {
 
 
     private void writeXML(OutputStream outputStream, String xml) throws IOException {
-        outputStream.write(xml.getBytes());
+        outputStream.write(xml.getBytes(StandardCharsets.UTF_8));
     }
 
 }

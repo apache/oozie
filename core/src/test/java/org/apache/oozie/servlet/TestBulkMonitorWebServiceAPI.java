@@ -359,7 +359,8 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         conn.setRequestMethod("GET");
         assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
         assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-        JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+        JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                StandardCharsets.UTF_8));
         JSONArray array = (JSONArray) json.get(JsonTags.BULK_RESPONSES);
         return array;
     }

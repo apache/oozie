@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.apache.hadoop.fs.Path;
@@ -43,7 +44,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
     public void testDistCpFile() throws Exception {
         Path inputPath = new Path(getFsTestCaseDir(), "input.txt");
         final Path outputPath = new Path(getFsTestCaseDir(), "output.txt");
-        byte[] content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes();
+        byte[] content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes(StandardCharsets.UTF_8);
 
         OutputStream os = getFileSystem().create(inputPath);
         os.write(content);

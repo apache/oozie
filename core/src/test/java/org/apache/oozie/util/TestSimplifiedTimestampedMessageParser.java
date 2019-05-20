@@ -21,9 +21,11 @@ package org.apache.oozie.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
@@ -46,8 +48,8 @@ public class TestSimplifiedTimestampedMessageParser extends XTestCase {
 
         File file = TestTimestampedMessageParser.prepareFile1(getTestCaseDir());
         StringWriter sw = new StringWriter();
-        new SimpleTimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw,
-                new XLogStreamer(xf));
+        new SimpleTimestampedMessageParser(new BufferedReader(new InputStreamReader(new FileInputStream(file),
+                StandardCharsets.UTF_8)), xf).processRemaining(sw, new XLogStreamer(xf));
         String[] out = sw.toString().split("\n");
         assertEquals(19, out.length);
         assertTrue(out[0].contains("_L1_"));
@@ -86,8 +88,8 @@ public class TestSimplifiedTimestampedMessageParser extends XTestCase {
 
         File file = TestTimestampedMessageParser.prepareFile2(getTestCaseDir());
         StringWriter sw = new StringWriter();
-        new SimpleTimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw,
-                new XLogStreamer(xf));
+        new SimpleTimestampedMessageParser(new BufferedReader(new InputStreamReader(new FileInputStream(file),
+                StandardCharsets.UTF_8)), xf).processRemaining(sw, new XLogStreamer(xf));
         String[] matches = sw.toString().split("\n");
         assertEquals(9, matches.length);
         assertTrue(matches[0].contains("_L1_"));

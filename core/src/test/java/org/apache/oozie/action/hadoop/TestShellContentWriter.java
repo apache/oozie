@@ -27,6 +27,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 
@@ -52,51 +54,57 @@ public class TestShellContentWriter {
     public void testPrintShellFile() throws Exception {
         writeScript("echo Hello World");
 
-        Assert.assertTrue(outputStream.toString().contains("echo Hello World"));
-        Assert.assertTrue(errorStream.toString().isEmpty());
+        Assert.assertTrue(outputStream.toString(StandardCharsets.UTF_8.name()).contains("echo Hello World"));
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
     }
 
     @Test
     public void testPrintShellNullByte() throws Exception {
         writeScript("echo Hello World\0");
 
-        Assert.assertFalse(outputStream.toString().contains("Hello World"));
-        Assert.assertTrue(errorStream.toString().contains("appears to be a binary file"));
+        Assert.assertFalse(outputStream.toString(StandardCharsets.UTF_8.name()).contains("Hello World"));
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).
+                contains("appears to be a binary file"));
     }
 
     @Test
-    public void testPrintShellValidShellCommand() {
+    public void testPrintShellValidShellCommand() throws UnsupportedEncodingException {
         callPrint(1, "echo");
 
-        Assert.assertTrue(String.format("output stream must be empty but is [%s]", outputStream.toString()),
-                outputStream.toString().isEmpty());
-        Assert.assertTrue(String.format("error stream must be empty but is [%s]", errorStream.toString()),
-                errorStream.toString().isEmpty());
+        Assert.assertTrue(String.format("output stream must be empty but is [%s]",
+                outputStream.toString(StandardCharsets.UTF_8.name())),
+                outputStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
+        Assert.assertTrue(String.format("error stream must be empty but is [%s]",
+                errorStream.toString(StandardCharsets.UTF_8.name())),
+                errorStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
     }
 
     @Test
-    public void testPrintShellInvalidShellCommand() {
+    public void testPrintShellInvalidShellCommand() throws UnsupportedEncodingException {
         callPrint(1, "invalid command");
 
-        Assert.assertTrue(String.format("output stream must be empty but is [%s]", outputStream.toString()),
-                outputStream.toString().isEmpty());
-        Assert.assertTrue(String.format("invalid error stream message [%s]", errorStream.toString()),
-                errorStream.toString().contains("doesn't appear to exist"));
+        Assert.assertTrue(String.format("output stream must be empty but is [%s]",
+                outputStream.toString(StandardCharsets.UTF_8.name())),
+                outputStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
+        Assert.assertTrue(String.format("invalid error stream message [%s]",
+                errorStream.toString(StandardCharsets.UTF_8.name())),
+                errorStream.toString(StandardCharsets.UTF_8.name()).contains("doesn't appear to exist"));
     }
     @Test
     public void testPrintControlCharacter() throws Exception {
         writeScript("echo Hello World\011");
 
-        Assert.assertFalse(outputStream.toString().contains("Hello World"));
-        Assert.assertTrue(errorStream.toString().contains("appears to be a binary file"));
+        Assert.assertFalse(outputStream.toString(StandardCharsets.UTF_8.name()).contains("Hello World"));
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).contains("appears to be a " +
+                "binary file"));
     }
 
     @Test
     public void testEmptyFile() throws Exception {
         writeScript("");
 
-        Assert.assertTrue(outputStream.toString().contains("---\n\n---"));
-        Assert.assertTrue(errorStream.toString().isEmpty());
+        Assert.assertTrue(outputStream.toString(StandardCharsets.UTF_8.name()).contains("---\n\n---"));
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
     }
 
     @Test
@@ -104,19 +112,21 @@ public class TestShellContentWriter {
         byte[] arr = new byte[2048];
         Arrays.fill(arr, (byte) Character.getNumericValue('x'));
 
-        writeScript(new String(arr));
+        writeScript(new String(arr,StandardCharsets.UTF_8));
 
-        Assert.assertTrue(outputStream.toString().isEmpty());
-        Assert.assertTrue(errorStream.toString().contains("content suppressed."));
-        Assert.assertTrue(errorStream.toString().contains("File size=2048b; max printable size=1024b"));
+        Assert.assertTrue(outputStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).contains("content suppressed."));
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).contains("File size=2048b; " +
+                "max printable size=1024b"));
     }
 
     @Test
     public void testNegativeMaxSize() throws Exception {
         writeScript("test script", -1);
 
-        Assert.assertTrue(outputStream.toString().isEmpty());
-        Assert.assertTrue(errorStream.toString().contains("Not printing script file as configured, content suppressed."));
+        Assert.assertTrue(outputStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
+        Assert.assertTrue(errorStream.toString(StandardCharsets.UTF_8.name()).contains("Not printing script" +
+                " file as configured, content suppressed."));
     }
 
     @Test
@@ -125,9 +135,10 @@ public class TestShellContentWriter {
 
         writeScript("");
 
-        Assert.assertTrue(outputStream.toString().isEmpty());
-        Assert.assertTrue(String.format("invalid error stream message [%s]", errorStream.toString()),
-                errorStream.toString().contains("doesn't appear to exist"));
+        Assert.assertTrue(outputStream.toString(StandardCharsets.UTF_8.name()).isEmpty());
+        Assert.assertTrue(String.format("invalid error stream message [%s]",
+                errorStream.toString(StandardCharsets.UTF_8.name())),
+                errorStream.toString(StandardCharsets.UTF_8.name()).contains("doesn't appear to exist"));
     }
 
     private void writeScript(String content) throws IOException {
@@ -137,7 +148,7 @@ public class TestShellContentWriter {
     // Write a stub script with the given content, and invoke the writer to print its content
     private void writeScript(String content, int maxLen) throws IOException {
         if (content != null && !content.isEmpty()) {
-            Files.write(scriptFile.toPath(), content.getBytes());
+            Files.write(scriptFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
         }
 
         callPrint(maxLen, scriptFile.getAbsolutePath());

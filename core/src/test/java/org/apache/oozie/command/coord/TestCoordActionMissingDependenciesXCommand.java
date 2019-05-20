@@ -19,9 +19,11 @@
 package org.apache.oozie.command.coord;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
@@ -67,7 +69,8 @@ public class TestCoordActionMissingDependenciesXCommand extends XHCatTestCase {
 
         // CASE 1: Failure case i.e. multiple data-in instances
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-output-instance5.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "coordinator.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -127,7 +130,9 @@ public class TestCoordActionMissingDependenciesXCommand extends XHCatTestCase {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-output-instance5.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "coordinator.xml")), StandardCharsets.UTF_8);
+
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -185,7 +190,8 @@ public class TestCoordActionMissingDependenciesXCommand extends XHCatTestCase {
         Configuration conf = new XConfiguration();
         File appPathFile = new File(getTestCaseDir(), "coordinator.xml");
         Reader reader = IOUtils.getResourceAsReader("coord-multiple-output-instance5.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "coordinator.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "coordinator.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPathFile.toURI().toString());
         conf.set(OozieClient.USER_NAME, getTestUser());

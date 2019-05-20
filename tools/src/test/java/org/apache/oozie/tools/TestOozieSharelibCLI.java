@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,11 +75,11 @@ public class TestOozieSharelibCLI {
     public void testHelpCommand() throws Exception {
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         PrintStream oldPrintStream = System.out;
-        System.setOut(new PrintStream(data));
+        System.setOut(new PrintStream(data, false, StandardCharsets.UTF_8.name()));
         try {
             String[] argsHelp = {"help"};
             assertEquals("Exit code mismatch",0, execOozieSharelibCLICommands(argsHelp));
-            String helpMessage = data.toString();
+            String helpMessage = data.toString(StandardCharsets.UTF_8.name());
             assertTrue("Missing create <OPTIONS> description from help message", helpMessage.contains(
                     "oozie-setup.sh create <OPTIONS> : create a new timestamped version of oozie sharelib"));
             assertTrue("Missing  upgrade <OPTIONS> description from help message",
@@ -97,13 +98,14 @@ public class TestOozieSharelibCLI {
 
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         PrintStream oldPrintStream = System.err;
-        System.setErr(new PrintStream(data));
+        System.setErr(new PrintStream(data, false,StandardCharsets.UTF_8.name()));
         try {
             String[] argsFake = {"fakeCommand"};
             assertEquals("Exit code mismatch", 1, execOozieSharelibCLICommands(argsFake));
-            assertTrue("Error message missing",
-                    data.toString().contains("Invalid sub-command: invalid sub-command [fakeCommand]"));
-            assertTrue("Help message missing", data.toString().contains("use 'help [sub-command]' for help details"));
+            assertTrue("Error message missing", data.toString(StandardCharsets.UTF_8.name())
+                    .contains("Invalid sub-command: invalid sub-command [fakeCommand]"));
+            assertTrue("Help message missing", data.toString(StandardCharsets.UTF_8.name())
+                    .contains("use 'help [sub-command]' for help details"));
         } finally {
             System.setErr(oldPrintStream);
         }

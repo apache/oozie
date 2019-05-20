@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -65,12 +66,12 @@ public class TestOozieCLIMethods extends TestCase {
             ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
             PipedOutputStream pipeOut = new PipedOutputStream();
             PipedInputStream pipeIn = new PipedInputStream(pipeOut, 1024 * 50);
-            System.setOut(new PrintStream(pipeOut));
+            System.setOut(new PrintStream(pipeOut,false,StandardCharsets.UTF_8.name()));
             execute();
             pipeOut.close();
             ByteStreams.copy(pipeIn, outBytes);
             pipeIn.close();
-            return new String(outBytes.toByteArray());
+            return new String(outBytes.toByteArray(), StandardCharsets.UTF_8);
         }
 
         abstract void execute() throws IOException;

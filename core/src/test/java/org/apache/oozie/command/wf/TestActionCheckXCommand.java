@@ -20,6 +20,7 @@ package org.apache.oozie.command.wf;
 
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
@@ -642,7 +643,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         FileSystem fs = getFileSystem();
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();

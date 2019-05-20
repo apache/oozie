@@ -31,6 +31,7 @@ import org.apache.oozie.test.MiniOozieTestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Properties;
 
@@ -102,7 +103,7 @@ public class TestGitMain extends MiniOozieTestCase {
         writeHDFSFile(credentialFilePath, credentialFileData);
 
         final File localFile = gitMain.getKeyFromFS(credentialFilePath);
-        final String testOutput = new String(Files.readAllBytes(localFile.toPath()));
+        final String testOutput = new String(Files.readAllBytes(localFile.toPath()), StandardCharsets.UTF_8);
 
         assertTrue("credential file length mismatch", credentialFileData.length() > 0);
         assertEquals("credential file data mismatch", credentialFileData, testOutput);
@@ -112,7 +113,7 @@ public class TestGitMain extends MiniOozieTestCase {
 
     private void writeHDFSFile(final Path hdfsFilePath, final String fileData) throws IOException {
         try (final FSDataOutputStream hdfsFileOS = getFileSystem().create(hdfsFilePath)) {
-            hdfsFileOS.write(fileData.getBytes());
+            hdfsFileOS.write(fileData.getBytes(StandardCharsets.UTF_8));
             hdfsFileOS.flush();
         }
     }

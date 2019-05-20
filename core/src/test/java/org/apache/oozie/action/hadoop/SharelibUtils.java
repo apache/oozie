@@ -27,9 +27,10 @@ import org.apache.oozie.util.IOUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,7 +75,8 @@ public class SharelibUtils {
 
     private static String[] getSharelibJars(String sharelib) throws Exception {
         String classpathFile = findClasspathFile(sharelib);
-        BufferedReader br = new BufferedReader(new FileReader(classpathFile));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(classpathFile),
+                StandardCharsets.UTF_8));
         String line = br.readLine();
         br.close();
         return line.split(System.getProperty("path.separator"));

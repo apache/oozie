@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -329,14 +330,14 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
 
         Path script = new Path(getAppPath(), "script.pig");
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(pigScript);
         w.close();
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();
@@ -363,14 +364,14 @@ public class TestPigActionExecutor extends ActionExecutorTestCase {
         IOUtils.copyStream(is, os);
 
         Path script = new Path(getAppPath(), "script.pig");
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(UDF_PIG_SCRIPT);
         w.close();
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
-        w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();

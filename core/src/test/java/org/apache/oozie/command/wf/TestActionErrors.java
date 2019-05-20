@@ -19,9 +19,11 @@
 package org.apache.oozie.command.wf;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -280,7 +282,8 @@ public class TestActionErrors extends XDataTestCase {
     private WorkflowActionBean _testKillNodeErrorMessage(String workflowXmlFile) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader(workflowXmlFile, -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
@@ -340,7 +343,8 @@ public class TestActionErrors extends XDataTestCase {
     private void _testNonTransient(String errorType, WorkflowActionBean.Status expStatus1, String expErrorMsg) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
@@ -413,7 +417,8 @@ public class TestActionErrors extends XDataTestCase {
             String errorType, WorkflowActionBean.Status expStatus1, String expErrorMsg) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
@@ -480,7 +485,8 @@ public class TestActionErrors extends XDataTestCase {
             final WorkflowActionBean.Status expStatus2, String expErrorMsg) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final int maxRetries = 2;
@@ -569,7 +575,8 @@ public class TestActionErrors extends XDataTestCase {
     private void _testError(String errorType, String externalStatus, String signalValue) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
@@ -608,7 +615,8 @@ public class TestActionErrors extends XDataTestCase {
     private void _testErrorWithUserRetry(String errorType, String externalStatus, String signalValue) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid-user-retry.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");
@@ -663,7 +671,8 @@ public class TestActionErrors extends XDataTestCase {
     private void _testDataNotSet(String avoidParam, String expActionErrorCode) throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");

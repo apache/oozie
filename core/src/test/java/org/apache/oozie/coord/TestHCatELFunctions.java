@@ -19,6 +19,7 @@
 package org.apache.oozie.coord;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagELFunctions;
@@ -97,7 +98,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         wf.setWorkflowInstance(job);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         protoConf.writeXml(baos);
-        wf.setProtoActionConf(baos.toString());
+        wf.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
@@ -144,7 +145,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         wf.setWorkflowInstance(job);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         protoConf.writeXml(baos);
-        wf.setProtoActionConf(baos.toString());
+        wf.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");

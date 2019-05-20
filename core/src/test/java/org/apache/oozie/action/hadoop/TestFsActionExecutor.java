@@ -42,6 +42,7 @@ import org.jdom.Element;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
 public class TestFsActionExecutor extends ActionExecutorTestCase {
@@ -661,7 +662,7 @@ public void testChmodRecursive() throws Exception {
 
         //Test touchz on a non-zero length file
         Path f3 = new Path(dir + "/newfile3");
-        Writer writer = new OutputStreamWriter(fs.create(f3));
+        Writer writer = new OutputStreamWriter(fs.create(f3), StandardCharsets.UTF_8);
         writer.write("This is not a zero length file");
         writer.close();
 

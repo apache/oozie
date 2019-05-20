@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,6 +29,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +131,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         + "<end name=\"end\"/>"
         + "</workflow-app>";
 
-        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        Writer writer = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/workflow.xml"),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(new StringReader(wfXml), writer);
 
         Configuration conf = new XConfiguration();
@@ -203,7 +204,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
                 + "<end name=\"end\"/>"
                 + "</workflow-app>";
 
-         writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+         writer = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/workflow.xml"),
+                StandardCharsets.UTF_8);
          IOUtils.copyCharStream(new StringReader(wfXml), writer);
 
         wfId = new SubmitXCommand(conf).call();
@@ -537,7 +539,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         Path outputDir = new Path(getFsTestCaseDir(), "output1");
 
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         writeDummyInput(fs, outputDir);
@@ -747,7 +749,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             Path p = fstat.getPath();
             if (getFileSystem().isFile(p) && p.getName().startsWith("part-")) {
                 InputStream is = getFileSystem().open(p);
-                Scanner sc = new Scanner(is);
+                Scanner sc = new Scanner(is,StandardCharsets.UTF_8.name());
                 while (sc.hasNextLine()) {
                     String line = sc.nextLine();
                     containsLib1Jar = (containsLib1Jar || line.contains(lib1JarStr) || lib1JarPatYarn.matcher(line).matches());
@@ -804,7 +806,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     }
 
     private void writeDummyInput(FileSystem fs, Path inputDir) throws IOException {
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();
@@ -1405,7 +1407,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             throws IOException, YarnException, HadoopAccessorException {
         final Path wfIDFile = new Path(inputFolder, LauncherMainTester.JOB_ID_FILE_NAME);
         try (final FileSystem fs = FileSystem.get(conf);
-             final Writer w = new OutputStreamWriter(fs.create(wfIDFile))) {
+             final Writer w = new OutputStreamWriter(fs.create(wfIDFile), StandardCharsets.UTF_8)) {
             final List<ApplicationReport> allApplications =
                     getHadoopAccessorService().createYarnClient(getTestUser(), conf).getApplications();
 

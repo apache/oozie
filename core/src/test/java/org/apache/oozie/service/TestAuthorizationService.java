@@ -19,11 +19,13 @@
 package org.apache.oozie.service;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -93,7 +95,8 @@ public class TestAuthorizationService extends XDataTestCase {
         Configuration conf = services.getConf();
         if (useAdminUsersFile) {
             Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
-            Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));
+            Writer adminListWriter = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseConfDir(),
+                    "adminusers.txt")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(adminListReader, adminListWriter);
         }
         if (useAdminGroups) {
@@ -136,7 +139,8 @@ public class TestAuthorizationService extends XDataTestCase {
     private void _testAuthorizationService(boolean useDefaultGroup) throws Exception {
         init(useDefaultGroup, true);
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());

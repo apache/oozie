@@ -39,6 +39,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -155,7 +156,7 @@ public class LauncherMainTester {
 
     private static void writeToFile(Path input, JobConf jConf, String content, String fileName) throws IOException {
         try (FileSystem fs = FileSystem.get(jConf);
-              Writer w = new OutputStreamWriter(fs.create(new Path(input, fileName)))) {
+              Writer w = new OutputStreamWriter(fs.create(new Path(input, fileName)), StandardCharsets.UTF_8)) {
             w.write(content);
         }
         System.out.println("Job Id written to file");

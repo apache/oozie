@@ -28,6 +28,8 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
@@ -58,8 +60,8 @@ public class TestArgParser {
     @Test
     public void testUsageDisplayedWithoutUserInput() throws Exception {
         final String[] args = {""};
-        final OutputStream interceptedStdout = new ByteArrayOutputStream();
-        final OutputStream interceptedStderr = new ByteArrayOutputStream();
+        final ByteArrayOutputStream interceptedStdout = new ByteArrayOutputStream();
+        final ByteArrayOutputStream interceptedStderr = new ByteArrayOutputStream();
 
         interceptSystemStreams(interceptedStdout, interceptedStderr);
 
@@ -67,8 +69,9 @@ public class TestArgParser {
             DiagBundleCollectorDriver.main(args);
         }
         catch (final SecurityException securityException){
-            assertTrue(interceptedStdout.toString().contains("usage: "));
-            assertTrue(interceptedStderr.toString().contains("Missing required options: oozie, output"));
+            assertTrue(interceptedStdout.toString(StandardCharsets.UTF_8.name()).contains("usage: "));
+            assertTrue(interceptedStderr.toString(StandardCharsets.UTF_8.name()).contains("Missing required" +
+                    " options: oozie, output"));
         }
         finally {
             restoreSystemStreams();
@@ -80,9 +83,10 @@ public class TestArgParser {
         System.setErr(System.out);
     }
 
-    private void interceptSystemStreams(OutputStream interceptedStdout, OutputStream interceptedStderr) {
-        System.setOut(new PrintStream(interceptedStdout));
-        System.setErr(new PrintStream(interceptedStderr));
+    private void interceptSystemStreams(OutputStream interceptedStdout, OutputStream interceptedStderr)
+            throws UnsupportedEncodingException {
+        System.setOut(new PrintStream(interceptedStdout,false,StandardCharsets.UTF_8.name()));
+        System.setErr(new PrintStream(interceptedStderr,false,StandardCharsets.UTF_8.name()));
     }
 
     @Test(expected = IllegalArgumentException.class)

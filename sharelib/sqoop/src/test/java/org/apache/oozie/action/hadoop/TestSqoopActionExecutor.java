@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -279,7 +280,8 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         assertFalse(hadoopCounters.isEmpty());
 
         FileSystem fs = getFileSystem();
-        BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(new Path(getSqoopOutputDir(), "part-m-00000"))));
+        BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(new Path(getSqoopOutputDir(),
+                "part-m-00000")), StandardCharsets.UTF_8));
         int count = 0;
         String line = br.readLine();
         while (line != null) {
@@ -397,7 +399,8 @@ public class TestSqoopActionExecutor extends ActionExecutorTestCase {
         });
         int count = 0;
         for (FileStatus part : parts) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(part.getPath())));
+            BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(part.getPath()),
+                    StandardCharsets.UTF_8));
             String line = br.readLine();
             while (line != null) {
                 assertTrue(line.contains("a"));

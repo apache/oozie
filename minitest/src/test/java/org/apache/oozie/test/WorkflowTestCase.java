@@ -28,6 +28,7 @@ import org.apache.oozie.service.XLogService;
 import org.apache.oozie.servlet.V2ValidateServlet;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public abstract class WorkflowTestCase extends MiniOozieTestCase {
@@ -68,7 +69,8 @@ public abstract class WorkflowTestCase extends MiniOozieTestCase {
         fs.mkdirs(new Path(appPath, "lib"));
 
         final Reader reader = getResourceAsReader(workflowFileName, -1);
-        final Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        final Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         copyCharStream(reader, writer);
         writer.close();
         reader.close();
@@ -138,7 +140,7 @@ public abstract class WorkflowTestCase extends MiniOozieTestCase {
      * @throws IOException thrown if the resource could not be read.
      */
     private Reader getResourceAsReader(final String path, final int maxLen) throws IOException {
-        return new InputStreamReader(getResourceAsStream(path, maxLen));
+        return new InputStreamReader(getResourceAsStream(path, maxLen), StandardCharsets.UTF_8);
     }
 
     /**
@@ -194,7 +196,8 @@ public abstract class WorkflowTestCase extends MiniOozieTestCase {
         }
 
         private void writeToDFS(final String workflowXml) throws IOException {
-            try (final Writer writer = new OutputStreamWriter(dfs.create(getDFSWorkflowPath()))) {
+            try (final Writer writer = new OutputStreamWriter(dfs.create(getDFSWorkflowPath()),
+                    StandardCharsets.UTF_8)) {
                 writer.write(workflowXml);
                 writer.flush();
             }
@@ -214,7 +217,8 @@ public abstract class WorkflowTestCase extends MiniOozieTestCase {
         }
 
         private void writeToLocalFile(final String workflowXml) throws IOException {
-            try (final Writer writer = new FileWriter(localPath.toString())) {
+            try (final Writer writer = new OutputStreamWriter(new FileOutputStream(localPath.toString()),
+                    StandardCharsets.UTF_8)) {
                 writer.write(workflowXml);
                 writer.flush();
             }

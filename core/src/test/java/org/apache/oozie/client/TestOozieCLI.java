@@ -22,12 +22,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -1306,12 +1308,14 @@ public class TestOozieCLI extends DagServletTestCase {
 
                 String oozieUrl = getContextURL();
 
-                IOUtils.copyCharStream(new StringReader(validContent), new  FileWriter(validfile));
+                IOUtils.copyCharStream(new StringReader(validContent),
+                        new OutputStreamWriter(new FileOutputStream(validfile), StandardCharsets.UTF_8));
                 String [] args = new String[] { "validate", "-oozie", oozieUrl, validfile.getAbsolutePath() };
                 String out = runOozieCLIAndGetStdout(args);
                 assertTrue(out.contains("Valid"));
 
-                IOUtils.copyCharStream(new StringReader(invalidContent), new FileWriter(invalidfile));
+                IOUtils.copyCharStream(new StringReader(invalidContent),
+                        new OutputStreamWriter(new FileOutputStream(invalidfile), StandardCharsets.UTF_8));
                 args = new String[] { "validate", "-oozie", oozieUrl, invalidfile.getAbsolutePath() };
                 out = runOozieCLIAndGetStderr(args);
                 assertTrue(out.contains("XML schema error"));
@@ -1896,17 +1900,17 @@ public class TestOozieCLI extends DagServletTestCase {
         }
     }
 
-    private String runOozieCLIAndGetStdout(String[] args) {
+    private String runOozieCLIAndGetStdout(String[] args) throws UnsupportedEncodingException {
         PrintStream original = System.out;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(baos);
+        PrintStream ps = new PrintStream(baos,false,StandardCharsets.UTF_8.name());
         String outStr = null;
         System.out.flush();
         try {
             System.setOut(ps);
             assertEquals(0, new OozieCLI().run(args));
             System.out.flush();
-            outStr = baos.toString();
+            outStr = baos.toString(StandardCharsets.UTF_8.name());
         } finally {
             System.setOut(original);
             if (outStr != null) {
@@ -1917,17 +1921,17 @@ public class TestOozieCLI extends DagServletTestCase {
         return outStr;
     }
 
-    private String runOozieCLIAndGetStderr(String[] args) {
+    private String runOozieCLIAndGetStderr(String[] args) throws UnsupportedEncodingException {
         PrintStream original = System.err;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(baos);
+        PrintStream ps = new PrintStream(baos, false, StandardCharsets.UTF_8.name());
         String outStr = null;
         System.err.flush();
         try {
             System.setErr(ps);
             assertEquals(-1, new OozieCLI().run(args));
             System.err.flush();
-            outStr = baos.toString();
+            outStr = baos.toString(StandardCharsets.UTF_8.name());
         } finally {
             System.setErr(original);
             if (outStr != null) {

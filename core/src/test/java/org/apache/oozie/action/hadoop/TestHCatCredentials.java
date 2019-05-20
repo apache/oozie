@@ -22,12 +22,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
@@ -82,7 +85,8 @@ public class TestHCatCredentials {
         File actionConfDir = new File(oozieConfDir, "action-conf");
         actionConfDir.mkdir();
         hiveSiteXml = new File(OOZIE_HOME_DIR, "hive-site.xml");
-        FileWriter fw = new FileWriter(hiveSiteXml);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(hiveSiteXml),
+                StandardCharsets.UTF_8);
         fw.write(getHiveConfig(TEST_HIVE_METASTORE_PRINCIPAL, TEST_HIVE_METASTORE_URI));
         fw.flush();
         fw.close();
@@ -117,7 +121,8 @@ public class TestHCatCredentials {
     @Test
     public void testAddToJobConfFromHCat() throws Exception {
         File hcatConfig = new File(OOZIE_HOME_DIR, "hcatConf.xml");
-        FileWriter fw = new FileWriter(hcatConfig);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(hcatConfig),
+                StandardCharsets.UTF_8);
         fw.write(getHiveConfig(TEST_HIVE_METASTORE_PRINCIPAL2, TEST_HIVE_METASTORE_URI2));
         fw.flush();
         fw.close();

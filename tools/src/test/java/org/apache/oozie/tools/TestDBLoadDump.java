@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.Permission;
 import java.util.List;
 import java.util.zip.ZipFile;
@@ -99,7 +100,7 @@ public class TestDBLoadDump extends XTestCase {
         assertEquals(validZipDump.length(), newZipDump.length());
         final ZipFile zip = new ZipFile(newZipDump);
         final BufferedReader reader = new BufferedReader(new InputStreamReader(
-                zip.getInputStream(zip.getEntry("ooziedb_wf.json"))));
+                zip.getInputStream(zip.getEntry("ooziedb_wf.json")), StandardCharsets.UTF_8));
         assertTrue(reader.readLine().contains("0000003-160720041037822-oozie-oozi-W"));
     }
 

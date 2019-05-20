@@ -21,6 +21,7 @@ package org.apache.oozie.servlet;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -79,7 +80,8 @@ public class TestV1JobServletBundleEngine extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
 
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(id, obj.get("bundleJobId"));
                 return null;
             }
@@ -126,7 +128,8 @@ public class TestV1JobServletBundleEngine extends DagServletTestCase {
 
                 String ct = conn.getHeaderField("content-type");
                 assertTrue(ct.startsWith(RestConstants.XML_CONTENT_TYPE));
-                String response = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream()), -1);
+                String response = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8), -1);
                 assertTrue(response!= null && response.length() > 0);
 
                 return null;
