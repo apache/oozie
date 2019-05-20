@@ -44,60 +44,60 @@ public class TestPersistenceExceptionSubclassFilterRetryPredicate {
 
     @Test
     public void testFilteredJPAExceptions() {
-        assertFalse(predicate.apply(new EntityExistsException()));
-        assertFalse(predicate.apply(new EntityNotFoundException()));
-        assertFalse(predicate.apply(new LockTimeoutException()));
-        assertFalse(predicate.apply(new NoResultException()));
-        assertFalse(predicate.apply(new NonUniqueResultException()));
-        assertFalse(predicate.apply(new OptimisticLockException()));
-        assertFalse(predicate.apply(new PessimisticLockException()));
-        assertFalse(predicate.apply(new QueryTimeoutException()));
-        assertFalse(predicate.apply(new TransactionRequiredException()));
+        assertFalse(predicate.test(new EntityExistsException()));
+        assertFalse(predicate.test(new EntityNotFoundException()));
+        assertFalse(predicate.test(new LockTimeoutException()));
+        assertFalse(predicate.test(new NoResultException()));
+        assertFalse(predicate.test(new NonUniqueResultException()));
+        assertFalse(predicate.test(new OptimisticLockException()));
+        assertFalse(predicate.test(new PessimisticLockException()));
+        assertFalse(predicate.test(new QueryTimeoutException()));
+        assertFalse(predicate.test(new TransactionRequiredException()));
     }
 
     @Test
     public void testNotFilteredJPAExceptions() {
-        assertTrue(predicate.apply(new RollbackException()));
-        assertTrue(predicate.apply(new PersistenceException()));
+        assertTrue(predicate.test(new RollbackException()));
+        assertTrue(predicate.test(new PersistenceException()));
     }
 
     @Test
     public void testNonJPAExceptions() {
-        assertTrue(predicate.apply(new IllegalStateException()));
-        assertTrue(predicate.apply(new Exception()));
+        assertTrue(predicate.test(new IllegalStateException()));
+        assertTrue(predicate.test(new Exception()));
     }
 
     @Test
     public void testNestedFilteredJPAExceptions() {
-        assertFalse(predicate.apply(wrapCause(new EntityExistsException())));
-        assertFalse(predicate.apply(wrapCause(new EntityNotFoundException())));
-        assertFalse(predicate.apply(wrapCause(new LockTimeoutException())));
-        assertFalse(predicate.apply(wrapCause(new NoResultException())));
-        assertFalse(predicate.apply(wrapCause(new NonUniqueResultException())));
-        assertFalse(predicate.apply(wrapCause(new OptimisticLockException())));
-        assertFalse(predicate.apply(wrapCause(new PessimisticLockException())));
-        assertFalse(predicate.apply(wrapCause(new QueryTimeoutException())));
-        assertFalse(predicate.apply(wrapCause(new TransactionRequiredException())));
+        assertFalse(predicate.test(wrapCause(new EntityExistsException())));
+        assertFalse(predicate.test(wrapCause(new EntityNotFoundException())));
+        assertFalse(predicate.test(wrapCause(new LockTimeoutException())));
+        assertFalse(predicate.test(wrapCause(new NoResultException())));
+        assertFalse(predicate.test(wrapCause(new NonUniqueResultException())));
+        assertFalse(predicate.test(wrapCause(new OptimisticLockException())));
+        assertFalse(predicate.test(wrapCause(new PessimisticLockException())));
+        assertFalse(predicate.test(wrapCause(new QueryTimeoutException())));
+        assertFalse(predicate.test(wrapCause(new TransactionRequiredException())));
     }
 
     @Test
     public void testNestedNotFilteredJPAExceptions() {
-        assertTrue(predicate.apply(wrapCause(new RollbackException())));
-        assertTrue(predicate.apply(wrapCause(new PersistenceException())));
+        assertTrue(predicate.test(wrapCause(new RollbackException())));
+        assertTrue(predicate.test(wrapCause(new PersistenceException())));
     }
 
     @Test
     public void testNestedNonJPAExceptions() {
-        assertTrue(predicate.apply(wrapCause(new RuntimeException())));
-        assertTrue(predicate.apply(wrapCause(new Exception())));
+        assertTrue(predicate.test(wrapCause(new RuntimeException())));
+        assertTrue(predicate.test(wrapCause(new Exception())));
     }
 
     @Test
     public void testPlainJPAExecutorExceptionWithMessage() {
-        assertFalse(predicate.apply(wrapMessage("No WorkflowJobBean found in database")));
-        assertFalse(predicate.apply(wrapMessage("Some other message")));
+        assertFalse(predicate.test(wrapMessage("No WorkflowJobBean found in database")));
+        assertFalse(predicate.test(wrapMessage("Some other message")));
 
-        assertFalse(predicate.apply(wrapMessageRuntime("Some runtime problem")));
+        assertFalse(predicate.test(wrapMessageRuntime("Some runtime problem")));
     }
 
     private JPAExecutorException wrapCause(final Throwable cause) {

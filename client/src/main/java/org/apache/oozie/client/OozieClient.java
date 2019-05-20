@@ -21,7 +21,6 @@ package org.apache.oozie.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.cli.ValidationUtil;
 import org.apache.oozie.client.rest.JsonTags;
@@ -53,6 +52,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2558,7 +2558,7 @@ public class OozieClient {
 
             Reader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
             JSONObject json = (JSONObject) JSONValue.parse(reader);
-            List<String> queueDumpMessages = Lists.newArrayList();
+            List<String> queueDumpMessages = new ArrayList<>();
 
             addSeparator(queueDumpMessages);
 

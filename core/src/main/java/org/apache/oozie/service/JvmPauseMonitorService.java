@@ -20,17 +20,15 @@ package org.apache.oozie.service;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Daemon;
-import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
@@ -100,7 +98,7 @@ public class JvmPauseMonitorService implements Service {
     private String formatMessage(long extraSleepTime, Map<String, GcTimes> gcTimesAfterSleep,
             Map<String, GcTimes> gcTimesBeforeSleep) {
         Set<String> gcBeanNames = Sets.intersection(gcTimesAfterSleep.keySet(), gcTimesBeforeSleep.keySet());
-        List<String> gcDiffs = Lists.newArrayList();
+        List<String> gcDiffs = new ArrayList<>();
         for (String name : gcBeanNames) {
             GcTimes diff = gcTimesAfterSleep.get(name).subtract(gcTimesBeforeSleep.get(name));
             if (diff.gcCount != 0) {

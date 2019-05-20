@@ -20,13 +20,12 @@ package org.apache.oozie.util.db;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 
 public abstract class DatabaseRetryPredicate implements Predicate<Throwable> {
 
     @Override
-    public abstract boolean apply(Throwable input);
+    public abstract boolean test(Throwable input);
 
     /*
      * Helper method for subclasses to retrieve all exceptions in a set. "All exceptions" means the exception

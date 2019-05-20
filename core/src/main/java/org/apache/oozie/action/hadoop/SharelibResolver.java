@@ -17,11 +17,10 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.util.XConfiguration;
 
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 class SharelibResolver {
@@ -64,7 +63,7 @@ class SharelibResolver {
         } else {
             this.defaultValue = new String[] { defaultValue };
         }
-        configProviders = Lists.newArrayList(
+        configProviders = Arrays.asList(
                 () -> actionConf.getStrings(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY),
                 () -> actionConf.getStrings(sharelibPropertyName),
                 () -> workflowConf.getStrings(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY),

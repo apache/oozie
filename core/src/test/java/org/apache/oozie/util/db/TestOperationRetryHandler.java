@@ -25,13 +25,13 @@ import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.common.base.Predicate;
 
 /**
  * Conventions used in the tests:
@@ -44,7 +44,7 @@ public class TestOperationRetryHandler {
 
     private final Predicate<Throwable> testRetryPredicate = new Predicate<Throwable>() {
         @Override
-        public boolean apply(Throwable input) {
+        public boolean test(Throwable input) {
             return input.getClass() == RuntimeException.class;
         }
     };

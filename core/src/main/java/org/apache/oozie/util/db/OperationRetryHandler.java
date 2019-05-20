@@ -19,12 +19,12 @@
 package org.apache.oozie.util.db;
 
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.oozie.util.XLog;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 
 public class OperationRetryHandler {
     private static XLog LOG = XLog.getLog(OperationRetryHandler.class);
@@ -98,7 +98,7 @@ public class OperationRetryHandler {
                         throw e;
                     }
 
-                    if (retryPredicate.apply(e)) {
+                    if (retryPredicate.test(e)) {
                         LOG.trace("Exception is not on blacklist, handling retry. [retries={0};e.class={1}]",
                                 retries, e.getClass().getName());
                         waitTime = handleRetry(waitTime, retries);

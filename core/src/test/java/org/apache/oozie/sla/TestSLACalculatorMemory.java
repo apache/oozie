@@ -1289,8 +1289,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         }
 
         @Override
-        public boolean apply(@Nullable String input) {
-            if (super.apply(input)) {
+        public boolean test(@Nullable String input) {
+            if (super.test(input)) {
                 if (remainingSuccessfulAttempts <= 0) {
                     return true;
                 }
@@ -1305,7 +1305,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         }
     }
 
-    static class DmlPredicate implements com.google.common.base.Predicate<String> {
+    static class DmlPredicate implements java.util.function.Predicate<String> {
         private final String tableName;
         private final Set<String> operationPrefixes;
 
@@ -1315,7 +1315,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         }
 
         @Override
-        public boolean apply(@Nullable String input) {
+        public boolean test(@Nullable String input) {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(input));
             boolean operationMatch = false;
             for (String s: operationPrefixes) {

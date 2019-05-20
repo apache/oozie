@@ -18,10 +18,11 @@
 
 package org.apache.oozie.fluentjob.api.workflow;
 
-import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+
+import java.util.Collections;
 
 public class TestCredentialsBuilder {
 
@@ -30,7 +31,7 @@ public class TestCredentialsBuilder {
         final Credentials credentials = CredentialsBuilder.create()
                 .withCredential("hive2",
                         "hive",
-                        Lists.newArrayList(
+                        Collections.singletonList(
                                 new ConfigurationEntry("jdbcUrl", "jdbc://localhost/hive")))
                 .build();
 
@@ -45,7 +46,7 @@ public class TestCredentialsBuilder {
         final Credentials credentials = CredentialsBuilder.create()
                 .withCredential("hive2",
                         "hive",
-                        Lists.newArrayList(
+                        Collections.singletonList(
                                 new ConfigurationEntry("jdbcUrl", "jdbc://localhost/hive")))
                 .build();
 

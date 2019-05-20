@@ -25,28 +25,15 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.anyBoolean;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.Writer;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import com.google.common.collect.Lists;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestLauncherAMUtils {
@@ -55,7 +42,7 @@ public class TestLauncherAMUtils {
 
     @Test
     public void testArgsHandlingWithoutNullsAndNullsNotAllowed() {
-       setupConf(Lists.newArrayList("a", "b", "c"));
+       setupConf(Arrays.asList("a", "b", "c"));
        setEnableNullArgsAllowed(false);
 
        String args[] = LauncherAMUtils.getMainArguments(conf);
@@ -65,7 +52,7 @@ public class TestLauncherAMUtils {
 
     @Test
     public void testHandlingWhenArgsContainNullsAndNullsNotAllowed() {
-        setupConf(Lists.newArrayList("a", null, "b", null, "c"));
+        setupConf(Arrays.asList("a", null, "b", null, "c"));
         setEnableNullArgsAllowed(false);
 
         String args[] = LauncherAMUtils.getMainArguments(conf);
@@ -75,7 +62,7 @@ public class TestLauncherAMUtils {
 
     @Test
     public void testArgsHandlingWhenArgsContainsNullsOnlyAndNullsNotAllowed() {
-        setupConf(Lists.<String>newArrayList(null, null, null));
+        setupConf(Arrays.asList(null, null, null));
         setEnableNullArgsAllowed(false);
 
         String args[] = LauncherAMUtils.getMainArguments(conf);
@@ -85,7 +72,7 @@ public class TestLauncherAMUtils {
 
     @Test
     public void testArgsHandlingWhenArgsContainsOneNullAndNullsNotAllowed() {
-        setupConf(Lists.<String>newArrayList((String) null));
+        setupConf(Arrays.asList((String) null));
         setEnableNullArgsAllowed(false);
 
         String args[] = LauncherAMUtils.getMainArguments(conf);
@@ -95,7 +82,7 @@ public class TestLauncherAMUtils {
 
     @Test
     public void testHandlingWhenArgsContainNullsAndNullAllowed() {
-        setupConf(Lists.newArrayList("a", null, "b", null, "c"));
+        setupConf(Arrays.asList("a", null, "b", null, "c"));
         setEnableNullArgsAllowed(true);
 
         String args[] = LauncherAMUtils.getMainArguments(conf);
@@ -105,7 +92,7 @@ public class TestLauncherAMUtils {
 
     @Test
     public void testArgsHandlingWhenArgsContainsOneNullAndNullsAllowed() {
-        setupConf(Lists.<String>newArrayList((String) null));
+        setupConf(Arrays.asList((String) null));
         setEnableNullArgsAllowed(true);
 
         String args[] = LauncherAMUtils.getMainArguments(conf);

@@ -74,7 +74,7 @@ public class PersistenceExceptionSubclassFilterRetryPredicate extends DatabaseRe
     );
 
     @Override
-    public boolean apply(final Throwable throwable) {
+    public boolean test(final Throwable throwable) {
         LOG.trace("Retry predicate investigation started. [throwable.class={0}]", throwable.getClass().getName());
 
         boolean applies = true;

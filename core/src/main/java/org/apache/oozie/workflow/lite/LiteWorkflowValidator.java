@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -38,8 +40,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 
 public class LiteWorkflowValidator {
 
@@ -178,11 +178,11 @@ public class LiteWorkflowValidator {
             // using Optional here so we can distinguish between "non-visited" and "visited - no parent" state.
             Optional<String> decisionParentOpt = nodeAndDecisionParents.get(nodeName);
             if (decisionParentOpt == null) {
-                nodeAndDecisionParents.put(node.getName(), Optional.fromNullable(topDecisionParent));
+                nodeAndDecisionParents.put(node.getName(), Optional.ofNullable(topDecisionParent));
             } else {
                 String decisionParent = decisionParentOpt.isPresent() ? decisionParentOpt.get() : null;
 
-                if ((decisionParent == null && topDecisionParent == null) || !Objects.equal(decisionParent, topDecisionParent)) {
+                if ((decisionParent == null && topDecisionParent == null) || !Objects.equals(decisionParent, topDecisionParent)) {
                     throw new WorkflowException(ErrorCode.E0743, nodeName);
                 }
             }

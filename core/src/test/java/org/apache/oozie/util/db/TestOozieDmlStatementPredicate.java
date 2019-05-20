@@ -31,33 +31,33 @@ public class TestOozieDmlStatementPredicate {
     @Test
     public void testDmlNotOozieTableDoesNotApply() {
         assertFalse("DML statement but not of an Oozie table",
-                statementPredicate.apply("SELECT * FROM wellhello"));
+                statementPredicate.test("SELECT * FROM wellhello"));
     }
 
     @Test
     public void testNotDmlOozieTableDoesNotApply() {
         assertFalse("not a DML statement but of an Oozie table",
-                statementPredicate.apply("CREATE TABLE WF_JOBS"));
+                statementPredicate.test("CREATE TABLE WF_JOBS"));
     }
 
     @Test
     public void testNotDmlNotOozieTableDoesNotApply() {
         assertFalse("not a DML statement and not of an Oozie table",
-                statementPredicate.apply("CREATE TABLE wellhello"));
+                statementPredicate.test("CREATE TABLE wellhello"));
     }
 
     @Test
     public void testDmlAndOozieTableAppliesIgnoreCase() {
         assertTrue("a DML statement and of an Oozie table",
-                statementPredicate.apply("SELECT * FROM wf_jobs"));
+                statementPredicate.test("SELECT * FROM wf_jobs"));
 
         assertTrue("a DML statement and of an Oozie table",
-                statementPredicate.apply("insert into WF_JOBS"));
+                statementPredicate.test("insert into WF_JOBS"));
 
         assertTrue("a DML statement and of an Oozie table",
-                statementPredicate.apply("update wf_jobs"));
+                statementPredicate.test("update wf_jobs"));
 
         assertTrue("a DML statement and of an Oozie table",
-                statementPredicate.apply("DELETE FROM WF_JOBS"));
+                statementPredicate.test("DELETE FROM WF_JOBS"));
     }
 }

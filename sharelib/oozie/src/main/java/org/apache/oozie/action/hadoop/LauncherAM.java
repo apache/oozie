@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -47,7 +48,6 @@ import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
@@ -529,7 +529,7 @@ public class LauncherAM {
 
     private void updateActionDataWithFailure(ErrorHolder eHolder, Map<String, String> actionData) {
         if (eHolder.getErrorCause() != null && eHolder.getErrorCause().getMessage() != null) {
-            if (Objects.equal(eHolder.getErrorMessage(), eHolder.getErrorCause().getMessage())) {
+            if (Objects.equals(eHolder.getErrorMessage(), eHolder.getErrorCause().getMessage())) {
                 eHolder.setErrorMessage(eHolder.getErrorMessage());
             } else {
                 eHolder.setErrorMessage(eHolder.getErrorMessage() + ", " + eHolder.getErrorCause().getMessage());

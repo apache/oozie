@@ -18,7 +18,6 @@
 
 package org.apache.oozie.fluentjob.api.mapping;
 
-import com.google.common.collect.Lists;
 import org.apache.oozie.fluentjob.api.generated.workflow.CREDENTIALS;
 import org.apache.oozie.fluentjob.api.workflow.ConfigurationEntry;
 import org.apache.oozie.fluentjob.api.workflow.Credentials;
@@ -26,13 +25,15 @@ import org.apache.oozie.fluentjob.api.workflow.CredentialsBuilder;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Collections;
+
 class SourceDataFactory {
 
     Credentials createCredentials() {
         return CredentialsBuilder.create()
                 .withCredential("hbase", "hbase")
                 .withCredential("hive2", "hive2",
-                        Lists.newArrayList(new ConfigurationEntry("jdbcUrl", "jdbc://localhost/hive2")))
+                        Collections.singletonList(new ConfigurationEntry("jdbcUrl", "jdbc://localhost/hive2")))
                 .build();
     }
 

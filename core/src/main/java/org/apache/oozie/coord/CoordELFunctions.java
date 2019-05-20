@@ -19,8 +19,6 @@
 package org.apache.oozie.coord;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -44,9 +42,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -984,7 +984,7 @@ public class CoordELFunctions {
                 }
                 nominalInstanceCal.add(dsTimeUnit.getCalendarUnit(), datasetFrequency);
             }
-            instances = Lists.reverse(instances);
+            Collections.reverse(instances);
             return StringUtils.join(instances, CoordELFunctions.INSTANCE_SEPARATOR);
         }
     }
@@ -1847,7 +1847,7 @@ public class CoordELFunctions {
          * @return -1 if no correct {@code source} was given, else the estimated occurrence count of a dataset
          */
         long convertMillis(final long millis, final TimeUnit source) {
-            Preconditions.checkNotNull(source, "source has to be filled");
+            Objects.requireNonNull(source, "source has to be filled");
 
             switch (source) {
                 case YEAR:

@@ -18,7 +18,6 @@
 
 package org.apache.oozie.fluentjob.api.workflow;
 
-import com.google.common.collect.Lists;
 import org.apache.oozie.fluentjob.api.action.MapReduceActionBuilder;
 import org.apache.oozie.fluentjob.api.action.Node;
 import org.apache.oozie.fluentjob.api.action.ShellAction;
@@ -28,6 +27,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -241,7 +241,7 @@ public class TestWorkflowBuilder {
         final Workflow workflow = new WorkflowBuilder()
                 .withDagContainingNode(hbaseAction)
                 .withCredentials(CredentialsBuilder.create()
-                        .withCredential("hive2", "hive2", Lists.newArrayList(
+                        .withCredential("hive2", "hive2", Collections.singletonList(
                                 new ConfigurationEntry("jdbcUrl", "jdbc://localhost/hive")))
                         .build())
                 .build();

@@ -18,7 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import com.google.common.collect.Lists;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.api.records.YarnApplicationState;
@@ -35,6 +34,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -83,7 +84,7 @@ public class TestYarnApplicationIdFinder {
         when(applicationReport.getApplicationType()).thenReturn("Oozie Launcher");
         when(applicationReport.getApplicationId()).thenReturn(applicationId);
         when(applicationId.toString()).thenReturn("application_1534164756526_0001");
-        when(reader.read()).thenReturn(Lists.newArrayList(applicationReport));
+        when(reader.read()).thenReturn(new ArrayList<>(Arrays.asList(applicationReport)));
 
         assertEquals(
                 "no Hadoop Job ID nor YARN applications of MAPREDUCE type: WorkflowActionBean.externalId should be found",
@@ -115,7 +116,7 @@ public class TestYarnApplicationIdFinder {
         when(applicationReport.getYarnApplicationState()).thenReturn(YarnApplicationState.RUNNING);
         when(applicationId.toString()).thenReturn("application_1534164756526_0000");
         when(applicationReport.getApplicationId()).thenReturn(applicationId);
-        when(reader.read()).thenReturn(Lists.newArrayList(applicationReport));
+        when(reader.read()).thenReturn(Arrays.asList(applicationReport));
 
         assertEquals("no Hadoop Job ID, but an appropriate YARN application: applicationId should be found",
                 "application_1534164756526_0000",
@@ -140,7 +141,7 @@ public class TestYarnApplicationIdFinder {
         when(applicationReport.getYarnApplicationState()).thenReturn(YarnApplicationState.RUNNING);
         when(applicationId.toString()).thenReturn(yarnApplicationId);
         when(applicationReport.getApplicationId()).thenReturn(applicationId);
-        when(reader.read()).thenReturn(Lists.newArrayList(applicationReport));
+        when(reader.read()).thenReturn(Arrays.asList(applicationReport));
     }
 
     @Test
@@ -187,7 +188,7 @@ public class TestYarnApplicationIdFinder {
         final ApplicationId newMRJobId = mock(ApplicationId.class);
         when(newMRJobId.toString()).thenReturn("application_1534164756526_0004");
         when(newMRJob.getApplicationId()).thenReturn(newMRJobId);
-        when(reader.read()).thenReturn(Lists.newArrayList(oldLauncher, oldMRJob, newLauncher, newMRJob));
+        when(reader.read()).thenReturn(new ArrayList<>(Arrays.asList(oldLauncher, oldMRJob, newLauncher, newMRJob)));
 
         when(workflowActionBean.getExternalId()).thenReturn("application_1534164756526_0003");
         assertEquals("newLauncher should be found", "application_1534164756526_0004", yarnApplicationIdFinder.find());
@@ -236,7 +237,7 @@ public class TestYarnApplicationIdFinder {
         when(newMRJobId.toString()).thenReturn("application_1534164756526_0004");
         when(newMRJob.getApplicationId()).thenReturn(newMRJobId);
 
-        final String lastYarnId = yarnApplicationIdFinder.getLastYarnId(Lists.newArrayList(newMRJob, newLauncher));
+        final String lastYarnId = yarnApplicationIdFinder.getLastYarnId(Arrays.asList(newMRJob, newLauncher));
         assertEquals("last YARN id should be the maximal element in the list", "application_1534164756526_0004", lastYarnId);
     }
 }

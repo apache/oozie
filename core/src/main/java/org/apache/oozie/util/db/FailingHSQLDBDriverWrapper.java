@@ -21,7 +21,6 @@ package org.apache.oozie.util.db;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
-import com.google.common.base.Predicate;
 
 public class FailingHSQLDBDriverWrapper extends org.hsqldb.jdbcDriver {
 

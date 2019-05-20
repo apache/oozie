@@ -18,8 +18,9 @@
 
 package org.apache.oozie.util.db;
 
+import java.util.function.Predicate;
+
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
 
 /**
  * Helper class for simulating DB failures.
@@ -36,7 +37,7 @@ public class FailingDBHelperForTest {
      * @param predicate predicate
      */
     @VisibleForTesting
-    public static void setDbPredicate (final Predicate predicate) {
+    public static void setDbPredicate (final Predicate<String> predicate) {
         FailingDBHelperForTest.dbPredicate = predicate;
     }
 

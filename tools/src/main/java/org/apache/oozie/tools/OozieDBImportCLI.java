@@ -19,7 +19,6 @@
 package org.apache.oozie.tools;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 
@@ -58,6 +57,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
@@ -308,7 +308,7 @@ public class OozieDBImportCLI {
         final BatchEntityPersister<E> batchEntityPersister = new BatchEntityPersister<>(entityClass,
                 importFileName, batchTransactionHandler);
 
-        final List<E> batch = Lists.newArrayList();
+        final List<E> batch = new ArrayList<>();
         final Gson gson = new Gson();
         final ZipEntry importEntry = mainZipFile.getEntry(importFileName);
 
@@ -428,7 +428,7 @@ public class OozieDBImportCLI {
         private EntityTransaction currentTransaction;
         private int totalPersistedCount = 0;
         private int totalSkippedCount = 0;
-        private List<E> pendingEntities = Lists.newArrayList();
+        private List<E> pendingEntities = new ArrayList<>();
 
         /**
          * Begin recording the {@link EntityTransaction}

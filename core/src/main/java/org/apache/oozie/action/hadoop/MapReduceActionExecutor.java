@@ -30,11 +30,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -606,16 +603,11 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
             Preconditions.checkNotNull(yarnApplications, "YARN application list should be filled");
             Preconditions.checkArgument(!yarnApplications.isEmpty(), "no YARN applications in the list");
 
-            final Iterable<String> unorderedApplicationIds =
-                    Iterables.transform(yarnApplications, new Function<ApplicationReport, String>() {
-                        @Override
-                        public String apply(final ApplicationReport input) {
-                            Preconditions.checkNotNull(input, "YARN application should be filled");
-                            return input.getApplicationId().toString();
-                        }
-                    });
-
-            return Ordering.from(new YarnApplicationIdComparator()).max(unorderedApplicationIds);
+            return yarnApplications.stream().map(applicationReport -> {
+                    Preconditions.checkNotNull(applicationReport, "YARN application should be filled");
+                    return applicationReport.getApplicationId().toString();
+                }).max(new YarnApplicationIdComparator())
+                .get(); // this is not empty, as yarnApplications was not empty.
         }
 
         private boolean isHadoopJobId(final String jobIdCandidate) {

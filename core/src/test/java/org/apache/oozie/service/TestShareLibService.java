@@ -42,7 +42,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
 import org.apache.hadoop.conf.Configuration;
@@ -126,7 +125,7 @@ public class TestShareLibService extends XFsTestCase {
 
         @Override
         public List<Class<?>> getLauncherClasses() {
-            return Lists.<Class<?>>newArrayList(MyPig.class);
+            return Arrays.asList(MyPig.class);
         }
     }
 
@@ -136,7 +135,7 @@ public class TestShareLibService extends XFsTestCase {
 
         @Override
         public List<Class<?>> getLauncherClasses() {
-            return Lists.<Class<?>>newArrayList(TestHive.class);
+            return Arrays.asList(TestHive.class);
         }
     }
 

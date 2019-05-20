@@ -18,12 +18,11 @@
 
 package org.apache.oozie.util.db;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public enum CompositeIndex {
     I_WF_JOBS_STATUS_CREATED_TIME ("WF_JOBS", "status", "created_time"),
@@ -46,12 +45,8 @@ public enum CompositeIndex {
     }
 
     public static List<String> getIndexStatements() {
-        Function<CompositeIndex, String> compositeIndexToString = new Function<CompositeIndex, String>() {
-            public String apply(CompositeIndex i) { return i != null ? i.createStatement : null; }
-        };
-
-        List<CompositeIndex> indexList = Arrays.asList(values());
-        return Lists.transform(indexList, compositeIndexToString);
+        return Arrays.asList(values()).stream()
+                .map(i -> i != null ? i.createStatement : null).collect(Collectors.toList());
     }
 
     public static boolean find(String indexName) {
