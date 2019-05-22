@@ -192,6 +192,7 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
 
         {
             String query = getHive2Script(inputDir.toString(), outputDir.toString());
+            query = removeLastNewLineCharacterFromQueryString(query);
             Writer dataWriter = new OutputStreamWriter(fs.create(new Path(inputDir, DATA_FILENAME)),
                     StandardCharsets.UTF_8);
             dataWriter.write(SAMPLE_DATA_TEXT);
@@ -246,6 +247,10 @@ public class TestHive2ActionExecutor extends ActionExecutorTestCase {
             assertTrue(fs.exists(outputDir));
             assertTrue(fs.isDirectory(outputDir));
         }
+    }
+
+    private String removeLastNewLineCharacterFromQueryString(String query) {
+        return query.trim();
     }
 
     public void testHive2ActionFails() throws Exception {

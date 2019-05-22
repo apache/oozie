@@ -259,7 +259,10 @@ public class Hive2Main extends LauncherMain {
     private String createScriptFile(String query) throws IOException {
         String filename = "oozie-hive2-query-" + System.currentTimeMillis() + ".hql";
         File f = new File(filename);
-        FileUtils.writeStringToFile(f, query, StandardCharsets.UTF_8.name());
+        if (query != null && !query.endsWith(System.lineSeparator())) {
+            query += System.lineSeparator();
+        }
+        FileUtils.writeStringToFile(f, query, StandardCharsets.UTF_8);
         return filename;
     }
 
