@@ -112,6 +112,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     }
 
     @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
+    }
+
+    @Override
     public void transitToNext() throws CommandException {
     }
 
@@ -176,11 +181,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
         }
-
+        LogUtils.setLogInfo(coordJob);
         // calculate start materialize and end materialize time
         calcMatdTime();
-
-        LogUtils.setLogInfo(coordJob);
     }
 
     /**
