@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3485 [Java 11] Update Maven Surefire Plugin to 2.22.2 (kmarton via asalamon74)
 OOZIE-2927 Append new line character for Hive2 query using query tag (abhishekbafna,asalamon74 via kmarton)
 OOZIE-3488 Migrate from guava classes to the base Java implementations (zsombor via asalamon74)
 OOZIE-3481 Upgrade Jetty to 9.3.27 (asalamon74 via kmarton)
