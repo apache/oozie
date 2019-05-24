@@ -523,6 +523,13 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-registry</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.hive.hcatalog</groupId>
                 <artifactId>hive-webhcat-java-client</artifactId>
                 <version>${hive.version}</version>
