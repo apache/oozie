@@ -31,7 +31,6 @@
     <description>Apache Oozie Fluent Job API</description>
     <name>Apache Oozie Fluent Job API</name>
     <packaging>jar</packaging>
-
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -67,6 +66,11 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.0</version>
         </dependency>
     </dependencies>
 
@@ -112,52 +116,53 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jaxb2-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>xjc</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <arguments>
-                        <argument>-XhashCode</argument>
-                        <argument>-Xequals</argument>
-                        <argument>-Xnamespace-prefix</argument>
-                        <argument>-Xsetters</argument>
-                    </arguments>
-
-                    <sources>
-                        <source>../../client/src/main/resources/distcp-action-1.0.xsd</source>
-                        <source>../../client/src/main/resources/email-action-0.2.xsd</source>
-                        <source>../../client/src/main/resources/hive2-action-1.0.xsd</source>
-                        <source>../../client/src/main/resources/hive-action-1.0.xsd</source>
-                        <source>../../client/src/main/resources/oozie-sla-0.2.xsd</source>
-                        <source>../../client/src/main/resources/oozie-workflow-1.0.xsd</source>
-                        <source>../../client/src/main/resources/shell-action-1.0.xsd</source>
-                        <source>../../client/src/main/resources/spark-action-1.0.xsd</source>
-                        <source>../../client/src/main/resources/sqoop-action-1.0.xsd</source>
-                        <source>../../client/src/main/resources/ssh-action-0.2.xsd</source>
-                        <source>../../client/src/main/resources/git-action-1.0.xsd</source>
-                    </sources>
-                </configuration>
-
+                <groupId>com.github.davidmoten</groupId>
+                <artifactId>jax-maven-plugin</artifactId>
+                <version>0.1.6</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.jvnet.jaxb2_commons</groupId>
                         <artifactId>jaxb2-basics</artifactId>
                         <version>1.11.1</version>
                     </dependency>
-                    <dependency>
-                        <groupId>org.jvnet.jaxb2_commons</groupId>
-                        <artifactId>jaxb2-namespace-prefix</artifactId>
-                        <version>1.3</version>
-                    </dependency>
                 </dependencies>
+                <executions>
+                    <execution>
+                <phase>generate-sources</phase>
+                <goals>
+                    <goal>xjc</goal>
+                </goals>
+                <configuration>
+                    <systemProperties>
+                        <enableExternalEntityProcessing>true</enableExternalEntityProcessing>
+                    </systemProperties>
+                    <arguments>
+                        <argument>-verbose</argument>
+                        <argument>-XhashCode</argument>
+                        <argument>-Xequals</argument>
+                        <argument>-Xsetters</argument>
+                        <argument>-d</argument>
+                        <argument>${project.basedir}/target/generate-sources/jaxb</argument>
+                        <argument>-b</argument>
+                        <argument>${project.basedir}/src/main/xjb/bindings.xml</argument>
+                        <argument>../../client/src/main/resources/distcp-action-1.0.xsd</argument>
+                        <arhument>../../client/src/main/resources/email-action-0.2.xsd</arhument>
+                        <argument>../../client/src/main/resources/hive2-action-1.0.xsd</argument>
+                        <argument>../../client/src/main/resources/hive-action-1.0.xsd</argument>
+                        <argument>../../client/src/main/resources/oozie-sla-0.2.xsd</argument>
+                        <argument>../../client/src/main/resources/oozie-workflow-1.0.xsd</argument>
+                        <argument>../../client/src/main/resources/shell-action-1.0.xsd</argument>
+                        <argument>../../client/src/main/resources/spark-action-1.0.xsd</argument>
+                        <argument>../../client/src/main/resources/sqoop-action-1.0.xsd</argument>
+                        <argument>../../client/src/main/resources/ssh-action-0.2.xsd</argument>
+                        <argument>../../client/src/main/resources/git-action-1.0.xsd</argument>
+
+                    </arguments>
+                </configuration>
+                    </execution>
+                </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>

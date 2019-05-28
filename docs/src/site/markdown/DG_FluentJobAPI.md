@@ -470,7 +470,7 @@ gets introduced. In any case, Fluent Job API needs to keep up with the changes.
 
 Here are the steps needed:
 
-   * in `fluent-job-api/pom.xml` extend or modify `jaxb2-maven-plugin` section `sources` by a new `source`
+   * in `fluent-job-api/pom.xml` extend or modify `jax-maven-plugin` section `arguments` by a new `argument`
    * in `fluent-job-api/src/main/xjb/bindings.xml` extend by a new or modify an existing `jaxb:bindings`
    * in `fluent-job-api`, `org.apache.oozie.fluentjob.api.mapping` package, introduce a new or modify an existing `DozerConverter`
    * in `dozer_config.xml`, introduce a new or modify an existing `converter` inside `custom-converters`

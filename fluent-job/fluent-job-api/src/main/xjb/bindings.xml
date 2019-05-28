@@ -21,20 +21,13 @@
 <jaxb:bindings xmlns:xs="http://www.w3.org/2001/XMLSchema"
         xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" version="2.1"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:namespace="http://jaxb2-commons.dev.java.net/namespace-prefix"
-        xsi:schemaLocation="http://java.sun.com/xml/ns/jaxb http://java.sun.com/xml/ns/jaxb/bindingschema_2_1.xsd
-            http://jaxb2-commons.dev.java.net/namespace-prefix
-            https://raw.githubusercontent.com/Siggen/jaxb2-namespace-prefix/master/src/main/resources/prefix-namespace-schema.xsd">
+        xsi:schemaLocation="http://java.sun.com/xml/ns/jaxb http://java.sun.com/xml/ns/jaxb/bindingschema_2_1.xsd">
 
     <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/distcp-action-1.0.xsd">
 
         <jaxb:schemaBindings>
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.distcp"/>
         </jaxb:schemaBindings>
-
-        <jaxb:bindings>
-            <namespace:prefix name="distcp" />
-        </jaxb:bindings>
 
     </jaxb:bindings>
 
@@ -44,10 +37,6 @@
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.email"/>
         </jaxb:schemaBindings>
 
-        <jaxb:bindings>
-            <namespace:prefix name="email" />
-        </jaxb:bindings>
-
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/hive2-action-1.0.xsd">
@@ -56,9 +45,6 @@
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.hive2"/>
         </jaxb:schemaBindings>
 
-        <jaxb:bindings>
-            <namespace:prefix name="hive2" />
-        </jaxb:bindings>
 
     </jaxb:bindings>
 
@@ -68,33 +54,14 @@
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.hive"/>
         </jaxb:schemaBindings>
 
-        <jaxb:bindings>
-            <namespace:prefix name="hive" />
-        </jaxb:bindings>
-
     </jaxb:bindings>
 
-    <!--<jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/oozie-sla-0.2.xsd">-->
-
-        <!--<jaxb:schemaBindings>-->
-            <!--<jaxb:package name = "org.apache.oozie.fluentjob.api.generated.sla"/>-->
-        <!--</jaxb:schemaBindings>-->
-
-        <!--<jaxb:bindings>-->
-            <!--<namespace:prefix name="sla" />-->
-        <!--</jaxb:bindings>-->
-
-    <!--</jaxb:bindings>-->
 
     <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/oozie-workflow-1.0.xsd">
 
         <jaxb:schemaBindings>
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.workflow"/>
         </jaxb:schemaBindings>
-
-        <jaxb:bindings>
-            <namespace:prefix name="workflow" />
-        </jaxb:bindings>
 
         <jaxb:bindings node="//xs:complexType[@name='ACTION']/xs:sequence/xs:choice/xs:any">
             <jaxb:property name="other" generateElementProperty="true"/>
@@ -107,7 +74,6 @@
                     <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.sla"/>
                 </jaxb:schemaBindings>
 
-                <namespace:prefix name="sla" />
             </jaxb:bindings>
 
             <jaxb:property name="sla" generateElementProperty="true"/>
@@ -121,10 +87,6 @@
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.shell"/>
         </jaxb:schemaBindings>
 
-        <jaxb:bindings>
-            <namespace:prefix name="shell" />
-        </jaxb:bindings>
-
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/spark-action-1.0.xsd">
@@ -132,10 +94,6 @@
         <jaxb:schemaBindings>
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.spark"/>
         </jaxb:schemaBindings>
-
-        <jaxb:bindings>
-            <namespace:prefix name="spark" />
-        </jaxb:bindings>
 
     </jaxb:bindings>
 
@@ -145,10 +103,6 @@
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.sqoop"/>
         </jaxb:schemaBindings>
 
-        <jaxb:bindings>
-            <namespace:prefix name="sqoop" />
-        </jaxb:bindings>
-
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/ssh-action-0.2.xsd">
@@ -157,10 +111,6 @@
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.ssh"/>
         </jaxb:schemaBindings>
 
-        <jaxb:bindings>
-            <namespace:prefix name="ssh" />
-        </jaxb:bindings>
-
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation = "../../../../../client/src/main/resources/git-action-1.0.xsd">
@@ -168,10 +118,6 @@
         <jaxb:schemaBindings>
             <jaxb:package name = "org.apache.oozie.fluentjob.api.generated.action.git"/>
         </jaxb:schemaBindings>
-
-        <jaxb:bindings>
-            <namespace:prefix name="git" />
-        </jaxb:bindings>
 
     </jaxb:bindings>
 </jaxb:bindings>

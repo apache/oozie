@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3483 [Java 11] Fluent job API build fails due to Jaxb2 maven plugin (kmarton via asalamon74)
 OOZIE-3494 Incorrect hadoop-yarn-registry version(asalamon74 via kmarton)
 OOZIE-3455 Inconsistent CoordMaterializeTransitionXCommand logging(asalamon74 via kmarton)
 OOZIE-3485 [Java 11] Update Maven Surefire Plugin to 2.22.2 (kmarton via asalamon74)
