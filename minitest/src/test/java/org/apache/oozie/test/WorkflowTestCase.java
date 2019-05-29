@@ -238,8 +238,6 @@ public abstract class WorkflowTestCase extends MiniOozieTestCase {
 
             workflowJob = oozieClient.getJobInfo(workflowJobId);
 
-            assertEquals(WorkflowJob.Status.RUNNING, workflowJob.getStatus());
-
             return this;
         }
 
