@@ -1518,7 +1518,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 }
                 catch (Exception e) {
                     assertTrue(e.getMessage().contains(
-                            "Error while connecting Oozie server. No of retries = 4. Exception = Connection refused"));
+                            "Error while connecting Oozie server. No of retries = 4."));
                 }
                 return null;
             }
@@ -1571,7 +1571,7 @@ public class TestOozieCLI extends DagServletTestCase {
                 }
                 catch (Exception e) {
                     assertTrue(e.getMessage().contains(
-                            "Error while connecting Oozie server. No of retries = 2. Exception = Connection refused"));
+                            "Error while connecting Oozie server. No of retries = 2."));
                 }
                 return null;
             }
