@@ -35,13 +35,13 @@
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
 
     <organization>
         <name>Apache Software Foundation</name>
-        <url>http://www.apache.org</url>
+        <url>https://www.apache.org</url>
     </organization>
 
     <properties>
@@ -145,7 +145,7 @@
     <repositories>
         <repository>
             <id>central</id>
-            <url>http://repo1.maven.org/maven2</url>
+            <url>https://repo1.maven.org/maven2</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -159,9 +159,8 @@
             </snapshots>
         </repository>
         <repository>
-            <id>datanucleus</id>
-            <url>http://www.datanucleus.org/downloads/maven2</url>
-            <name>Datanucleus</name>
+            <id>redhat</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
