@@ -181,7 +181,7 @@ public class CoordMaterializeTriggerService implements Service, Instrumentable {
                     updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME,
                             coordJob));
                     Timestamp startTime = coordJob.getNextMaterializedTimestamp();
-                    if (startTime != null && startTime.getTime() > now) {
+                    if (startTime != null && startTime.getTime() < now) {
                         delayedCount ++;
                     }
                 }

@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3393 amend Add Oozie instrumentation delayed metric in CoordMaterializeTriggerService (zuston via asalamon74)
 OOZIE-3500 Flaky tests based on WorkflowTestCase (asalamon74 via kmarton)
 OOZIE-3498 TestOozieCLI testRetryWithRetryCount and testRetryForTimeout is flaky (asalamon74 via kmarton)
 OOZIE-3483 [Java 11] Fluent job API build fails due to Jaxb2 maven plugin (kmarton via asalamon74)
