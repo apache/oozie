@@ -2187,7 +2187,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
                 "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
                 "<name-node>" + getNameNodeUri() + "</name-node>" +
                 "<configuration>" +
-                "  <property><name>oozie.launcher.queue</name><value>test</value></property>" +
+                "  <property><name>oozie.launcher.queue</name><value>default1</value></property>" +
                 "</configuration>" +
                 "<main-class>" + LauncherMainTester.class.getName() + "</main-class>" +
                 "</java>";
@@ -2198,10 +2198,10 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         String queue = getHadoopAccessorService().createYarnClient(getTestUser(), conf).getApplicationReport(appId).getQueue();
 
         if (isFairSchedulerUsed(conf)) {
-            assertEquals("root.test", queue);
+            assertEquals("root.default1", queue);
         }
         else {
-            assertEquals("test", queue);
+            assertEquals("default1", queue);
         }
     }
 
