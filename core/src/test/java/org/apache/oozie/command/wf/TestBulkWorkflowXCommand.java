@@ -18,7 +18,6 @@
 package org.apache.oozie.command.wf;
 
 import org.apache.oozie.command.OperationType;
-import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
@@ -29,12 +28,15 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TestBulkWorkflowXCommand extends XDataTestCase {
+    private static final String VALID_APP_NAME = "testApp";
+    private static final String INVALID_APP_NAME = "testApp-new";
     private Services services;
 
     @Override
@@ -57,10 +59,7 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job2 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action2 = this.addRecordToWfActionTable(job2.getId(), "1", WorkflowAction.Status.PREP);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(VALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 10, OperationType.Suspend).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.SUSPENDED);
@@ -73,8 +72,8 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         new BulkWorkflowXCommand(map, 1, 10, OperationType.Kill).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.KILLED);
         verifyJobStatus(job2.getId(), WorkflowJob.Status.KILLED);
-        verifyActionStatus(action1.getId(), WorkflowAction.Status.KILLED);
-        verifyActionStatus(action2.getId(), WorkflowAction.Status.KILLED);
+        verifyActionStatus(action1.getId(), WorkflowAction.Status.KILLED, WorkflowAction.Status.FAILED);
+        verifyActionStatus(action2.getId(), WorkflowAction.Status.KILLED, WorkflowAction.Status.FAILED);
     }
 
     public void testbulkWfKillSuccess() throws Exception {
@@ -84,16 +83,13 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job2 = this.addRecordToWfJobTable(WorkflowJob.Status.SUSPENDED, WorkflowInstance.Status.SUSPENDED);
         WorkflowActionBean action2 = this.addRecordToWfActionTable(job2.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(VALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Kill).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.KILLED);
         verifyJobStatus(job2.getId(), WorkflowJob.Status.KILLED);
-        verifyActionStatus(action1.getId(), WorkflowAction.Status.KILLED);
-        verifyActionStatus(action2.getId(), WorkflowAction.Status.KILLED);
+        verifyActionStatus(action1.getId(), WorkflowAction.Status.KILLED, WorkflowAction.Status.FAILED);
+        verifyActionStatus(action2.getId(), WorkflowAction.Status.KILLED, WorkflowAction.Status.FAILED);
     }
 
     public void testbulkWfKillNoOp() throws Exception {
@@ -103,15 +99,12 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job2 = this.addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean action2 = this.addRecordToWfActionTable(job2.getId(), "1", WorkflowAction.Status.DONE);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(VALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Kill).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.KILLED);
         verifyJobStatus(job2.getId(), WorkflowJob.Status.SUCCEEDED);
-        verifyActionStatus(action1.getId(), WorkflowAction.Status.KILLED);
+        verifyActionStatus(action1.getId(), WorkflowAction.Status.KILLED, WorkflowAction.Status.FAILED);
         verifyActionStatus(action2.getId(), WorkflowAction.Status.DONE);
     }
 
@@ -119,10 +112,7 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job1 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action1 = this.addRecordToWfActionTable(job1.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp-new");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(INVALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Kill).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.RUNNING);
@@ -136,10 +126,7 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job2 = this.addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
         WorkflowActionBean action2 = this.addRecordToWfActionTable(job2.getId(), "1", WorkflowAction.Status.DONE);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(VALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Suspend).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.SUSPENDED);
@@ -152,10 +139,7 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job1 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action1 = this.addRecordToWfActionTable(job1.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp-new");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(INVALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Suspend).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.RUNNING);
@@ -166,10 +150,7 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job1 = this.addRecordToWfJobTable(WorkflowJob.Status.SUSPENDED, WorkflowInstance.Status.SUSPENDED);
         WorkflowActionBean action1 = this.addRecordToWfActionTable(job1.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp-new");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(INVALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Resume).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.SUSPENDED);
@@ -180,10 +161,7 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
         WorkflowJobBean job1 = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action1 = this.addRecordToWfActionTable(job1.getId(), "1", WorkflowAction.Status.RUNNING);
 
-        Map<String, List<String>> map = new HashMap<String, List<String>>();
-        List<String> names = new ArrayList<String>();
-        names.add("testApp");
-        map.put("name", names);
+        Map<String, List<String>> map = getFilterMap(VALID_APP_NAME);
 
         new BulkWorkflowXCommand(map, 1, 50, OperationType.Resume).call();
         verifyJobStatus(job1.getId(), WorkflowJob.Status.RUNNING);
@@ -193,12 +171,20 @@ public class TestBulkWorkflowXCommand extends XDataTestCase {
     private void verifyJobStatus(String jobId, WorkflowJob.Status status) throws Exception {
         WorkflowJobBean job = WorkflowJobQueryExecutor.getInstance().get(
                 WorkflowJobQueryExecutor.WorkflowJobQuery.GET_WORKFLOW, jobId);
-        assertEquals(status, job.getStatus());
+        assertEquals( "Invalid job status", status, job.getStatus());
     }
 
-    private void verifyActionStatus(String actionId, WorkflowAction.Status status) throws Exception {
+    private void verifyActionStatus(String actionId, WorkflowAction.Status... statuses) throws Exception {
         WorkflowActionBean action = WorkflowActionQueryExecutor.getInstance().get(
                 WorkflowActionQueryExecutor.WorkflowActionQuery.GET_ACTION, actionId);
-        assertEquals(status, action.getStatus());
+        assertTrue("Invalid action status", Arrays.asList(statuses).contains(action.getStatus()));
     }
+
+    private Map<String, List<String>> getFilterMap(String appName) {
+        Map<String, List<String>> map = new HashMap<>();
+        List<String> names = Collections.singletonList(appName);
+        map.put("name", names);
+        return map;
+    }
+
 }

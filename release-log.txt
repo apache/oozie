@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3489 TestBulkWorkflowXCommand.testbulkWfKillSuccess is flaky (asalamon74 via kmarton)
 OOZIE-3502 Use https when downloading dependencies (gezapeti)
 OOZIE-3490 [Java 11] Remove com.sun:tools dependency from core module (kmarton via asalamon74)
 OOZIE-3393 amend Add Oozie instrumentation delayed metric in CoordMaterializeTriggerService (zuston via asalamon74)
