@@ -22,8 +22,11 @@ package org.apache.oozie.workflow.lite;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
@@ -67,194 +70,109 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserGlobal() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1),
-                new Configuration());
-
-        String d = app.getNode("d").getConf();
-        String expectedD =
-             "<map-reduce xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp\" />\r\n" +
-             "    <mkdir path=\"/tmp\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <streaming>\r\n" +
-             "    <mapper>/mycat.sh</mapper>\r\n" +
-             "    <reducer>/mywc.sh</reducer>\r\n" +
-             "  </streaming>\r\n" +
-             "  <file>/tmp</file>\r\n" +
-             "  <archive>/tmp</archive>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
-             "  <job-tracker>${foo}</job-tracker>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "</map-reduce>";
-        d = cleanupXml(d);
-        assertEquals(expectedD.replaceAll(" ", ""), d.replaceAll(" ", ""));
+        String workflowXml = "wf-schema-valid-global.xml";
+        String nodeName = "d";
+        String d = getNodeConfig(workflowXml, nodeName);
+        String configuration = extractConfigurationFromXML(d);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a","A");
+        expectedConfigs.put("b","B");
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "${foo}";
+        checkGlobalParametersInAction(d, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
 
     }
 
-    public void testParserGlobalJobXML() throws Exception {
+    private String getNodeConfig(String workflowXml, String nodeName) throws WorkflowException, IOException {
         LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-jobXml.xml", -1),
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader(workflowXml, -1),
                 new Configuration());
+        return app.getNode(nodeName).getConf();
+    }
 
-        String d = app.getNode("d").getConf();
-        String expectedD =
-             "<map-reduce xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp\" />\r\n" +
-             "    <mkdir path=\"/tmp\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <streaming>\r\n" +
-             "    <mapper>/mycat.sh</mapper>\r\n" +
-             "    <reducer>/mywc.sh</reducer>\r\n" +
-             "  </streaming>\r\n" +
-             "  <job-xml>/tmp</job-xml>\r\n" +
-             "  <file>/tmp</file>\r\n" +
-             "  <archive>/tmp</archive>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
-             "  <job-xml>/spam1</job-xml>\r\n" +
-             "  <job-xml>/spam2</job-xml>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "</map-reduce>";
-        d = cleanupXml(d);
-        assertEquals(expectedD.replaceAll(" ", ""), d.replaceAll(" ", ""));
+    private String extractConfigurationFromXML(String actionConfig) {
+        return StringUtils.substringBetween(cleanupXml(actionConfig), "<configuration>", "</configuration>");
+    }
+
+    private void checkGlobalParametersInAction(String actionConfig, String configuration, String expectedNameNode,
+                                               String expectedJobTracker, Map<String,String> expectedConfigs) {
+        String nameNode = "<name-node>" + expectedNameNode + "</name-node>";
+        String jobTracker =  "<job-tracker>" + expectedJobTracker + "</job-tracker>";
+
+        assertTrue("Missing nameNode configuration", actionConfig.contains(nameNode));
+        assertTrue("Missing job-tracker configuration", actionConfig.contains(jobTracker));
+
+        for(Map.Entry<String, String> entry:expectedConfigs.entrySet()) {
+            String expectedConfig = "<property>\r\n" +
+                    "      <name>" + entry.getKey() + "</name>\r\n" +
+                    "      <value>" + entry.getValue() + "</value>\r\n";
+            assertTrue("Missing configuration", configuration.contains(expectedConfig));
+        }
+    }
+
+    public void testParserGlobalJobXML() throws Exception {
+        String workFlowXml = "wf-schema-valid-global-jobXml.xml";
+        String nodeName = "d";
+        String d = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(d);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A");
+        expectedConfigs.put("b", "B");
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "foo";
+        checkGlobalParametersInAction(d, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
+        assertTrue("Missing spam1 job-xml parameter", d.contains("<job-xml>/spam1</job-xml>\r\n"));
+        assertTrue("Missing spam2 job-xml parameter", d.contains("<job-xml>/spam2</job-xml>\r\n"));
+        assertTrue("Missing /tmp job-xml parameter", d.contains( "<job-xml>/tmp</job-xml>\r\n"));
 
     }
 
     public void testParserGlobalLocalAlreadyExists() throws Exception{
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+        String workFlowXml = "wf-schema-valid-global.xml";
+        String nodeName = "e";
+        String e = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(e);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A2");
+        expectedConfigs.put("b", "B");
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1),
-                new Configuration());
-
-        String e = app.getNode("e").getConf();
-        String expectedE =
-                "<pig xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-                "  <prepare>\r\n" +
-                "    <delete path=\"/tmp\" />\r\n" +
-                "    <mkdir path=\"/tmp\" />\r\n" +
-                "  </prepare>\r\n" +
-                "  <configuration>\r\n" +
-                "    <property>\r\n" +
-                "      <name>b</name>\r\n" +
-                "      <value>B</value>\r\n" +
-                "    </property>\r\n" +
-                "    <property>\r\n" +
-                "      <name>a</name>\r\n" +
-                "      <value>A2</value>\r\n" +
-                "    </property>\r\n" +
-                "  </configuration>\r\n" +
-                "  <script>/tmp</script>\r\n" +
-                "  <param>x</param>\r\n" +
-                "  <file>/tmp</file>\r\n" +
-                "  <file>/tmp</file>\r\n" +
-                "  <name-node>bar</name-node>\r\n" +
-                "  <job-tracker>${foo}</job-tracker>\r\n" +
-                "</pig>";
-        e = cleanupXml(e);
-        assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
-
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "${foo}";
+        checkGlobalParametersInAction(e, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
     }
 
     public void testParserGlobalExtensionActions() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+        String workFlowXml = "wf-schema-valid-global-ext.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(a);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A");
+        expectedConfigs.put("b", "B");
+        expectedConfigs.put("c", "C");
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "foo";
+        checkGlobalParametersInAction(a, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
-                new Configuration());
-
-        String a = app.getNode("a").getConf();
-        String expectedA =
-             "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp\" />\r\n" +
-             "    <mkdir path=\"/tmp\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>c</name>\r\n" +
-             "      <value>C</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "  <script>script.q</script>\r\n" +
-             "  <param>INPUT=/tmp/table</param>\r\n" +
-             "  <param>OUTPUT=/tmp/hive</param>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
-             "</hive>";
-        a = cleanupXml(a);
-        assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
 
     public void testParserGlobalExtensionActionsLocalAlreadyExists() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
-                new Configuration());
-
-        String b = app.getNode("b").getConf();
-        String expectedB =
-             "<distcp xmlns=\"uri:oozie:distcp-action:0.1\">\r\n" +
-             "  <job-tracker>blah</job-tracker>\r\n" +
-             "  <name-node>meh</name-node>\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp2\" />\r\n" +
-             "    <mkdir path=\"/tmp2\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A2</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "  <arg>/tmp/data.txt</arg>\r\n" +
-             "  <arg>/tmp2/data.txt</arg>\r\n" +
-             "</distcp>";
-        b = cleanupXml(b);
-        assertEquals(expectedB.replaceAll(" ", ""), b.replaceAll(" ", ""));
+        String workFlowXml = "wf-schema-valid-global-ext.xml";
+        String nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(b);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A2");
+        expectedConfigs.put("b", "B");
+        String expectedNameNode = "meh";
+        String expectedJobTracker = "blah";
+        checkGlobalParametersInAction(b, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
     }
 
     public void testParserGlobalExtensionActionsNotApplicable() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        // Not all actions want a JT, NN, conf, or jobxml (e.g. email action)
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
-                new Configuration());
-
-        String c1 = app.getNode("c1").getConf();
+        String workFlowXml = "wf-schema-valid-global-ext.xml";
+        String nodeName = "c1";
+        String c1 = getNodeConfig(workFlowXml, nodeName);
         String expectedC1 =
                 "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
                 "  <to>foo@bar.com</to>\r\n" +
@@ -288,11 +206,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultNameNode() throws Exception {
         ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-namenode.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -316,12 +232,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserDefaultNameNodeWithGlobal() throws Exception {
-        ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode-global.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-namenode-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -346,12 +259,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultNameNodeNotApplicable() throws Exception {
         ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
         // Not all actions want a NN (e.g. email action)
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
-                new Configuration());
-        String b1 = app.getNode("b1").getConf();
+        String workFlowXml = "wf-schema-no-namenode.xml";
+        String nodeName = "b1";
+        String b1 = getNodeConfig(workFlowXml, nodeName);
         String expectedB1 =
                 "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
                         "  <to>foo@bar.com</to>\r\n" +
@@ -378,11 +289,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultJobTracker() throws Exception {
         ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-jobtracker.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -407,11 +316,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultJobTrackerWithGlobal() throws Exception {
         ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker-global.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-jobtracker-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -436,12 +343,11 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultJobTrackerNotApplicable() throws Exception {
         ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         // Not all actions want a NN (e.g. email action)
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
-                new Configuration());
-        String b1 = app.getNode("b1").getConf();
+        String workFlowXml = "wf-schema-no-jobtracker.xml";
+        String nodeName = "b1";
+        String b1 = getNodeConfig(workFlowXml, nodeName);
         String expectedB1 =
                 "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
                         "  <to>foo@bar.com</to>\r\n" +
@@ -467,13 +373,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserSubWorkflowPropagateNoGlobal() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(
-                IOUtils.getResourceAsReader("wf-schema-subworkflow-propagate-no-global.xml", -1),
-                new Configuration());
-
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-subworkflow-propagate-no-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<sub-workflowxmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "<app-path>/tmp/foo/</app-path>\r\n" +
@@ -485,11 +387,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserFsGlobalNN() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode-global.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-fs-no-namenode-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <name-node>action-nn</name-node>\r\n" +
@@ -498,7 +398,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                         "</fs>";
         a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
-        String b = app.getNode("b").getConf();
+        nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
         String expectedB =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <mkdir path=\"/foo\" />\r\n" +
@@ -511,11 +412,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserFsDefaultNN() throws Exception {
         ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-fs-no-namenode.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <name-node>action-nn</name-node>\r\n" +
@@ -524,7 +423,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                         "</fs>";
         a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
-        String b = app.getNode("b").getConf();
+
+        nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
         String expectedB =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <mkdir path=\"/foo\" />\r\n" +
@@ -536,11 +437,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserFsNoNN() throws Exception {
-        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-fs-no-namenode.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <name-node>action-nn</name-node>\r\n" +
@@ -550,7 +449,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
         // The FS Action shouldn't care if there's no NN in the end
-        String b = app.getNode("b").getConf();
+        nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
         String expectedB =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <mkdir path=\"/foo\" />\r\n" +
