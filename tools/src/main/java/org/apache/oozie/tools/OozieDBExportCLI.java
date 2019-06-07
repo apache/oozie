@@ -19,6 +19,7 @@
 package org.apache.oozie.tools;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.cli.CLIParser;
@@ -176,7 +177,7 @@ public class OozieDBExportCLI {
     }
 
     private static int exportTableToJSON(Query query, ZipOutputStream zipOutputStream, String filename) throws IOException {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
         ZipEntry zipEntry = new ZipEntry(filename);
         zipOutputStream.putNextEntry(zipEntry);
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8.name()));

@@ -19,7 +19,6 @@ package org.apache.oozie.tools;
 
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.*;
-import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
@@ -35,14 +34,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.security.Permission;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -97,11 +95,18 @@ public class TestDBLoadDump extends XTestCase {
 
         exportFromDB(newZipDump);
 
-        assertEquals(validZipDump.length(), newZipDump.length());
-        final ZipFile zip = new ZipFile(newZipDump);
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(
-                zip.getInputStream(zip.getEntry("ooziedb_wf.json")), StandardCharsets.UTF_8));
-        assertTrue(reader.readLine().contains("0000003-160720041037822-oozie-oozi-W"));
+        validateZipContent(new ZipFile(validZipDump), new ZipFile(newZipDump));
+    }
+
+    private void validateZipContent(ZipFile expectedZip, ZipFile actualZip) {
+        assertEquals("Unexpected zip file size", expectedZip.size(), actualZip.size());
+        for (Enumeration e = expectedZip.entries(); e.hasMoreElements();) {
+            ZipEntry entry = ((ZipEntry)e.nextElement());
+            String fileName = entry.getName();
+            long expectedChecksum = entry.getCrc();
+            long actualChecksum = actualZip.getEntry(fileName).getCrc();
+            assertEquals("Checksum mismatch for file: " + fileName, expectedChecksum, actualChecksum);
+        }
     }
 
     @Test

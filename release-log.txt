@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3505 [Java 11] Fix TestDBLoadDump (kmarton via asalamon74)
 OOZIE-2879 Remove unused class SLAStore and related classes (asalamon74 via kmarton)
 OOZIE-3510 TestProxyUserService.testInvalidGroup fails if executed by nobody (asalamon74 via kmarton)
 OOZIE-3499 [Java 11] Fix TestLiteWorkflowAppParser (kmarton via asalamon74)
