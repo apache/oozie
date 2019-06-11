@@ -42,9 +42,9 @@ import org.apache.oozie.fluentjob.api.dag.ExplicitNode;
 import org.apache.oozie.fluentjob.api.dag.Fork;
 import org.apache.oozie.fluentjob.api.dag.Join;
 import org.apache.oozie.fluentjob.api.dag.NodeBase;
-import org.dozer.DozerConverter;
-import org.dozer.Mapper;
-import org.dozer.MapperAware;
+import com.github.dozermapper.core.DozerConverter;
+import com.github.dozermapper.core.Mapper;
+import com.github.dozermapper.core.MapperAware;
 
 import java.util.HashMap;
 import java.util.Map;

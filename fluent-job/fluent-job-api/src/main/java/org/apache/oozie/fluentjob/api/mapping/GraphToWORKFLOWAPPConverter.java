@@ -21,9 +21,9 @@ package org.apache.oozie.fluentjob.api.mapping;
 import com.google.common.base.Preconditions;
 import org.apache.oozie.fluentjob.api.generated.workflow.WORKFLOWAPP;
 import org.apache.oozie.fluentjob.api.dag.Graph;
-import org.dozer.DozerConverter;
-import org.dozer.Mapper;
-import org.dozer.MapperAware;
+import com.github.dozermapper.core.DozerConverter;
+import com.github.dozermapper.core.Mapper;
+import com.github.dozermapper.core.MapperAware;
 
 /**
  * A {@link DozerConverter} converting from {@link Graph} to JAXB {@link WORKFLOWAPP}.

@@ -22,7 +22,7 @@ import org.apache.oozie.fluentjob.api.generated.workflow.ObjectFactory;
 import org.apache.oozie.fluentjob.api.generated.workflow.PARAMETERS;
 import org.apache.oozie.fluentjob.api.workflow.Parameter;
 import org.apache.oozie.fluentjob.api.workflow.Parameters;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 /**
  * A {@link DozerConverter} converting from {@link Parameters} to JAXB {@link PARAMETERS}.

@@ -20,7 +20,7 @@ package org.apache.oozie.fluentjob.api.mapping;
 
 import org.apache.oozie.fluentjob.api.generated.action.shell.FLAG;
 import org.apache.oozie.fluentjob.api.generated.action.shell.ObjectFactory;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 /**
  * A {@link DozerConverter} converting from {@link Boolean} to JAXB {@link FLAG}.

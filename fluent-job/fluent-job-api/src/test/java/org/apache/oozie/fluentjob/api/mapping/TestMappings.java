@@ -24,7 +24,7 @@ import org.apache.oozie.fluentjob.api.action.MapReduceActionBuilder;
 import org.apache.oozie.fluentjob.api.dag.Graph;
 import org.apache.oozie.fluentjob.api.workflow.Workflow;
 import org.apache.oozie.fluentjob.api.workflow.WorkflowBuilder;
-import org.dozer.DozerBeanMapper;
+import com.github.dozermapper.core.DozerBeanMapper;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -49,8 +49,7 @@ public class TestMappings {
         mappingFiles.add("mappingGraphToWORKFLOWAPP.xml");
         mappingFiles.add("action_mappings.xml");
 
-        final DozerBeanMapper mapper = new DozerBeanMapper();
-        mapper.setMappingFiles(mappingFiles);
+        final DozerBeanMapper mapper = DozerBeanMapperSingleton.instance();
 
         final WORKFLOWAPP workflowapp = mapper.map(graph, WORKFLOWAPP.class);
 

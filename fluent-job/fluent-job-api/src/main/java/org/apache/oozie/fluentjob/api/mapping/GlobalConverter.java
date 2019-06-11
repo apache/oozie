@@ -24,9 +24,9 @@ import org.apache.oozie.fluentjob.api.generated.workflow.GLOBAL;
 import org.apache.oozie.fluentjob.api.generated.workflow.LAUNCHER;
 import org.apache.oozie.fluentjob.api.generated.workflow.ObjectFactory;
 import org.apache.oozie.fluentjob.api.workflow.Global;
-import org.dozer.DozerConverter;
-import org.dozer.Mapper;
-import org.dozer.MapperAware;
+import com.github.dozermapper.core.DozerConverter;
+import com.github.dozermapper.core.Mapper;
+import com.github.dozermapper.core.MapperAware;
 
 /**
  * A {@link DozerConverter} converting from {@link Global} to JAXB {@link GLOBAL}.

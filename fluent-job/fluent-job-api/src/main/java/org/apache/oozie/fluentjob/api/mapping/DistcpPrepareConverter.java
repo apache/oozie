@@ -25,7 +25,7 @@ import org.apache.oozie.fluentjob.api.generated.action.distcp.PREPARE;
 import org.apache.oozie.fluentjob.api.action.Delete;
 import org.apache.oozie.fluentjob.api.action.Mkdir;
 import org.apache.oozie.fluentjob.api.action.Prepare;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 import java.util.ArrayList;
 import java.util.List;

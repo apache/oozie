@@ -18,10 +18,10 @@
   limitations under the License.
 -->
 
-<mappings xmlns="http://dozer.sourceforge.net"
+<mappings xmlns="http://dozermapper.github.io/schema/bean-mapping"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://dozer.sourceforge.net
-          http://dozer.sourceforge.net/schema/beanmapping.xsd">
+          xsi:schemaLocation="http://dozermapper.github.io/schema/bean-mapping
+          https://dozermapper.github.io/schema/bean-mapping.xsd">
 
     <mapping type="one-way">
         <class-a>org.apache.oozie.fluentjob.api.dag.End</class-a>

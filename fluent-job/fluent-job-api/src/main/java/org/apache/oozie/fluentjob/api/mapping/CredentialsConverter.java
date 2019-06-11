@@ -24,7 +24,7 @@ import org.apache.oozie.fluentjob.api.generated.workflow.ObjectFactory;
 import org.apache.oozie.fluentjob.api.workflow.ConfigurationEntry;
 import org.apache.oozie.fluentjob.api.workflow.Credential;
 import org.apache.oozie.fluentjob.api.workflow.Credentials;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 /**
  * A {@link DozerConverter} converting from {@link Credentials} to JAXB {@link CREDENTIALS}.

@@ -23,7 +23,7 @@ import org.apache.oozie.fluentjob.api.generated.workflow.FORKTRANSITION;
 import org.apache.oozie.fluentjob.api.generated.workflow.ObjectFactory;
 import org.apache.oozie.fluentjob.api.dag.Fork;
 import org.apache.oozie.fluentjob.api.dag.NodeBase;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 import java.util.List;
 

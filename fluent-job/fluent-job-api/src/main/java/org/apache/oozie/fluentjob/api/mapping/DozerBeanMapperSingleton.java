@@ -18,7 +18,8 @@
 
 package org.apache.oozie.fluentjob.api.mapping;
 
-import org.dozer.DozerBeanMapper;
+import com.github.dozermapper.core.DozerBeanMapper;
+import com.github.dozermapper.core.DozerBeanMapperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,14 +31,11 @@ public class DozerBeanMapperSingleton {
     private static DozerBeanMapper mapper;
 
     private static void init() {
-        mapper = new DozerBeanMapper();
-
         final List<String> mappingFiles = new ArrayList<>();
         mappingFiles.add("dozer_config.xml");
         mappingFiles.add("mappingGraphToWORKFLOWAPP.xml");
         mappingFiles.add("action_mappings.xml");
-
-        mapper.setMappingFiles(mappingFiles);
+        mapper = (DozerBeanMapper)DozerBeanMapperBuilder.create().withMappingFiles(mappingFiles).build();
     }
 
     public static DozerBeanMapper instance() {

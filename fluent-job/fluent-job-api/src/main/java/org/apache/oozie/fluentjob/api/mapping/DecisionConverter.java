@@ -28,9 +28,9 @@ import org.apache.oozie.fluentjob.api.generated.workflow.SWITCH;
 import org.apache.oozie.fluentjob.api.dag.DagNodeWithCondition;
 import org.apache.oozie.fluentjob.api.dag.Decision;
 import org.apache.oozie.fluentjob.api.dag.NodeBase;
-import org.dozer.DozerConverter;
-import org.dozer.Mapper;
-import org.dozer.MapperAware;
+import com.github.dozermapper.core.DozerConverter;
+import com.github.dozermapper.core.Mapper;
+import com.github.dozermapper.core.MapperAware;
 
 import java.util.List;
 

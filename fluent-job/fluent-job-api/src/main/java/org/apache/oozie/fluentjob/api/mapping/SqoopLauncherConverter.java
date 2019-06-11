@@ -21,7 +21,7 @@ package org.apache.oozie.fluentjob.api.mapping;
 import org.apache.oozie.fluentjob.api.generated.action.sqoop.LAUNCHER;
 import org.apache.oozie.fluentjob.api.generated.action.sqoop.ObjectFactory;
 import org.apache.oozie.fluentjob.api.action.Launcher;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 /**
  * A {@link DozerConverter} converting from {@link Launcher} to JAXB {@link LAUNCHER}.

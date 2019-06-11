@@ -47,9 +47,9 @@ import org.apache.oozie.fluentjob.api.dag.DecisionJoin;
 import org.apache.oozie.fluentjob.api.dag.ExplicitNode;
 import org.apache.oozie.fluentjob.api.dag.NodeBase;
 import org.apache.oozie.fluentjob.api.workflow.Credential;
-import org.dozer.DozerConverter;
-import org.dozer.Mapper;
-import org.dozer.MapperAware;
+import com.github.dozermapper.core.DozerConverter;
+import com.github.dozermapper.core.Mapper;
+import com.github.dozermapper.core.MapperAware;
 import com.google.common.base.Preconditions;
 
 import javax.xml.bind.JAXBElement;

@@ -20,7 +20,7 @@ package org.apache.oozie.fluentjob.api.mapping;
 
 import org.apache.oozie.fluentjob.api.generated.workflow.CONFIGURATION;
 import org.apache.oozie.fluentjob.api.generated.workflow.ObjectFactory;
-import org.dozer.DozerConverter;
+import com.github.dozermapper.core.DozerConverter;
 
 import java.util.Map;
 
