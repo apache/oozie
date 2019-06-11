@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import com.google.common.base.Strings;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
@@ -46,6 +47,8 @@ public class SparkActionExecutor extends JavaActionExecutor {
     public static final String SPARK_JAR = "oozie.spark.jar";
     public static final String MAPRED_CHILD_ENV = "mapred.child.env";
     private static final String CONF_OOZIE_SPARK_SETUP_HADOOP_CONF_DIR = "oozie.action.spark.setup.hadoop.conf.dir";
+    private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
+    private static final String HADOOP_CLIENT_CONF_DIR = "HADOOP_CLIENT_CONF_DIR";
 
     public SparkActionExecutor() {
         super("spark");
@@ -147,6 +150,19 @@ public class SparkActionExecutor extends JavaActionExecutor {
     @Override
     protected void addActionSpecificEnvVars(Map<String, String> env) {
         env.put("SPARK_HOME", ".");
+        setHadoopConfDirIfEmpty(env);
+    }
+
+    private void setHadoopConfDirIfEmpty(Map<String, String> env) {
+        String envHadoopConfDir = env.get(HADOOP_CONF_DIR);
+        if (StringUtils.isEmpty(envHadoopConfDir)) {
+            String hadoopClientConfDirVariable = String.format("${%s}",HADOOP_CLIENT_CONF_DIR);
+            LOG.debug("Setting {0} environment variable to {1}.", HADOOP_CONF_DIR, hadoopClientConfDirVariable);
+            env.put(HADOOP_CONF_DIR, hadoopClientConfDirVariable);
+        }
+        else {
+            LOG.debug( "Environment variable {0} is already set to {1}.", HADOOP_CONF_DIR, envHadoopConfDir);
+        }
     }
 
     @Override
