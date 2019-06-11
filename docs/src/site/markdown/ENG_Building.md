@@ -247,7 +247,7 @@ as the execution engine for those applications.
 -Dopenjpa.version=<version> - default 2.2.2
 -Dxerces.version=<version> - default 2.10.0
 -Dcurator.version=<version> - default 2.5.0
--Dhive.version=<version> - default 1.2.0
+-Dhive.version=<version> - default 1.2.2
 -Dhbase.version=<version> - default 1.2.3
 -Dtez.version=<version> - default 0.8.4
 ```
