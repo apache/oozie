@@ -50,8 +50,8 @@ hcatalog libraries, however they are required for oozie to work. There are 2 opt
     +as the execution engine for those applications.
     -Dpig.version=<version> - default 0.16.0
     -Dpig.classifier=<classifier> - default h2
-    -Dsqoop.version=<version> - default 1.4.3
-    -Dsqoop.classifier=<classifier> - default hadoop100
+    -Dsqoop.version=<version> - default 1.4.7
+    -Dsqoop.classifier=<classifier> - default hadoop260
     -Djetty.version=<version> - default 9.3.20.v20170531
     -Dopenjpa.version=<version> - default 2.2.2
     -Dxerces.version=<version> - default 2.10.0
