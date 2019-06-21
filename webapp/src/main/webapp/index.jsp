@@ -20,7 +20,6 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <title>Oozie Web Console</title>
         <link rel="stylesheet" type="text/css" href="ext-2.2/resources/css/ext-all.css"/>
-        <link rel="stylesheet" type="text/css" href="ext-2.2/resources/css/xtheme-default.css"/>
         <link rel="stylesheet" type="text/css" href="oozie-console.css"/>
 
         <!-- jquery needs to be before extjs -->
