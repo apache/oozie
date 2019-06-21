@@ -74,7 +74,8 @@ public class HadoopTokenHelper {
             serverPrincipal = SecurityUtil.getServerPrincipal(servicePrincipal, addr);
             LOG.info("Delegation Token Renewer details: Principal={0},Target={1}", serverPrincipal, target);
         } catch (final IllegalArgumentException iae) {
-            LOG.warn("An error happened while trying to get server principal. Getting it from service principal anyway.", iae);
+            LOG.warn("An error happened while trying to get server principal. Getting it from service principal anyway.");
+            LOG.trace(iae);
 
             serverPrincipal = servicePrincipal.split("[/@]")[0];
             LOG.info("Delegation Token Renewer for {0} is {1}", target, serverPrincipal);

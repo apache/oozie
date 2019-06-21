@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3516 Misleading warning: java.lang.IllegalArgumentException: Does not contain a valid host:port authority: yarnRM (kmarton via asalamon74)
 OOZIE-3515 Upgrade sqoop version to 1.4.7 (asalamon74 via kmarton)
 OOZIE-3507 Upgrade to Dozer 6 (asalamon74 via kmarton)
 OOZIE-3492 [spark-action] Missing HADOOP_CONF_DIR property (asalamon74 via kmarton)
