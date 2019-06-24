@@ -11,11 +11,11 @@ HCatalog is a table and storage management layer for Hadoop that enables users w
 tools - Pig, MapReduce, and Hive - to more easily read and write data on the grid. HCatalog's table abstraction presents
 users with a relational view of data in the Hadoop distributed file system (HDFS).
 
-Read [HCatalog Documentation](http://incubator.apache.org/hcatalog/docs/r0.5.0/index.html) to know more about HCatalog.
+Read [HCatalog Documentation](https://cwiki.apache.org/confluence/display/Hive/HCatalog) to know more about HCatalog.
 Working with HCatalog using pig is detailed in
-[HCatLoader and HCatStorer](http://incubator.apache.org/hcatalog/docs/r0.5.0/loadstore.html).
+[HCatLoader and HCatStorer](https://cwiki.apache.org/confluence/display/Hive/HCatalog+LoadStore).
 Working with HCatalog using MapReduce directly is detailed in
-[HCatInputFormat and HCatOutputFormat](http://incubator.apache.org/hcatalog/docs/r0.5.0/inputoutput.html).
+[HCatInputFormat and HCatOutputFormat](https://cwiki.apache.org/confluence/display/Hive/HCatalog+InputOutput).
 
 ### HCatalog notifications
    HCatalog provides notifications through a JMS provider like ActiveMQ when a new partition is added to a table in the
@@ -23,7 +23,7 @@ database. This allows applications to consume those events and schedule the work
 the notifications are used to determine the availability of HCatalog partitions defined as data dependencies in the
 Coordinator and trigger workflows.
 
-Read [HCatalog Notification](http://incubator.apache.org/hcatalog/docs/r0.5.0/notification.html) to know more about
+Read [HCatalog Notification](https://cwiki.apache.org/confluence/display/Hive/HCatalog+Notification) to know more about
 notifications in HCatalog.
 
 ## Oozie HCatalog Integration
