@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-2907 Delete PrepareActionsDriver from oozie-sharelib (asalamon74 via kmarton)
 OOZIE-3518 [docs] Dead links in DG_HCatalogIntegration (nobigo via asalamon74)
 OOZIE-3517 Invalid reference to xtheme-default.css (nobigo via asalamon74)
 OOZIE-3516 Misleading warning: java.lang.IllegalArgumentException: Does not contain a valid host:port authority: yarnRM (kmarton via asalamon74)

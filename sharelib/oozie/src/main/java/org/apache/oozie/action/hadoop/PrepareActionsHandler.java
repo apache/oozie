@@ -39,7 +39,7 @@ public class PrepareActionsHandler {
     private final LauncherURIHandlerFactory factory;
 
     @VisibleForTesting
-    PrepareActionsHandler(final LauncherURIHandlerFactory factory) {
+    public PrepareActionsHandler(final LauncherURIHandlerFactory factory) {
         this.factory = factory;
     }
 
@@ -53,7 +53,8 @@ public class PrepareActionsHandler {
      * @throws ParserConfigurationException if the parser is not well configured
      * @throws LauncherException when accessing resource on uri fails
      */
-    void prepareAction(String prepareXML, Configuration conf)
+    @VisibleForTesting
+    public void prepareAction(String prepareXML, Configuration conf)
             throws IOException, SAXException, ParserConfigurationException, LauncherException {
         Document doc = getDocumentFromXML(prepareXML);
         doc.getDocumentElement().normalize();

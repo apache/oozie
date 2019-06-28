@@ -60,7 +60,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         JobConf conf = createJobConf();
         LauncherHelper.setupLauncherURIHandlerConf(conf);
-        PrepareActionsDriver.doOperations(prepareXML, conf);
+        doPrepareOperations(prepareXML, conf);
         assertFalse(fs.exists(newDir));
     }
 
@@ -86,7 +86,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         JobConf conf = createJobConf();
         LauncherHelper.setupLauncherURIHandlerConf(conf);
-        PrepareActionsDriver.doOperations(prepareXML, conf);
+        doPrepareOperations(prepareXML, conf);
         assertFalse(fs.exists(new Path(newDir + "/2010/10")));
         assertFalse(fs.exists(new Path(newDir + "/2011/10")));
         assertTrue(fs.exists(new Path(newDir + "/2012/10")));
@@ -108,7 +108,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         JobConf conf = createJobConf();
         LauncherHelper.setupLauncherURIHandlerConf(conf);
-        PrepareActionsDriver.doOperations(prepareXML, conf);
+        doPrepareOperations(prepareXML, conf);
         assertTrue(fs.exists(newDir));
     }
 
@@ -121,13 +121,13 @@ public class TestFSPrepareActions extends XFsTestCase {
         // Construct prepare XML block with the path
         String prepareXML = "<prepare>" + "<delete path='" + newDir + "'/>" + "</prepare>";
         // Parse the XML to get the node
-        Document doc = PrepareActionsDriver.getDocumentFromXML(prepareXML);
+        Document doc = PrepareActionsHandler.getDocumentFromXML(prepareXML);
         Node n = doc.getDocumentElement().getChildNodes().item(0);
 
         try {
             JobConf conf = createJobConf();
             LauncherHelper.setupLauncherURIHandlerConf(conf);
-            PrepareActionsDriver.doOperations(prepareXML, conf);
+            doPrepareOperations(prepareXML, conf);
             fail("Expected to catch an exception but did not encounter any");
         } catch (LauncherException le) {
             Path path = new Path(n.getAttributes().getNamedItem("path").getNodeValue().trim());
@@ -154,7 +154,7 @@ public class TestFSPrepareActions extends XFsTestCase {
 
         JobConf conf = createJobConf();
         LauncherHelper.setupLauncherURIHandlerConf(conf);
-        PrepareActionsDriver.doOperations(prepareXML, conf);
+        doPrepareOperations(prepareXML, conf);
 
         assertTrue(fs.exists(new Path(noSchemePath)));
     }

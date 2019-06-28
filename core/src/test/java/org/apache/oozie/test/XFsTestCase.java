@@ -25,6 +25,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.mapred.JobClient;
+import org.apache.oozie.action.hadoop.LauncherException;
+import org.apache.oozie.action.hadoop.LauncherURIHandlerFactory;
+import org.apache.oozie.action.hadoop.PrepareActionsHandler;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.client.WorkflowJob;
@@ -32,7 +35,9 @@ import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.URI;
 
@@ -54,6 +59,7 @@ public abstract class XFsTestCase extends XTestCase {
     private FileSystem fileSystem2;
     private Path fsTestDir;
     private Path fsTestDir2;
+    private PrepareActionsHandler prepareHandler;
 
     /**
      * Set up the testcase.
@@ -83,6 +89,7 @@ public abstract class XFsTestCase extends XTestCase {
             fileSystem2 = has.createFileSystem(getTestUser(), new URI(getNameNode2Uri()), jobConf);
             fsTestDir2 = initFileSystem(fileSystem2);
         }
+        prepareHandler = new PrepareActionsHandler(new LauncherURIHandlerFactory(null));
     }
 
     private Path initFileSystem(FileSystem fs) throws Exception {
@@ -200,5 +207,19 @@ public abstract class XFsTestCase extends XTestCase {
                 "/" + context.getActionDir().getName(),
                 fileName
                 );
+    }
+
+    /**
+     * Method to parse the prepare XML and execute the corresponding prepare actions
+     *
+     * @param prepareXML Prepare XML block in string format
+     * @throws IOException if there is an IO error during prepare action
+     * @throws SAXException in case of xml parsing error
+     * @throws ParserConfigurationException if the parser is not well configured
+     * @throws LauncherException when accessing resource on uri fails
+     */
+    public void doPrepareOperations(String prepareXML, Configuration conf)
+            throws IOException, SAXException, ParserConfigurationException, LauncherException {
+        prepareHandler.prepareAction(prepareXML, conf);
     }
 }
