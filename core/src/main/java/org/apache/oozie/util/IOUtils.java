@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.jar.JarOutputStream;
@@ -46,7 +47,7 @@ public abstract class IOUtils {
      * @throws IOException thrown if the directory could not be deleted.
      */
     public static void delete(File file) throws IOException {
-        ParamChecker.notNull(file, "file");
+        Objects.requireNonNull(file, "file cannot be null");
         if (file.getAbsolutePath().length() < 5) {
             throw new RuntimeException(XLog.format("Path[{0}] is too short, not deleting", file.getAbsolutePath()));
         }
@@ -74,7 +75,7 @@ public abstract class IOUtils {
      * @throws IOException thrown if the resource could not be read.
      */
     public static String getReaderAsString(Reader reader, int maxLen) throws IOException {
-        ParamChecker.notNull(reader, "reader");
+        Objects.requireNonNull(reader, "reader cannot be null");
         StringBuffer sb = new StringBuffer();
         char[] buffer = new char[2048];
         int read;
@@ -146,8 +147,8 @@ public abstract class IOUtils {
      * @throws IOException thrown if the copy failed.
      */
     public static void copyStream(InputStream is, OutputStream os) throws IOException {
-        ParamChecker.notNull(is, "is");
-        ParamChecker.notNull(os, "os");
+        Objects.requireNonNull(is, "is cannot be null");
+        Objects.requireNonNull(os, "os cannot be null");
         byte[] buffer = new byte[4096];
         int read;
         while ((read = is.read(buffer)) > -1) {
@@ -165,8 +166,8 @@ public abstract class IOUtils {
      * @throws IOException thrown if the copy failed.
      */
     public static void copyCharStream(Reader reader, Writer writer) throws IOException {
-        ParamChecker.notNull(reader, "reader");
-        ParamChecker.notNull(writer, "writer");
+        Objects.requireNonNull(reader, "reader cannot be null");
+        Objects.requireNonNull(writer, "writer cannot be null");
         char[] buffer = new char[4096];
         int read;
         while ((read = reader.read(buffer)) > -1) {

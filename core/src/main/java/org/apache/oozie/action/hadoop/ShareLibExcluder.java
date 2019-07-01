@@ -23,9 +23,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.util.XLog;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import com.google.common.base.Preconditions;
 
 import static org.apache.oozie.action.hadoop.JavaActionExecutor.ACTION_SHARELIB_FOR;
 import static org.apache.oozie.action.hadoop.JavaActionExecutor.SHARELIB_EXCLUDE_SUFFIX;
@@ -50,9 +50,9 @@ class ShareLibExcluder {
             return null;
         }
 
-        Preconditions.checkNotNull(actionConf, VALUE_NULL_MSG, "actionConf");
-        Preconditions.checkNotNull(servicesConf, VALUE_NULL_MSG, "servicesConf");
-        Preconditions.checkNotNull(jobConf, VALUE_NULL_MSG, "jobConf");
+        Objects.requireNonNull(actionConf, () -> String.format(VALUE_NULL_MSG, "actionConf"));
+        Objects.requireNonNull(servicesConf, () -> String.format(VALUE_NULL_MSG, "servicesConf"));
+        Objects.requireNonNull(jobConf, () -> String.format(VALUE_NULL_MSG, "jobConf"));
 
         final String excludeProperty = ACTION_SHARELIB_FOR + executorType + SHARELIB_EXCLUDE_SUFFIX;
 
@@ -88,7 +88,7 @@ class ShareLibExcluder {
     }
 
     boolean shouldExclude(final URI actionLibURI) {
-        Preconditions.checkNotNull(actionLibURI, VALUE_NULL_MSG, "actionLibURI");
+        Objects.requireNonNull(actionLibURI, () -> String.format(VALUE_NULL_MSG, "actionLibURI"));
 
         if (configuredExcludePattern != null && shareLibRoot != null) {
             if (configuredExcludePattern.matcher(shareLibRoot.relativize(actionLibURI).getPath()).matches()) {

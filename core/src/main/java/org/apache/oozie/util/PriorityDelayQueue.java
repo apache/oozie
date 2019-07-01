@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
@@ -354,7 +355,7 @@ public class PriorityDelayQueue<E> extends AbstractQueue<PriorityDelayQueue.Queu
      * @throws NullPointerException if the specified element is null
      */
     boolean offer(QueueElement<E> queueElement, boolean ignoreSize) {
-        ParamChecker.notNull(queueElement, "queueElement");
+        Objects.requireNonNull(queueElement, "queueElement cannot be null");
         if (queueElement.getPriority() < 0 || queueElement.getPriority() >= priorities) {
             throw new IllegalArgumentException("priority out of range: " + queueElement);
         }

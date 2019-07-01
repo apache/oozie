@@ -61,11 +61,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.apache.oozie.tools.OozieDBExportCLI.OOZIEDB_AC_JSON;
 import static org.apache.oozie.tools.OozieDBExportCLI.OOZIEDB_BNA_JSON;
@@ -444,7 +444,7 @@ public class OozieDBImportCLI {
          * Commit the {@link EntityTransaction}
          */
         void commit() {
-            checkNotNull(currentTransaction, "TX should be open.");
+            Objects.requireNonNull(currentTransaction, "TX should be open.");
 
             currentTransaction.commit();
 
@@ -472,7 +472,7 @@ public class OozieDBImportCLI {
          * @param newEntity the new {@link javax.persistence.Entity} instance
          */
         void persist(final E newEntity) {
-            checkNotNull(currentTransaction, "TX should be open.");
+            Objects.requireNonNull(currentTransaction, "TX should be open.");
 
             entityManager.persist(newEntity);
             pendingEntities.add(newEntity);

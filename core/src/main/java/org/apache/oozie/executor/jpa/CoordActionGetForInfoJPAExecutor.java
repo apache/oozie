@@ -20,6 +20,7 @@ package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -31,7 +32,6 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the CoordinatorAction into a Bean and return it.
@@ -42,8 +42,7 @@ public class CoordActionGetForInfoJPAExecutor implements JPAExecutor<Coordinator
     public static final String COORD_GET_ALL_COLS_FOR_ACTION = "oozie.coord.action.get.all.attributes";
 
     public CoordActionGetForInfoJPAExecutor(String coordActionId) {
-        ParamChecker.notNull(coordActionId, "coordActionId");
-        this.coordActionId = coordActionId;
+        this.coordActionId = Objects.requireNonNull(coordActionId, "coordActionId cannot be null");
     }
 
     @Override

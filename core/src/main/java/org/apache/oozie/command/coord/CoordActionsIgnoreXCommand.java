@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
@@ -91,7 +92,7 @@ public class CoordActionsIgnoreXCommand extends IgnoreTransitionXCommand<Coordin
             throw new CommandException(ErrorCode.E1024, "no actions are eligible to ignore");
         }
         for (CoordinatorActionBean action : coordActions) {
-            ParamChecker.notNull(action, "Action");
+            Objects.requireNonNull(action, "Action cannot be null");
             if (!(action.getStatus() == Status.FAILED || action.getStatus() == Status.KILLED
                     || action.getStatus() == Status.TIMEDOUT)) {
                 LOG.info("Cannot ignore coord action = [{0}], since its status is [{1}]", action.getId(),

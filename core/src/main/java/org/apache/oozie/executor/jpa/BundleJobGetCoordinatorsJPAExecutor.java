@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the coordinators for specified bundle in the Coordinator job bean
@@ -34,8 +34,7 @@ public class BundleJobGetCoordinatorsJPAExecutor implements JPAExecutor<List<Coo
     private String bundleId = null;
 
     public BundleJobGetCoordinatorsJPAExecutor(String bundleId) {
-        ParamChecker.notNull(bundleId, "bundleId");
-        this.bundleId = bundleId;
+        this.bundleId = Objects.requireNonNull(bundleId, "bundleId cannot be null");
     }
 
     @Override

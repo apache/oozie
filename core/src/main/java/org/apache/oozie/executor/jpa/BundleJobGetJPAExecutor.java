@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the BundleJob into a Bean and return it.
@@ -35,7 +35,7 @@ public class BundleJobGetJPAExecutor implements JPAExecutor<BundleJobBean> {
     private String bundleJobId = null;
 
     public BundleJobGetJPAExecutor(String bundleJobId) {
-        ParamChecker.notNull(bundleJobId, "bundleJobId");
+        Objects.requireNonNull(bundleJobId, "bundleJobId cannot be null");
         this.bundleJobId = bundleJobId;
     }
 

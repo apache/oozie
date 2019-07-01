@@ -25,8 +25,8 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.util.DiskChecker;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -192,7 +192,7 @@ public class GitActionExecutor extends JavaActionExecutor {
          * Otherwise, set actionConf value displayName to XML trimmed text value
          */
         void checkTrimAndSet(String displayName, Element value) {
-            Preconditions.checkNotNull(value, "Action Configuration does not have [%s] property", displayName);
+            Objects.requireNonNull(value, () -> String.format("Action Configuration does not have [%s] property", displayName));
             actionConf.set(displayName, value.getTextTrim());
         }
 
@@ -201,7 +201,7 @@ public class GitActionExecutor extends JavaActionExecutor {
         * Otherwise, set actionConf value displayName to value
         */
         void checkAndSet(String displayName, String value) {
-            Preconditions.checkNotNull(value, "Action Configuration does not have [%s] property", displayName);
+            Objects.requireNonNull(value, () -> String.format("Action Configuration does not have [%s] property", displayName));
             actionConf.set(displayName, value);
         }
 
@@ -221,7 +221,8 @@ public class GitActionExecutor extends JavaActionExecutor {
          * @param name - actionConf value to return
          */
         String checkAndGetTrimmed(String name) {
-            Preconditions.checkNotNull(actionConf.getTrimmed(name), "Action Configuration does not have [%s] property", name);
+            Objects.requireNonNull(actionConf.getTrimmed(name),
+                    () -> String.format("Action Configuration does not have [%s] property", name));
             return actionConf.getTrimmed(name);
         }
     }

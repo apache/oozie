@@ -27,7 +27,6 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.Pair;
-import org.apache.oozie.util.ParamChecker;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -35,6 +34,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Load coordinator actions by offset and len (a subset) for a coordinator job.
@@ -48,7 +48,7 @@ public class CoordJobGetActionsSubsetJPAExecutor implements JPAExecutor<List<Coo
     private Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap;
 
     public CoordJobGetActionsSubsetJPAExecutor(String coordJobId) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
+        Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
         this.coordJobId = coordJobId;
     }
 

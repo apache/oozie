@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Retrieve the name of the user submitting the bundle job
@@ -33,8 +34,7 @@ public class BundleJobGetForUserJPAExecutor implements JPAExecutor<String> {
     private String bundleJobId = null;
 
     public BundleJobGetForUserJPAExecutor(String bundleJobId) {
-        ParamChecker.notNull(bundleJobId, "bundleJobId");
-        this.bundleJobId = bundleJobId;
+        this.bundleJobId = Objects.requireNonNull(bundleJobId, "bundleJobId cannot be null");
     }
 
     public String getName() {

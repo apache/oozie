@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -644,7 +645,7 @@ public abstract class XTestCase extends TestCase {
      * @return the test working directory.
      */
     private String getTestCaseDirInternal(TestCase testCase) {
-        ParamChecker.notNull(testCase, "testCase");
+        Objects.requireNonNull(testCase, "testCase cannot be null");
         File dir = new File(System.getProperty(OOZIE_TEST_DIR, "target/test-data"));
         dir = new File(dir, "oozietests").getAbsoluteFile();
         dir = new File(dir, testCase.getClass().getName());
@@ -654,7 +655,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     protected void delete(File file) throws IOException {
-        ParamChecker.notNull(file, "file");
+        Objects.requireNonNull(file, "file cannot be null");
         if (file.getAbsolutePath().length() < 5) {
             throw new RuntimeException(XLog.format("path [{0}] is too short, not deleting", file.getAbsolutePath()));
         }
@@ -707,14 +708,14 @@ public abstract class XTestCase extends TestCase {
      * @return the absolute path to the created directory.
      */
     protected String createTestCaseSubDir(String... subDirNames) {
-        ParamChecker.notNull(subDirNames, "subDirName");
+        Objects.requireNonNull(subDirNames, "subDirName cannot be null");
         if (subDirNames.length == 0) {
             throw new RuntimeException(XLog.format("Could not create testcase subdir ''; it already exists"));
         }
 
         File dir = new File(testCaseDir);
         for (int i = 0; i < subDirNames.length; i++) {
-            ParamChecker.notNull(subDirNames[i], "subDirName[" + i + "]");
+            Objects.requireNonNull(subDirNames[i], "subDirName[" + i + "] cannot be null");
             dir = new File(dir, subDirNames[i]);
         }
 
@@ -787,7 +788,7 @@ public abstract class XTestCase extends TestCase {
      * @return the waited time.
      */
     protected long waitFor(int timeout, Predicate predicate) {
-        ParamChecker.notNull(predicate, "predicate");
+        Objects.requireNonNull(predicate, "predicate cannot be null");
         XLog log = new XLog(LogFactory.getLog(getClass()));
         long started = System.currentTimeMillis();
         long mustEnd = System.currentTimeMillis() + (long)(WAITFOR_RATIO * timeout);

@@ -21,13 +21,13 @@ package org.apache.oozie.executor.jpa;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 
 /**
@@ -48,7 +48,7 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
      * @param length length
      */
     public WorkflowActionSubsetGetJPAExecutor(String wfId, int start, int length) {
-        ParamChecker.notNull(wfId, "wfJobId");
+        Objects.requireNonNull(wfId, "wfJobId cannot be null");
         this.wfId = wfId;
         this.start = start;
         this.length = length;

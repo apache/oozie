@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -32,7 +33,6 @@ import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.BundleJob.Timeunit;
 import org.apache.oozie.store.StoreStatusFilter;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.apache.openjpa.persistence.OpenJPAQuery;
 import org.apache.openjpa.persistence.jdbc.FetchDirection;
@@ -58,8 +58,7 @@ public class BundleJobInfoGetJPAExecutor implements JPAExecutor<BundleJobInfo> {
      * @param len total length to get
      */
     public BundleJobInfoGetJPAExecutor(Map<String, List<String>> filter, int start, int len) {
-        ParamChecker.notNull(filter, "filter");
-        this.filter = filter;
+        this.filter = Objects.requireNonNull(filter, "filter cannot be null");
         this.start = start;
         this.len = len;
     }

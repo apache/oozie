@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Factory that is used to configure SSL settings for the Oozie server.
@@ -57,7 +58,7 @@ class SSLServerConnectorFactory {
 
     @Inject
     public SSLServerConnectorFactory(final SslContextFactory sslContextFactory) {
-        this.sslContextFactory = Preconditions.checkNotNull(sslContextFactory,  "sslContextFactory is null");
+        this.sslContextFactory = Objects.requireNonNull(sslContextFactory,  "sslContextFactory is null");
     }
 
     /**
@@ -70,8 +71,8 @@ class SSLServerConnectorFactory {
      *  @return ServerConnector
     */
     public ServerConnector createSecureServerConnector(int oozieHttpsPort, Configuration conf, Server server) {
-        this.conf = Preconditions.checkNotNull(conf, "conf is null");
-        Preconditions.checkNotNull(server, "server is null");
+        this.conf = Objects.requireNonNull(conf, "conf is null");
+        Objects.requireNonNull(server, "server is null");
         Preconditions.checkState(oozieHttpsPort >= 1 && oozieHttpsPort <= 65535,
                 String.format("Invalid port number specified: \'%d\'. It should be between 1 and 65535.", oozieHttpsPort));
 
@@ -135,13 +136,13 @@ class SSLServerConnectorFactory {
 
     private void setKeystorePass() {
         String keystorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_KEYSTORE_PASS);
-        Preconditions.checkNotNull(keystorePass, "keystorePass is null");
+        Objects.requireNonNull(keystorePass, "keystorePass is null");
         sslContextFactory.setKeyManagerPassword(keystorePass);
     }
 
     private void setKeyStoreFile() {
         String keystoreFile = conf.get(OOZIE_HTTPS_KEYSTORE_FILE);
-        Preconditions.checkNotNull(keystoreFile, "keystoreFile is null");
+        Objects.requireNonNull(keystoreFile, "keystoreFile is null");
         sslContextFactory.setKeyStorePath(keystoreFile);
     }
 

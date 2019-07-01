@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -49,7 +50,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Shell;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
@@ -164,7 +164,7 @@ public abstract class LauncherMain {
 
     @VisibleForTesting
     protected static void extractJobIDs(String line, Pattern[] patterns, Set<String> jobIds) {
-        Preconditions.checkNotNull(line);
+        Objects.requireNonNull(line);
         for (Pattern pattern : patterns) {
             Matcher matcher = pattern.matcher(line);
             if (matcher.find()) {

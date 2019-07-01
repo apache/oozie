@@ -29,7 +29,6 @@ import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.CommandException;
@@ -51,6 +50,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -63,7 +63,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
 
     public SubmitHttpXCommand(String name, String type, Configuration conf) {
         super(name, type, 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();

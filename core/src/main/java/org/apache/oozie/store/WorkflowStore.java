@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import javax.persistence.EntityManager;
@@ -72,14 +73,14 @@ public class WorkflowStore extends Store {
 
     public WorkflowStore(Connection connection, boolean selectForUpdate) throws StoreException {
         super();
-        conn = ParamChecker.notNull(connection, "conn");
+        conn = Objects.requireNonNull(connection, "conn cannot be null");
         entityManager = getEntityManager();
         this.selectForUpdate = selectForUpdate;
     }
 
     public WorkflowStore(Connection connection, Store store, boolean selectForUpdate) throws StoreException {
         super(store);
-        conn = ParamChecker.notNull(connection, "conn");
+        conn = Objects.requireNonNull(connection, "conn cannot be null");
         entityManager = getEntityManager();
         this.selectForUpdate = selectForUpdate;
     }
@@ -107,7 +108,7 @@ public class WorkflowStore extends Store {
      */
 
     public void insertWorkflow(final WorkflowJobBean workflow) throws StoreException {
-        ParamChecker.notNull(workflow, "workflow");
+        Objects.requireNonNull(workflow, "workflow cannot be null");
 
         doOperation("insertWorkflow", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException {
@@ -199,7 +200,7 @@ public class WorkflowStore extends Store {
      * @throws StoreException If Workflow doesn't exist
      */
     public void updateWorkflow(final WorkflowJobBean wfBean) throws StoreException {
-        ParamChecker.notNull(wfBean, "WorkflowJobBean");
+        Objects.requireNonNull(wfBean, "WorkflowJobBean cannot be null");
         doOperation("updateWorkflow", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException, JPAExecutorException {
                 WorkflowJobQueryExecutor.getInstance().executeUpdate(
@@ -216,7 +217,7 @@ public class WorkflowStore extends Store {
      * @throws StoreException If the action is already present
      */
     public void insertAction(final WorkflowActionBean action) throws StoreException {
-        ParamChecker.notNull(action, "WorkflowActionBean");
+        Objects.requireNonNull(action, "WorkflowActionBean cannot be null");
         doOperation("insertAction", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException {
                 entityManager.persist(action);
@@ -273,7 +274,7 @@ public class WorkflowStore extends Store {
      * @throws StoreException if action doesn't exist
      */
     public void updateAction(final WorkflowActionBean action) throws StoreException {
-        ParamChecker.notNull(action, "WorkflowActionBean");
+        Objects.requireNonNull(action, "WorkflowActionBean cannot be null");
         doOperation("updateAction", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException, JPAExecutorException {
                 WorkflowActionQueryExecutor.getInstance().executeUpdate(

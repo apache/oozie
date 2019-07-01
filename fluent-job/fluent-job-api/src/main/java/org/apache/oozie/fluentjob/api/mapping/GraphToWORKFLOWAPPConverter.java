@@ -18,12 +18,13 @@
 
 package org.apache.oozie.fluentjob.api.mapping;
 
-import com.google.common.base.Preconditions;
 import org.apache.oozie.fluentjob.api.generated.workflow.WORKFLOWAPP;
 import org.apache.oozie.fluentjob.api.dag.Graph;
 import com.github.dozermapper.core.DozerConverter;
 import com.github.dozermapper.core.Mapper;
 import com.github.dozermapper.core.MapperAware;
+
+import java.util.Objects;
 
 /**
  * A {@link DozerConverter} converting from {@link Graph} to JAXB {@link WORKFLOWAPP}.
@@ -56,7 +57,7 @@ public class GraphToWORKFLOWAPPConverter extends DozerConverter<Graph, WORKFLOWA
     }
 
     private Mapper checkAndGetMapper() {
-        Preconditions.checkNotNull(mapper, "mapper should be set");
+        Objects.requireNonNull(mapper, "mapper should be set");
         return mapper;
     }
 

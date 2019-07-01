@@ -20,13 +20,13 @@ package org.apache.oozie.executor.jpa;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Get the status of Coordinator actions for a given Coordinator job
@@ -36,8 +36,7 @@ public class CoordJobGetActionsStatusJPAExecutor implements JPAExecutor<List<Coo
     private String coordJobId = null;
 
     public CoordJobGetActionsStatusJPAExecutor(String coordJobId) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
-        this.coordJobId = coordJobId;
+        this.coordJobId = Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
     }
 
     @Override

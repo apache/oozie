@@ -18,13 +18,14 @@
 
 package org.apache.oozie.util;
 
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.servlet.ServicesLoader;
+
+import java.util.Objects;
 
 /**
  *
@@ -150,9 +151,9 @@ public class ConfigUtils {
                                                                              final String newValue,
                                                                              final E toThrow,
                                                                              final boolean performWrite) throws E {
-        Preconditions.checkNotNull(base, "base");
-        Preconditions.checkNotNull(newValue, "newValue");
-        Preconditions.checkNotNull(toThrow, "toThrow");
+        Objects.requireNonNull(base, "base cannot be null");
+        Objects.requireNonNull(newValue, "newValue cannot be null");
+        Objects.requireNonNull(toThrow, "toThrow cannot be null");
 
         for (final String defaultDisallowedProperty : PropertiesUtils.DEFAULT_DISALLOWED_PROPERTIES) {
             checkAndSetConfigValue(base, defaultDisallowedProperty, newValue, toThrow, performWrite);

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util.db;
 
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
@@ -46,7 +47,7 @@ public class OperationRetryHandler {
         this.maxRetryCount = maxRetryCount;
         this.initialWaitTime = initialWaitTime;
         this.maxWaitTime = maxWaitTime;
-        this.retryPredicate = Preconditions.checkNotNull(retryPredicate, "Retry predicate must not be null");
+        this.retryPredicate = Objects.requireNonNull(retryPredicate, "Retry predicate must not be null");
         this.shouldRetry = !(maxRetryCount == 0 || maxWaitTime == 0);
 
         LOG.trace("Retry handler parameters are set." +

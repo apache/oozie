@@ -30,6 +30,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -121,7 +122,7 @@ public class XmlUtils {
      * @throws JDOMException thrown if an error happend while XML parsing.
      */
     public static Element parseXml(String xmlStr) throws JDOMException {
-        ParamChecker.notNull(xmlStr, "xmlStr");
+        Objects.requireNonNull(xmlStr, "xmlStr cannot be null");
         try {
             SAXBuilder saxBuilder = createSAXBuilder();
             Document document = saxBuilder.build(new StringReader(xmlStr));
@@ -141,7 +142,7 @@ public class XmlUtils {
      * @throws IOException thrown if an IO error occurred.
      */
     public static Element parseXml(InputStream is) throws JDOMException, IOException {
-        ParamChecker.notNull(is, "is");
+        Objects.requireNonNull(is, "is cannot be null");
         SAXBuilder saxBuilder = createSAXBuilder();
         Document document = saxBuilder.build(is);
         return document.getRootElement();
@@ -156,8 +157,8 @@ public class XmlUtils {
      * @return value of the specified attribute.
      */
     public static String getRootAttribute(String filePath, String attributeName) {
-        ParamChecker.notNull(filePath, "filePath");
-        ParamChecker.notNull(attributeName, "attributeName");
+        Objects.requireNonNull(filePath, "filePath cannot be null");
+        Objects.requireNonNull(attributeName, "attributeName cannot be null");
         SAXBuilder saxBuilder = createSAXBuilder();
         try {
             Document doc = saxBuilder.build(Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath));
@@ -181,7 +182,7 @@ public class XmlUtils {
         }
 
         private PrettyPrint(Element element) {
-            this.element = ParamChecker.notNull(element, "element");
+            this.element = Objects.requireNonNull(element, "element cannot be null");
         }
 
         /**

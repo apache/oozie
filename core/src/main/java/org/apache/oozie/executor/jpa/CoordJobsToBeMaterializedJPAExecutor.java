@@ -22,13 +22,13 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * JPA command to get coordinator jobs which are qualify for Materialization.
@@ -43,8 +43,7 @@ public class CoordJobsToBeMaterializedJPAExecutor implements JPAExecutor<List<Co
      * @param limit limit
      */
     public CoordJobsToBeMaterializedJPAExecutor(Date date, int limit) {
-        ParamChecker.notNull(date, "Coord Job Materialization Date");
-        this.dateInput = date;
+        this.dateInput = Objects.requireNonNull(date, "Coord Job Materialization Date cannot be null");
         this.limit = limit;
     }
 

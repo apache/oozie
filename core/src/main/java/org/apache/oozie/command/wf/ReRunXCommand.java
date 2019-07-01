@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -107,7 +108,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
     public ReRunXCommand(String jobId, Configuration conf) {
         super("rerun", "rerun", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     @Override

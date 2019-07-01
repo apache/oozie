@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -164,7 +165,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     public CoordSubmitXCommand(Configuration conf) {
         super("coord_submit", "coord_submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
         this.bundleId = null;
         this.coordName = null;
     }
@@ -178,7 +179,7 @@ public class CoordSubmitXCommand extends SubmitTransitionXCommand {
      */
     protected CoordSubmitXCommand(Configuration conf, String bundleId, String coordName) {
         super("coord_submit", "coord_submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
         this.bundleId = ParamChecker.notEmpty(bundleId, "bundleId");
         this.coordName = ParamChecker.notEmpty(coordName, "coordName");
     }

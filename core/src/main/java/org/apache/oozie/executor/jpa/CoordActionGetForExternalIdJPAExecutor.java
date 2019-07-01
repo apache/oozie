@@ -20,6 +20,7 @@ package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -29,7 +30,6 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load coordinator action by externalId.
@@ -39,8 +39,7 @@ public class CoordActionGetForExternalIdJPAExecutor implements JPAExecutor<Coord
     private String externalId = null;
 
     public CoordActionGetForExternalIdJPAExecutor(String externalId) {
-        ParamChecker.notNull(externalId, "externalId");
-        this.externalId = externalId;
+        this.externalId = Objects.requireNonNull(externalId, "externalId cannot be null");
     }
 
     @Override

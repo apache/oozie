@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Load the CoordinatorJob into a Bean and return it.
@@ -33,8 +34,7 @@ public class CoordJobGetActionByActionNumberJPAExecutor implements JPAExecutor<S
     private final int actionNumber;
 
     public CoordJobGetActionByActionNumberJPAExecutor(String coordJobId, int actionNumber) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
-        this.coordJobId = coordJobId;
+        this.coordJobId = Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
         this.actionNumber = actionNumber;
     }
 

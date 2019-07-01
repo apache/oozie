@@ -18,7 +18,6 @@
 
 package org.apache.oozie.fluentjob.api.mapping;
 
-import com.google.common.base.Preconditions;
 import org.apache.oozie.fluentjob.api.generated.workflow.CONFIGURATION;
 import org.apache.oozie.fluentjob.api.generated.workflow.GLOBAL;
 import org.apache.oozie.fluentjob.api.generated.workflow.LAUNCHER;
@@ -27,6 +26,8 @@ import org.apache.oozie.fluentjob.api.workflow.Global;
 import com.github.dozermapper.core.DozerConverter;
 import com.github.dozermapper.core.Mapper;
 import com.github.dozermapper.core.MapperAware;
+
+import java.util.Objects;
 
 /**
  * A {@link DozerConverter} converting from {@link Global} to JAXB {@link GLOBAL}.
@@ -89,7 +90,7 @@ public class GlobalConverter extends DozerConverter<Global, GLOBAL> implements M
     }
 
     private Mapper checkAndGetMapper() {
-        Preconditions.checkNotNull(mapper, "mapper should be set");
+        Objects.requireNonNull(mapper, "mapper should be set");
         return mapper;
     }
 

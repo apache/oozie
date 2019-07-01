@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -600,11 +601,11 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
          */
         @VisibleForTesting
         protected String getLastYarnId(final List<ApplicationReport> yarnApplications) {
-            Preconditions.checkNotNull(yarnApplications, "YARN application list should be filled");
+            Objects.requireNonNull(yarnApplications, "YARN application list should be filled");
             Preconditions.checkArgument(!yarnApplications.isEmpty(), "no YARN applications in the list");
 
             return yarnApplications.stream().map(applicationReport -> {
-                    Preconditions.checkNotNull(applicationReport, "YARN application should be filled");
+                    Objects.requireNonNull(applicationReport, "YARN application should be filled");
                     return applicationReport.getApplicationId().toString();
                 }).max(new YarnApplicationIdComparator())
                 .get(); // this is not empty, as yarnApplications was not empty.

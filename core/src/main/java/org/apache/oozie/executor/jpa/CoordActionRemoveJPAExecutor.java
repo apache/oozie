@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Deletes the coordinator action if its in WAITING or READY state.
@@ -38,7 +39,7 @@ public class CoordActionRemoveJPAExecutor implements JPAExecutor<Void> {
      * @param coordActionId id of coordinator action
      */
     public CoordActionRemoveJPAExecutor(String coordActionId) {
-        ParamChecker.notNull(coordActionId, "coordActionId");
+        Objects.requireNonNull(coordActionId, "coordActionId cannot be null");
         this.coordActionId = coordActionId;
     }
 

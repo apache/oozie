@@ -20,6 +20,7 @@ package org.apache.oozie.command.bundle;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
@@ -40,7 +41,6 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.ParamChecker;
 
 public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
 
@@ -56,7 +56,7 @@ public class BundleJobResumeXCommand extends ResumeTransitionXCommand {
      */
     public BundleJobResumeXCommand(String jobId) {
         super("bundle_resume", "bundle_resume", 1);
-        this.bundleId = ParamChecker.notNull(jobId, "BundleId");
+        this.bundleId = Objects.requireNonNull(jobId, "BundleId cannot be null");
     }
 
     @Override

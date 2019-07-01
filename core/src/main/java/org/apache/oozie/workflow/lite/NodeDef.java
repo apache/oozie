@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This node definition is serialized object and should provide readFields() and write() for read and write of fields in
@@ -52,7 +53,7 @@ public class NodeDef implements Writable {
     NodeDef(String name, String conf, Class<? extends NodeHandler> handlerClass, List<String> transitions) {
         this.name = ParamChecker.notEmpty(name, "name");
         this.conf = conf;
-        this.handlerClass = ParamChecker.notNull(handlerClass, "handlerClass");
+        this.handlerClass = Objects.requireNonNull(handlerClass, "handlerClass cannot be null");
         this.transitions = Collections.unmodifiableList(ParamChecker.notEmptyElements(transitions, "transitions"));
     }
 

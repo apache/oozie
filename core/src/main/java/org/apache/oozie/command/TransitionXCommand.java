@@ -21,6 +21,7 @@ package org.apache.oozie.command;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -28,7 +29,6 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.coord.CoordinatorXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * This is the base commands for all the jobs related commands . This will drive the statuses for all the jobs and all
@@ -120,7 +120,7 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      * @param job the job
      */
     public void setJob(Job job) {
-        this.job = ParamChecker.notNull(job, "job");
+        this.job = Objects.requireNonNull(job, "job cannot be null");
     }
 
 }

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.io.StringWriter;
@@ -57,7 +58,7 @@ public class PropertiesUtils {
     public static final Set<String> DEFAULT_DISALLOWED_PROPERTIES = ImmutableSet.of(OozieClient.USER_NAME, MRJobConfig.USER_NAME);
 
     public static String propertiesToString(Properties props) {
-        ParamChecker.notNull(props, "props");
+        Objects.requireNonNull(props, "props cannot be null");
         try {
             StringWriter sw = new StringWriter();
             props.store(sw, "");
@@ -70,7 +71,7 @@ public class PropertiesUtils {
     }
 
     public static Properties stringToProperties(String str) {
-        ParamChecker.notNull(str, "str");
+        Objects.requireNonNull(str, "str cannot be null");
         try {
             StringReader sr = new StringReader(str);
             Properties props = new Properties();
@@ -95,7 +96,7 @@ public class PropertiesUtils {
      * @param set String set
      */
     public static void createPropertySet(String[] properties, Set<String> set) {
-        ParamChecker.notNull(set, "set");
+        Objects.requireNonNull(set, "set cannot be null");
         for (String p : properties) {
             set.add(p);
         }
@@ -109,7 +110,7 @@ public class PropertiesUtils {
      * @throws CommandException if a property in the set is not null in the conf
      */
     public static void checkDisallowedProperties(Configuration conf, Set<String> set) throws CommandException {
-        ParamChecker.notNull(conf, "conf");
+        Objects.requireNonNull(conf, "conf cannot be null");
         for (String prop : set) {
             if (conf.get(prop) != null) {
                 throw new CommandException(ErrorCode.E0808, prop);

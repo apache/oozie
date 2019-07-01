@@ -18,7 +18,6 @@
 
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.servlet.ErrorServlet;
@@ -42,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
+import java.util.Objects;
 
 public class ServletMapper {
     private final WebAppContext servletContextHandler;
@@ -49,7 +49,7 @@ public class ServletMapper {
 
     @Inject
     public ServletMapper(final WebAppContext servletContextHandler) {
-        this.servletContextHandler = Preconditions.checkNotNull(servletContextHandler, "ServletContextHandler is null");
+        this.servletContextHandler = Objects.requireNonNull(servletContextHandler, "ServletContextHandler is null");
     }
     /**
      * Maps Oozie servlets to path specs. Make sure it is in sync with FilterMapper when making changes.

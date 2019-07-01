@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -50,10 +51,10 @@ class ApiJarFactory {
 
     ApiJarFactory(final File classFolder,
                          File jarFolder, final Class<? extends WorkflowFactory> apiFactoryClass, final String apiJarName) {
-        Preconditions.checkNotNull(classFolder, "classFolder should be set");
-        Preconditions.checkNotNull(jarFolder, "jarFolder should be set");
-        Preconditions.checkNotNull(apiJarName, "apiJarName should be set");
-        Preconditions.checkNotNull(apiFactoryClass, "apiFactoryClass should be set");
+        Objects.requireNonNull(classFolder, "classFolder should be set");
+        Objects.requireNonNull(jarFolder, "jarFolder should be set");
+        Objects.requireNonNull(apiJarName, "apiJarName should be set");
+        Objects.requireNonNull(apiFactoryClass, "apiFactoryClass should be set");
         Preconditions.checkState(WorkflowFactory.class.isAssignableFrom(apiFactoryClass),
                 String.format("%s should be a %s", apiFactoryClass.getName(), WorkflowFactory.class.getName()));
 

@@ -17,9 +17,10 @@
  */
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.eclipse.jetty.server.HttpConfiguration;
+
+import java.util.Objects;
 
 /**
  *  Class that wraps HTTP configuration settings.
@@ -30,7 +31,7 @@ public class HttpConfigurationWrapper {
     private Configuration conf;
 
     public HttpConfigurationWrapper(Configuration conf) {
-        this.conf = Preconditions.checkNotNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     /**

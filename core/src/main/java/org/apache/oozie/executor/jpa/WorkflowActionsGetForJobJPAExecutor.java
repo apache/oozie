@@ -21,13 +21,13 @@ package org.apache.oozie.executor.jpa;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the list of WorkflowAction for a WorkflowJob and return the list.
@@ -37,7 +37,7 @@ public class WorkflowActionsGetForJobJPAExecutor implements JPAExecutor<List<Wor
     private String wfJobId = null;
 
     public WorkflowActionsGetForJobJPAExecutor(String wfJobId) {
-        ParamChecker.notNull(wfJobId, "wfJobId");
+        Objects.requireNonNull(wfJobId, "wfJobId cannot be null");
         this.wfJobId = wfJobId;
     }
 

@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -398,12 +399,12 @@ public class OozieSharelibCLI {
 
         CopyTaskCallable(CopyTaskConfiguration copyTask, File file, Path trgName, long blockSize,
                                  Set<CopyTaskConfiguration> failedCopyTasks) {
-            Preconditions.checkNotNull(copyTask);
-            Preconditions.checkNotNull(file);
-            Preconditions.checkNotNull(trgName);
-            Preconditions.checkNotNull(failedCopyTasks);
-            Preconditions.checkNotNull(copyTask.dstPath);
-            Preconditions.checkNotNull(copyTask.fs);
+            Objects.requireNonNull(copyTask, "copyTask cannot be null");
+            Objects.requireNonNull(file, "file cannot be null");
+            Objects.requireNonNull(trgName, "trgName cannot be null");
+            Objects.requireNonNull(failedCopyTasks, "failedCopyTask cannot be null");
+            Objects.requireNonNull(copyTask.dstPath, "copyTask.dstPath cannot be null");
+            Objects.requireNonNull(copyTask.fs, "copyTask.fs cannot be null");
             this.file = file;
             this.destinationPath = copyTask.dstPath;
             this.failedCopyTasks = failedCopyTasks;

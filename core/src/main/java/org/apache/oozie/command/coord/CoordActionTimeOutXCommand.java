@@ -19,6 +19,7 @@
 package org.apache.oozie.command.coord;
 
 import java.util.Date;
+import java.util.Objects;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
@@ -46,7 +47,7 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
 
     public CoordActionTimeOutXCommand(CoordinatorActionBean actionBean, String user, String appName) {
         super("coord_action_timeout", "coord_action_timeout", 1);
-        this.actionBean = ParamChecker.notNull(actionBean, "ActionBean");
+        this.actionBean = Objects.requireNonNull(actionBean, "ActionBean cannot be null");
         this.user = ParamChecker.notEmpty(user, "user");
         this.appName = ParamChecker.notEmpty(appName, "appName");
     }

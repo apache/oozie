@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.transform.stream.StreamSource;
@@ -100,7 +101,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      */
     public BundleSubmitXCommand(Configuration conf) {
         super("bundle_submit", "bundle_submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     /**

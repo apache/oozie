@@ -28,7 +28,7 @@ public class TestParameterVerifier extends XTestCase {
         try {
             ParameterVerifier.verifyParameters(null, XmlUtils.parseXml("<root xmlns=\"uri:oozie:workflow:0.4\"></root>"));
             fail();
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | NullPointerException ex) {
             assertEquals("conf cannot be null", ex.getMessage());
         }
 
@@ -40,7 +40,7 @@ public class TestParameterVerifier extends XTestCase {
 
         try {
             ParameterVerifier.verifyParameters(null, null);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException  | NullPointerException ex) {
             assertEquals("conf cannot be null", ex.getMessage());
         }
     }

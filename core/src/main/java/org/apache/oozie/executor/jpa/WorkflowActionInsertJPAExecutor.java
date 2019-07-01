@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the WorkflowAction bean.
@@ -31,8 +32,7 @@ public class WorkflowActionInsertJPAExecutor implements JPAExecutor<String> {
     private WorkflowActionBean wfAction = null;
 
     public WorkflowActionInsertJPAExecutor(WorkflowActionBean wfAction) {
-        ParamChecker.notNull(wfAction, "wfAction");
-        this.wfAction = wfAction;
+        this.wfAction = Objects.requireNonNull(wfAction, "wfAction cannot be null");
     }
 
     @Override

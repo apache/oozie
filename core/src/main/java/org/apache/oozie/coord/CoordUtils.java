@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
@@ -75,7 +76,7 @@ public class CoordUtils {
 
     public static Configuration getHadoopConf(Configuration jobConf) {
         Configuration conf = new Configuration();
-        ParamChecker.notNull(jobConf, "Configuration to be used for hadoop setup ");
+        Objects.requireNonNull(jobConf, "Configuration to be used for hadoop setup  cannot be null");
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         conf.set(HADOOP_USER, user);
         return conf;

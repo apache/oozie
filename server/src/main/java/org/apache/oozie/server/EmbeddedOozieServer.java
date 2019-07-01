@@ -18,7 +18,6 @@
 
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -45,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 /**
  *  Class to start Oozie inside an embedded Jetty server.
@@ -91,15 +91,15 @@ public class EmbeddedOozieServer {
                                final ConstraintSecurityHandler constraintSecurityHandler)
     {
         this.constraintSecurityHandler = constraintSecurityHandler;
-        this.serviceController = Preconditions.checkNotNull(serviceController, "serviceController is null");
-        this.jspHandler = Preconditions.checkNotNull(jspHandler, "jspHandler is null");
-        this.sslServerConnectorFactory = Preconditions.checkNotNull(sslServerConnectorFactory,
+        this.serviceController = Objects.requireNonNull(serviceController, "serviceController is null");
+        this.jspHandler = Objects.requireNonNull(jspHandler, "jspHandler is null");
+        this.sslServerConnectorFactory = Objects.requireNonNull(sslServerConnectorFactory,
                 "sslServerConnectorFactory is null");
-        this.server = Preconditions.checkNotNull(server, "server is null");
-        this.oozieRewriteHandler = Preconditions.checkNotNull(oozieRewriteHandler, "rewriter is null");
-        this.servletContextHandler = Preconditions.checkNotNull(servletContextHandler, "servletContextHandler is null");
-        this.oozieServletMapper = Preconditions.checkNotNull(oozieServletMapper, "oozieServletMapper is null");
-        this.oozieFilterMapper = Preconditions.checkNotNull(oozieFilterMapper, "oozieFilterMapper is null");
+        this.server = Objects.requireNonNull(server, "server is null");
+        this.oozieRewriteHandler = Objects.requireNonNull(oozieRewriteHandler, "rewriter is null");
+        this.servletContextHandler = Objects.requireNonNull(servletContextHandler, "servletContextHandler is null");
+        this.oozieServletMapper = Objects.requireNonNull(oozieServletMapper, "oozieServletMapper is null");
+        this.oozieFilterMapper = Objects.requireNonNull(oozieFilterMapper, "oozieFilterMapper is null");
     }
 
     /**

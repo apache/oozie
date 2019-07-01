@@ -29,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -56,7 +57,7 @@ public class ApiJarLoader {
         final URLClassLoader workflowFactoryClassLoader = URLClassLoader.newInstance(new URL[]{apiJarFile.toURI().toURL()});
         final Class mainClass = workflowFactoryClassLoader.loadClass(mainClassName);
 
-        Preconditions.checkNotNull(mainClass, "Fluent Job API JAR file should have a main class");
+        Objects.requireNonNull(mainClass, "Fluent Job API JAR file should have a main class");
         Preconditions.checkState(WorkflowFactory.class.isAssignableFrom(mainClass),
                 "Fluent Job API JAR main class should be an " + WorkflowFactory.class.getName());
 
@@ -70,7 +71,7 @@ public class ApiJarLoader {
 
     private String getMainClassName() throws IOException {
         try (final JarFile apiJar = new JarFile(apiJarFile)) {
-            Preconditions.checkNotNull(apiJar.getManifest(), "Fluent Job API JAR doesn't have MANIFEST.MF");
+            Objects.requireNonNull(apiJar.getManifest(), "Fluent Job API JAR doesn't have MANIFEST.MF");
 
             return apiJar.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
         }

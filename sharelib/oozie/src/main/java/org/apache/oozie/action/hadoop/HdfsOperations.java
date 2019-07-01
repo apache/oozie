@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -42,7 +43,7 @@ public class HdfsOperations {
     private final SequenceFileWriterFactory seqFileWriterFactory;
 
     public HdfsOperations(SequenceFileWriterFactory seqFileWriterFactory) {
-        this.seqFileWriterFactory = Preconditions.checkNotNull(seqFileWriterFactory, "seqFileWriterFactory should not be null");
+        this.seqFileWriterFactory = Objects.requireNonNull(seqFileWriterFactory, "seqFileWriterFactory should not be null");
     }
 
     /**

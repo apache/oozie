@@ -20,6 +20,7 @@ package org.apache.oozie.util;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,38 +33,6 @@ import java.text.ParseException;
 public class ParamChecker {
 
     private static final int MAX_NODE_NAME_LEN = 128;
-
-    /**
-     * Check that a value is not null. If null throws an IllegalArgumentException.
-     *
-     * @param <T> the type of the object
-     * @param obj value.
-     * @param name parameter name for the exception message.
-     * @return the given value.
-     */
-    public static <T> T notNull(T obj, String name) {
-        if (obj == null) {
-            throw new IllegalArgumentException(name + " cannot be null");
-        }
-        return obj;
-    }
-
-    /**
-     * Check that a list is not null and that none of its elements is null. If null or if the list has emtpy elements
-     * throws an IllegalArgumentException.
-     *
-     * @param <T> the type of the list
-     * @param list the list of strings.
-     * @param name parameter name for the exception message.
-     * @return the given list.
-     */
-    public static <T> List<T> notNullElements(List<T> list, String name) {
-        notNull(list, name);
-        for (int i = 0; i < list.size(); i++) {
-            notNull(list.get(i), XLog.format("list [{0}] element [{1}]", name, i));
-        }
-        return list;
-    }
 
     /**
      * Check that a string is not null and not empty. If null or emtpy throws an IllegalArgumentException.
@@ -103,7 +72,7 @@ public class ParamChecker {
      * @return the given list.
      */
     public static List<String> notEmptyElements(List<String> list, String name) {
-        notNull(list, name);
+        Objects.requireNonNull(list, () -> String.format("%s cannot be null", name));
         for (int i = 0; i < list.size(); i++) {
             notEmpty(list.get(i), XLog.format("list [{0}] element [{1}]", name, i));
         }

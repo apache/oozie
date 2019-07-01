@@ -188,8 +188,8 @@ public class CoordELFunctions {
      */
     public static int ph2_coord_tzOffset() {
         long actionCreationTime = getActionCreationtime().getTime();
-        TimeZone dsTZ = ParamChecker.notNull(getDatasetTZ(), "DatasetTZ");
-        TimeZone jobTZ = ParamChecker.notNull(getJobTZ(), "JobTZ");
+        TimeZone dsTZ = Objects.requireNonNull(getDatasetTZ(), "DatasetTZ cannot be null");
+        TimeZone jobTZ = Objects.requireNonNull(getJobTZ(), "JobTZ cannot be null");
         return (dsTZ.getOffset(actionCreationTime) - jobTZ.getOffset(actionCreationTime)) / (1000 * 60);
     }
 
@@ -340,8 +340,8 @@ public class CoordELFunctions {
      */
     public static String ph2_coord_nominalTime() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
-        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
-                "Coordinator Action");
+        SyncCoordAction action = Objects.requireNonNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
+                "Coordinator Action cannot be null");
         return DateUtils.formatDateOozieTZ(action.getNominalTime());
     }
 
@@ -393,8 +393,8 @@ public class CoordELFunctions {
      */
     public static String ph2_coord_actionId() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
-        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
-                "Coordinator Action");
+        SyncCoordAction action = Objects.requireNonNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
+                "Coordinator Action cannot be null");
         return action.getActionId();
     }
 
@@ -410,8 +410,8 @@ public class CoordELFunctions {
      */
     public static String ph2_coord_name() throws Exception {
         ELEvaluator eval = ELEvaluator.getCurrent();
-        SyncCoordAction action = ParamChecker.notNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
-                "Coordinator Action");
+        SyncCoordAction action = Objects.requireNonNull((SyncCoordAction) eval.getVariable(COORD_ACTION),
+                "Coordinator Action cannot be null");
         return action.getName();
     }
 

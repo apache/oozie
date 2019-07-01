@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,28 +51,28 @@ public class TestPriorityDelayQueue extends TestCase {
             new TestQueueElement<Object>(null);
             fail();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | NullPointerException ex) {
         }
 
         try {
             new TestQueueElement<Object>(null, 0, 0, TimeUnit.MILLISECONDS);
             fail();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | NullPointerException ex) {
         }
 
         try {
             new TestQueueElement<Object>(obj, -1, 0, TimeUnit.MILLISECONDS);
             fail();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | NullPointerException ex) {
         }
 
         try {
             new TestQueueElement<Object>(obj, 0, -1, TimeUnit.MILLISECONDS);
             fail();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | NullPointerException ex) {
         }
 
         TestQueueElement<Object> e1 = new TestQueueElement<Object>(obj);
@@ -422,7 +423,7 @@ public class TestPriorityDelayQueue extends TestCase {
                     return false;
                 }
             }, priority, delay, unit);
-            ParamChecker.notNull(element, "element can't be null");
+            Objects.requireNonNull(element, "element cannot be null");
         }
 
         public TestQueueElement(E element) {

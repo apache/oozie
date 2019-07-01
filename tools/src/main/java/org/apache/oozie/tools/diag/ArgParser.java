@@ -31,6 +31,7 @@ import org.apache.oozie.cli.OozieCLI;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "Output directory is specified by user")
 class ArgParser {
@@ -103,7 +104,7 @@ class ArgParser {
 
     File ensureOutputDir() throws IOException {
         final String output = commandLine.getOptionValue(OUTPUT_DIR_OPTION);
-        Preconditions.checkNotNull(output);
+        Objects.requireNonNull(output, "output cannot be null");
 
         final File outputDir = new File(output);
         if (!outputDir.isDirectory() && !outputDir.mkdirs()) {

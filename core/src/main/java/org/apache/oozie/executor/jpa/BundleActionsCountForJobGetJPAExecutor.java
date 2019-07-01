@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Load the number of actions for a bundle job.
@@ -32,7 +33,7 @@ public class BundleActionsCountForJobGetJPAExecutor implements JPAExecutor<Integ
     private String bundleJobId = null;
 
     public BundleActionsCountForJobGetJPAExecutor(String bundleJobId) {
-        ParamChecker.notNull(bundleJobId, "bundleJobId");
+        Objects.requireNonNull(bundleJobId, "bundleJobId cannot be null");
         this.bundleJobId = bundleJobId;
     }
 

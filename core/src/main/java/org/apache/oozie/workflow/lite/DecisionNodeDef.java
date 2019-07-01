@@ -18,9 +18,8 @@
 
 package org.apache.oozie.workflow.lite;
 
-import org.apache.oozie.util.ParamChecker;
-
 import java.util.List;
+import java.util.Objects;
 
 public class DecisionNodeDef extends NodeDef {
 
@@ -28,7 +27,7 @@ public class DecisionNodeDef extends NodeDef {
     }
 
     public DecisionNodeDef(String name, String conf, Class<? extends DecisionNodeHandler> clazz, List<String> evals) {
-        super(name, ParamChecker.notNull(conf, "conf"), clazz, evals);
+        super(name, Objects.requireNonNull(conf, "conf cannot be null"), clazz, evals);
     }
 
 

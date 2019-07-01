@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.BundleJobBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the BundleJob bean.
@@ -31,8 +32,7 @@ public class BundleJobInsertJPAExecutor implements JPAExecutor<String> {
     private BundleJobBean bundleJob = null;
 
     public BundleJobInsertJPAExecutor(BundleJobBean bundleJob) {
-        ParamChecker.notNull(bundleJob, "bundleJob");
-        this.bundleJob = bundleJob;
+        this.bundleJob = Objects.requireNonNull(bundleJob, "bundleJob cannot be null");
     }
 
     @Override

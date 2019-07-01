@@ -19,6 +19,7 @@
 package org.apache.oozie.util;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.oozie.ErrorCode;
@@ -46,7 +47,7 @@ public abstract class ParameterVerifier
      * @throws ParameterVerifierException If required parameters are not defined and have no default values, or if a name is empty
      */
     public static void verifyParameters(Configuration conf, Element rootElement) throws ParameterVerifierException {
-        ParamChecker.notNull(conf, "conf");
+        Objects.requireNonNull(conf, "conf cannot be null");
         if (rootElement == null) {
             return;
         }

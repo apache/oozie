@@ -25,7 +25,8 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.NotificationXCommand;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 public class WorkflowNotificationXCommand extends NotificationXCommand {
 
@@ -36,7 +37,7 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
 
     public WorkflowNotificationXCommand(WorkflowJobBean workflow) {
         super("job.notification", "job.notification", 0);
-        ParamChecker.notNull(workflow, "workflow");
+        Objects.requireNonNull(workflow, "workflow cannot be null");
         jobId = workflow.getId();
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL);
         if (url != null) {
@@ -55,8 +56,8 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
 
     public WorkflowNotificationXCommand(WorkflowJobBean workflow, WorkflowActionBean action) {
         super("action.notification", "job.notification", 0);
-        ParamChecker.notNull(workflow, "workflow");
-        ParamChecker.notNull(action, "action");
+        Objects.requireNonNull(workflow, "workflow cannot be null");
+        Objects.requireNonNull(action, "action cannot be null");
         jobId = action.getId();
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL);
         if (url != null) {

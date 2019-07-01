@@ -94,9 +94,9 @@ public abstract class JsonRestServlet extends HttpServlet {
             if (type != Integer.class && type != Boolean.class && type != String.class) {
                 throw new IllegalArgumentException("Type must be integer, boolean or string");
             }
-            this.type = ParamChecker.notNull(type, "type");
+            this.type = Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
-            this.methods = ParamChecker.notNull(methods, "methods");
+            this.methods = Objects.requireNonNull(methods, "methods cannot be null");
         }
 
     }
@@ -123,7 +123,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             for (ParameterInfo parameter : parameters) {
                 this.parameters.put(parameter.name, parameter);
             }
-            this.methods = ParamChecker.notNull(methods, "methods");
+            this.methods = Objects.requireNonNull(methods, "methods cannot be null");
         }
     }
 

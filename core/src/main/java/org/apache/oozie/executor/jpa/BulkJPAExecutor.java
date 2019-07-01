@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +47,6 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.rest.BulkResponseImpl;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * The query executor class for bulk monitoring queries i.e. debugging bundle coord actions directly
@@ -61,8 +61,7 @@ public class BulkJPAExecutor implements JPAExecutor<BulkResponseInfo> {
     }
 
     public BulkJPAExecutor(Map<String, List<String>> bulkFilter, int start, int len) {
-        ParamChecker.notNull(bulkFilter, "bulkFilter");
-        this.bulkFilter = bulkFilter;
+        this.bulkFilter = Objects.requireNonNull(bulkFilter, "bulkFilter cannot be null");
         this.start = start;
         this.len = len;
     }

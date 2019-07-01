@@ -33,6 +33,7 @@ import com.github.dozermapper.core.Mapper;
 import com.github.dozermapper.core.MapperAware;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A {@link DozerConverter} converting from {@link Decision} to JAXB {@link DECISION}.
@@ -62,7 +63,7 @@ public class DecisionConverter extends DozerConverter<Decision, DECISION> implem
     }
 
     private Mapper checkAndGetMapper() {
-        Preconditions.checkNotNull(mapper, "mapper should be set");
+        Objects.requireNonNull(mapper, "mapper should be set");
         return mapper;
     }
 

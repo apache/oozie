@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
@@ -32,7 +33,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.hadoop.GitOperations.GitOperationsException;
 
-import com.google.common.base.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
 
 public class GitMain extends LauncherMain {
@@ -177,7 +177,8 @@ public class GitMain extends LauncherMain {
      * @param name - actionConf value to return
      */
     String checkAndGetTrimmed(final Configuration actionConf, String name) {
-        Preconditions.checkNotNull(actionConf.getTrimmed(name), "Action Configuration does not have [%s] property", name);
+        Objects.requireNonNull(actionConf.getTrimmed(name), () -> String.format("Action Configuration does not have [%s] property",
+                name));
         return actionConf.getTrimmed(name);
     }
 

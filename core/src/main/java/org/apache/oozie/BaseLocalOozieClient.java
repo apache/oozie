@@ -18,7 +18,6 @@
 
 package org.apache.oozie;
 
-import com.google.common.base.Preconditions;
 import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
@@ -41,6 +40,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import static org.apache.oozie.BaseEngine.BaseEngineCallable;
@@ -54,7 +54,7 @@ abstract class BaseLocalOozieClient extends OozieClient {
     private final BaseEngine engine;
 
     BaseLocalOozieClient(final BaseEngine engine) {
-        Preconditions.checkNotNull(engine);
+        Objects.requireNonNull(engine);
         this.engine = engine;
     }
 

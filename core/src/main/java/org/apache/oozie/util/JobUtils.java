@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -53,7 +54,7 @@ public class JobUtils {
      * @throws IOException thrown if normalization can not be done properly.
      */
     public static void normalizeAppPath(String user, String group, Configuration conf) throws IOException {
-        ParamChecker.notNull(user, "user");
+        Objects.requireNonNull(user, "user cannot be null");
 
         if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) != null) { // do nothing for proxy submission job;
             return;

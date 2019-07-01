@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 //TODO javadoc
 public class LiteWorkflowApp implements Writable, WorkflowApp {
@@ -63,7 +64,7 @@ public class LiteWorkflowApp implements Writable, WorkflowApp {
     }
 
     public LiteWorkflowApp addNode(NodeDef node) throws WorkflowException {
-        ParamChecker.notNull(node, "node");
+        Objects.requireNonNull(node, "node cannot be null");
         if (complete) {
             throw new WorkflowException(ErrorCode.E0704, name);
         }

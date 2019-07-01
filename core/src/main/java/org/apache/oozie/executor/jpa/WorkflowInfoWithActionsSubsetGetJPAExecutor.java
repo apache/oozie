@@ -19,6 +19,7 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 
@@ -28,7 +29,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * This JPA Executor is responsible for getting the Workflow job with actions in certain range.
@@ -49,7 +49,7 @@ public class WorkflowInfoWithActionsSubsetGetJPAExecutor implements JPAExecutor<
      * @param len length of range
      */
     public WorkflowInfoWithActionsSubsetGetJPAExecutor(String wfJobId, int start, int len) {
-        ParamChecker.notNull(wfJobId, "wfJobId");
+        Objects.requireNonNull(wfJobId, "wfJobId cannot be null");
         this.wfJobId = wfJobId;
         this.start = start;
         this.len = len;

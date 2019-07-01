@@ -1429,7 +1429,7 @@ public class JavaActionExecutor extends ActionExecutor {
         if (launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY) != null) {
             launcherQueueName = launcherJobConf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY);
         } else {
-            launcherQueueName = Preconditions.checkNotNull(
+            launcherQueueName = Objects.requireNonNull(
                     ConfigurationService.get(DEFAULT_LAUNCHER_QUEUE), "Default launcherQueueName is undefined");
         }
         appContext.setQueue(launcherQueueName);

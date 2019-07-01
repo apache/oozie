@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Load the number of running actions for a coordinator job.
@@ -32,8 +33,7 @@ public class CoordActionsActiveCountJPAExecutor implements JPAExecutor<Integer> 
     private String coordJobId = null;
 
     public CoordActionsActiveCountJPAExecutor(String coordJobId) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
-        this.coordJobId = coordJobId;
+        this.coordJobId = Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
     }
 
     @Override

@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -43,8 +43,7 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
     }
 
     public WorkflowActionGetJPAExecutor(String wfActionId, boolean isNullAcceptable) {
-        ParamChecker.notNull(wfActionId, "wfActionId");
-        this.wfActionId = wfActionId;
+        this.wfActionId = Objects.requireNonNull(wfActionId, "wfActionId cannot be null");
         this.isNullAcceptable = isNullAcceptable;
     }
 

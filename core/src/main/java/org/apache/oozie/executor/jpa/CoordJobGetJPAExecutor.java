@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the CoordinatorJob into a Bean and return it.
@@ -35,8 +35,7 @@ public class CoordJobGetJPAExecutor implements JPAExecutor<CoordinatorJobBean> {
     private String coordJobId = null;
 
     public CoordJobGetJPAExecutor(String coordJobId) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
-        this.coordJobId = coordJobId;
+        this.coordJobId = Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
     }
 
     @Override

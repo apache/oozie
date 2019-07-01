@@ -25,17 +25,6 @@ import java.util.Arrays;
 
 public class TestParamChecker extends XTestCase {
 
-    public void testNotNull() {
-        ParamChecker.notNull("value", "name");
-        try {
-            ParamChecker.notNull(null, "name");
-            fail();
-        }
-        catch (IllegalArgumentException ex) {
-            // nop
-        }
-    }
-
     public void testNotNullElements() {
         ParamChecker.notEmptyElements(new ArrayList<String>(), "name");
         ParamChecker.notEmptyElements(Arrays.asList("a"), "name");
@@ -43,7 +32,7 @@ public class TestParamChecker extends XTestCase {
             ParamChecker.notEmptyElements(null, "name");
             fail();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | NullPointerException ex) {
             // nop
         }
         try {
@@ -80,7 +69,7 @@ public class TestParamChecker extends XTestCase {
             ParamChecker.notEmptyElements(null, "name");
             fail();
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | NullPointerException ex) {
             // nop
         }
         try {

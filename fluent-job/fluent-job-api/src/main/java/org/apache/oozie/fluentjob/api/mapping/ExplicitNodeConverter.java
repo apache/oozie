@@ -50,10 +50,10 @@ import org.apache.oozie.fluentjob.api.workflow.Credential;
 import com.github.dozermapper.core.DozerConverter;
 import com.github.dozermapper.core.Mapper;
 import com.github.dozermapper.core.MapperAware;
-import com.google.common.base.Preconditions;
 
 import javax.xml.bind.JAXBElement;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A {@link DozerConverter} converting from {@link ExplicitNode} to JAXB {@link ACTION}.
@@ -120,7 +120,7 @@ public class ExplicitNodeConverter extends DozerConverter<ExplicitNode, ACTION> 
     }
 
     private Mapper checkAndGetMapper() {
-        Preconditions.checkNotNull(mapper, "mapper should be set");
+        Objects.requireNonNull(mapper, "mapper should be set");
         return mapper;
     }
 
@@ -184,7 +184,7 @@ public class ExplicitNodeConverter extends DozerConverter<ExplicitNode, ACTION> 
             actionTypeObject = checkAndGetMapper().map(realNode, mappedClass);
         }
 
-        Preconditions.checkNotNull(actionTypeObject, "actionTypeObject");
+        Objects.requireNonNull(actionTypeObject, "actionTypeObject cannot be null");
 
         if (actionTypeObject instanceof MAPREDUCE) {
             destination.setMapReduce((MAPREDUCE) actionTypeObject);

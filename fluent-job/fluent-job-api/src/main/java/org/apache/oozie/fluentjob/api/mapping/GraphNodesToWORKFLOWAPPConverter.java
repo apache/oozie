@@ -18,7 +18,6 @@
 
 package org.apache.oozie.fluentjob.api.mapping;
 
-import com.google.common.base.Preconditions;
 import org.apache.oozie.fluentjob.api.generated.workflow.ACTION;
 import org.apache.oozie.fluentjob.api.generated.workflow.ACTIONTRANSITION;
 import org.apache.oozie.fluentjob.api.generated.workflow.CREDENTIALS;
@@ -48,6 +47,7 @@ import com.github.dozermapper.core.MapperAware;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A {@link DozerConverter} converting from {@link GraphNodes} to JAXB {@link WORKFLOWAPP}.
@@ -175,7 +175,7 @@ public class GraphNodesToWORKFLOWAPPConverter extends DozerConverter<GraphNodes,
     }
 
     private void convertNode(final NodeBase nodeBase, final WORKFLOWAPP workflowapp, final KILL kill) {
-        Preconditions.checkNotNull(nodeBase, "nodeBase");
+        Objects.requireNonNull(nodeBase, "nodeBase cannot be null");
 
         final Class<?> sourceClass = nodeBase.getClass();
         if (SOURCE_TARGET_CLASSES.containsKey(sourceClass)) {

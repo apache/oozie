@@ -48,7 +48,6 @@ import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 
@@ -118,18 +117,18 @@ public class LauncherAM {
             LauncherSecurityManager launcherSecurityManager,
             String containerId,
             Configuration launcherConf) {
-        this.amrmClientAsyncFactory = Preconditions.checkNotNull(amrmClientAsyncFactory,
+        this.amrmClientAsyncFactory = Objects.requireNonNull(amrmClientAsyncFactory,
                 "amrmClientAsyncFactory should not be null");
-        this.amrmCallBackHandler = Preconditions.checkNotNull(amrmCallBackHandler, "amrmCallBackHandler should not be null");
-        this.hdfsOperations = Preconditions.checkNotNull(hdfsOperations, "hdfsOperations should not be null");
-        this.localFsOperations = Preconditions.checkNotNull(localFsOperations, "localFsOperations should not be null");
-        this.prepareHandler = Preconditions.checkNotNull(prepareHandler, "prepareHandler should not be null");
-        this.callbackNotifierFactory = Preconditions.checkNotNull(callbackNotifierFactory,
+        this.amrmCallBackHandler = Objects.requireNonNull(amrmCallBackHandler, "amrmCallBackHandler should not be null");
+        this.hdfsOperations = Objects.requireNonNull(hdfsOperations, "hdfsOperations should not be null");
+        this.localFsOperations = Objects.requireNonNull(localFsOperations, "localFsOperations should not be null");
+        this.prepareHandler = Objects.requireNonNull(prepareHandler, "prepareHandler should not be null");
+        this.callbackNotifierFactory = Objects.requireNonNull(callbackNotifierFactory,
                 "callbackNotifierFactory should not be null");
-        this.launcherSecurityManager = Preconditions.checkNotNull(launcherSecurityManager,
+        this.launcherSecurityManager = Objects.requireNonNull(launcherSecurityManager,
                 "launcherSecurityManager should not be null");
-        this.containerId = ContainerId.fromString(Preconditions.checkNotNull(containerId, "containerId should not be null"));
-        this.launcherConf = Preconditions.checkNotNull(launcherConf, "launcherConf should not be null");
+        this.containerId = ContainerId.fromString(Objects.requireNonNull(containerId, "containerId should not be null"));
+        this.launcherConf = Objects.requireNonNull(launcherConf, "launcherConf should not be null");
     }
 
     public static void main(String[] args) throws Exception {
@@ -405,7 +404,7 @@ public class LauncherAM {
             final String[] mainArgs = getMainArguments(launcherConf);
             setRecoveryId();
             Class<?> klass = launcherConf.getClass(CONF_OOZIE_ACTION_MAIN_CLASS, null);
-            Preconditions.checkNotNull(klass, "Launcher class should not be null");
+            Objects.requireNonNull(klass, "Launcher class should not be null");
             System.out.println("Launcher class: " + klass.toString());
             Method mainMethod = klass.getMethod("main", String[].class);
             // Enable LauncherSecurityManager to catch System.exit calls
@@ -469,7 +468,7 @@ public class LauncherAM {
             ApplicationId applicationId = containerId.getApplicationAttemptId().getApplicationId();
             final String applicationIdStr = applicationId.toString();
 
-            final String recoveryId = Preconditions.checkNotNull(launcherConf.get(OOZIE_ACTION_RECOVERY_ID),
+            final String recoveryId = Objects.requireNonNull(launcherConf.get(OOZIE_ACTION_RECOVERY_ID),
                             "RecoveryID should not be null");
 
             final Path path = new Path(actionDir, recoveryId);

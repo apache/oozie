@@ -39,7 +39,6 @@ import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.CommandException;
@@ -68,6 +67,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
 import java.io.IOException;
@@ -88,7 +88,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      */
     public SubmitXCommand(Configuration conf) {
         super("submit", "submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     /**

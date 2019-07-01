@@ -19,7 +19,8 @@
 package org.apache.oozie;
 
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Base exception for all Oozie exception. <p> It requires error codes an captures the Log info at exception time. <p>
@@ -37,7 +38,7 @@ public class XException extends Exception {
      */
     private XException(String message, ErrorCode errorCode, Throwable cause) {
         super(message, cause);
-        this.errorCode = ParamChecker.notNull(errorCode, "errorCode");
+        this.errorCode = Objects.requireNonNull(errorCode, "errorCode cannot be null");
     }
 
     /**

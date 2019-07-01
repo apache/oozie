@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 //TODO javadoc
 public class LiteWorkflowInstance implements Writable, WorkflowInstance {
@@ -159,9 +160,9 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     public LiteWorkflowInstance(LiteWorkflowApp def, Configuration conf, String instanceId) {
         this();
-        this.def = ParamChecker.notNull(def, "def");
-        this.instanceId = ParamChecker.notNull(instanceId, "instanceId");
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.def = Objects.requireNonNull(def, "def cannot be null");
+        this.instanceId = Objects.requireNonNull(instanceId, "instanceId cannot be null");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
         refreshLog();
         status = Status.PREP;
     }
@@ -180,7 +181,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     public synchronized boolean signal(String executionPath, String signalValue) throws WorkflowException {
         ParamChecker.notEmpty(executionPath, "executionPath");
-        ParamChecker.notNull(signalValue, "signalValue");
+        Objects.requireNonNull(signalValue, "signalValue cannot be null");
 
         if (status != Status.RUNNING) {
             throw new WorkflowException(ErrorCode.E0716);

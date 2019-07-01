@@ -18,7 +18,6 @@
 
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.oozie.servlet.AuthFilter;
 import org.apache.oozie.servlet.HttpResponseHeaderFilter;
@@ -28,13 +27,14 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
+import java.util.Objects;
 
 public class FilterMapper {
     private final WebAppContext servletContextHandler;
 
     @Inject
     public FilterMapper(final WebAppContext servletContextHandler) {
-        this.servletContextHandler = Preconditions.checkNotNull(servletContextHandler, "ServletContextHandler is null");
+        this.servletContextHandler = Objects.requireNonNull(servletContextHandler, "ServletContextHandler is null");
     }
 
     /**

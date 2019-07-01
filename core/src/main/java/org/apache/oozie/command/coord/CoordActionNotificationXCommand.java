@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
@@ -29,7 +30,6 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.NotificationXCommand;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 
 /**
@@ -46,8 +46,7 @@ public class CoordActionNotificationXCommand extends NotificationXCommand {
 
     public CoordActionNotificationXCommand(CoordinatorActionBean actionBean) {
         super("coord_action_notification", "coord_action_notification", 0);
-        ParamChecker.notNull(actionBean, "Action Bean");
-        this.actionBean = actionBean;
+        this.actionBean = Objects.requireNonNull(actionBean, "Action Bean cannot be null");
         jobId = actionBean.getId();
 
     }

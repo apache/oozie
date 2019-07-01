@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -31,7 +32,6 @@ import org.apache.oozie.CoordinatorJobInfo;
 import org.apache.oozie.client.Job.Status;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.store.StoreStatusFilter;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.apache.openjpa.persistence.OpenJPAQuery;
 import org.apache.openjpa.persistence.jdbc.FetchDirection;
@@ -50,7 +50,7 @@ public class CoordJobInfoGetJPAExecutor implements JPAExecutor<CoordinatorJobInf
     private int len = 50;
 
     public CoordJobInfoGetJPAExecutor(Map<String, List<String>> filter, int start, int len) {
-        ParamChecker.notNull(filter, "filter");
+        Objects.requireNonNull(filter, "filter cannot be null");
         this.filter = filter;
         this.start = start;
         this.len = len;

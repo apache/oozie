@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
@@ -124,7 +125,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      * @return true if all actions are eligible to rerun
      */
     private static boolean checkAllActionsRunnable(List<CoordinatorActionBean> coordActions) {
-        ParamChecker.notNull(coordActions, "Coord actions to be rerun");
+        Objects.requireNonNull(coordActions, "Coord actions to be rerun cannot be null");
         boolean ret = false;
         for (CoordinatorActionBean coordAction : coordActions) {
             ret = true;
