@@ -79,20 +79,20 @@ public class TestOozieRollingPolicy extends XTestCase {
 
         Calendar cal = new GregorianCalendar();
         final File f0 = new File(oozieLogPath, oozieLogName);
-        f0.createNewFile();
+        createFileAndWait(f0);
         f0.setLastModified(cal.getTimeInMillis());
         cal.add(calendarUnit, 1);
         final File f1 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit) + ".gz");
-        f1.createNewFile();
+        createFileAndWait(f1);
         cal.add(calendarUnit, 1);
         final File f2 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit) + ".gz");
-        f2.createNewFile();
+        createFileAndWait(f2);
         cal.add(calendarUnit, 1);
         final File f3 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit) + ".gz");
-        f3.createNewFile();
+        createFileAndWait(f3);
         cal.add(calendarUnit, 1);
         final File f4 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit) + ".gz");
-        f4.createNewFile();
+        createFileAndWait(f4);
 
         // Test that it only deletes the oldest file (f1)
         orp.isTriggeringEvent(null, null, null, 0);
@@ -106,12 +106,12 @@ public class TestOozieRollingPolicy extends XTestCase {
 
         cal.add(calendarUnit, 1);
         final File f5 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit));
-        f5.createNewFile();
+        createFileAndWait(f5);
         f5.setLastModified(cal.getTimeInMillis());
 
         cal.add(calendarUnit, -15);
         final File f6 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit));
-        f6.createNewFile();
+        createFileAndWait(f6);
         f6.setLastModified(cal.getTimeInMillis());
 
         // Test that it can delete more than one file when necessary and that it works with non .gz files
@@ -125,13 +125,13 @@ public class TestOozieRollingPolicy extends XTestCase {
         assertTrue(f0.exists() && !f1.exists() && !f2.exists() && f3.exists() && f4.exists() && f5.exists() && !f6.exists());
 
         final File f7 = new File(oozieLogPath, "blah.txt");
-        f7.createNewFile();
+        createFileAndWait(f7);
         f7.setLastModified(cal.getTimeInMillis());
 
         cal.add(calendarUnit, 1);
         final File f8 = new File(oozieLogPath, oozieLogName + formatDateForFilename(cal, calendarUnit));
         cal.add(calendarUnit, 15);
-        f8.createNewFile();
+        createFileAndWait(f8);
         f8.setLastModified(cal.getTimeInMillis());
 
         // Test that it ignores "other" files even if they are oldest and test that it uses the modified time for non .gz files
@@ -146,6 +146,11 @@ public class TestOozieRollingPolicy extends XTestCase {
         });
         assertTrue(f0.exists() && !f1.exists() && !f2.exists() && !f3.exists() && f4.exists() && f5.exists() && !f6.exists() &&
                    f7.exists() && f8.exists());
+    }
+
+    private void createFileAndWait(File file) throws IOException {
+        file.createNewFile();
+        sleep(10);
     }
 
 
