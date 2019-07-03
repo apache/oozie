@@ -21,9 +21,12 @@ package org.apache.oozie.client.rest;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
 
-import junit.framework.TestCase;
 
-public class TestJsonCoordinatorJob extends TestCase {
+
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+public class TestJsonCoordinatorJob {
 
     static String LAST_ACTION_TIME = "Wed, 02 Sep 2009 00:00:00 GMT";
     static String NEXT_MATERIALIZED_TIME = "Thu, 03 Sep 2009 00:00:00 GMT";
@@ -54,6 +57,7 @@ public class TestJsonCoordinatorJob extends TestCase {
         return app;
     }
 
+    @Test
     public void testProperties() {
         CoordinatorJobBean app = createApplication();
         assertEquals("a", app.getAppPath());

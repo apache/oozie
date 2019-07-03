@@ -24,7 +24,11 @@ import org.junit.rules.ExpectedException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TestBlockingWritesExitValueProcess extends DrainerTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+
+public class TestBlockingWritesExitValueProcess {
     private static final String TEST_STRING = "test string";
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();

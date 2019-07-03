@@ -20,13 +20,16 @@ package org.apache.oozie;
 
 import java.util.Date;
 
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Deprecated
-public class TestSLAEventBean extends XTestCase {
+public class TestSLAEventBean {
 
     private static final Date ee = new Date(1L);
     private static final Date es = new Date(2L);
@@ -59,6 +62,7 @@ public class TestSLAEventBean extends XTestCase {
         bean.setUser("u");
     }
 
+    @Test
     public void testSetGet() {
         final SLAEventBean bean = new SLAEventBean();
 
@@ -95,6 +99,7 @@ public class TestSLAEventBean extends XTestCase {
         assertEquals(DateUtils.convertDateToTimestamp(es), bean.getExpectedStartTS());
     }
 
+    @Test
     public void testToXmlStatusEvent() {
         final SLAEventBean bean = new SLAEventBean();
         set(bean);
@@ -106,6 +111,7 @@ public class TestSLAEventBean extends XTestCase {
                 + "    <app-name>an</app-name>\r\n" + "  </status>\r\n" + "</event>", actualXml);
     }
 
+    @Test
     public void testToXmlRegistrationEvent() {
         final SLAEventBean bean = new SLAEventBean();
         set(bean);

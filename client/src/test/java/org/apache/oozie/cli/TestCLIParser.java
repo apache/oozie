@@ -25,7 +25,7 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
-import junit.framework.TestCase;
+
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -34,7 +34,12 @@ import org.junit.Test;
 
 import com.google.common.io.ByteStreams;
 
-public class TestCLIParser extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class TestCLIParser {
 
     @Test
     public void testEmptyParser() throws Exception {

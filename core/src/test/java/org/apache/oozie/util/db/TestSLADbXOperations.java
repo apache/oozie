@@ -21,14 +21,18 @@ package org.apache.oozie.util.db;
 import java.util.Date;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.SLAEvent;
-import org.apache.oozie.test.XTestCase;
+
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
-public class TestSLADbXOperations extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+public class TestSLADbXOperations {
 
     @SuppressWarnings("deprecation")
+    @Test
     public void testCreateSlaRegistrationEventMinReqFields() throws Exception {
         Date nomDate = DateUtils.parseDateOozieTZ("2014-01-01T01:01Z");
         String slaXML = " <sla:info xmlns:sla='uri:oozie:sla:0.2'>"

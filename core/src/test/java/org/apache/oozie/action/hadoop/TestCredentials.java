@@ -25,8 +25,12 @@ import org.apache.oozie.action.hadoop.CredentialsProperties;
  * Test Credentials
  *
  */
-public class TestCredentials extends ActionExecutorTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+public class TestCredentials {
+
+    @Test
     public void testHbaseCredentials() {
         CredentialsProperties prop = new CredentialsProperties("dummyName", "dummyType");
         prop.getProperties().put("hbase.zookeeper.quorum", "dummyHost");

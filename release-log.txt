@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3476 Migrate classes without setup/tearDown to JUnit4 (asalamon74 via kmarton)
 OOZIE-3522 Migrate from Guava's Joiner (asalamon74 via kmarton)
 OOZIE-3520 Upgrade Derby to 10.14.2.0 (nobigo via asalamon74)
 OOZIE-3513 Migrate from Preconditions.checkNotNull and ParamChecker.notNull (asalamon74 via kmarton)

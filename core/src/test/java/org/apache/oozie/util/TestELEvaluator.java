@@ -18,14 +18,19 @@
 
 package org.apache.oozie.util;
 
-import junit.framework.TestCase;
+
 
 import javax.el.ELException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestELEvaluator extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+public class TestELEvaluator {
 
     public static String functionA() {
         assertEquals("A", ELEvaluator.getCurrent().getVariable("a"));
@@ -68,6 +73,7 @@ public class TestELEvaluator extends TestCase {
         }
     }
 
+    @Test
     public void testContextVars() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         assertNull(support.getVariable("a"));
@@ -89,6 +95,7 @@ public class TestELEvaluator extends TestCase {
     }
 
 
+    @Test
     public void testContextFunctions() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.addFunction("a", "a", functionA);
@@ -112,6 +119,7 @@ public class TestELEvaluator extends TestCase {
         assertEquals(functionA, support.resolveFunction("a", "a"));
     }
 
+    @Test
     public void testVars() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.setVariable("a", "A");
@@ -134,6 +142,7 @@ public class TestELEvaluator extends TestCase {
         }
     }
 
+    @Test
     public void testFunctions() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.addFunction("a", "a", functionA);
@@ -141,6 +150,7 @@ public class TestELEvaluator extends TestCase {
         assertEquals(functionA, evaluator.getContext().resolveFunction("a", "a"));
     }
 
+    @Test
     public void testEval() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.setVariable("a", "A");
@@ -149,6 +159,7 @@ public class TestELEvaluator extends TestCase {
         assertEquals("Aa", evaluator.evaluate("${a}${a:a()}", String.class));
     }
 
+    @Test
     public void testCurrent() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.setVariable("a", "A");
@@ -159,6 +170,7 @@ public class TestELEvaluator extends TestCase {
         assertNull(ELEvaluator.getCurrent());
     }
 
+    @Test
     public void testFunctionELEvaluationError() throws Exception {
         try {
             ELEvaluator.Context support = new ELEvaluator.Context();

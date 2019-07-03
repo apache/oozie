@@ -31,13 +31,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.oozie.test.XTestCase;
+
 import org.apache.oozie.util.db.Schema.Column;
 import org.apache.oozie.util.db.Schema.DBType;
 import org.apache.oozie.util.db.Schema.Index;
 import org.apache.oozie.util.db.Schema.Table;
 
-public class TestSchema extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+public class TestSchema {
 
     public static Map<Table, List<Column>> TABLE_COLUMNS = new HashMap<Table, List<Column>>();
     private static final String DB_NAME = "testdb";
@@ -189,6 +192,7 @@ public class TestSchema extends XTestCase {
         }
     }
 
+    @Test
     public void testGenerateCreateScript() throws SQLException {
         Connection conn = getDirectConnection();
         prepareDB(conn);

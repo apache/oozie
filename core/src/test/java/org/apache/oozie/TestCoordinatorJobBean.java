@@ -30,10 +30,12 @@ import java.util.List;
 import org.apache.oozie.client.CoordinatorJob.Execution;
 import org.apache.oozie.client.CoordinatorJob.Timeunit;
 import org.apache.oozie.client.Job.Status;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.junit.Test;
 
-public class TestCoordinatorJobBean extends XTestCase {
+import static org.junit.Assert.assertEquals;
+
+public class TestCoordinatorJobBean {
 
     private static final Date ct = new Date(1L);
     private static final Date et = new Date(2L);
@@ -91,6 +93,7 @@ public class TestCoordinatorJobBean extends XTestCase {
     /**
      * Test {@link CoordinatorJobBean} get- and set- methods.
      */
+    @Test
     public void testSetGet() {
         final CoordinatorJobBean bean = new CoordinatorJobBean();
         set(bean);
@@ -161,6 +164,7 @@ public class TestCoordinatorJobBean extends XTestCase {
     /**
      * Test {@link CoordinatorJobBean} serialization and deserialization.
      */
+    @Test
     public void testSerialization() throws IOException {
         final CoordinatorJobBean bean = new CoordinatorJobBean();
 

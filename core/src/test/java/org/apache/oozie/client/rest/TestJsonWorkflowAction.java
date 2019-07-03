@@ -19,12 +19,14 @@
 package org.apache.oozie.client.rest;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+
 
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.WorkflowAction;
 
-public class TestJsonWorkflowAction extends TestCase {
+import org.junit.Test;
+
+public class TestJsonWorkflowAction {
     static String START_TIME = "Thu, 01 Jan 2009 00:00:00 GMT";
     static String END_TIME = "Fri, 02 Jan 2009 00:00:00 GMT";
 
@@ -50,6 +52,7 @@ public class TestJsonWorkflowAction extends TestCase {
         return action;
     }
 
+    @Test
     public void testProperties() {
         WorkflowAction action = createNode();
         Assert.assertEquals("a", action.getId());

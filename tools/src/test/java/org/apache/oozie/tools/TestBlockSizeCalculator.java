@@ -18,32 +18,36 @@
 
 package org.apache.oozie.tools;
 
-import junit.framework.TestCase;
-import org.junit.Assert;
+import org.junit.Test;
 
-public class TestBlockSizeCalculator extends TestCase{
+import static org.junit.Assert.assertEquals;
+
+public class TestBlockSizeCalculator {
 
     private long minBlockSize = 1048576;
     private long bytesPerChecksum = 512;
 
+    @Test
     public void testGetValidBlockSizeWhenFileLengthLowerThanMinBlockSize() {
         long fileLength = 615100;
         long validBlockSize = OozieSharelibCLI.BlockSizeCalculator.getValidBlockSize(fileLength, minBlockSize, bytesPerChecksum);
-        Assert.assertEquals("The block size should be equal to the defined min block size", minBlockSize, validBlockSize);
+        assertEquals("The block size should be equal to the defined min block size", minBlockSize, validBlockSize);
     }
 
+    @Test
     public void testGetValidBlockSizeWhenBytesPerChecksumDoesNotDivideFileLength() {
         long fileLength = 1048577;
         long expectedBlockSize = (fileLength / bytesPerChecksum + 1) * bytesPerChecksum;
         long validBlockSize = OozieSharelibCLI.BlockSizeCalculator.getValidBlockSize(fileLength, minBlockSize, bytesPerChecksum);
-        Assert.assertEquals("The block size should be the first greater value than the file size, dividable by bytes per checksum",
+        assertEquals("The block size should be the first greater value than the file size, dividable by bytes per checksum",
                 expectedBlockSize, validBlockSize);
     }
 
+    @Test
     public void testGetValidBlockSizeWhenBytesPerChecksumDivideFileLength() {
         long fileLength = 1049088;
         long validBlockSize = OozieSharelibCLI.BlockSizeCalculator.getValidBlockSize(fileLength, minBlockSize, bytesPerChecksum);
-        Assert.assertEquals("The block size should be equal with the file length", fileLength, validBlockSize);
+        assertEquals("The block size should be equal with the file length", fileLength, validBlockSize);
     }
 
 }

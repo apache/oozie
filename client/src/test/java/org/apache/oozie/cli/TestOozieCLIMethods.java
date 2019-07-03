@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
+
 
 import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
@@ -44,7 +44,10 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 
-public class TestOozieCLIMethods extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+
+public class TestOozieCLIMethods {
 
     static final String jobIdPattern = "Job ID[\\s|:]+";
     static final String jobNamePattern = "Job Name[\\s|:]+";

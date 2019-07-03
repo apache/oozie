@@ -22,10 +22,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.oozie.test.XTestCase;
 
-public class TestHive2Main extends XTestCase {
 
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+public class TestHive2Main {
+
+    @Test
     public void testJobIDPattern() {
         List<String> lines = new ArrayList<String>();
         lines.add("Ended Job = job_001");

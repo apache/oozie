@@ -18,10 +18,17 @@
 
 package org.apache.oozie.client;
 
-import org.apache.oozie.test.XTestCase;
 
-public class TestWorkflowClientException extends XTestCase {
 
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+
+public class TestWorkflowClientException {
+
+    @Test
     public void testErrorCodeMessage() {
         OozieClientException ex = new OozieClientException("errorCode", "message");
         assertEquals("errorCode", ex.getErrorCode());
@@ -30,6 +37,7 @@ public class TestWorkflowClientException extends XTestCase {
         assertTrue(ex.toString().contains("errorCode") && ex.toString().contains("message"));
     }
 
+    @Test
     public void testErrorCodeCause() {
         OozieClientException ex = new OozieClientException("errorCode", new Exception("message"));
         assertEquals("errorCode", ex.getErrorCode());
@@ -38,6 +46,7 @@ public class TestWorkflowClientException extends XTestCase {
         assertTrue(ex.toString().contains("errorCode") && ex.toString().contains("message"));
     }
 
+    @Test
     public void testErrorCodeMessageCause() {
         OozieClientException ex = new OozieClientException("errorCode", "message", new Exception());
         assertEquals("errorCode", ex.getErrorCode());

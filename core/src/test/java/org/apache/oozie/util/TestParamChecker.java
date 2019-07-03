@@ -18,13 +18,20 @@
 
 package org.apache.oozie.util;
 
-import org.apache.oozie.test.XTestCase;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class TestParamChecker extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+public class TestParamChecker {
+
+    @Test
     public void testNotNullElements() {
         ParamChecker.notEmptyElements(new ArrayList<String>(), "name");
         ParamChecker.notEmptyElements(Arrays.asList("a"), "name");
@@ -44,6 +51,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testNotEmpty() {
         ParamChecker.notEmpty("value", "name");
         try {
@@ -62,6 +70,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testNotEmptyElements() {
         ParamChecker.notEmptyElements(new ArrayList<String>(), "name");
         ParamChecker.notEmptyElements(Arrays.asList("a"), "name");
@@ -81,6 +90,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testValidToken() {
         ParamChecker.validateActionName("azAZ09_-");
         try {
@@ -106,6 +116,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testValidIdentifier() {
         assertTrue(ParamChecker.isValidIdentifier("a"));
         assertTrue(ParamChecker.isValidIdentifier("a1"));
@@ -115,6 +126,7 @@ public class TestParamChecker extends XTestCase {
         assertFalse(ParamChecker.isValidIdentifier("1"));
     }
 
+    @Test
     public void testCheckGTZero() {
         assertEquals(120, ParamChecker.checkGTZero(120, "test"));
         try {
@@ -131,6 +143,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testCheckGEZero() {
         assertEquals(120, ParamChecker.checkGEZero(120, "test"));
         assertEquals(0, ParamChecker.checkGEZero(0, "test"));
@@ -142,6 +155,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testCheckInteger() {
         assertEquals(120, ParamChecker.checkInteger("120", "test"));
         assertEquals(-12, ParamChecker.checkInteger("-12", "test"));
@@ -159,6 +173,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testCheckUTC() {
         ParamChecker.checkDateOozieTZ("2009-02-01T01:00Z", "test");
         try {
@@ -175,6 +190,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testCheckTimeZone() {
         ParamChecker.checkTimeZone("UTC", "test");
         try {
@@ -192,6 +208,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testIsMember() {
         String[] members = {"LIFO", "FIFO", "ONLYLAST"};
         ParamChecker.isMember("FIFO", members, "test");
@@ -204,6 +221,7 @@ public class TestParamChecker extends XTestCase {
 
     }
 
+    @Test
     public void testCheckFrequency() {
         ParamChecker.checkFrequency("10");
 
@@ -228,6 +246,7 @@ public class TestParamChecker extends XTestCase {
         }
     }
 
+    @Test
     public void testValidateActionName() {
         String actionName = "actionName";
         ParamChecker.validateActionName(actionName);

@@ -27,8 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestEmbeddedServletContainer extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
+public class TestEmbeddedServletContainer {
+
+    @Test
     public void testEmbeddedServletContainer() throws Exception {
         EmbeddedServletContainer container = new EmbeddedServletContainer("blah");
         container.addServletEndpoint("/ping/*", PingServlet.class);
@@ -45,6 +50,7 @@ public class TestEmbeddedServletContainer extends XTestCase {
         }
     }
 
+    @Test
     public void testMultipleParallelStarts() throws Exception {
         final List<EmbeddedServletContainer> containers = new ArrayList<>();
         PingServlet.FILTER_INIT = false;

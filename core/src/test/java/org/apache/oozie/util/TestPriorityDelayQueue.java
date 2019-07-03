@@ -18,7 +18,7 @@
 
 package org.apache.oozie.util;
 
-import junit.framework.TestCase;
+
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,7 +29,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
 
-public class TestPriorityDelayQueue extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+public class TestPriorityDelayQueue {
 
     public static class DPriorityDelayQueue<E> extends PriorityDelayQueue<E> {
 
@@ -44,6 +52,7 @@ public class TestPriorityDelayQueue extends TestCase {
 
     }
 
+    @Test
     public void testQueueElement() throws Exception {
         Object obj = new Object();
 
@@ -93,6 +102,7 @@ public class TestPriorityDelayQueue extends TestCase {
         assertTrue(e1.compareTo(e2) < 0);
     }
 
+    @Test
     public void testQueueConstructor() throws Exception {
         try {
             new PriorityDelayQueue<Integer>(0, 1000, TimeUnit.MILLISECONDS, -1);
@@ -123,6 +133,7 @@ public class TestPriorityDelayQueue extends TestCase {
         }
     }
 
+    @Test
     public void testBoundUnboundQueueSize() {
         PriorityDelayQueue<Integer> q = new PriorityDelayQueue<Integer>(1, 1000, TimeUnit.MILLISECONDS, -1);
         assertEquals(1, q.getPriorities());
@@ -149,6 +160,7 @@ public class TestPriorityDelayQueue extends TestCase {
         assertEquals(1, q.size());
     }
 
+    @Test
     public void testPoll() throws Exception {
         PriorityDelayQueue<Integer> q = new PriorityDelayQueue<Integer>(3, 500, TimeUnit.MILLISECONDS, -1);
 
@@ -240,6 +252,7 @@ public class TestPriorityDelayQueue extends TestCase {
         assertEquals(0, q.size());
     }
 
+    @Test
     public void testPeek() throws Exception {
         PriorityDelayQueue<Integer> q = new PriorityDelayQueue<Integer>(3, 500, TimeUnit.MILLISECONDS, -1);
 
@@ -290,6 +303,7 @@ public class TestPriorityDelayQueue extends TestCase {
         assertEquals(0, q.size());
     }
 
+    @Test
     public void testAntiStarvation() throws Exception {
         PriorityDelayQueue<Integer> q = new PriorityDelayQueue<Integer>(3, 500, TimeUnit.MILLISECONDS, -1);
         q.offer(new TestQueueElement<Integer>(1));
@@ -303,6 +317,7 @@ public class TestPriorityDelayQueue extends TestCase {
         assertEquals(1, q.sizes()[2]);
     }
 
+    @Test
     public void testConcurrency() throws Exception {
         final int threads = 5;
         final AtomicInteger counter = new AtomicInteger(threads);
@@ -343,6 +358,7 @@ public class TestPriorityDelayQueue extends TestCase {
         }
     }
 
+    @Test
     public void testIterator() throws Exception {
         PriorityDelayQueue<Integer> q = new PriorityDelayQueue<Integer>(3, 500, TimeUnit.MILLISECONDS, -1);
 
@@ -365,6 +381,7 @@ public class TestPriorityDelayQueue extends TestCase {
         assertEquals(4, q.size());
     }
 
+    @Test
     public void testClear() {
         PriorityDelayQueue<Integer> q = new PriorityDelayQueue<Integer>(3, 500, TimeUnit.MILLISECONDS, -1);
         q.offer(new TestQueueElement<Integer>(1, 1, 10, TimeUnit.MILLISECONDS));

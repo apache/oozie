@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import junit.framework.TestCase;
+
 
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.BulkResponse;
@@ -41,7 +41,12 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-public class TestJsonToBean extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+public class TestJsonToBean {
 
     static String CREATED_TIME = "Thu, 01 Jan 2009 00:00:00 GMT";
     static String START_TIME = "Thu, 01 Jan 2009 00:00:00 GMT";
@@ -86,6 +91,7 @@ public class TestJsonToBean extends TestCase {
         return array;
     }
 
+    @Test
     public void testParseWorkflowAction() {
         JSONObject json = createJsonWorkflowAction();
         WorkflowAction action = JsonToBean.createWorkflowAction(json);
@@ -109,6 +115,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseWorkflowActions() {
         JSONArray array = createJsonWorkflowActionList();
         List<WorkflowAction> list = JsonToBean.createWorkflowActionList(array);
@@ -150,6 +157,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseWorkflowJob() {
         JSONObject json = createJsonWorkflowJob();
         WorkflowJob wf = JsonToBean.createWorkflowJob(json);
@@ -172,6 +180,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseWorkflowJobs() {
         JSONArray array = createJsonWorkflowJobList();
         List<WorkflowJob> list = JsonToBean.createWorkflowJobList(array);
@@ -217,6 +226,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseCoordinatorAction() {
         JSONObject json = createJsonCoordinatorAction();
         CoordinatorAction action = JsonToBean.createCoordinatorAction(json);
@@ -241,6 +251,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseCoordinatorActions() {
         JSONArray array = createJsonCoordinatorActionList();
         List<CoordinatorAction> list = JsonToBean.createCoordinatorActionList(array);
@@ -290,6 +301,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseCoordinatorJob() {
         JSONObject json = createJsonCoordinatorJob();
         CoordinatorJob job = JsonToBean.createCoordinatorJob(json);
@@ -326,6 +338,7 @@ public class TestJsonToBean extends TestCase {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testParseCoordinatorJobs() {
         JSONArray array = createJsonCoordinatorJobList();
         List<CoordinatorJob> list = JsonToBean.createCoordinatorJobList(array);
@@ -351,6 +364,7 @@ public class TestJsonToBean extends TestCase {
         return json;
     }
 
+    @Test
     public void testParseJMSInfo() {
         JSONObject json = createJMSInfoJSONObject();
         JMSConnectionInfo jmsDetails = JsonToBean.createJMSConnectionInfo(json);
@@ -409,6 +423,7 @@ public class TestJsonToBean extends TestCase {
         return array;
     }
 
+    @Test
     public void testParseBulkResponse() {
         JSONObject json = createJsonBulkResponse();
 
@@ -437,6 +452,7 @@ public class TestJsonToBean extends TestCase {
         assertEquals("action-missingDeps", bulkAction.getMissingDependencies());
     }
 
+    @Test
     public void testParseBulkResponseList() {
         JSONArray array = createJsonBulkResponseList();
         List<BulkResponse> list = JsonToBean.createBulkResponseList(array);
@@ -446,30 +462,37 @@ public class TestJsonToBean extends TestCase {
         assertEquals("cj2", list.get(1).getCoordinator().getId());
     }
 
+    @Test
     public void testWorkflowActionMappings() throws Exception {
         _testMappings(JsonToBean.WF_ACTION, WorkflowAction.class, true);
     }
 
+    @Test
     public void testWorkflowJobMappings() throws Exception {
         _testMappings(JsonToBean.WF_JOB, WorkflowJob.class, true);
     }
 
+    @Test
     public void testCoordActionMappings() throws Exception {
         _testMappings(JsonToBean.COORD_ACTION, CoordinatorAction.class, true);
     }
 
+    @Test
     public void testCoordJobMappings() throws Exception {
         _testMappings(JsonToBean.COORD_JOB, CoordinatorJob.class, true);
     }
 
+    @Test
     public void testBundleJobMappings() throws Exception {
         _testMappings(JsonToBean.BUNDLE_JOB, BundleJob.class, true);
     }
 
+    @Test
     public void testBulkResponseMappings() throws Exception {
         _testMappings(JsonToBean.BULK_RESPONSE, BulkResponse.class, false);
     }
 
+    @Test
     public void testJMSConnectionInfoMappings() throws Exception {
         _testMappings(JsonToBean.JMS_CONNECTION_INFO, JMSConnectionInfoWrapper.class, false);
     }

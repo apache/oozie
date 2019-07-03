@@ -20,10 +20,17 @@ package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.test.XTestCase;
 
-public class TestParameterVerifier extends XTestCase {
 
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class TestParameterVerifier {
+
+    @Test
     public void testVerifyParametersNull() throws Exception {
         try {
             ParameterVerifier.verifyParameters(null, XmlUtils.parseXml("<root xmlns=\"uri:oozie:workflow:0.4\"></root>"));
@@ -45,6 +52,7 @@ public class TestParameterVerifier extends XTestCase {
         }
     }
 
+    @Test
     public void testVerifyParametersEmpty() throws Exception {
         Configuration conf = new Configuration(false);
         conf.set("A", "a");
@@ -59,6 +67,7 @@ public class TestParameterVerifier extends XTestCase {
         assertEquals("a", conf.get("A"));
     }
 
+    @Test
     public void testVerifyParametersMissing() throws Exception {
         Configuration conf = new Configuration(false);
 
@@ -104,6 +113,7 @@ public class TestParameterVerifier extends XTestCase {
         }
     }
 
+    @Test
     public void testVerifyParametersDefined() throws Exception {
         Configuration conf = new Configuration(false);
         conf.set("hello", "planet");
@@ -123,6 +133,7 @@ public class TestParameterVerifier extends XTestCase {
         assertEquals("planet", conf.get("hello"));
     }
 
+    @Test
     public void testVerifyParametersEmptyName() throws Exception {
         Configuration conf = new Configuration(false);
 
@@ -148,6 +159,7 @@ public class TestParameterVerifier extends XTestCase {
         }
     }
 
+    @Test
     public void testSupportsParameters() throws Exception {
         assertFalse(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.3"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.4"));

@@ -18,20 +18,28 @@
 
 package org.apache.oozie.service;
 
-import org.apache.oozie.test.XTestCase;
 
-public class TestActionConfFileType extends XTestCase {
+
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class TestActionConfFileType {
 
     private static final String XML_FILE = "a.xml";
     private static final String PROPERTIES_FILE = "b.properties";
     private static final String JSON_FILE = "c.json";
 
+    @Test
     public void testIsSupportedFileType() {
         assertTrue(ActionConfFileType.isSupportedFileType(XML_FILE));
         assertTrue(ActionConfFileType.isSupportedFileType(PROPERTIES_FILE));
         assertFalse(ActionConfFileType.isSupportedFileType(JSON_FILE));
     }
 
+    @Test
     public void testGetFileType() {
         assertEquals(ActionConfFileType.XML, ActionConfFileType.getFileType(XML_FILE));
         assertEquals(ActionConfFileType.PROPERTIES, ActionConfFileType.getFileType(PROPERTIES_FILE));
@@ -45,6 +53,7 @@ public class TestActionConfFileType extends XTestCase {
         }
     }
 
+    @Test
     public void testGetExtension() {
         assertEquals(".xml", ActionConfFileType.XML.getExtension());
         assertEquals(".properties", ActionConfFileType.PROPERTIES.getExtension());
