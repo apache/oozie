@@ -39,8 +39,6 @@ import org.apache.oozie.workflow.WorkflowException;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-import com.google.common.base.Joiner;
-
 public class LiteWorkflowValidator {
 
     public void validateWorkflow(LiteWorkflowApp app, boolean validateForkJoin) throws WorkflowException {
@@ -306,7 +304,7 @@ public class LiteWorkflowValidator {
     private void checkCycle(Deque<String> path, String nodeName) throws WorkflowException {
         if (path.contains(nodeName)) {
             path.addLast(nodeName);
-            throw new WorkflowException(ErrorCode.E0707, nodeName, Joiner.on("->").join(path));
+            throw new WorkflowException(ErrorCode.E0707, nodeName, String.join("->", path));
         }
     }
 
@@ -339,7 +337,7 @@ public class LiteWorkflowValidator {
         }
 
         if (joinNodes.size() > 1) {
-            throw new WorkflowException(ErrorCode.E0757, forkName, Joiner.on(",").join(joinNodes));
+            throw new WorkflowException(ErrorCode.E0757, forkName, String.join(",", joinNodes));
         }
     }
 

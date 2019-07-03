@@ -18,8 +18,6 @@
 
 package org.apache.oozie.util.db;
 
-import com.google.common.base.Joiner;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +37,7 @@ public enum CompositeIndex {
     private final String createStatement;
 
     CompositeIndex(String tableName, String ... columnNames) {
-        final String columns = Joiner.on(", ").join(columnNames);
+        final String columns = String.join(", ", columnNames);
         this.createStatement = String.format("CREATE INDEX %s ON %s (%s)",
                 name(), tableName.toUpperCase(), columns);
     }

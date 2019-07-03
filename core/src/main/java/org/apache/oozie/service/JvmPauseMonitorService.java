@@ -18,7 +18,6 @@
 
 package org.apache.oozie.service;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -110,7 +109,7 @@ public class JvmPauseMonitorService implements Service {
         if (gcDiffs.isEmpty()) {
             ret += "No GCs detected";
         } else {
-            ret += Joiner.on("\n").join(gcDiffs);
+            ret += String.join("\n", gcDiffs);
         }
         return ret;
     }
