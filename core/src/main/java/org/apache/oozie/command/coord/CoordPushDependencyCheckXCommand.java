@@ -388,6 +388,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             }
         }
         catch (JPAExecutorException je) {
+            final CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+            callableQueueService.queue(new CoordPushDependencyCheckXCommand(actionId), getCoordPushCheckRequeueInterval());
             throw new CommandException(je);
         }
     }

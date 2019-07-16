@@ -501,8 +501,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         }
         try {
             coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
-            coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_INPUT_CHECK,
-                    coordAction.getJobId());
+            if (coordAction != null){
+                coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_INPUT_CHECK,
+                        coordAction.getJobId());
+            }
+            else {
+                throw new CommandException(ErrorCode.E0605, actionId);
+            }
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);

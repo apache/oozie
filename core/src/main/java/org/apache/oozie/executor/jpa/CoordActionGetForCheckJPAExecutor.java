@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
@@ -55,6 +56,9 @@ public class CoordActionGetForCheckJPAExecutor implements JPAExecutor<Coordinato
             Object[] obj = (Object[]) q.getSingleResult();
             CoordinatorActionBean caBean = getBeanForRunningCoordAction(obj);
             return caBean;
+        }
+        catch (NoResultException e) {
+            return null;
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
