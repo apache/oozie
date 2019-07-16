@@ -58,11 +58,9 @@ public class FsELFunctions {
      * @throws Exception in case of file system issue
      */
     private static FileStatus getFileStatus(String pathUri) throws Exception {
-        URI uri = new URI(pathUri);
-        String path = uri.getPath();
-        FileSystem fs = getFileSystem(uri);
-        Path p = new Path(path);
-        return fs.exists(p) ? fs.getFileStatus(p) : null;
+        Path path = new Path(pathUri);
+        FileSystem fs = getFileSystem(path.toUri());
+        return fs.exists(path) ? fs.getFileStatus(path) : null;
     }
 
     /**
@@ -126,14 +124,12 @@ public class FsELFunctions {
      * @throws Exception in case of file system issue
      */
     public static long fs_dirSize(String pathUri) throws Exception {
-        URI uri = new URI(pathUri);
-        String path = uri.getPath();
+        Path path = new Path(pathUri);
         long size = -1;
         try {
-            FileSystem fs = getFileSystem(uri);
-            Path p = new Path(path);
-            if (fs.exists(p) && !fs.isFile(p)) {
-                FileStatus[] stati = fs.listStatus(p);
+            FileSystem fs = getFileSystem(path.toUri());
+            if (fs.exists(path) && !fs.isFile(path)) {
+                FileStatus[] stati = fs.listStatus(path);
                 size = 0;
                 if (stati != null) {
                     for (FileStatus status : stati) {

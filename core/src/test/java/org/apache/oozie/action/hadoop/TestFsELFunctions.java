@@ -20,6 +20,7 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
@@ -75,6 +76,13 @@ public class TestFsELFunctions extends XFsTestCase {
         os.write(arr);
         os.close();
 
+        URI filebURI = new Path(dir, "b").toUri();
+        String filebExtraSlashInPath = new URI(filebURI.getScheme(), filebURI.getAuthority(),
+                "/" + filebURI.getPath(), null, null).toString();
+        URI dirURI = new Path(dir).toUri();
+        String dirExtraSlashInPath = new URI(dirURI.getScheme(), dirURI.getAuthority(),
+                "/" + dirURI.getPath(), null, null).toString();
+
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "appPath");
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -87,6 +95,8 @@ public class TestFsELFunctions extends XFsTestCase {
         conf.set("file5", getFsTestCaseDir()+"/file*");
         conf.set("file6", getFsTestCaseDir()+"/file_*");
         conf.set("dir", dir);
+        conf.set("dirExtraSlashInPath", dirExtraSlashInPath);
+        conf.set("filebExtraSlashInPath", filebExtraSlashInPath);
 
         LiteWorkflowApp def =
                 new LiteWorkflowApp("name", "<workflow-app/>",
@@ -124,6 +134,10 @@ public class TestFsELFunctions extends XFsTestCase {
         assertEquals(3, (int) eval.evaluate("${fs:dirSize(wf:conf('dir'))}", Integer.class));
         assertEquals(-1, (int) eval.evaluate("${fs:blockSize(wf:conf('file2'))}", Integer.class));
         assertTrue(eval.evaluate("${fs:blockSize(wf:conf('file1'))}", Integer.class) > 0);
+        assertEquals("Size of fileb with extra slash in path should be 2",
+                2, (int) eval.evaluate("${fs:fileSize(wf:conf('filebExtraSlashInPath'))}", Integer.class));
+        assertEquals("Size of dir with extra slash in path should be 3",
+                3, (int) eval.evaluate("${fs:dirSize(wf:conf('dirExtraSlashInPath'))}", Integer.class));
     }
 
 }

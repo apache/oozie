@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3524 fs:fileSize() does not work correctly for files with extra slash in path (mgogineni via asalamon74)
 OOZIE-3523 First missing dependency is shown incorrectly (mgogineni via asalamon74)
 OOZIE-2836 Remove .ps1 and .cmd windows scripts (kmarton via asalamon74)
 OOZIE-3506 Flaky test TestOozieRollingPolicy (asalamon74 via kmarton)
