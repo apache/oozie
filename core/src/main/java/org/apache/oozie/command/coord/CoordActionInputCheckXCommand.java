@@ -170,8 +170,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + firstMissingDependency + " "
                     + nonResolvedList.toString());
 
+            boolean status = false;
+            try {
+                status = checkResolvedInput(actionXml, existList, nonExistList, actionConf);
+            }
+            catch (Exception e){
+                if(existList.length() > 0){
+                    isChangeInDependency = isChangeInDependency(nonExistList, missingDependencies, nonResolvedList, status);
+                }
+                throw e;
+            }
 
-            boolean status = checkResolvedInput(actionXml, existList, nonExistList, actionConf);
             boolean isPushDependenciesMet = coordPushInputDependency.isDependencyMet();
             if (status && nonResolvedList.length() > 0) {
                 status = (isPushDependenciesMet) ? checkUnResolvedInput(actionXml, actionConf) : false;

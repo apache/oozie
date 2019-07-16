@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -212,6 +214,44 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         if( index < 0) {
             fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
         }
+    }
+
+    public void testActionInputMissingDependenciesWithExceptions() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
+
+        //Creating the files needed for our set missing dependencies
+        Path file1 = new Path(getFsTestCaseDir(), "dir1/_SUCCESS");
+        Path file2 = new Path(getFsTestCaseDir(), "dir2/_SUCCESS");
+        Path file3 = new Path(getFsTestCaseDir(), "dir3/_SUCCESS");
+        Path file4 = new Path(getFsTestCaseDir(), "dir4/_SUCCESS");
+
+        FileSystem fs = getFileSystem();
+        fs.mkdirs(file1);
+        fs.mkdirs(file2);
+        fs.mkdirs(file3);
+        fs.mkdirs(file4);
+
+        //Setting file2 to be inaccessible
+        fs.setPermission(new Path(getFsTestCaseDir(), "dir2"), FsPermission.valueOf("----------"));
+
+        //Set missing dependencies
+        String missDeps = file1.toString() + "#" + file2.toString() + "#" + file3.toString() + "#" + file4.toString();
+        String expected = file2.toString() + "#" + file3.toString() + "#" + file4.toString();
+
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", missDeps);
+
+        new CoordActionInputCheckXCommand(action.getId(), job.getId()).call();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean caBean = jpaService.execute(new CoordActionGetJPAExecutor(action.getId()));
+        log.info("Missing deps list: " + caBean.getMissingDependencies());
+        //Checking case when second missing dependency is inaccessible to see if first one is shown or not.
+        assertEquals(expected, caBean.getMissingDependencies());
     }
 
     public void testActionInputCheckLatestActionCreationTime() throws Exception {
@@ -927,11 +967,17 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);
         String missDeps = getTestCaseFileUri("2009/01/29/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/22/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/15/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/08/_SUCCESS");
+
+        return addRecordToCoordActionTableForWaiting(jobId, actionNum, status, resourceXmlName, missDeps);
+        }
+
+    protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName, String missDeps) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);
 
         action.setMissingDependencies(missDeps);
 
