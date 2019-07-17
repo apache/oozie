@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static junit.framework.Assert.assertEquals;
 
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.ConfigUtils;
@@ -175,6 +175,32 @@ public class TestZKJobsConcurrencyService extends ZKXTestCase {
         }
     }
 
+    public void testIsJobIdForThisServerBadZk() throws Exception {
+        ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
+        try {
+            zkjcs.init(Services.get());
+            assertTrue(zkjcs.isJobIdForThisServer("0000000-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("0000001-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("0000002-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("0000003-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("0000004-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("0000005-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("0000006-130521183438837-oozie-rkan-W"));
+            assertTrue(zkjcs.isJobIdForThisServer("blah"));
+            zkjcs.zk.getClient().close(); // simulating zookeeper problem
+            sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
+            try {
+                zkjcs.isJobIdForThisServer("0000000-130521183438837-oozie-rkan-W");
+                fail("Expected ServletException");
+            } catch (ServiceException e) {
+                assertEquals(ErrorCode.E1700, e.getErrorCode());
+            }
+        }
+        finally {
+            zkjcs.destroy();
+        }
+    }
+
     public void testGetJobIdsForThisServer() throws Exception {
         ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
         // We'll use some DummyZKXOozies here to pretend to be other Oozie servers that will influence getJobIdsForThisServer()
@@ -232,6 +258,36 @@ public class TestZKJobsConcurrencyService extends ZKXTestCase {
             if (dummyOozie2 != null) {
                 dummyOozie2.teardown();
             }
+        }
+    }
+
+    public void testGetJobIdsForThisServerBadZk() throws Exception {
+        ZKJobsConcurrencyService zkjcs = new ZKJobsConcurrencyService();
+        try {
+            zkjcs.init(Services.get());
+            List<String> ids = new ArrayList<String>();
+            ids.add("0000000-130521183438837-oozie-rkan-W");
+            ids.add("0000001-130521183438837-oozie-rkan-W");
+            ids.add("0000002-130521183438837-oozie-rkan-W");
+            ids.add("0000003-130521183438837-oozie-rkan-W");
+            ids.add("0000004-130521183438837-oozie-rkan-W");
+            ids.add("0000005-130521183438837-oozie-rkan-W");
+            ids.add("0000006-130521183438837-oozie-rkan-W");
+            ids.add("blah");
+            List<String> ids2 = zkjcs.getJobIdsForThisServer(ids);
+            assertEquals(8, ids2.size());
+            assertTrue(ids2.containsAll(ids));
+            zkjcs.zk.getClient().close(); // simulating zookeeper problem
+            sleep(1000);    // Sleep to allow ZKUtils ServiceCache to update
+            try {
+                zkjcs.getJobIdsForThisServer(ids);
+                fail("Expected ServletException");
+            } catch (ServiceException e) {
+                assertEquals(ErrorCode.E1700, e.getErrorCode());
+            }
+        }
+        finally {
+            zkjcs.destroy();
         }
     }
 
