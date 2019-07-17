@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -225,6 +226,100 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
          eConf = eAction.getChild("name-node", eAction.getNamespace());
          assertEquals(getNameNodeUri(), eConf.getText());
          assertEquals("global-output-dir", actionConf.get("outputDir"));
+    }
+
+    public void testGlobalOverrideJobXml() throws Exception {
+        FileSystem fs = getFileSystem();
+
+        String jobXml1 = createJobXml("aa", "from_jobXml1", "bb", "from_jobXml1", "jobXml1", fs);
+        String jobXml2 = createJobXml("bb", "from_jobXml2", "cc", "from_jobXml2", "jobXml2", fs);
+        String jobXml3 = createJobXml("cc", "from_jobXml3", "dd", "from_jobXml3", "jobXml3", fs);
+        String jobXml4 = createJobXml("dd", "from_jobXml4", "ee", "from_jobXml4", "jobXml4", fs);
+
+        String actionXml = "<map-reduce>"
+                + "        <prepare>"
+                + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
+                + "        </prepare>"
+                + "        <job-xml>" + jobXml3 + "</job-xml>"
+                + "        <job-xml>" + jobXml4 + "</job-xml>"
+                + "        <configuration>"
+                + "        <property><name>ee</name><value>from_action_config</value></property>"
+                + "        </configuration>"
+                + "      </map-reduce>";
+        String wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"map-reduce-wf\">"
+                + "<global>"
+                + "<job-tracker>${jobTracker}</job-tracker>"
+                + "<name-node>${nameNode}</name-node>"
+                + "<job-xml>" + jobXml1 + "</job-xml>"
+                + "<job-xml>" + jobXml2 + "</job-xml>"
+                + "<configuration>"
+                + "<property><name>aa</name><value>from_global_config</value></property>"
+                + "<property><name>ee</name><value>from_global_config</value></property>"
+                + "</configuration>"
+                + "</global>"
+                + "    <start to=\"mr-node\"/>"
+                + "    <action name=\"mr-node\">"
+                + actionXml
+                + "    <ok to=\"end\"/>"
+                + "    <error to=\"fail\"/>"
+                + "</action>"
+                + "<kill name=\"fail\">"
+                + "    <message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>"
+                + "</kill>"
+                + "<end name=\"end\"/>"
+                + "</workflow-app>";
+
+        Writer writer = new FileWriter(getTestCaseDir() + "/workflow.xml");
+        IOUtils.copyCharStream(new StringReader(wfXml), writer);
+
+        Configuration conf = new XConfiguration();
+        conf.set("nameNode", getNameNodeUri());
+        conf.set("jobTracker", getJobTrackerUri());
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set(OozieClient.APP_PATH, "file://" + getTestCaseDir() + File.separator + "workflow.xml");
+
+        OutputStream os = new FileOutputStream(getTestCaseDir() + "/config-default.xml");
+        XConfiguration defaultConf = new XConfiguration();
+        defaultConf.set("aa", "from_config_default");
+        defaultConf.set("ff", "from_config_default");
+        defaultConf.writeXml(os);
+        os.close();
+        defaultConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
+
+        String wfId = new SubmitXCommand(conf).call();
+        new StartXCommand(wfId).call();
+        waitForWorkflowAction(wfId + "@mr-node");
+        WorkflowActionBean mrAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION,
+                wfId + "@mr-node");
+
+        JavaActionExecutor ae = new JavaActionExecutor();
+        WorkflowJobBean wf = createBaseWorkflow(defaultConf, "mr-action", wfXml);
+        Context context = new Context(wf, mrAction);
+        Element mrActionXml = XmlUtils.parseXml(mrAction.getConf());
+        Configuration actionConfig = ae.setupActionConf(conf, context, mrActionXml, getAppPath());
+
+        // Check attribute values
+        assertEquals("from_global_config", actionConfig.get("aa"));
+        assertEquals("from_jobXml2", actionConfig.get("bb"));
+        assertEquals("from_jobXml3", actionConfig.get("cc"));
+        assertEquals("from_jobXml4", actionConfig.get("dd"));
+        assertEquals("from_action_config", actionConfig.get("ee"));
+        assertEquals("from_config_default", actionConfig.get("ff"));
+    }
+
+    protected String createJobXml(String key1, String value1, String key2, String value2, String filename, FileSystem fs)
+            throws Exception {
+        String content = "<configuration>"
+                + "<property><name>" + key1 + "</name><value>" + value1 + "</value></property>"
+                + "<property><name>" + key2 + "</name><value>" + value2 + "</value></property>"
+                + "</configuration>";
+
+        Path path = new Path(getAppPath(), filename);
+        Writer writer = new OutputStreamWriter(fs.create(path, true));
+        writer.write(content);
+        writer.close();
+
+        return path.toString();
     }
 
     public void testSetupMethods() throws Exception {

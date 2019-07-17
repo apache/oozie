@@ -532,6 +532,7 @@ public class LiteWorkflowAppParser {
             @SuppressWarnings("unchecked")
             List<Element> actionJobXmls = actionElement.getChildren(JOB_XML, actionNs);
             if (gData != null && gData.jobXmls != null) {
+                int i = 0;
                 for(String gJobXml : gData.jobXmls) {
                     boolean alreadyExists = false;
                     for (Element actionXml : actionJobXmls) {
@@ -543,7 +544,8 @@ public class LiteWorkflowAppParser {
                     if (!alreadyExists) {
                         Element ejobXml = new Element(JOB_XML, actionNs);
                         ejobXml.setText(gJobXml);
-                        actionElement.addContent(ejobXml);
+                        actionElement.addContent(i, ejobXml);
+                        i++;
                     }
                 }
             }
