@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3024 Email action ignores value of content_type attribute when attachment attribute is set (matijhs via asalamon74)
 OOZIE-3526 Global job-xml not being overwritten by job-xml specified for an action (mgogineni via rohini)
 OOZIE-2755 Oozie HA: ZKJobsConcurrencyService throws runtime exception when numOozies is zero(asalamon74 via kmarton)
 OOZIE-3527 Oozie stuck in waiting state if CoordPushDependencyCheckXCommand is not requeued (mgogineni via rohini)

@@ -285,10 +285,31 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         elem.append("<content_type>text/html</content_type>");
         elem.append("<body>&lt;body&gt; This is a test mail &lt;/body&gt;</body>");
         elem.append("</email>");
-        EmailActionExecutor emailContnetType = new EmailActionExecutor();
-        emailContnetType.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
+        EmailActionExecutor emailContentType = new EmailActionExecutor();
+        emailContentType.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
         assertEquals("<body> This is a test mail </body>", GreenMailUtil.getBody(server.getReceivedMessages()[0]));
         assertTrue(server.getReceivedMessages()[0].getContentType().contains("text/html"));
+    }
+
+    public void testContentTypeWithAttachment() throws Exception {
+        String file1 = "file1";
+        Path path1 = new Path(getFsTestCaseDir(), file1);
+        String content1 = "this is attachment content in file1";
+        FileSystem fs = getFileSystem();
+        Writer writer = new OutputStreamWriter(fs.create(path1, true), StandardCharsets.UTF_8);
+        writer.write(content1);
+        writer.close();
+        sendAndReceiveEmail(path1.toString(), "text/html");
+
+        Multipart retParts = (Multipart) (server.getReceivedMessages()[0].getContent());
+        BodyPart bp = retParts.getBodyPart(0);
+        assertTrue(bp.getContentType().contains("text/html"));
+        assertEquals("This is a test mail", IOUtils.toString(bp.getInputStream()));
+
+        sendAndReceiveEmail(path1.toString());
+        retParts = (Multipart) (server.getReceivedMessages()[1].getContent());
+        bp = retParts.getBodyPart(0);
+        assertTrue(bp.getContentType().contains("text/plain"));
     }
 
     public void testLocalFileAttachmentError() throws Exception {
@@ -365,13 +386,20 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         assertEquals(attachCount, numAttach);
     }
 
-    private void sendAndReceiveEmail(String attachtag) throws Exception {
+    private void sendAndReceiveEmail(String attachTag) throws Exception {
+        sendAndReceiveEmail(attachTag, null);
+    }
+
+    private void sendAndReceiveEmail(String attachTag, String contentType) throws Exception{
         StringBuilder elem = new StringBuilder();
         elem.append("<email xmlns=\"uri:oozie:email-action:0.2\">");
         elem.append("<to>oozie@yahoo-inc.com</to>");
         elem.append("<subject>sub</subject>");
         elem.append("<body>This is a test mail</body>");
-        elem.append("<attachment>").append(attachtag).append("</attachment>");
+        if(contentType != null){
+            elem.append("<content_type>").append(contentType).append("</content_type>");
+        }
+        elem.append("<attachment>").append(attachTag).append("</attachment>");
         elem.append("</email>");
         EmailActionExecutor emailExecutor = new EmailActionExecutor();
         emailExecutor.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));

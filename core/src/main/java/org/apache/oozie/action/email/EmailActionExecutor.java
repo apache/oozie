@@ -253,10 +253,10 @@ public class EmailActionExecutor extends ActionExecutor {
             if (attachments != null && attachments.length > 0 && ConfigurationService.getBoolean(EMAIL_ATTACHMENT_ENABLED)) {
                 Multipart multipart = new MimeMultipart();
 
-                // Set body text
-                MimeBodyPart bodyTextPart = new MimeBodyPart();
-                bodyTextPart.setText(body);
-                multipart.addBodyPart(bodyTextPart);
+                // Set body text/content
+                MimeBodyPart bodyPart = new MimeBodyPart();
+                bodyPart.setContent(body, contentType);
+                multipart.addBodyPart(bodyPart);
 
                 for (String attachment : attachments) {
                     URI attachUri = new URI(attachment);
@@ -279,6 +279,7 @@ public class EmailActionExecutor extends ActionExecutor {
                 }
                 message.setContent(body, contentType);
             }
+            message.saveChanges();
         }
         catch (AddressException e) {
             throw new ActionExecutorException(ErrorType.ERROR, "EM004", "Bad address format in <to> or <cc> or <bcc>.", e);
