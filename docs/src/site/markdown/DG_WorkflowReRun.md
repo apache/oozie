@@ -2,17 +2,19 @@
 
 [::Go back to Oozie Documentation Index::](index.html)
 
-# Workflow ReRrun
+# Workflow ReRun
 
 <!-- MACRO{toc|fromDepth=1|toDepth=4} -->
 ## Configs
 
    * oozie.wf.application.path
-   * Only one of following two configurations is mandatory. Both should not be defined at the same time
-      * oozie.wf.rerun.skip.nodes
-      * oozie.wf.rerun.failnodes
+   * Only one of following two configurations is mandatory. Both should not be defined at the same time.
+      * `oozie.wf.rerun.skip.nodes`
+      * `oozie.wf.rerun.failnodes`
    * Skip nodes are comma separated list of action names. They can be any action nodes including decision node.
-   * The valid value of  `oozie.wf.rerun.failnodes` is true or false.
+   If this value is empty, or null, and `oozie.wf.rerun.failnodes` is false, than the whole workflow is rerunned.
+   * The valid value of  `oozie.wf.rerun.failnodes` is true or false. By default its value is false. In case of setting
+   this value to true, all the nodes where the status is OK will be skipped.
    * If secured hadoop version is used, the following two properties needs to be specified as well
       * mapreduce.jobtracker.kerberos.principal
       * dfs.namenode.kerberos.principal.
@@ -26,7 +28,7 @@ $ oozie job -oozie http://localhost:11000/oozie -rerun 14-20090525161321-oozie-j
 
    * Workflow with id wfId should exist.
    * Workflow with id wfId should be in SUCCEEDED/KILLED/FAILED.
-   * If specified , nodes in the config oozie.wf.rerun.skip.nodes must be completed successfully.
+   * If specified , nodes in the config `oozie.wf.rerun.skip.nodes` must be completed successfully.
 
 ## ReRun
 

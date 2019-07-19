@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
-
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
@@ -60,6 +60,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
@@ -297,15 +298,15 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    private void validateReRunConfiguration(Configuration conf) throws DagEngineException {
+    @VisibleForTesting
+    protected void validateReRunConfiguration(Configuration conf) throws DagEngineException {
         if (conf.get(OozieClient.APP_PATH) == null) {
             throw new DagEngineException(ErrorCode.E0401, OozieClient.APP_PATH);
         }
-        if (conf.get(OozieClient.RERUN_SKIP_NODES) == null && conf.get(OozieClient.RERUN_FAIL_NODES) == null) {
-            throw new DagEngineException(ErrorCode.E0401, OozieClient.RERUN_SKIP_NODES + " OR "
-                    + OozieClient.RERUN_FAIL_NODES);
-        }
-        if (conf.get(OozieClient.RERUN_SKIP_NODES) != null && conf.get(OozieClient.RERUN_FAIL_NODES) != null) {
+        boolean rerunFailNodes = ConfigurationService.getBoolean(conf, OozieClient.RERUN_FAIL_NODES);
+        String skipNodes = conf.get(OozieClient.RERUN_SKIP_NODES);
+
+        if (rerunFailNodes && skipNodes != null) {
             throw new DagEngineException(ErrorCode.E0404, OozieClient.RERUN_SKIP_NODES + " OR "
                     + OozieClient.RERUN_FAIL_NODES);
         }

@@ -350,12 +350,6 @@ public class TestReRunXCommand extends XDataTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId).getStatus());
-        try {
-            wfClient.reRun(jobId, newConf);
-        }
-        catch (OozieClientException e) {
-            assertTrue(e.getCause().getMessage().contains(ErrorCode.E0401.toString()));
-        }
         newConf = wfClient.createConfiguration();
         // Skip a non-executed node
         getFileSystem().delete(new Path(path, "p2"), true);
