@@ -22,8 +22,8 @@ import static org.apache.oozie.action.hadoop.LauncherAMUtils.CONF_OOZIE_ACTION_M
 import static org.apache.oozie.action.hadoop.LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_ARG_PREFIX;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 
 import java.util.Arrays;
 import java.util.List;

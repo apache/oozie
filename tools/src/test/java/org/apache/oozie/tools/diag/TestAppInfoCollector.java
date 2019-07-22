@@ -38,7 +38,7 @@ import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.oozie.tools.diag.TestServerInfoCollector.assertFileContains;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 @RunWith(MockitoJUnitRunner.class)

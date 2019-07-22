@@ -38,8 +38,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -70,13 +71,13 @@ public class TestScriptLanguageActionExecutor {
     @Test
     public void multibyteInputsAreAcceptedInScripts() throws Exception {
         final String testInput = "林檎";
-        doReturn(mockScript).when(mockElement).getChild(anyString(), any(Namespace.class));
+        doReturn(mockScript).when(mockElement).getChild(anyString(), any());
         doReturn("script").when(mockScript).getTextTrim();
         doReturn(mockActionConfig).when(mockContext).getProtoActionConf();
-        doReturn(testInput).when(mockActionConfig).get(anyString());
+        doReturn(testInput).when(mockActionConfig).get(isNull());
         doReturn(new Path(".")).when(mockContext).getActionDir();
         doReturn(mockFs).when(mockContext).getAppFileSystem();
-        doReturn(fsDataOutputStream).when(mockFs).create(any(Path.class));
+        doReturn(fsDataOutputStream).when(mockFs).create(any());
 
         ScriptLanguageActionExecutor scriptLanguageActionExecutor = spy(new ScriptLanguageActionExecutor("pig") {
             @Override

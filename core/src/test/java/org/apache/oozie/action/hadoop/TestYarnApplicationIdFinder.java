@@ -20,7 +20,6 @@ package org.apache.oozie.action.hadoop;
 
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
-import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.service.HadoopAccessorException;
@@ -82,8 +81,6 @@ public class TestYarnApplicationIdFinder {
                 yarnApplicationIdFinder.find());
 
         when(applicationReport.getApplicationType()).thenReturn("Oozie Launcher");
-        when(applicationReport.getApplicationId()).thenReturn(applicationId);
-        when(applicationId.toString()).thenReturn("application_1534164756526_0001");
         when(reader.read()).thenReturn(new ArrayList<>(Arrays.asList(applicationReport)));
 
         assertEquals(
@@ -91,8 +88,6 @@ public class TestYarnApplicationIdFinder {
                 "application_1534164756526_0000",
                 yarnApplicationIdFinder.find());
 
-        when(applicationReport.getApplicationType()).thenReturn("MAPREDUCE");
-        when(workflowActionBean.getWfId()).thenReturn("workflowId");
 
         assertEquals(
                 "no Hadoop Job ID nor YARN applications of the same workflow: WorkflowActionBean.externalId should be found",
@@ -112,8 +107,6 @@ public class TestYarnApplicationIdFinder {
     public void whenHadoopJobIdIsNotPresentChildYarnApplicationIdIsFound() throws Exception {
         when(hadoopJobIdFinder.find()).thenReturn(null);
         when(applicationReport.getApplicationType()).thenReturn("MAPREDUCE");
-        when(workflowActionBean.getWfId()).thenReturn("workflowId");
-        when(applicationReport.getYarnApplicationState()).thenReturn(YarnApplicationState.RUNNING);
         when(applicationId.toString()).thenReturn("application_1534164756526_0000");
         when(applicationReport.getApplicationId()).thenReturn(applicationId);
         when(reader.read()).thenReturn(Arrays.asList(applicationReport));
@@ -136,9 +129,7 @@ public class TestYarnApplicationIdFinder {
             throws HadoopAccessorException, IOException, URISyntaxException, InterruptedException, YarnException {
         when(hadoopJobIdFinder.find()).thenReturn(mrJobId);
         when(applicationReport.getApplicationType()).thenReturn("MAPREDUCE");
-        when(workflowActionBean.getWfId()).thenReturn("workflowId");
         when(workflowActionBean.getExternalId()).thenReturn(wfExternalId);
-        when(applicationReport.getYarnApplicationState()).thenReturn(YarnApplicationState.RUNNING);
         when(applicationId.toString()).thenReturn(yarnApplicationId);
         when(applicationReport.getApplicationId()).thenReturn(applicationId);
         when(reader.read()).thenReturn(Arrays.asList(applicationReport));
@@ -166,25 +157,15 @@ public class TestYarnApplicationIdFinder {
     public void whenOldLauncherAndMRobApplicationsAreFinishedAndNewLauncherPresentNewLauncherIsUsed() throws Exception {
         final ApplicationReport oldLauncher = mock(ApplicationReport.class);
         when(oldLauncher.getApplicationType()).thenReturn("Oozie Launcher");
-        when(oldLauncher.getYarnApplicationState()).thenReturn(YarnApplicationState.FINISHED);
-        final ApplicationId oldLauncherId = mock(ApplicationId.class);
-        when(oldLauncherId.toString()).thenReturn("application_1534164756526_0001");
-        when(oldLauncher.getApplicationId()).thenReturn(oldLauncherId);
         final ApplicationReport oldMRJob = mock(ApplicationReport.class);
         when(oldMRJob.getApplicationType()).thenReturn("MAPREDUCE");
-        when(oldMRJob.getYarnApplicationState()).thenReturn(YarnApplicationState.FINISHED);
         final ApplicationId oldMRJobId = mock(ApplicationId.class);
         when(oldMRJobId.toString()).thenReturn("application_1534164756526_0002");
         when(oldMRJob.getApplicationId()).thenReturn(oldMRJobId);
         final ApplicationReport newLauncher = mock(ApplicationReport.class);
         when(newLauncher.getApplicationType()).thenReturn("Oozie Launcher");
-        when(newLauncher.getYarnApplicationState()).thenReturn(YarnApplicationState.FINISHED);
-        final ApplicationId newLauncherId = mock(ApplicationId.class);
-        when(newLauncherId.toString()).thenReturn("application_1534164756526_0003");
-        when(newLauncher.getApplicationId()).thenReturn(newLauncherId);
         final ApplicationReport newMRJob = mock(ApplicationReport.class);
         when(newMRJob.getApplicationType()).thenReturn("MAPREDUCE");
-        when(newMRJob.getYarnApplicationState()).thenReturn(YarnApplicationState.RUNNING);
         final ApplicationId newMRJobId = mock(ApplicationId.class);
         when(newMRJobId.toString()).thenReturn("application_1534164756526_0004");
         when(newMRJob.getApplicationId()).thenReturn(newMRJobId);
@@ -225,14 +206,10 @@ public class TestYarnApplicationIdFinder {
     @Test
     public void testGetLastYarnIdFromUnorderedListSuccess() {
         final ApplicationReport newLauncher = mock(ApplicationReport.class);
-        when(newLauncher.getApplicationType()).thenReturn("Oozie Launcher");
-        when(newLauncher.getYarnApplicationState()).thenReturn(YarnApplicationState.FINISHED);
         final ApplicationId newLauncherId = mock(ApplicationId.class);
         when(newLauncherId.toString()).thenReturn("application_1534164756526_0003");
         when(newLauncher.getApplicationId()).thenReturn(newLauncherId);
         final ApplicationReport newMRJob = mock(ApplicationReport.class);
-        when(newMRJob.getApplicationType()).thenReturn("MAPREDUCE");
-        when(newMRJob.getYarnApplicationState()).thenReturn(YarnApplicationState.RUNNING);
         final ApplicationId newMRJobId = mock(ApplicationId.class);
         when(newMRJobId.toString()).thenReturn("application_1534164756526_0004");
         when(newMRJob.getApplicationId()).thenReturn(newMRJobId);

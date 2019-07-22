@@ -17,7 +17,6 @@
  */
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +28,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.URI;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -48,7 +48,7 @@ public class TestPrepareActionsHandler {
     public void setUp() throws LauncherException {
         prepareActionsHandler = new PrepareActionsHandler(launcherURIHandlerFactory);
 
-        when(launcherURIHandlerFactory.getURIHandler(any(URI.class), any(Configuration.class))).thenReturn(launcherURIHandler);
+        when(launcherURIHandlerFactory.getURIHandler(any(URI.class), isNull())).thenReturn(launcherURIHandler);
     }
 
     @Test

@@ -36,7 +36,8 @@ import java.util.List;
 import java.util.Map;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -57,6 +58,7 @@ public class TestServerInfoCollector {
 
     @Test
     public void testGetShareLibInfo() throws Exception {
+        doReturn("share1\nshare2").when(mockDiagClient).listShareLib(isNull());
         doReturn("share1\nshare2").when(mockDiagClient).listShareLib(anyString());
 
         serverInfoCollector.storeShareLibInfo(testTempFolder);

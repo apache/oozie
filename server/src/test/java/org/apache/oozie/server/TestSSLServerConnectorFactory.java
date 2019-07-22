@@ -44,7 +44,7 @@ import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYS
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_PASS;
 import static org.apache.oozie.util.ConfigUtils.OOZIE_HTTP_PORT;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;

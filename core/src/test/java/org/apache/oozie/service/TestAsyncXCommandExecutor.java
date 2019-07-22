@@ -59,11 +59,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.times;
-import static org.mockito.Matchers.same;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("deprecation")
@@ -162,8 +162,6 @@ public class TestAsyncXCommandExecutor {
         asyncExecutor = createExecutor(false, 2, DEFAULT_MAXWAIT, TEST_PRIORITIES, AWAIT_TERMINATION_TIMEOUT_SECONDS);
         when(callableWrapper.getInitialDelay()).thenReturn(100L);
         when(callableWrapper.getDelay(eq(TimeUnit.MILLISECONDS))).thenReturn(50L);
-        XCallable<?> wrappedCommand = mock(XCallable.class);
-        Mockito.<XCallable<?>>when(callableWrapper.getElement()).thenReturn(wrappedCommand);
         configureMockScheduler();
 
         asyncExecutor.queue(callableWrapper, false);

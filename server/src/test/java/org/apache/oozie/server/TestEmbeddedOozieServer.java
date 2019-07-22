@@ -42,10 +42,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -59,7 +59,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class TestEmbeddedOozieServer {
     @Mock private JspHandler mockJspHandler;
     @Mock private Services mockServices;
-    @Mock private SslContextFactory mockSSLContextFactory;
     @Mock private SSLServerConnectorFactory mockSSLServerConnectorFactory;
     @Spy private Server mockServer;
     @Mock private ServerConnector mockServerConnector;
@@ -74,7 +73,7 @@ public class TestEmbeddedOozieServer {
     private String confTruststoreFile = "oozie.truststore";
 
 
-    @Before public void setUp() throws IOException {
+    @Before public void setUp() {
         embeddedOozieServer = new EmbeddedOozieServer(mockServer, mockJspHandler, mockServices, mockSSLServerConnectorFactory,
                 mockOozieRewriteHandler, servletContextHandler, oozieServletMapper, oozieFilterMapper, constraintSecurityHandler);
 
@@ -82,7 +81,6 @@ public class TestEmbeddedOozieServer {
         doReturn("11443").when(mockConfiguration).get("oozie.https.port");
         doReturn("65536").when(mockConfiguration).get("oozie.http.request.header.size");
         doReturn("65536").when(mockConfiguration).get("oozie.http.response.header.size");
-        doReturn("42").when(mockConfiguration).get("oozie.server.threadpool.max.threads");
         doReturn("https://localhost:11443/oozie").when(mockConfiguration).get("oozie.base.url");
         doReturn(mockConfiguration).when(mockConfigService).getConf();
         doReturn(mockConfigService).when(mockServices).get(ConfigurationService.class);
