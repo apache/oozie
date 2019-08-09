@@ -36,27 +36,22 @@ class YarnACLHandler {
     }
 
     public void setACLs(ContainerLaunchContext containerLaunchContext) {
-        boolean mrAclsEnabled = launcherConf.getBoolean(MRConfig.MR_ACLS_ENABLED, true);
+        Map<ApplicationAccessType, String> aclDefinition = new HashMap<>();
 
-        // This is checked for backward compatibility
-        if (mrAclsEnabled) {
-            Map<ApplicationAccessType, String> aclDefinition = new HashMap<>();
+        String viewAcl = launcherConf.get(JavaActionExecutor.LAUNCER_VIEW_ACL);
+        if (viewAcl != null) {
+            LOG.info("Setting view-acl: [{0}]", viewAcl);
+            aclDefinition.put(ApplicationAccessType.VIEW_APP, viewAcl);
+        }
 
-            String viewAcl = launcherConf.get(JavaActionExecutor.LAUNCER_VIEW_ACL);
-            if (viewAcl != null) {
-                aclDefinition.put(ApplicationAccessType.VIEW_APP, viewAcl);
-            }
+        String modifyAcl = launcherConf.get(JavaActionExecutor.LAUNCER_MODIFY_ACL);
+        if (modifyAcl != null) {
+            LOG.info("Setting modify-acl: [{0}]", modifyAcl);
+            aclDefinition.put(ApplicationAccessType.MODIFY_APP, modifyAcl);
+        }
 
-            String modifyAcl = launcherConf.get(JavaActionExecutor.LAUNCER_MODIFY_ACL);
-            if (modifyAcl != null) {
-                aclDefinition.put(ApplicationAccessType.MODIFY_APP, modifyAcl);
-            }
-
-            if (!aclDefinition.isEmpty()) {
-                containerLaunchContext.setApplicationACLs(aclDefinition);
-            }
-        } else {
-            LOG.info("Not setting ACLs because {0} is set to false", MRConfig.MR_ACLS_ENABLED);
+        if (!aclDefinition.isEmpty()) {
+            containerLaunchContext.setApplicationACLs(aclDefinition);
         }
     }
 }

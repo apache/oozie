@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -87,7 +88,8 @@ public class TestYarnACLHandler {
 
         yarnACLSetter.setACLs(contextMock);
 
-        assertNoACLset();
+        assertViewACLset();
+        assertModifyACLset();
     }
 
     private void setupYarnACLHandler(boolean mrACLsEnabled) {
@@ -121,7 +123,7 @@ public class TestYarnACLHandler {
     private void verifyACLset(String aclMessage, String aclValue, ApplicationAccessType aclType) {
         verify(contextMock).setApplicationACLs(captor.capture());
         Map<ApplicationAccessType, String> aclDefinition = captor.getValue();
-        assertEquals("ACL size", 1, aclDefinition.size());
+        assertNotNull(aclDefinition.get(aclType));
         assertEquals(aclMessage, aclValue, aclDefinition.get(aclType));
     }
 }

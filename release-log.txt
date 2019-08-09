@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3535 mapreduce.job.acl-view-job property in Oozie workflow.xml not taking full effect (kmarton via asalamon74)
 OOZIE-3496 Upgrade ActiveMQ to 5.15.9 (asalamon74 via kmarton)
 OOZIE-3504 [Java 11] Fix tests using PowerMock (kmarton via asalamon74)
 OOZIE-3528 Migrate to PowerMock 2 and Mockito2 (kmarton via asalamon74)
