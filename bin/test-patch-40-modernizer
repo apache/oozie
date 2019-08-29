@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
+BASEDIR=$(pwd)
+TASKNAME="MODERNIZER"
+OP=""
+TEMPDIR=""
+REPORTDIR=""
+STDOUT="/dev/null"
+SUMMARYFILE=""
+
+###############################################################################
+cleanupAndExit() {
+  exit "$1"
+}
+###############################################################################
+printUsage() {
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE>)"
+  echo
+}
+###############################################################################
+parseArgs() {
+  for i in "$@"
+  do
+    case $i in
+    --taskname)
+      echo ${TASKNAME}
+      exit 0
+      ;;
+    --op=*)
+      OP=${i#*=}
+      ;;
+    --tempdir=*)
+      TEMPDIR=${i#*=}
+      ;;
+    --reportdir=*)
+      REPORTDIR=${i#*=}
+      ;;
+    --summaryfile=*)
+      SUMMARYFILE=${i#*=}
+      ;;
+    --verbose)
+      STDOUT="/dev/stdout"
+      ;;
+    -D*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    -P*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    esac
+  done
+  if [[ -z "${TASKNAME}" || -z "${OP}" || -z "${TEMPDIR}" || -z "${REPORTDIR}" || -z "${SUMMARYFILE}" ]]; then
+    echo "Missing options"
+    echo
+    printUsage
+    cleanupAndExit 1
+  fi
+  if [[ "${OP}" != "pre" && "${OP}" != "post" && "${OP}" != "report" ]] ; then
+    echo "Invalid operation"
+    echo
+    printUsage
+    cleanupAndExit 1
+  fi
+}
+###############################################################################
+
+verify_and_save_modernizer_output() {
+  BRANCH_LABEL=$1
+  REPORT_SUFFIX=$2
+  output_txt=${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt
+
+  echo "[TRACE] Saving modernizer output in ${BRANCH_LABEL}"
+  echo "[TRACE] mvn clean compile modernizer:modernizer ${MVNPASSTHRU} | tee ${output_txt} >> ${STDOUT}"
+
+  mvn clean compile modernizer:modernizer ${MVNPASSTHRU} | tee "${output_txt}" >> ${STDOUT}
+  exitCode=${PIPESTATUS[0]}
+  echo "EXITVALUE $exitCode" | tee -a "${output_txt}"
+  echo "[TRACE] Modernizer output in ${BRANCH_LABEL} verified and saved"
+}
+
+check_modernizer_errors() {
+    output_txt_clean="${REPORTDIR}/${TASKNAME}-clean.txt"
+    output_txt_patch="${REPORTDIR}/${TASKNAME}-patch.txt"
+    echo "[TRACE] grep -c '.*ERROR.*Prefer' ${output_txt_clean}"
+    cleanModernizerErrors=$(grep -c '.*ERROR.*Prefer' "${output_txt_clean}")
+    echo "[TRACE] Modernizer errors before patch: $cleanModernizerErrors"
+    echo "[TRACE] grep -c '.*ERROR.*Prefer' ${output_txt_patch}"
+    patchModernizerErrors=$(grep -c '.*ERROR.*Prefer' "${output_txt_patch}")
+    echo "[TRACE] Modernizer errors after patch: $patchModernizerErrors"
+    newModernizerErrors=$(( patchModernizerErrors - cleanModernizerErrors))
+
+    if ! grep -lq 'EXITVALUE 0' "${output_txt_clean}"; then
+        REPORT+=("{color:red}-1{color} Error during executing modernizer plugin on HEAD")
+        return 1
+    fi
+    if ! grep -lq 'EXITVALUE 0' "${output_txt_patch}"; then
+        REPORT+=("{color:red}-1{color} Error during executing modernizer plugin on PATCH")
+        return 1
+    fi
+
+    if [ $newModernizerErrors -gt 0 ] ; then
+        REPORT+=("{color:red}-1{color} the patch seems to introduce $newModernizerErrors new modernizer error(s)")
+    fi
+
+    if [ $newModernizerErrors -lt 0 ] ; then
+        fixedModernizerErrors=$((-newModernizerErrors))
+        REPORT+=("{color:green}+1{color} the patch fixes $fixedModernizerErrors modernizer error(s)")
+    fi
+    sed_extract="s@.*${BASEDIR}([^:]*):.*@\\1@g"
+
+    cleanClassLines=$(grep '.*ERROR.*Prefer' "${output_txt_clean}" | sed -E "${sed_extract}" | sort | uniq -c)
+    patchClassLines=$(grep '.*ERROR.*Prefer' "${output_txt_patch}" | sed -E "${sed_extract}" | sort | uniq -c)
+
+    diffClassLines=$(diff <(echo "${cleanClassLines}") <(echo "${patchClassLines}") | grep '>\s*[^-]' | awk '{ print $3}')
+    if [ -n "${diffClassLines}" ]; then
+      for class_name in ${diffClassLines}; do
+        oldErrorNumInClass=$(grep -c "${class_name}" "${output_txt_clean}")
+        newErrorNumInClass=$(grep -c "${class_name}" "${output_txt_patch}")
+        newErrorInClass=$(( newErrorNumInClass - oldErrorNumInClass ))
+        if [ $newErrorInClass -gt 0 ] ; then
+            REPORT+=("{color:red}-1{color} the patch introduces ${newErrorInClass} new warning(s) in ${class_name}")
+        fi
+      done
+      return 1
+    fi
+
+    return 0
+}
+
+parseArgs "$@"
+
+echo "  Running modernizer op=$OP"
+
+case $OP in
+  pre)
+    verify_and_save_modernizer_output HEAD clean
+    ;;
+  post)
+    verify_and_save_modernizer_output PATCH patch
+    ;;
+  report)
+    REPORT=()
+    if check_modernizer_errors; then
+      echo "{color:green}+1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
+    else
+      echo "{color:red}-1 ${TASKNAME}{color}" >> "$SUMMARYFILE"
+    fi
+    for line in "${REPORT[@]}" ; do
+      echo ".    ${line}" >> "$SUMMARYFILE"
+    done
+    ;;
+esac
+
+exit 0
