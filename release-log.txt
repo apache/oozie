@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3539 amend Support http proxy/basic authentication in the command line client (zsombor via asalamon74)
 OOZIE-3539 Support http proxy/basic authentication in the command line client (zsombor via asalamon74)
 OOZIE-3468 [build] Use modernizer plugin (asalamon74 via kmarton)
 OOZIE-3535 mapreduce.job.acl-view-job property in Oozie workflow.xml not taking full effect (kmarton via asalamon74)
