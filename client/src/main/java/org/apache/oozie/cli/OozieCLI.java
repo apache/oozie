@@ -18,8 +18,35 @@
 
 package org.apache.oozie.cli;
 
-import com.google.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -30,6 +57,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.ApiJarLoader;
 import org.apache.oozie.client.AuthOozieClient;
+import org.apache.oozie.client.AuthOozieClient.AuthType;
 import org.apache.oozie.client.BulkResponse;
 import org.apache.oozie.client.BundleJob;
 import org.apache.oozie.client.CoordinatorAction;
@@ -55,32 +83,9 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TimeZone;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.common.annotations.VisibleForTesting;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Oozie command line utility.
@@ -173,6 +178,8 @@ public class OozieCLI {
     public static final String INSTRUMENTATION_OPTION = "instrumentation";
 
     public static final String AUTH_OPTION = "auth";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
 
     public static final String VERBOSE_OPTION = "verbose";
     public static final String VERBOSE_DELIMITER = "\t";
@@ -260,8 +267,10 @@ public class OozieCLI {
      * @param options the collection of options to add auth options
      */
     protected void addAuthOptions(Options options) {
-        Option auth = new Option(AUTH_OPTION, true, "select authentication type [SIMPLE|KERBEROS]");
+        Option auth = new Option(AUTH_OPTION, true, "select authentication type [SIMPLE|BASIC|KERBEROS]");
         options.addOption(auth);
+        options.addOption(new Option(USERNAME, true, "username for BASIC authentication"));
+        options.addOption(new Option(PASSWORD, true, "password for BASIC authentication"));
     }
 
     /**
@@ -369,7 +378,7 @@ public class OozieCLI {
         Option verbose = new Option(VERBOSE_OPTION, false, "verbose mode");
         Option action = new Option(ACTION_OPTION, true,
                 "coordinator rerun/kill on action ids (requires -rerun/-kill); coordinator log retrieval on action ids"
-                        + "(requires -log)");
+                        + " (requires -log)");
         Option date = new Option(DATE_OPTION, true,
                 "coordinator/bundle rerun on action dates (requires -rerun); "
                 + "coordinator log retrieval on action dates (requires -log)");
@@ -908,7 +917,13 @@ public class OozieCLI {
         return changeValue;
     }
 
-    protected void addHeader(OozieClient wc) {
+    protected void addHeader(OozieClient wc, CommandLine commandLine) {
+        String username = commandLine.getOptionValue(USERNAME);
+        String password = commandLine.getOptionValue(PASSWORD);
+        if (username != null && password != null) {
+            String encoded = Base64.getEncoder().encodeToString((username + ':' + password).getBytes(StandardCharsets.UTF_8));
+            wc.setHeader("Authorization", "Basic " + encoded);
+        }
         for (Map.Entry entry : System.getProperties().entrySet()) {
             String key = (String) entry.getKey();
             if (key.startsWith(WS_HEADER_PREFIX)) {
@@ -923,14 +938,32 @@ public class OozieCLI {
      *
      * @param commandLine the command line object
      * @return auth option
+     * @throws OozieCLIException if wrong authentication parameters are used.
      */
-    protected String getAuthOption(CommandLine commandLine) {
+    protected String getAuthOption(CommandLine commandLine) throws OozieCLIException {
+        if (commandLine.hasOption(USERNAME)) {
+            if (commandLine.hasOption(PASSWORD)) {
+                return AuthType.BASIC.name();
+            } else {
+                throw new OozieCLIException(
+                        "No " + PASSWORD + " specified, it is required, if " + USERNAME + " is set!");
+            }
+        } else {
+            if (commandLine.hasOption(PASSWORD)) {
+                throw new OozieCLIException(
+                        "No " + USERNAME + " specified, it is required, if " + PASSWORD + " is set!");
+            }
+        }
         String authOpt = commandLine.getOptionValue(AUTH_OPTION);
         if (authOpt == null) {
             authOpt = System.getenv(ENV_OOZIE_AUTH);
         }
         if (commandLine.hasOption(DEBUG_OPTION)) {
             System.out.println(" Auth type : " + authOpt);
+        }
+        if (AuthType.BASIC.name().equalsIgnoreCase(authOpt)) {
+            throw new OozieCLIException(
+                    "BASIC authentication requires -" + USERNAME + " and -" + PASSWORD + " to set!");
         }
         return authOpt;
     }
@@ -959,7 +992,7 @@ public class OozieCLI {
      */
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
         XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine), getAuthOption(commandLine));
-        addHeader(wc);
+        addHeader(wc, commandLine);
         setDebugMode(wc,commandLine.hasOption(DEBUG_OPTION));
         setRetryCount(wc);
         return wc;

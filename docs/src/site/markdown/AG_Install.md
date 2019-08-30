@@ -1448,4 +1448,9 @@ export JETTY_PID=/tmp/oozie.pid
 
 [::Go back to Oozie Documentation Index::](index.html)
 
+## Oozie behind a trusted proxy
 
+Oozie can be configured to work behind a proxy server - eg Apache Knox - which handles the Kerberos authentication
+for the incoming requests. In this case, the command line client can be configured to use basic authentication -
+and a custom user name and password - to authenticate with Knox. It has the advantage, that the client doesn't need
+Kerberos to be set up.

@@ -43,7 +43,7 @@ oozie job <OPTIONS>           : job operations
           -allruns              Get workflow jobs corresponding to a coordinator action
                                 including all the reruns
           -auditlog <arg>       job audit log
-          -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+          -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
           -change <arg>         change a coordinator or bundle job
           -config <arg>         job configuration file '.xml' or '.properties'
           -configcontent <arg>  job configuration
@@ -90,6 +90,7 @@ oozie job <OPTIONS>           : job operations
           -oozie <arg>          Oozie URL
           -order <arg>          order to show coord actions (default ascending order, 'desc'
                                 for descending order, requires -info)
+          -password <arg>       password for BASIC authentication
           -poll <arg>           poll Oozie until a job reaches a terminal state or a timeout
                                 occurs
           -refresh              re-materialize the coordinator rerun actions (requires
@@ -114,6 +115,7 @@ oozie job <OPTIONS>           : job operations
           -timezone <arg>       use time zone with the specified ID (default GMT).
                                 See 'oozie info -timezones' for a list
           -update <arg>         Update coord definition and properties
+          -username <arg>       username for BASIC authentication
           -validatejar <arg>    generate and check job definition
           -value <arg>          new endtime/concurrency/pausetime value for changing a
                                 coordinator job
@@ -124,7 +126,7 @@ oozie job <OPTIONS>           : job operations
 
 ```
 oozie jobs <OPTIONS>          : jobs status
-           -auth <arg>          select authentication type [SIMPLE|KERBEROS]
+           -auth <arg>          select authentication type [SIMPLE|BASIC|KERBEROS]
            -bulk <arg>          key-value pairs to filter bulk jobs response. e.g.
                                 bundle=<B>\;coordinators=<C>\;actionstatus=<S>\;startcreatedtime=
                                 <SC>\;endcreatedtime=<EC>\;startscheduledtime=<SS>\;endscheduledt
@@ -146,13 +148,16 @@ oozie jobs <OPTIONS>          : jobs status
                                 'coordinator' or 'bundle' or 'wf'(default))
            -kill                bulk kill operation
            -len <arg>           number of jobs (default '100')
-           -localtime           use local time (same as passing your time zone to -timezone). Overrides -timezone option
+           -localtime           use local time (same as passing your time zone to -timezone).
+                                Overrides -timezone option
            -offset <arg>        jobs offset (default '1')
            -oozie <arg>         Oozie URL
+           -password <arg>      password for BASIC authentication
            -resume              bulk resume operation
            -suspend             bulk suspend operation
            -timezone <arg>      use time zone with the specified ID (default GMT).
                                 See 'oozie info -timezones' for a list
+           -username <arg>      username for BASIC authentication
            -verbose             verbose mode
 ```
 
@@ -160,7 +165,7 @@ oozie jobs <OPTIONS>          : jobs status
 
 ```
 oozie admin <OPTIONS>         : admin operations
-            -auth <arg>         select authentication type [SIMPLE|KERBEROS]
+            -auth <arg>         select authentication type [SIMPLE|BASIC|KERBEROS]
             -configuration      show Oozie system configuration
             -doas <arg>         doAs user, impersonates as the specified user
             -instrumentation    show Oozie system instrumentation
@@ -168,6 +173,7 @@ oozie admin <OPTIONS>         : admin operations
             -metrics            show Oozie system metrics
             -oozie <arg>        Oozie URL
             -osenv              show Oozie system OS environment
+            -password <arg>     password for BASIC authentication
             -purge <arg>        purge old oozie workflow, coordinator and bundle records from
                                 DB (parameter unit: day)
             -queuedump          show Oozie server queue elements
@@ -179,26 +185,31 @@ oozie admin <OPTIONS>         : admin operations
             -status             show the current system status
             -systemmode <arg>   Supported in Oozie-2.0 or later versions ONLY. Change oozie
                                 system mode [NORMAL|NOWEBSERVICE|SAFEMODE]
+            -username <arg>     username for BASIC authentication
             -version            show Oozie server build version
 ```
 
 ### Oozie validate command
 
 ```
-oozie validate <OPTIONS> <ARGS>   : validate a workflow, coordinator, bundle XML file
-                     -auth <arg>    select authentication type [SIMPLE|KERBEROS]
-                     -oozie <arg>   Oozie URL
+oozie validate <OPTIONS> <ARGS> : validate a workflow, coordinator, bundle XML file
+               -auth <arg>       select authentication type [SIMPLE|BASIC|KERBEROS]
+               -oozie <arg>      Oozie URL
+               -password <arg>   password for BASIC authentication
+               -username <arg>   username for BASIC authentication
 ```
 
 ### Oozie SLA operation commands
 
 ```
 oozie sla <OPTIONS>           : sla operations (Deprecated with Oozie 4.0)
-          -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+          -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
           -filter <arg>         filter of SLA events. e.g., jobid=<J>\;appname=<A>
           -len <arg>            number of results (default '100', max '1000')
           -offset <arg>         start offset (default '0')
           -oozie <arg>          Oozie URL
+          -password <arg>       password for BASIC authentication
+          -username <arg>       username for BASIC authentication
 ```
 
 ### Oozie Pig submit command
@@ -206,27 +217,31 @@ oozie sla <OPTIONS>           : sla operations (Deprecated with Oozie 4.0)
 ```
 oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass-through parameters to pig, any '-D' arguments
                                 after '-X' are put in <configuration>
-          -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+          -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
           -config <arg>         job configuration file '.properties'
           -D <property=value>   set/override value for given property
           -doas <arg>           doAs user, impersonates as the specified user
           -file <arg>           pig script
           -oozie <arg>          Oozie URL
           -P <property=value>   set parameters for script
+          -password <arg>       password for BASIC authentication
+          -username <arg>       username for BASIC authentication
 ```
 
 ### Oozie Hive submit command
 
 ```
-oozie hive <OPTIONS> -X <ARGS> : submit a hive job, everything after '-X' are pass-through parameters to hive, any '-D' arguments
- after '-X' are put in <configuration>
-           -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+oozie hive <OPTIONS> -X<ARGS>  : submit a hive job, everything after '-X' are pass-through parameters to hive,
+                                 any '-D' arguments after '-X' are put in <configuration>
+           -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
            -config <arg>         job configuration file '.properties'
            -D <property=value>   set/override value for given property
            -doas <arg>           doAs user, impersonates as the specified user
            -file <arg>           hive script
            -oozie <arg>          Oozie URL
            -P <property=value>   set parameters for script
+           -password <arg>       password for BASIC authentication
+           -username <arg>       username for BASIC authentication
 ```
 
 ### Oozie Sqoop submit command
@@ -234,12 +249,14 @@ oozie hive <OPTIONS> -X <ARGS> : submit a hive job, everything after '-X' are pa
 ```
 oozie sqoop <OPTIONS> -X <ARGS> : submit a sqoop job, everything after '-X' are pass-through parameters to sqoop, any '-D'
  arguments after '-X' are put in <configuration>
-            -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+            -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
             -command <command>    sqoop command
             -config <arg>         job configuration file '.properties'
             -D <property=value>   set/override value for given property
             -doas <arg>           doAs user, impersonates as the specified user
             -oozie <arg>          Oozie URL
+            -password <arg>       password for BASIC authentication
+            -username <arg>       username for BASIC authentication
 ```
 
 ### Oozie info command
@@ -253,11 +270,13 @@ oozie info <OPTIONS>           : get more detailed info about specific topics
 
 ```
 oozie mapreduce <OPTIONS>           : submit a mapreduce job
-                -auth <arg>           select authentication type [SIMPLE|KERBEROS]
+                -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
                 -config <arg>         job configuration file '.properties'
                 -D <property=value>   set/override value for given property
                 -doas <arg>           doAs user, impersonates as the specified user
                 -oozie <arg>          Oozie URL
+                -password <arg>       password for BASIC authentication
+                -username <arg>       username for BASIC authentication
 ```
 
 ## Common CLI Options
@@ -268,7 +287,9 @@ The `oozie` CLI automatically perform authentication if the Oozie server request
 pseudo/simple authentication and Kerberos HTTP SPNEGO authentication.
 
 To perform a specific authentication, the `auth` option with authentication type requests Oozie client to run the
-specified authentication mechanism only. Oozie client provides two types `simple` and `kerberos` which supports `pseudo/simple` and `Kerberos`.
+specified authentication mechanism only. Oozie client provides three types `simple`, `basic` and `kerberos` which
+supports `pseudo/simple` and `Kerberos`. Basic authentication can be used, when the server sits behind a proxy
+which accepts basic authentication, and use Kerberos to authorize to Oozie itself.
 
 For pseudo/simple authentication the `oozie` CLI uses the user name of the current OS user.
 
@@ -281,7 +302,7 @@ This library can be extended to support other authentication mechanisms.
 Once authentication is performed successfully the received authentication token is cached in the user home directory
 in the `.oozie-auth-token` file with owner-only permissions. Subsequent requests reuse the cached token while valid.
 
-The use of the cache file can be disabled by invoking the `oozie` CLI with the `-Doozie.auth.token.cache`false=
+The use of the cache file can be disabled by invoking the `oozie` CLI with the `-Doozie.auth.token.cache`=false
 option.
 
 To use an custom authentication mechanism, a Hadoop-Auth `Authenticator` implementation must be specified with the

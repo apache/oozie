@@ -64,7 +64,7 @@ public class AuthOozieClient extends XOozieClient {
     public static final int AUTH_TOKEN_CACHE_FILENAME_MAXLENGTH = 255;
 
     public enum AuthType {
-        KERBEROS, SIMPLE
+        KERBEROS, SIMPLE, BASIC
     }
 
     private String authOption = null;
@@ -321,7 +321,7 @@ public class AuthOozieClient extends XOozieClient {
             catch (IllegalArgumentException iae) {
                 throw new OozieClientException(OozieClientException.AUTHENTICATION,
                         "Invalid options provided for auth: " + authOption
-                        + ", (" + AuthType.KERBEROS + " or " + AuthType.SIMPLE + " expected.)");
+                        + ", (" + AuthType.KERBEROS + " or " + AuthType.SIMPLE + " or " + AuthType.BASIC + " expected.)");
             }
             catch (InstantiationException | IllegalAccessException ex) {
                 throw new OozieClientException(OozieClientException.AUTHENTICATION,
@@ -368,6 +368,7 @@ public class AuthOozieClient extends XOozieClient {
         Map<String, Class<? extends Authenticator>> authClasses = new HashMap<>();
         authClasses.put(AuthType.KERBEROS.toString(), KerberosAuthenticator.class);
         authClasses.put(AuthType.SIMPLE.toString(), PseudoAuthenticator.class);
+        authClasses.put(AuthType.BASIC.toString(), BasicAuthenticator.class);
         authClasses.put(null, KerberosAuthenticator.class);
         return authClasses;
     }
