@@ -671,7 +671,7 @@ public abstract class SqlStatement {
         public String toString() {
             String oBy = "";
             if ((orderby != null) && (isAscending != null) && (orderby.length == isAscending.length)) {
-                StringBuffer osb = new StringBuffer(" ORDER BY ");
+                StringBuilder osb = new StringBuilder(" ORDER BY ");
                 int i = 0;
                 for (Column column : orderby) {
                     osb.append(column.asLabel()).append(isAscending[i] ? " ASC ," : " DESC ,");

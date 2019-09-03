@@ -569,7 +569,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         try {
             container.start();
             dummyOozie = new DummyZKOozie("9876", container.getServletURL("/other-oozie-server/*"));
-            StringBuffer newLog = new StringBuffer();
+            StringBuilder newLog = new StringBuilder();
 
             newLog.append(
                     "2014-02-07 00:26:56,126 WARN CoordActionInputCheckXCommand:545 [pool-2-thread-26] - USER[-] GROUP[-] "

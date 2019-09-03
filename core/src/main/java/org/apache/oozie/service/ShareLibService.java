@@ -851,7 +851,7 @@ public class ShareLibService implements Service, Instrumentable {
                 Map<String, Map<Path, Path>> shareLibSymlinkMapping = getSymlinkMapping();
                 if (shareLibSymlinkMapping != null && !shareLibSymlinkMapping.isEmpty()
                         && shareLibSymlinkMapping.values() != null && !shareLibSymlinkMapping.values().isEmpty()) {
-                    StringBuffer bf = new StringBuffer();
+                    StringBuilder bf = new StringBuilder();
                     for (Entry<String, Map<Path, Path>> entry : shareLibSymlinkMapping.entrySet()) {
                         if (entry.getKey() != null && !entry.getValue().isEmpty()) {
                             for (Path path : entry.getValue().keySet()) {
@@ -872,7 +872,7 @@ public class ShareLibService implements Service, Instrumentable {
             public String getValue() {
                 Map<String, Map<Path, Configuration>> shareLibConfigMap = getShareLibConfigMap();
                 if (shareLibConfigMap != null && !shareLibConfigMap.isEmpty()) {
-                    StringBuffer bf = new StringBuffer();
+                    StringBuilder bf = new StringBuilder();
 
                     for (String path : shareLibConfigMap.keySet()) {
                         bf.append(path).append(";");

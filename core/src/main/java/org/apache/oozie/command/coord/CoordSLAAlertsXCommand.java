@@ -144,7 +144,7 @@ public abstract class CoordSLAAlertsXCommand extends SLAAlertsXCommand {
      * @return the action date list as string
      */
     protected String getActionDateListAsString() {
-        StringBuffer bf = new StringBuffer();
+        StringBuilder bf = new StringBuilder();
         if (!StringUtils.isEmpty(dates)) {
             bf.append(dates);
         }

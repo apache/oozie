@@ -298,7 +298,7 @@ public class CoordOldInputDependency implements CoordInputDependency {
                 String unResolvedInstance = dEvent
                         .getChild(CoordCommandUtils.UNRESOLVED_INSTANCES_TAG, dEvent.getNamespace()).getTextTrim();
                 String unresolvedList[] = unResolvedInstance.split(CoordELFunctions.INSTANCE_SEPARATOR);
-                StringBuffer resolvedTmp = new StringBuffer();
+                StringBuilder resolvedTmp = new StringBuilder();
                 for (int i = 0; i < unresolvedList.length; i++) {
                     String returnData = CoordELFunctions.evalAndWrap(eval, unresolvedList[i]);
                     Boolean isResolved = (Boolean) eval.getVariable(CoordELConstants.IS_RESOLVED);

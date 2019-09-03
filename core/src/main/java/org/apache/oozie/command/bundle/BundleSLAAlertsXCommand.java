@@ -117,7 +117,7 @@ public abstract class BundleSLAAlertsXCommand extends SLAAlertsXCommand {
 
     @Override
     protected boolean executeSlaCommand() throws ServiceException, CommandException {
-        StringBuffer report = new StringBuffer();
+        StringBuilder report = new StringBuilder();
 
         Set<String> coordJobs = getCoordJobsFromBundle(getJobId(), getCoordJobs());
 

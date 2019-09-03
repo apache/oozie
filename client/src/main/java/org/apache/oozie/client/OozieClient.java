@@ -1427,7 +1427,7 @@ public class OozieClient {
          */
         private String getReaderAsString(Reader reader, int maxLen) throws IOException {
             notNull(reader, "reader");
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             char[] buffer = new char[2048];
             int read;
             int count = 0;
@@ -2245,7 +2245,7 @@ public class OozieClient {
 
         @Override
         protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
-            StringBuffer bf = new StringBuffer();
+            StringBuilder bf = new StringBuilder();
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
                 Object sharelib = JSONValue.parse(reader);
@@ -2288,7 +2288,7 @@ public class OozieClient {
         protected String call(HttpURLConnection conn) throws IOException, OozieClientException {
 
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
-                StringBuffer bf = new StringBuffer();
+                StringBuilder bf = new StringBuilder();
                 Reader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
                 JSONObject json = (JSONObject) JSONValue.parse(reader);
                 Object sharelib = json.get(JsonTags.SHARELIB_LIB);

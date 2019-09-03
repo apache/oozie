@@ -343,7 +343,7 @@ public class SLAEmailEventListener extends SLAEventListener {
     }
 
     private String getJobLink(String jobId) {
-        StringBuffer url = new StringBuffer();
+        StringBuilder url = new StringBuilder();
         String param = "/?job=";
         url.append(oozieBaseUrl);
         url.append(param);

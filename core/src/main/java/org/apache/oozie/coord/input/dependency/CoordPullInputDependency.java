@@ -68,7 +68,7 @@ public class CoordPullInputDependency extends AbstractCoordInputDependency {
     }
 
     public String getMissingDependencies() {
-        StringBuffer bf = new StringBuffer(super.getMissingDependencies());
+        StringBuilder bf = new StringBuilder(super.getMissingDependencies());
         String unresolvedMissingDependencies = getUnresolvedMissingDependencies();
         if (!StringUtils.isEmpty(unresolvedMissingDependencies)) {
             bf.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR);
@@ -78,7 +78,7 @@ public class CoordPullInputDependency extends AbstractCoordInputDependency {
     }
 
     public String getUnresolvedMissingDependencies() {
-        StringBuffer bf = new StringBuffer();
+        StringBuilder bf = new StringBuilder();
         if (unResolvedList != null) {
             for (CoordUnResolvedInputDependency coordUnResolvedDependency : unResolvedList.values()) {
                 if (!coordUnResolvedDependency.isResolved()) {

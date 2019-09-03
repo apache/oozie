@@ -160,7 +160,7 @@ public class BundleJobChangeXCommand extends XCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
-        StringBuffer changeReport = new StringBuffer();
+        StringBuilder changeReport = new StringBuilder();
         try {
             if (isChangePauseTime || isChangeEndTime) {
                 if (isChangePauseTime) {

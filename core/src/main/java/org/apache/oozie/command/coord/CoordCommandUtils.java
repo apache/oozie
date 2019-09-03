@@ -347,7 +347,7 @@ public class CoordCommandUtils {
 
     private static void resolveAbsoluteRange(Element event, StringBuilder instances, SyncCoordAction appInst,
             Configuration conf, ELEvaluator eval, String strStart, int endIndex, String rangeStr) throws Exception {
-        StringBuffer bf = new StringBuffer();
+        StringBuilder bf = new StringBuilder();
         bf.append("${coord:absoluteRange(\"").append(rangeStr).append("\",")
                 .append(endIndex).append(")}");
         String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);

@@ -67,7 +67,7 @@ public class OoziePigStats extends ActionStats {
         pigStatsGroup.put("SMM_SPILL_COUNT", Long.toString(pigStats.getSMMSpillCount()));
 
         PigStats.JobGraph jobGraph = pigStats.getJobGraph();
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String separator = ",";
 
         for (JobStats jobStats : jobGraph) {

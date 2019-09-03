@@ -60,7 +60,7 @@ public class InputLogicParser {
         if (root == null) {
             return "";
         }
-        StringBuffer parsedString = new StringBuffer();
+        StringBuilder parsedString = new StringBuilder();
 
         List<Element> childrens = root.getChildren();
         for (int i = 0; i < childrens.size(); i++) {
@@ -79,7 +79,7 @@ public class InputLogicParser {
     }
 
     public String parse(Element root, String opt, String min, String wait) {
-        StringBuffer parsedString = new StringBuffer();
+        StringBuilder parsedString = new StringBuilder();
 
         Namespace ns = root.getNamespace();
         if (root.getName().equals(COMBINE)) {
@@ -120,7 +120,7 @@ public class InputLogicParser {
      */
     @SuppressWarnings("unchecked")
     private String parseAllChildren(Element root, String parentOpt, String opt, String min, String wait) {
-        StringBuffer parsedString = new StringBuffer();
+        StringBuilder parsedString = new StringBuilder();
 
         List<Element> childrens = root.getChildren();
         for (int i = 0; i < childrens.size(); i++) {
@@ -153,7 +153,7 @@ public class InputLogicParser {
      * @return the string
      */
     private String parseDataInNode(Element root, String min, String wait) {
-        StringBuffer parsedString = new StringBuffer();
+        StringBuilder parsedString = new StringBuilder();
 
         String nestedChildDataName = root.getAttributeValue("dataset");
 
@@ -175,7 +175,7 @@ public class InputLogicParser {
      */
     @SuppressWarnings("unchecked")
     private String processChildNode(final Element root, final String opt, final String min, final String wait) {
-        StringBuffer parsedString = new StringBuffer();
+        StringBuilder parsedString = new StringBuilder();
 
         Namespace ns = root.getNamespace();
 
@@ -202,7 +202,7 @@ public class InputLogicParser {
      */
     @SuppressWarnings("unchecked")
     private String processCombinedNode(final Element root, final String opt, final String min, final String wait) {
-        StringBuffer parsedString = new StringBuffer();
+        StringBuilder parsedString = new StringBuilder();
 
         Namespace ns = root.getNamespace();
 
@@ -276,7 +276,7 @@ public class InputLogicParser {
 
     }
 
-    private void appendWait(final Element root, String wait, StringBuffer parsedString) {
+    private void appendWait(final Element root, String wait, StringBuilder parsedString) {
         String childWait = root.getAttributeValue("wait");
         if (!StringUtils.isEmpty(childWait)) {
             parsedString.append(".inputWait(" + childWait + ")");
@@ -291,7 +291,7 @@ public class InputLogicParser {
 
     }
 
-    private void appendMin(final Element root, String min, StringBuffer parsedString) {
+    private void appendMin(final Element root, String min, StringBuilder parsedString) {
         String childMin = root.getAttributeValue("min");
 
         if (!StringUtils.isEmpty(childMin)) {

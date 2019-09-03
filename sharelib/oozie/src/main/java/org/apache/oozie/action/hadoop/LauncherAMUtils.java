@@ -63,7 +63,7 @@ public class LauncherAMUtils {
 
 
     public static String getLocalFileContentStr(File file, String type, int maxLen) throws LauncherException, IOException {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
         char[] buffer = new char[2048];
         int read;

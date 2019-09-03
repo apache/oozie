@@ -88,7 +88,7 @@ public class JVMInfo implements Serializable {
 
     public String getHeapMemoryUsage() {
         MemoryUsage hmu = memoryMXBean.getHeapMemoryUsage();
-        StringBuffer sb = new StringBuffer(60);
+        StringBuilder sb = new StringBuilder(60);
         sb.append("INIT=").append(hmu.getInit());
         sb.append("&nbsp;&nbsp;USED=").append(hmu.getUsed());
         sb.append("&nbsp;&nbsp;COMMITTED=").append(hmu.getCommitted());
@@ -98,7 +98,7 @@ public class JVMInfo implements Serializable {
 
     public String getNonHeapMemoryUsage() {
         MemoryUsage nhmu = memoryMXBean.getNonHeapMemoryUsage();
-        StringBuffer sb = new StringBuffer(60);
+        StringBuilder sb = new StringBuilder(60);
         sb.append("INIT=").append(nhmu.getInit());
         sb.append("&nbsp;&nbsp;USED=").append(nhmu.getUsed());
         sb.append("&nbsp;&nbsp;COMMITTED=").append(nhmu.getCommitted());
@@ -107,7 +107,7 @@ public class JVMInfo implements Serializable {
     }
 
     public String getClassLoadingInfo() {
-        StringBuffer sb = new StringBuffer(150);
+        StringBuilder sb = new StringBuilder(150);
         sb.append("Total Loaded Classes=").append(classLoadingMXBean.getTotalLoadedClassCount());
         sb.append("&nbsp;&nbsp;Loaded Classes=").append(classLoadingMXBean.getLoadedClassCount());
         sb.append("&nbsp;&nbsp;Unloaded Classes=").append(classLoadingMXBean.getUnloadedClassCount());
@@ -116,7 +116,7 @@ public class JVMInfo implements Serializable {
 
     public String getThreadInfo() throws InterruptedException {
         getThreads();
-        StringBuffer sb = new StringBuffer(150);
+        StringBuilder sb = new StringBuilder(150);
         sb.append("Thread Count=").append(threadMXBean.getThreadCount());
         sb.append("&nbsp;&nbsp;Peak Thread Count=").append(threadMXBean.getPeakThreadCount());
         sb.append("&nbsp;&nbsp;Total Started Threads=").append(threadMXBean.getTotalStartedThreadCount());

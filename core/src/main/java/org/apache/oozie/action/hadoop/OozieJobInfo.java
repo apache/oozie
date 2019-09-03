@@ -88,7 +88,7 @@ public class OozieJobInfo {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public String getJobInfo() throws IOException {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         addBundleInfo(sb);
         addCoordInfo(sb);
         addWorkflowInfo(sb);
@@ -98,35 +98,35 @@ public class OozieJobInfo {
 
     }
 
-    private void addBundleInfo(StringBuffer sb) throws IOException {
+    private void addBundleInfo(StringBuilder sb) throws IOException {
         addJobInfo(sb, BUNDLE_ID, contextConf.get(OozieClient.BUNDLE_ID));
         addJobInfo(sb, BUNDLE_NAME, contextConf.get(OozieJobInfo.BUNDLE_NAME));
 
     }
 
-    private void addCoordInfo(StringBuffer sb) throws IOException {
+    private void addCoordInfo(StringBuilder sb) throws IOException {
         addJobInfo(sb, COORD_NAME, contextConf.get(OozieJobInfo.COORD_NAME));
         addJobInfo(sb, COORD_NOMINAL_TIME, contextConf.get(OozieJobInfo.COORD_NOMINAL_TIME));
         addJobInfo(sb, COORD_ID, contextConf.get(OozieJobInfo.COORD_ID));
     }
 
-    private void addWorkflowInfo(StringBuffer sb) {
+    private void addWorkflowInfo(StringBuilder sb) {
         addJobInfo(sb, WORKFLOW_ID, context.getWorkflow().getId());
         addJobInfo(sb, WORKFLOW_NAME, context.getWorkflow().getAppName());
         addJobInfo(sb, WORKFLOW_DEPTH, contextConf.get(SubWorkflowActionExecutor.SUBWORKFLOW_DEPTH, "0"));
         addJobInfo(sb, WORKFLOW_SUPER_PARENT, computeSuperParent());
     }
 
-    private void addActionInfo(StringBuffer sb) {
+    private void addActionInfo(StringBuilder sb) {
         addJobInfo(sb, ACTION_NAME, action.getName());
         addJobInfo(sb, ACTION_TYPE, action.getType());
     }
 
-    private void addCustomInfo(StringBuffer sb) throws IOException {
+    private void addCustomInfo(StringBuilder sb) throws IOException {
         addfromConf(actionConf, sb);
     }
 
-    public void addfromConf(Configuration conf, StringBuffer sb) {
+    private void addfromConf(Configuration conf, StringBuilder sb) {
         Iterator<Map.Entry<String, String>> it = conf.iterator();
         while (it.hasNext()) {
             Entry<String, String> entry = it.next();
@@ -136,7 +136,7 @@ public class OozieJobInfo {
         }
     }
 
-    private void addJobInfo(StringBuffer sb, String key, String value) {
+    private void addJobInfo(StringBuilder sb, String key, String value) {
         if (value != null) {
             sb.append(key).append("=").append(value).append(OozieJobInfo.SEPARATOR);
         }

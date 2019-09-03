@@ -76,7 +76,7 @@ public abstract class IOUtils {
      */
     public static String getReaderAsString(Reader reader, int maxLen) throws IOException {
         Objects.requireNonNull(reader, "reader cannot be null");
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         char[] buffer = new char[2048];
         int read;
         int count = 0;
