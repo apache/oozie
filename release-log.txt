@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3542 Handle better old Hdfs implementations in ECPolicyDisabler (zsombor dionusos via kmarton)
 OOZIE-3540 Use StringBuilder instead of StringBuffer if concurrent access is not required (zsombor via asalamon74)
 OOZIE-3539 amend Support http proxy/basic authentication in the command line client (zsombor via asalamon74)
 OOZIE-3539 Support http proxy/basic authentication in the command line client (zsombor via asalamon74)
