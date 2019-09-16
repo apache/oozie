@@ -32,6 +32,7 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
@@ -154,6 +155,7 @@ public class TestSshActionExecutor extends XFsTestCase {
 
         @Override
         public void setErrorInfo(String str, String exMsg) {
+            action.setErrorInfo(str, exMsg);
         }
     }
 
@@ -601,6 +603,36 @@ public class TestSshActionExecutor extends XFsTestCase {
         Context contextMock = mock(Context.class);
         ssh.kill(contextMock, action);
         verify(contextMock).setEndData(WorkflowAction.Status.KILLED, "ERROR");
+    }
+
+    /**
+     * test {@code SshActionExecutor.check()} where the remote executable returns an error code
+     */
+    public void testCaptureActionErrorStream() throws Exception {
+        WorkflowJobBean workflow = createBaseWorkflowJobBean();
+        final WorkflowActionBean action = new WorkflowActionBean();
+        action.setId("actionId");
+        action.setConf("<ssh xmlns='" + getActionXMLSchema() + "'>" +
+                "<host>localhost</host>" +
+                "<command>exit 123</command>" +
+                "<capture-output/>" +
+                "</ssh>");
+        action.setName("ssh");
+        final SshActionExecutor ssh = new SshActionExecutor();
+        final Context context = new Context(workflow, action);
+        ssh.start(context, action);
+
+        waitFor(30 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                ssh.check(context, action);
+                return Status.DONE == action.getStatus();
+            }
+        });
+        ssh.end(context, action);
+        assertEquals("Action status is not ERROR", Status.ERROR, action.getStatus());
+        assertEquals("Error code is not what expected", ErrorCode.E1111.toString(), action.getErrorCode());
+        assertEquals("The remote executable exit code and action error message is not what expected",
+                "Exit code:123", action.getErrorMessage());
     }
 
     @Override

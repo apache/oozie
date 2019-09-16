@@ -228,6 +228,8 @@ public enum ErrorCode {
 
     E1102(XLog.STD, "Invalid operation [{0}] for bulk command"),
 
+    E1111(XLog.STD, "Script failed on remote host with [{0}]"),
+
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
 
     E1301(XLog.STD, "Could not read the bundle job definition, [{0}]"),

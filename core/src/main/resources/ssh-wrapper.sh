@@ -33,6 +33,8 @@ mpid=`echo $$`
 echo $mpid > $dir/$actionId.pid
 stdout="$dir/$mpid.$actionId.stdout"
 stderr="$dir/$mpid.$actionId.stderr"
+errorFile="$dir/$mpid.$actionId.error"
+exitCodeMsg="Exit code:"
 
 if [ $preserveArgs == "PRESERVE_ARGS" ]
 then
@@ -41,16 +43,18 @@ then
     if $cmnd "$@" >>${stdout} 2>>${stderr}; then
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
     else
+        ec=$?
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
-        touch $dir/$mpid.$actionId.error
+        echo $exitCodeMsg$ec > $errorFile
     fi
 else
     cmnd="${*}"
     if $cmnd >>${stdout} 2>>${stderr}; then
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
     else
+        ec=$?
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
-        touch $dir/$mpid.$actionId.error
+        echo $exitCodeMsg$ec > $errorFile
     fi
 fi
 sleep 1
