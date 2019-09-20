@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3179 Adding a configurable config-default.xml location to a workflow (jphelps via asalamon74)
 OOZIE-3405 SSH action shows empty error Message and Error code (matijhs via asalamon74)
 OOZIE-3542 Handle better old Hdfs implementations in ECPolicyDisabler (zsombor dionusos via kmarton)
 OOZIE-3540 Use StringBuilder instead of StringBuffer if concurrent access is not required (zsombor via asalamon74)

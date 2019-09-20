@@ -135,29 +135,53 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
-            Path configDefault = null;
-            Configuration defaultConf = null;
+
+
+            // Generate a list of all default configuration files to be processed
+            // A default-conf.xml in the workflow directory should have higher precedence than service defaults
+            // Adding oozie.default.configuration.path files first will allow default-conf.xml to override duplicates
+            ArrayList<Path> configDefault = new ArrayList<>();
+            Configuration defaultConf = new XConfiguration();
+
+            String[] defaultConfFiles = conf.getStrings(OozieClient.CONFIG_PATH);
+            if (defaultConfFiles != null && defaultConfFiles.length > 0) {
+                for ( String defaultConfFile : defaultConfFiles ) {
+                    if (defaultConfFile.trim().length() > 0) {
+                        configDefault.add(new Path(defaultConfFile.trim()));
+                    }
+
+                }
+            }
+
             // app path could be a directory
             Path path = new Path(uri.getPath());
             if (!fs.isFile(path)) {
-                configDefault = new Path(path, CONFIG_DEFAULT);
+                configDefault.add(new Path(path, CONFIG_DEFAULT));
             } else {
-                configDefault = new Path(path.getParent(), CONFIG_DEFAULT);
+                configDefault.add(new Path(path.getParent(), CONFIG_DEFAULT));
             }
 
-            if (fs.exists(configDefault)) {
-                try {
-                    defaultConf = new XConfiguration(fs.open(configDefault));
-                    PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_USER_PROPERTIES);
-                    PropertiesUtils.checkDefaultDisallowedProperties(defaultConf);
-                    XConfiguration.injectDefaults(defaultConf, conf);
+            //
+            for (Path configDefaultFile: configDefault) {
+
+                LOG.debug("Loading Configuration file {0}", configDefaultFile.getName());
+                Configuration defaultConfigs = null;
+                if (fs.exists(configDefaultFile)) {
+                    try {
+                        defaultConfigs = new XConfiguration(fs.open(configDefaultFile));
+                        PropertiesUtils.checkDisallowedProperties(defaultConfigs, DISALLOWED_USER_PROPERTIES);
+                        PropertiesUtils.checkDefaultDisallowedProperties(defaultConfigs);
+                        XConfiguration.injectDefaults(defaultConfigs, conf);
+
+                    }
+                    catch (IOException ex) {
+                        throw new IOException("Failed Loading default configuration file: " +
+                                configDefaultFile.getName() + ex.getMessage(), ex);
+                    }
                 }
-                catch (IOException ex) {
-                    throw new IOException("default configuration file, " + ex.getMessage(), ex);
+                if (defaultConfigs != null) {
+                    XConfiguration.copy(resolveDefaultConfVariables(defaultConfigs),defaultConf);
                 }
-            }
-            if (defaultConf != null) {
-                defaultConf = resolveDefaultConfVariables(defaultConf);
             }
 
             WorkflowApp app = wps.parseDef(conf, defaultConf);

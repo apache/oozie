@@ -174,6 +174,8 @@ public class OozieClient {
 
     public static final String LIBPATH = "oozie.libpath";
 
+    public static final String CONFIG_PATH = "oozie.default.configuration.path";
+
     public static final String USE_SYSTEM_LIBPATH = "oozie.use.system.libpath";
 
     public static final String OOZIE_SUSPEND_ON_NODES = "oozie.suspend.on.nodes";
