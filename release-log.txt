@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3543 Upgrade quartz to 2.3.1 (matijhs via asalamon74)
 OOZIE-3179 Adding a configurable config-default.xml location to a workflow (jphelps via asalamon74)
 OOZIE-3405 SSH action shows empty error Message and Error code (matijhs via asalamon74)
 OOZIE-3542 Handle better old Hdfs implementations in ECPolicyDisabler (zsombor dionusos via kmarton)
