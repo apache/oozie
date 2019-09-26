@@ -18,7 +18,6 @@
 
 package org.apache.oozie.workflow.lite;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
@@ -62,6 +61,7 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+import java.util.Base64;
 
 /**
  * Class to parse and validate workflow xml
@@ -333,7 +333,7 @@ public class LiteWorkflowAppParser {
     private GlobalSectionData getGlobalFromString(String globalStr) throws WorkflowException {
         GlobalSectionData globalSectionData = new GlobalSectionData();
         try {
-            byte[] data = Base64.decodeBase64(globalStr);
+            byte[] data = Base64.getDecoder().decode(globalStr);
             Inflater inflater = new Inflater();
             DataInputStream ois = new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(data), inflater));
             globalSectionData.readFields(ois);
@@ -362,7 +362,7 @@ public class LiteWorkflowAppParser {
         } catch (IOException e) {
             throw new WorkflowException(ErrorCode.E0700, "Error while processing global section conf");
         }
-        return Base64.encodeBase64String(baos.toByteArray());
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
     }
 
     private void addChildElement(Element parent, Namespace ns, String childName, String childValue) {

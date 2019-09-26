@@ -18,7 +18,6 @@
 
 package org.apache.oozie.servlet;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
@@ -52,6 +51,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.Base64;
 
 /**
  *
@@ -374,7 +374,7 @@ public class TestAuthFilterAuthOozieClient extends XTestCase {
         md.update(str.getBytes(StandardCharsets.UTF_8));
         md.update(secret);
         byte[] digest = md.digest();
-        return new Base64(0).encodeToString(digest);
+        return Base64.getEncoder().encodeToString(digest);
     }
 
     /**

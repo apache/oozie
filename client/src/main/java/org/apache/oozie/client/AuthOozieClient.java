@@ -34,10 +34,11 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Base64;
 
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.codec.binary.Base64;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.security.authentication.client.AuthenticatedURL;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
@@ -105,7 +106,7 @@ public class AuthOozieClient extends XOozieClient {
 
     @VisibleForTesting
     public String getAuthCacheFileName(String oozieUrl) {
-        String encodeBase64OozieUrl = Base64.encodeBase64URLSafeString(oozieUrl.getBytes(StandardCharsets.UTF_8));
+        String encodeBase64OozieUrl = Base64.getEncoder().encodeToString(oozieUrl.getBytes(StandardCharsets.UTF_8));
         String filename = ".oozie-auth-token-" + encodeBase64OozieUrl;
         if (filename.length() >= AUTH_TOKEN_CACHE_FILENAME_MAXLENGTH) {
             filename = filename.substring(0, AUTH_TOKEN_CACHE_FILENAME_MAXLENGTH);
