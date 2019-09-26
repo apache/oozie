@@ -199,8 +199,9 @@ public class XLogService implements Service, Instrumentable {
 
             // Getting configuration for oozie log via WS
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            InputStream is = (fromClasspath) ? cl.getResourceAsStream(log4jFileName) : new FileInputStream(log4jFile);
-            extractInfoForLogWebService(is);
+            try ( InputStream is = (fromClasspath) ? cl.getResourceAsStream(log4jFileName) : new FileInputStream(log4jFile); ) {
+                extractInfoForLogWebService(is);
+            }
         }
         catch (IOException ex) {
             throw new ServiceException(ErrorCode.E0010, ex.getMessage(), ex);

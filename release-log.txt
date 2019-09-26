@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3533 Flaky test TestXLogService.testLog4jReload (asalamon74 via kmarton)
 OOZIE-3544 Upgrade commons-beanutils to 1.9.4 (matijhs via asalamon74)
 OOZIE-3543 Upgrade quartz to 2.3.1 (matijhs via asalamon74)
 OOZIE-3179 Adding a configurable config-default.xml location to a workflow (jphelps via asalamon74)
