@@ -100,6 +100,7 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
+    protected static final String FS_PROP_PATTERN = CONF_PREFIX + "fs.%s";
 
     private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     private static final String DEFAULT_ACTIONNAME = "default";
@@ -619,18 +620,39 @@ public class HadoopAccessorService implements Service {
             }
         }
         validateNameNode(nameNode);
-
+        final Configuration fileSystemConf = extendWithFileSystemSpecificPropertiesIfAny(uri, conf);
         try {
             UserGroupInformation ugi = getUGI(user);
             return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
                 public FileSystem run() throws Exception {
-                    return FileSystem.get(uri, conf);
+                    return FileSystem.get(uri, fileSystemConf);
                 }
             });
         }
         catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
+    }
+
+    Configuration extendWithFileSystemSpecificPropertiesIfAny(final URI uri, final Configuration conf) {
+        final String fsProps = String.format(FS_PROP_PATTERN, uri.getScheme());
+        final String fsCustomProps = ConfigurationService.get(fsProps);
+        if (fsCustomProps == null || fsCustomProps.length() == 0) {
+            return conf;
+        }
+
+        final Configuration result = new Configuration();
+        XConfiguration.copy(conf, result);
+        for (final String entry : fsCustomProps.split(",")) {
+            final String[] nameAndValue = entry.trim().split("=", 2);
+            if (nameAndValue.length < 2) {
+                LOG.warn(String.format("Configuration for %s cannot be read: %s. Skipping...",
+                        fsProps, Arrays.toString(nameAndValue)));
+                continue;
+            }
+            result.set(nameAndValue[0], nameAndValue[1]);
+        }
+        return result;
     }
 
     /**

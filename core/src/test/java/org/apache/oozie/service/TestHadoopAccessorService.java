@@ -38,9 +38,11 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.XConfiguration;
+import org.junit.Assert;
 
 public class TestHadoopAccessorService extends XFsTestCase {
 
@@ -325,5 +327,84 @@ public class TestHadoopAccessorService extends XFsTestCase {
         Configuration conf2 = new Configuration(false);
         conf2.addResource(getFileSystem().open(resPath));
         assertEquals("bar", conf2.get("foo"));
+    }
+
+    public void testCreateS3WithByteBufferProperties() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties(
+                "s3a://somebucket/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "s3a"),
+                "fs.s3a.fast.upload.buffer=bytebuffer,fs.s3a.impl.disable.cache=true");
+        assertEquals("Expected peroperty [bytebuffer] is not set.", "bytebuffer", fs.getConf().get("fs.s3a.fast.upload.buffer"));
+    }
+
+    public void testCreateS3WithDefaultProperties() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("s3a://somebucket/somedirectory/somefile.txt", null, null);
+        assertNotSame("Unxpected peroperty [bytebuffer] is set.", "bytebuffer", fs.getConf().get("fs.s3a.fast.upload.buffer"));
+    }
+
+    public void testCreateHdfsWithoutProperties() throws Exception {
+        createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt", null, null);
+    }
+
+    public void testCreateFileWithoutProperties() throws Exception {
+        createFileSystemWithCustomProperties("file://somebucket/somedirectory/somefile.txt", null, null);
+    }
+
+    public void testCreateWithoutSchemeWithoutProperties() throws Exception {
+        createFileSystemWithCustomProperties("/somebucket/somedirectory/somefile.txt", null, null);
+    }
+
+    public void testCreateHdfsWithInvalidProperties() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "hdfs"),
+                "fs.hdfs.custom.property1=value1,fs.hdfs.custom.property2");
+        Assert.assertEquals("value1", fs.getConf().get("fs.hdfs.custom.property1"));
+        Assert.assertEquals(null, fs.getConf().get("fs.hdfs.custom.property2"));
+    }
+
+    public void testCreateHdfsWithEqualSignInValuePropertiy() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "hdfs"),
+                "fs.hdfs.custom.property1=value1=value2");
+        Assert.assertEquals("value1=value2", fs.getConf().get("fs.hdfs.custom.property1"));
+        Assert.assertEquals(null, fs.getConf().get("value1"));
+        Assert.assertEquals(null, fs.getConf().get("value2"));
+    }
+
+    public void testCreateHdfsWithCommaSeparatedValues() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "hdfs"),
+                "fs.hdfs.custom.property1=value1,value2");
+        Assert.assertEquals("value1", fs.getConf().get("fs.hdfs.custom.property1"));
+        Assert.assertEquals(null, fs.getConf().get("value2"));
+    }
+
+    public void testIfNoCustomFsConfigProvidedBaseConfigRemainsTheSame() throws Exception {
+        HadoopAccessorService has = new HadoopAccessorService();
+        Configuration base = new XConfiguration();
+        base.set("foo.bar", "baz");
+        Configuration result = has.extendWithFileSystemSpecificPropertiesIfAny(new URI("hdfs://localhost:1234/"), base);
+        assertEquals("The two configuration object shall be the same", base, result);
+        assertEquals("Key foo.bar shall be present in result configuration", "baz", result.get("foo.bar"));
+        assertSame("The two configuration object shall be the same", base, result);
+    }
+
+    public FileSystem createFileSystemWithCustomProperties(
+            final String uri, final String fsKey, final String commaSeparatedKeyValues) throws Exception {
+        final HadoopAccessorService has = new HadoopAccessorService();
+        if (fsKey != null && commaSeparatedKeyValues != null) {
+            ConfigurationService.set(fsKey, commaSeparatedKeyValues);
+        }
+        has.init(new Configuration(false));
+        final Configuration conf = has.createConfiguration(null);
+        setS3CredentialProperties(conf);
+        final FileSystem fs = has.createFileSystem("user", new URI(uri), conf);
+        has.destroy();
+        return fs;
+    }
+
+    private void setS3CredentialProperties(final Configuration conf) {
+        conf.set("fs.s3a.access.key", "someAccessKey");
+        conf.set("fs.s3a.secret.key", "someSecretKey");
     }
 }

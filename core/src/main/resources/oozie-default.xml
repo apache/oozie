@@ -2219,6 +2219,18 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.HadoopAccessorService.fs.s3a</name>
+        <value> </value>
+        <description>
+            You can configure custom s3a file system properties globally.
+            Value shall be a comma separated list of key=value pairs. For example:
+            fs.s3a.fast.upload.buffer=bytebuffer,fs.s3a.impl.disable.cache=true
+            Limitation: the custom file system properties cannot contain comma neither
+            in key nor in value.
+        </description>
+    </property>
+
     <!-- Credentials -->
     <property>
         <name>oozie.credentials.credentialclasses</name>

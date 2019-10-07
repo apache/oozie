@@ -84,6 +84,28 @@ By default Oozie defines `*=hadoop-conf` and the default values of the `hadoop-s
     </property>
 </configuration>
 ```
+## File system custom properties
+Some users notified us about issues when they started using Amazon S3A file system -
+see [OOZIE-3529](https://issues.apache.org/jira/browse/OOZIE-3529).
+Oozie from version 5.2.0 supports custom file system properties which can be defined in the following way.
+The example shows how to resolve issues mentioned in OOZIE-3529 by setting the following in oozie-site.xml:
+```
+    <property>
+        <name>oozie.service.HadoopAccessorService.fs.s3a</name>
+        <value>fs.s3a.fast.upload.buffer=bytebuffer,fs.s3a.impl.disable.cache=true</value>
+    </property>
+```
+Use `oozie.service.HadoopAccessorService.fs.%s` where `%s` is the schema of the file system.
+The value shall be a list of key=value pairs separated using a comma (,). You can use properties as describe below:
+ * `property_name=property_value_1=property_value2` will be read as:
+     * name: property_name
+     * value: property_value_1=property_value2
+ * `property1_name=value1,property2_name`
+     * name: property1_name
+     * value: value1
+     * property2_name will be ignored
+ * Limitation: the custom file system properties cannot contain comma neither in key nor in value.
+ See [OOZIE-3547](https://issues.apache.org/jira/browse/OOZIE-3547).
 
 ## Limitations
 

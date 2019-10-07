@@ -79,6 +79,7 @@ public abstract class XFsTestCase extends XTestCase {
         conf.set("oozie.service.HadoopAccessorService.hadoop.configurations", "*=hadoop-conf");
         conf.set("oozie.service.HadoopAccessorService.action.configurations", "*=action-conf");
 
+        new Services().init();
         has = new HadoopAccessorService();
         has.init(conf);
         Configuration jobConf = has.createConfiguration(getNameNodeUri());
@@ -128,6 +129,9 @@ public abstract class XFsTestCase extends XTestCase {
      * Tear down the testcase.
      */
     protected void tearDown() throws Exception {
+        if (Services.get() != null) {
+            Services.get().destroy();
+        }
         fileSystem = null;
         fsTestDir = null;
         super.tearDown();
