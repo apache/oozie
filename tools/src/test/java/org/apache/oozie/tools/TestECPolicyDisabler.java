@@ -36,6 +36,7 @@ import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.ipc.protobuf.RpcHeaderProtos.RpcResponseHeaderProto.RpcErrorCodeProto;
 import org.apache.oozie.tools.ECPolicyDisabler.Result;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -48,6 +49,11 @@ public class TestECPolicyDisabler  {
     static abstract class MockDistributedFileSystem extends DistributedFileSystem {
         public abstract SystemErasureCodingPolicies.ReplicationPolicy getErasureCodingPolicy(Path path);
         public abstract void setErasureCodingPolicy(Path path, String policy);
+    }
+
+    @Before
+    public void setup() {
+        SystemErasureCodingPolicies.setSystemPolicy(ReplicationPolicy.DEFAULT);
     }
 
     @Test
@@ -80,6 +86,42 @@ public class TestECPolicyDisabler  {
 
     @Test
     public void testServerNotSupports() {
+        MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
+        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+        Mockito.doThrow(createNoSuchMethodException()).when(fs).setErasureCodingPolicy(any(), any());
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
+        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).setErasureCodingPolicy(any(), eq("DEFAULT"));
+        verifyNoMoreInteractions(fs);
+    }
+
+    @Test
+    public void testServerNotSupportsGetErasureCodingPolicyMethod() {
+        MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
+        when(fs.getErasureCodingPolicy(any(Path.class))).thenThrow(createNoSuchMethodException());
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, mock(Path.class));
+        assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
+        verify(fs).getErasureCodingPolicy(any(Path.class));
+        verifyNoMoreInteractions(fs);
+    }
+
+    @Test
+    public void testServerNotSupportsGetName() {
+        MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
+        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+
+        ReplicationPolicy mockPolicy = mock(ReplicationPolicy.class);
+        SystemErasureCodingPolicies.setSystemPolicy(mockPolicy);
+        when(mockPolicy.getName()).thenThrow(createNoSuchMethodException());
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
+        verify(fs).getErasureCodingPolicy(any());
+        verifyNoMoreInteractions(fs);
+    }
+
+    @Test
+    public void testServerNotSupportsSetErasureCodingPolicyMethod() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
         when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
         Mockito.doThrow(createNoSuchMethodException()).when(fs).setErasureCodingPolicy(any(), any());

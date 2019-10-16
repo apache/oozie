@@ -27,6 +27,8 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.ipc.protobuf.RpcHeaderProtos.RpcResponseHeaderProto.RpcErrorCodeProto;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 /**
  * Utility class which can disable Erasure Coding for a given path.
  *
@@ -68,22 +70,23 @@ public final class ECPolicyDisabler {
             DistributedFileSystem dfs = (DistributedFileSystem) fs;
             final Object replicationPolicy = getReplicationPolicy();
             Method getErasureCodingPolicyMethod = getMethod(dfs, GETERASURECODINGPOLICY_METHOD);
-            final Object currentECPolicy = invokeMethod(getErasureCodingPolicyMethod, dfs, path);
+            final Pair<Object,Result> currentECPolicy = safeInvokeMethod(getErasureCodingPolicyMethod, dfs, path);
+            if (currentECPolicy.getRight() != null) {
+                return currentECPolicy.getRight();
+            }
 
-            if (currentECPolicy != replicationPolicy) {
+            if (currentECPolicy.getLeft() != replicationPolicy) {
                 Method setECPolicyMethod = getMethod(dfs, SETERASURECODINGPOLICY_METHOD);
                 Method policyGetNameMethod = getMethod(replicationPolicy, GETNAME_METHOD);
 
-                String name = (String) invokeMethod(policyGetNameMethod, replicationPolicy);
+                Pair<String,Result> pairName = safeInvokeMethod(policyGetNameMethod, replicationPolicy);
+                if (pairName.getRight() != null) {
+                    return pairName.getRight();
+                }
 
-                try {
-                    invokeMethod(setECPolicyMethod, dfs, path, name);
-                } catch (RuntimeException e) {
-                    RpcErrorCodeProto errorCode = unwrapRemote(e);
-                    if (errorCode == RpcErrorCodeProto.ERROR_NO_SUCH_METHOD) {
-                        return Result.NO_SUCH_METHOD;
-                    }
-                    throw e;
+                Pair<String,Result> result = safeInvokeMethod(setECPolicyMethod, dfs, path, pairName.getLeft());
+                if (result.getRight() != null) {
+                    return result.getRight();
                 }
                 return Result.DONE;
             } else {
@@ -91,6 +94,18 @@ public final class ECPolicyDisabler {
             }
         } else {
             return Result.NOT_SUPPORTED;
+        }
+    }
+
+    private static <X> Pair<X, Result> safeInvokeMethod(Method method, Object instance, Object... args) {
+        try {
+            return Pair.of((X) invokeMethod(method, instance, args), null);
+        } catch (RuntimeException e) {
+            RpcErrorCodeProto errorCode = unwrapRemote(e);
+            if (errorCode == RpcErrorCodeProto.ERROR_NO_SUCH_METHOD) {
+                return Pair.of(null, Result.NO_SUCH_METHOD);
+            }
+            throw e;
         }
     }
 

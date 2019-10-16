@@ -24,16 +24,26 @@ package org.apache.hadoop.hdfs.protocol;
  *
  */
 public class SystemErasureCodingPolicies {
-    public enum ReplicationPolicy {
-        DEFAULT, OTHER;
+    private static ReplicationPolicy systemPolicy = ReplicationPolicy.DEFAULT;
+
+    public static class ReplicationPolicy {
+        public final static ReplicationPolicy DEFAULT = new ReplicationPolicy("DEFAULT");
+        public final static ReplicationPolicy OTHER = new ReplicationPolicy("OTHER");
+        private String name;
+        public ReplicationPolicy(String name) {
+            this.name = name;
+        }
 
         public String getName() {
-            return name();
+            return name;
         }
     }
 
     public static ReplicationPolicy getReplicationPolicy() {
-        return ReplicationPolicy.DEFAULT;
+        return systemPolicy;
     }
 
+    public static void setSystemPolicy(ReplicationPolicy systemPolicy) {
+        SystemErasureCodingPolicies.systemPolicy = systemPolicy;
+    }
 }
