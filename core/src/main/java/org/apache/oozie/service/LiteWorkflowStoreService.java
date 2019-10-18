@@ -165,8 +165,8 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             try {
                 ret = Integer.parseInt(userRetryMax);
                 if (ret > max) {
-                    ret = max;
                     log.warn(ErrorCode.E0820.getTemplate(), ret, max);
+                    ret = max;
                 }
             }
             catch (NumberFormatException nfe) {
