@@ -1,5 +1,6 @@
 -- Oozie 5.2.0 release (trunk - unreleased)
 
+OOZIE-3552 OozieCLI: missing separator in coordinator job output (dvigal via gezapeti)
 OOZIE-3487 Confusing E0820 error message (matijhs via asalamon74)
 OOZIE-3542 amend Handle better old Hdfs implementations in ECPolicyDisabler (zsombor via kmarton)
 OOZIE-3529 Oozie not supported for s3 as filesystem (dionusos via asalamon74)

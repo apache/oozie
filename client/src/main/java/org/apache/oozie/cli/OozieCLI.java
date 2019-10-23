@@ -1529,7 +1529,7 @@ public class OozieCLI {
                         + maskIfNull(action.getExternalStatus()) + VERBOSE_DELIMITER + maskIfNull(action.getJobId())
                         + VERBOSE_DELIMITER + maskIfNull(action.getTrackerUri()) + VERBOSE_DELIMITER
                         + maskDate(action.getCreatedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
-                        + maskDate(action.getNominalTime(), timeZoneId, verbose) + action.getStatus() + VERBOSE_DELIMITER
+                        + maskDate(action.getNominalTime(), timeZoneId, verbose) + VERBOSE_DELIMITER + action.getStatus() + VERBOSE_DELIMITER
                         + maskDate(action.getLastModifiedTime(), timeZoneId, verbose) + VERBOSE_DELIMITER
                         + maskIfNull(getFirstMissingDependencies(action)));
 
