@@ -1,4 +1,6 @@
--- Oozie 5.2.0 release (trunk - unreleased)
+-- Oozie 5.3.0 release (trunk - unreleased)
+
+-- Oozie 5.2.0 release
 
 OOZIE-3553 [examples] Fix sqoop example (asalamon74 via kmarton)
 OOZIE-3552 OozieCLI: missing separator in coordinator job output (dvigal via gezapeti)
