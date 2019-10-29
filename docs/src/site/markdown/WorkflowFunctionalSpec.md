@@ -5,7 +5,6 @@
 -----
 
 # Oozie Specification, a Hadoop Workflow System
-**<center>(v5.0)</center>**
 
 The goal of this document is to define a workflow engine system specialized in coordinating the execution of Hadoop
 Map/Reduce and Pig jobs.
