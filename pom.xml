@@ -70,7 +70,7 @@
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
         <maven.test.java.opts>-Xmx2048m -da -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled
                               -XX:+UseConcMarkSweepGC</maven.test.java.opts>
-        <maven.javadoc.opts>-Xdoclint:all</maven.javadoc.opts>
+        <maven.javadoc.opts>all</maven.javadoc.opts>
         <maven-dependency-plugin.version>3.0.2</maven-dependency-plugin.version>
 
         <oozie.data.dir>${oozie.test.dir}</oozie.data.dir>
@@ -1751,7 +1751,7 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.0.1</version>
                     <configuration>
-                        <additionalparam>${maven.javadoc.opts}</additionalparam>
+                        <doclint>${maven.javadoc.opts}</doclint>
                     </configuration>
                 </plugin>
                 <plugin>
