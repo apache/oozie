@@ -141,6 +141,8 @@
                         <argument>-XhashCode</argument>
                         <argument>-Xequals</argument>
                         <argument>-Xsetters</argument>
+                        <argument>-encoding</argument>
+                        <argument>utf-8</argument>
                         <argument>-d</argument>
                         <argument>${project.basedir}/target/generate-sources/jaxb</argument>
                         <argument>-b</argument>
