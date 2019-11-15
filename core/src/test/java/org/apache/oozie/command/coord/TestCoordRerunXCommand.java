@@ -987,7 +987,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
                 StandardCharsets.UTF_8);
         byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        Reader reader2 = new InputStreamReader(bais,StandardCharsets.UTF_8.name());
+        Reader reader2 = new InputStreamReader(bais,StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader2, writer);
 
         CoordinatorJobBean coordJob = new CoordinatorJobBean();

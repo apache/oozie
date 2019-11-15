@@ -1,5 +1,7 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3555 Remove unnecessary StandardCharsets.UTF_8.name() calls (zsombor via asalamon74)
+
 -- Oozie 5.2.0 release
 
 OOZIE-3553 [examples] Fix sqoop example (asalamon74 via kmarton)

@@ -105,7 +105,7 @@ public class TestJobsServlet extends DagServletTestCase {
                 jobConf.writeXml(conn.getOutputStream());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
-                        StandardCharsets.UTF_8.name()));
+                        StandardCharsets.UTF_8));
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
                              obj.get(JsonTags.JOB_ID));
                 assertTrue(MockDagEngineService.started.get(wfCount));
@@ -152,7 +152,7 @@ public class TestJobsServlet extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
-                        StandardCharsets.UTF_8.name()));
+                        StandardCharsets.UTF_8));
                 array = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
 
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());

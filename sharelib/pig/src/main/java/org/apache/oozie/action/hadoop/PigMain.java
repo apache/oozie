@@ -264,7 +264,7 @@ public class PigMain extends LauncherMain {
             System.out.println(type + " Pig script [" + name + "] content: ");
             System.out.println("-----------------------------------------------------------");
             fin = new FileInputStream(script);
-            inReader = new InputStreamReader(fin, StandardCharsets.UTF_8.name());
+            inReader = new InputStreamReader(fin, StandardCharsets.UTF_8);
             bufReader = new BufferedReader(inReader);
             String line = bufReader.readLine();
             while (line != null) {
@@ -296,7 +296,7 @@ public class PigMain extends LauncherMain {
         System.err.println();
         try {
             try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(pigLog), StandardCharsets.UTF_8.name()))) {
+                    new InputStreamReader(new FileInputStream(pigLog), StandardCharsets.UTF_8))) {
                 String line = reader.readLine();
                 while (line != null) {
                     System.err.println(line);

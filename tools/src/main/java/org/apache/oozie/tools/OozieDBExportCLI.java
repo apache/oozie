@@ -180,7 +180,7 @@ public class OozieDBExportCLI {
         Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
         ZipEntry zipEntry = new ZipEntry(filename);
         zipOutputStream.putNextEntry(zipEntry);
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8.name()));
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
         query.setMaxResults(LIMIT);
         int exported = 0;
         List<?> list = query.getResultList();

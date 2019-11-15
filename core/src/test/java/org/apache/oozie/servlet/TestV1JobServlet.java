@@ -232,7 +232,7 @@ public class TestV1JobServlet extends DagServletTestCase {
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
                 obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
-                        StandardCharsets.UTF_8.name()));
+                        StandardCharsets.UTF_8));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 assertEquals(MockCoordinatorEngineService.offset, new Integer(2));

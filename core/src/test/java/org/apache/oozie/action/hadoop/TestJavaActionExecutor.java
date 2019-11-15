@@ -741,7 +741,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
 
         byte[] secKey = credentials.getSecretKey(new Text(InsertTestToken.DUMMY_SECRET_KEY));
         assertNotNull(secKey);
-        assertEquals(InsertTestToken.DUMMY_SECRET_KEY, new String(secKey, StandardCharsets.UTF_8.name()));
+        assertEquals(InsertTestToken.DUMMY_SECRET_KEY, new String(secKey, StandardCharsets.UTF_8));
     }
 
     public void testCredentialsInvalid() throws Exception {

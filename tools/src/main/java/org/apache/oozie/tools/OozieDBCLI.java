@@ -672,7 +672,7 @@ public class OozieDBCLI {
                     }
                     PreparedStatement ps = conn.prepareStatement("update " + tableName + " set " + TEMP_COLUMN_PREFIX
                             + column + "=? where id = ?");
-                    byte[] data = IOUtils.toByteArray(confClob.getCharacterStream(), StandardCharsets.UTF_8.name());
+                    byte[] data = IOUtils.toByteArray(confClob.getCharacterStream(), StandardCharsets.UTF_8);
                     ps.setBinaryStream(1, new ByteArrayInputStream(data), data.length);
                     ps.setString(2, rs.getString(1));
                     ps.executeUpdate();

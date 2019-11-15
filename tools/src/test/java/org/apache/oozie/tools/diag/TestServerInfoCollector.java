@@ -120,7 +120,7 @@ public class TestServerInfoCollector {
     }
 
     static void assertFileContains(final File testFile, final String testData) throws IOException {
-        final String str = new String(Files.readAllBytes(testFile.toPath()), StandardCharsets.UTF_8.name());
+        final String str = new String(Files.readAllBytes(testFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(str.contains(testData));
     }
 }

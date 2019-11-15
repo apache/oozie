@@ -65,7 +65,7 @@ public final class StringSerializationUtil {
             int length = dIn.readInt();
             byte[] data = new byte[length];
             dIn.readFully(data);
-            value = new String(data, StandardCharsets.UTF_8.name());
+            value = new String(data, StandardCharsets.UTF_8);
         }
         return value;
     }

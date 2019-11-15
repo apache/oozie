@@ -282,7 +282,7 @@ public class Hive2Main extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8.name()));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {

@@ -23,13 +23,14 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
  * Utility class to handle schema import and include statements
  */
 class Input implements LSInput {
-    private static final String UTF_8_ENCODING = StandardCharsets.UTF_8.name();
+    private static final Charset UTF_8_ENCODING = StandardCharsets.UTF_8;
     private BufferedInputStream inputStream;
     private String publicId;
     private String systemId;

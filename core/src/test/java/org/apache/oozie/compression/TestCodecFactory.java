@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.BinaryBlob;
-import org.apache.oozie.StringBlob;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.junit.After;

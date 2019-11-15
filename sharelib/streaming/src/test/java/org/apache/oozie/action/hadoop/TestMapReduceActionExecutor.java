@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
@@ -844,7 +845,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             Path p = fstat.getPath();
             if (getFileSystem().isFile(p) && p.getName().startsWith("part-")) {
                 InputStream is = getFileSystem().open(p);
-                Scanner sc = new Scanner(is,StandardCharsets.UTF_8.name());
+                Scanner sc = new Scanner(new InputStreamReader(is,StandardCharsets.UTF_8));
                 while (sc.hasNextLine()) {
                     String line = sc.nextLine();
                     containsLib1Jar = (containsLib1Jar || line.contains(lib1JarStr) || lib1JarPatYarn.matcher(line).matches());

@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -42,11 +41,7 @@ public class DiagBundleEntryWriter implements Closeable {
     }
 
     private DiagBundleEntryWriter(final OutputStream ous) {
-        try {
-            this.writer = new OutputStreamWriter(ous, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        this.writer = new OutputStreamWriter(ous, StandardCharsets.UTF_8);
     }
 
     DiagBundleEntryWriter writeDateValue(final String key, final Date date) throws IOException {

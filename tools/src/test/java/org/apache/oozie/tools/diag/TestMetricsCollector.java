@@ -121,7 +121,7 @@ public class TestMetricsCollector {
         metricsCollector.storeMetrics(testOut);
 
         final File metricsOut = new File(testOut, "metrics.txt");
-        final String str = new String(Files.readAllBytes(metricsOut.toPath()), StandardCharsets.UTF_8.name());
+        final String str = new String(Files.readAllBytes(metricsOut.toPath()), StandardCharsets.UTF_8);
 
         assertTrue(str.contains("CoordJobsGetPendingJPAExecutor"));
     }
@@ -210,7 +210,7 @@ public class TestMetricsCollector {
         final File instrumentationFile = new File(testOut, "instrumentation.txt");
         assertTrue(instrumentationFile.exists());
 
-        final String str = new String(Files.readAllBytes(instrumentationFile.toPath()), StandardCharsets.UTF_8.name());
+        final String str = new String(Files.readAllBytes(instrumentationFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(str.contains("45776800"));
     }
 
