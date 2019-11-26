@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3491 Confusing System ID error message (matijhs via asalamon74)
 OOZIE-3536 Invalid configuration tag <additionalparam> in maven-javadoc-plugin (nobigo via asalamon74)
 OOZIE-3559 Code generation encoding error in fluent-job-api (nobigo via asalamon74)
 OOZIE-3555 Remove unnecessary StandardCharsets.UTF_8.name() calls (zsombor via asalamon74)

@@ -117,13 +117,19 @@ public class Services {
                                          DateUtils.getOozieProcessingTimeZone().getID());
         }
         systemId = ConfigurationService.get(conf, CONF_SYSTEM_ID);
-        if (systemId.length() > MAX_SYSTEM_ID_LEN) {
-            systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
-            XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming", systemId,
-                                         MAX_SYSTEM_ID_LEN);
-        }
+        systemId = trimIfExceedsLimit(systemId);
         setSystemMode(SYSTEM_MODE.valueOf(ConfigurationService.get(conf, CONF_SYSTEM_MODE)));
         runtimeDir = createRuntimeDir();
+    }
+
+    protected String trimIfExceedsLimit(String systemId) {
+        if (systemId.length() > MAX_SYSTEM_ID_LEN) {
+            String origSystemId = systemId;
+            systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
+            XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming to [{2}]",
+                    origSystemId, MAX_SYSTEM_ID_LEN, systemId);
+        }
+        return systemId;
     }
 
     private String createRuntimeDir() throws ServiceException {
