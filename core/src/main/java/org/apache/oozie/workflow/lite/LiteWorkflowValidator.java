@@ -34,12 +34,14 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.service.ActionService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowException;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
 public class LiteWorkflowValidator {
+    private static XLog LOG = XLog.getLog(LiteWorkflowValidator.class);
 
     public void validateWorkflow(LiteWorkflowApp app, boolean validateForkJoin) throws WorkflowException {
         NodeDef startNode = app.getNode(StartNodeDef.START);
@@ -64,7 +66,8 @@ public class LiteWorkflowValidator {
                     true,
                     new ArrayDeque<String>(),
                     new HashMap<String, String>(),
-                    new HashMap<String, Optional<String>>());
+                    new HashMap<String, Optional<String>>(),
+                    new HashSet<>());
         }
     }
 
@@ -135,11 +138,18 @@ public class LiteWorkflowValidator {
      * already been visited at least once before
      * @param forkJoins Map that contains a mapping of fork-join node pairs.
      * @param nodeAndDecisionParents Map that contains a mapping of nodes and their eldest decision node
+     * @param visitedNodes contains the nodes that have been already visited & validated (except Join/End nodes)
      * @throws WorkflowException If there is any of the constraints described above is violated
      */
-    private void validateForkJoin(LiteWorkflowApp app, NodeDef node, NodeDef currentFork, String topDecisionParent,
-            boolean okPath, Deque<String> path, Map<String, String> forkJoins,
-            Map<String, Optional<String>> nodeAndDecisionParents) throws WorkflowException {
+    private void validateForkJoin(LiteWorkflowApp app,
+            NodeDef node,
+            NodeDef currentFork,
+            String topDecisionParent,
+            boolean okPath,
+            Deque<String> path,
+            Map<String, String> forkJoins,
+            Map<String, Optional<String>> nodeAndDecisionParents,
+            Set<NodeDef> visitedNodes) throws WorkflowException {
         final String nodeName = node.getName();
 
         path.addLast(nodeName);
@@ -186,6 +196,33 @@ public class LiteWorkflowValidator {
             }
         }
 
+        /* Memoization part: don't re-walk paths that have been visited already. This prevents
+         * exponential runtime in specific cases.
+         *
+         * There are three edge-cases that we have to keep in mind:
+         * 1. This part of the code cannot be above the "okTo" verification part. Otherwise we would
+         * accept WFs where multiple "ok" paths lead to the same node.
+         *
+         * 2. We don't store Join nodes. Firstly, we don't recurse from Join nodes anyway.
+         * Also, it's necessary to reach fork-join mapping verification below,
+         * so that we can throw errors "E0742" or "E0758" if needed.
+         *
+         * 3. We don't store End nodes. Similarly to Join, no recursion occurs after End. Plus, we
+         * could miss the erroneous condition "E0737" if we previously arrived at End from a valid path.
+         */
+        if (visitedNodes.contains(node)) {
+            LOG.debug("Skipping node because it's been validated: " + nodeName);
+            path.remove(nodeName);
+            return;
+        } else {
+            if (node instanceof JoinNodeDef || node instanceof EndNodeDef) {
+                LOG.debug("Not storing node because it's a Join or End: " + nodeName);
+            } else {
+                visitedNodes.add(node);
+                LOG.debug("Storing node as visited: " + nodeName);
+            }
+        }
+
         /* Fork-Join validation logic:
          *
          * At each Fork node, we recurse to every possible paths, changing the "currentFork" variable to the Fork node. We stop
@@ -211,7 +248,8 @@ public class LiteWorkflowValidator {
 
             for (String t : transitions) {
                 NodeDef transition = app.getNode(t);
-                validateForkJoin(app, transition, node, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents);
+                validateForkJoin(app, transition, node, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents,
+                        visitedNodes);
             }
 
             // get the Join node for this ForkNode & validate it (we must have only one)
@@ -222,7 +260,8 @@ public class LiteWorkflowValidator {
             List<String> joinTransitions = app.getNode(joins.iterator().next()).getTransitions();
             NodeDef next = app.getNode(joinTransitions.get(0));
 
-            validateForkJoin(app, next, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents);
+            validateForkJoin(app, next, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents,
+                    visitedNodes);
         } else if (node instanceof JoinNodeDef) {
             if (currentFork == null) {
                 throw new WorkflowException(ErrorCode.E0742, node.getName());
@@ -247,7 +286,7 @@ public class LiteWorkflowValidator {
             for (String t : transitions) {
                 NodeDef transition = app.getNode(t);
                 validateForkJoin(app, transition, currentFork, parentDecisionNode, okPath, path, forkJoins,
-                        nodeAndDecisionParents);
+                        nodeAndDecisionParents, visitedNodes);
             }
         } else if (node instanceof KillNodeDef) {
             // no op
@@ -262,19 +301,21 @@ public class LiteWorkflowValidator {
         } else if (node instanceof ActionNodeDef) {
             String transition = node.getTransitions().get(0);   // "ok to" transition
             NodeDef okNode = app.getNode(transition);
-            validateForkJoin(app, okNode, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents);
+            validateForkJoin(app, okNode, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents,
+                    visitedNodes);
 
             transition = node.getTransitions().get(1);          // "error to" transition
             NodeDef errorNode = app.getNode(transition);
-            validateForkJoin(app, errorNode, currentFork, topDecisionParent, false, path, forkJoins, nodeAndDecisionParents);
+            validateForkJoin(app, errorNode, currentFork, topDecisionParent, false, path, forkJoins, nodeAndDecisionParents,
+                    visitedNodes);
         } else if (node instanceof StartNodeDef) {
             String transition = node.getTransitions().get(0);   // start always has only 1 transition
             NodeDef tranNode = app.getNode(transition);
-            validateForkJoin(app, tranNode, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents);
+            validateForkJoin(app, tranNode, currentFork, topDecisionParent, okPath, path, forkJoins, nodeAndDecisionParents,
+                    visitedNodes);
         } else {
             throw new WorkflowException(ErrorCode.E0740, node.getClass());
         }
-
         path.remove(nodeName);
     }
 

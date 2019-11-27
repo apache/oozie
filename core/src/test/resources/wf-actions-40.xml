@@ -1,0 +1,63 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="test-wf">
+    <start to="a1"/>
+
+    <action name="a1"><fs><mkdir path='/tmp'/></fs><ok to="a2"/><error to="a2"/></action>
+    <action name="a2"><fs><mkdir path='/tmp'/></fs><ok to="a3"/><error to="a3"/></action>
+    <action name="a3"><fs><mkdir path='/tmp'/></fs><ok to="a4"/><error to="a4"/></action>
+    <action name="a4"><fs><mkdir path='/tmp'/></fs><ok to="a5"/><error to="a5"/></action>
+    <action name="a5"><fs><mkdir path='/tmp'/></fs><ok to="a6"/><error to="a6"/></action>
+    <action name="a6"><fs><mkdir path='/tmp'/></fs><ok to="a7"/><error to="a7"/></action>
+    <action name="a7"><fs><mkdir path='/tmp'/></fs><ok to="a8"/><error to="a8"/></action>
+    <action name="a8"><fs><mkdir path='/tmp'/></fs><ok to="a9"/><error to="a9"/></action>
+    <action name="a9"><fs><mkdir path='/tmp'/></fs><ok to="a10"/><error to="a10"/></action>
+    <action name="a10"><fs><mkdir path='/tmp'/></fs><ok to="a11"/><error to="a11"/></action>
+    <action name="a11"><fs><mkdir path='/tmp'/></fs><ok to="a12"/><error to="a12"/></action>
+    <action name="a12"><fs><mkdir path='/tmp'/></fs><ok to="a13"/><error to="a13"/></action>
+    <action name="a13"><fs><mkdir path='/tmp'/></fs><ok to="a14"/><error to="a14"/></action>
+    <action name="a14"><fs><mkdir path='/tmp'/></fs><ok to="a15"/><error to="a15"/></action>
+    <action name="a15"><fs><mkdir path='/tmp'/></fs><ok to="a16"/><error to="a16"/></action>
+    <action name="a16"><fs><mkdir path='/tmp'/></fs><ok to="a17"/><error to="a17"/></action>
+    <action name="a17"><fs><mkdir path='/tmp'/></fs><ok to="a18"/><error to="a18"/></action>
+    <action name="a18"><fs><mkdir path='/tmp'/></fs><ok to="a19"/><error to="a19"/></action>
+    <action name="a19"><fs><mkdir path='/tmp'/></fs><ok to="a20"/><error to="a20"/></action>
+    <action name="a20"><fs><mkdir path='/tmp'/></fs><ok to="a21"/><error to="a21"/></action>
+    <action name="a21"><fs><mkdir path='/tmp'/></fs><ok to="a22"/><error to="a22"/></action>
+    <action name="a22"><fs><mkdir path='/tmp'/></fs><ok to="a23"/><error to="a23"/></action>
+    <action name="a23"><fs><mkdir path='/tmp'/></fs><ok to="a24"/><error to="a24"/></action>
+    <action name="a24"><fs><mkdir path='/tmp'/></fs><ok to="a25"/><error to="a25"/></action>
+    <action name="a25"><fs><mkdir path='/tmp'/></fs><ok to="a26"/><error to="a26"/></action>
+    <action name="a26"><fs><mkdir path='/tmp'/></fs><ok to="a27"/><error to="a27"/></action>
+    <action name="a27"><fs><mkdir path='/tmp'/></fs><ok to="a28"/><error to="a28"/></action>
+    <action name="a28"><fs><mkdir path='/tmp'/></fs><ok to="a29"/><error to="a29"/></action>
+    <action name="a29"><fs><mkdir path='/tmp'/></fs><ok to="a30"/><error to="a30"/></action>
+    <action name="a30"><fs><mkdir path='/tmp'/></fs><ok to="a31"/><error to="a31"/></action>
+    <action name="a31"><fs><mkdir path='/tmp'/></fs><ok to="a32"/><error to="a32"/></action>
+    <action name="a32"><fs><mkdir path='/tmp'/></fs><ok to="a33"/><error to="a33"/></action>
+    <action name="a33"><fs><mkdir path='/tmp'/></fs><ok to="a34"/><error to="a34"/></action>
+    <action name="a34"><fs><mkdir path='/tmp'/></fs><ok to="a35"/><error to="a35"/></action>
+    <action name="a35"><fs><mkdir path='/tmp'/></fs><ok to="a36"/><error to="a36"/></action>
+    <action name="a36"><fs><mkdir path='/tmp'/></fs><ok to="a37"/><error to="a37"/></action>
+    <action name="a37"><fs><mkdir path='/tmp'/></fs><ok to="a38"/><error to="a38"/></action>
+    <action name="a38"><fs><mkdir path='/tmp'/></fs><ok to="a39"/><error to="a39"/></action>
+    <action name="a39"><fs><mkdir path='/tmp'/></fs><ok to="a40"/><error to="a40"/></action>
+    <action name="a40"><fs><mkdir path='/tmp'/></fs><ok to="z"/><error to="z"/></action>
+
+    <end name="z"/>
+</workflow-app>

@@ -1292,6 +1292,75 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
     }
 
+    public void testMultiplePathsToEnd() throws Exception {
+        // Makes sure that despite using memoization, the validator
+        // still finds incorrect state transition to "end" nodes
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
+                new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
+                .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "end", "f"))
+                .addNode(new ForkNodeDef("f", LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                        Arrays.asList(new String[]{"two", "three"})))
+                .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "end", "k")) // invalid
+                .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
+                .addNode(new JoinNodeDef("j", LiteWorkflowStoreService.LiteControlNodeHandler.class, "end"))
+                .addNode(new KillNodeDef("k", "kill", LiteWorkflowStoreService.LiteControlNodeHandler.class))
+                .addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail("Expected to catch an exception but did not encounter any");
+        } catch (WorkflowException we) {
+            assertEquals(ErrorCode.E0737, we.getErrorCode());
+            assertTrue(we.getMessage().contains("[two]"));
+        }
+    }
+
+    public void testRuntimeWith20Actions() throws Exception {
+        testRuntimeWithActions("wf-actions-20.xml");
+    }
+
+    public void testRuntimeWith40Actions() throws Exception {
+        testRuntimeWithActions("wf-actions-40.xml");
+    }
+
+    public void testRuntimeWith80Actions() throws Exception {
+        testRuntimeWithActions("wf-actions-80.xml");
+    }
+
+    @SuppressWarnings("deprecation")
+    private void testRuntimeWithActions(String workflowXml) throws Exception {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        final AtomicBoolean failure = new AtomicBoolean(false);
+        final AtomicBoolean finished = new AtomicBoolean(false);
+
+        Runnable r = () -> {
+            try {
+                parser.validateAndParse(IOUtils.getResourceAsReader(
+                        workflowXml, -1), new Configuration());
+            } catch (final Exception e) {
+                e.printStackTrace();
+                failure.set(true);
+            }
+
+            finished.set(true);
+        };
+
+        Thread t = new Thread(r);
+        t.setName("Workflow validator thread for " + workflowXml);
+        t.start();
+        t.join((long) (2000 * XTestCase.WAITFOR_RATIO));
+
+        if (!finished.get()) {
+            t.stop();  // don't let the validation keep running in the background which causes high CPU load
+            fail("Workflow validation did not finish in time");
+        }
+
+        assertFalse("Workflow validation failed", failure.get());
+    }
+
     private void invokeForkJoin(LiteWorkflowAppParser parser, LiteWorkflowApp def) throws WorkflowException {
         LiteWorkflowValidator validator = new LiteWorkflowValidator();
         validator.validateWorkflow(def, true);
