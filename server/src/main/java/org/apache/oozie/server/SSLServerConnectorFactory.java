@@ -137,7 +137,7 @@ class SSLServerConnectorFactory {
     private void setKeystorePass() {
         String keystorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_KEYSTORE_PASS);
         Objects.requireNonNull(keystorePass, "keystorePass is null");
-        sslContextFactory.setKeyManagerPassword(keystorePass);
+        sslContextFactory.setKeyStorePassword(keystorePass);
     }
 
     private void setKeyStoreFile() {

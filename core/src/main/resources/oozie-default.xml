@@ -2745,6 +2745,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.https.truststore.pass</name>
+        <value></value>
+        <description>
+            Password to the TrustStore.
+        </description>TestSSLServerConnectorFactory
+    </property>
+
+    <property>
         <name>oozie.https.keystore.file</name>
         <value></value>
         <description>

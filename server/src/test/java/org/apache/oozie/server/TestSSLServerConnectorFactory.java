@@ -83,7 +83,7 @@ public class TestSSLServerConnectorFactory {
     public void tearDown() {
         testConfig.clear();
         verify(mockSSLContextFactory).setKeyStorePath(anyString());
-        verify(mockSSLContextFactory).setKeyManagerPassword(anyString());
+        verify(mockSSLContextFactory).setKeyStorePassword(anyString());
         verifyNoMoreInteractions(
                 mockServerConnector,
                 mockSSLServerConnectorFactory);
