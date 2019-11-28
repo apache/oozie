@@ -52,7 +52,9 @@ import java.util.Objects;
 public class EmbeddedOozieServer {
     private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOozieServer.class);
     protected static final String OOZIE_HTTPS_TRUSTSTORE_FILE = "oozie.https.truststore.file";
+    protected static final String OOZIE_HTTPS_TRUSTSTORE_PASS = "oozie.https.truststore.pass";
     protected static final String TRUSTSTORE_PATH_SYSTEM_PROPERTY = "javax.net.ssl.trustStore";
+    protected static final String TRUSTSTORE_PASS_SYSTEM_PROPERTY = "javax.net.ssl.trustStorePassword";
     private static String contextPath;
     protected Server server;
     private int httpPort;
@@ -122,6 +124,7 @@ public class EmbeddedOozieServer {
 
         HandlerCollection handlerCollection = new HandlerCollection();
         setTrustStore();
+        setTrustStorePassword();
 
         if (isSecured()) {
             httpsPort =  getConfigPort(ConfigUtils.OOZIE_HTTPS_PORT);
@@ -160,6 +163,21 @@ public class EmbeddedOozieServer {
             }
         } else {
             LOG.info("javax.net.ssl.trustStore is already set. The value from config file will be ignored");
+        }
+    }
+
+    /**
+     * set the truststore password from the config file, if is not set by the user
+     */
+    private void setTrustStorePassword() {
+        if (System.getProperty(TRUSTSTORE_PASS_SYSTEM_PROPERTY) == null) {
+            final String trustStorePassword = conf.get(OOZIE_HTTPS_TRUSTSTORE_PASS);
+            if (trustStorePassword != null) {
+                LOG.info("Setting javax.net.ssl.trustStorePassword from config file");
+                System.setProperty(TRUSTSTORE_PASS_SYSTEM_PROPERTY, trustStorePassword);
+            }
+        } else {
+            LOG.info("javax.net.ssl.trustStorePassword is already set. The value from config file will be ignored");
         }
     }
 

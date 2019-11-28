@@ -932,7 +932,8 @@ included with your JRE. If it's not on your path, you should be able to find it 
     2b. Set location and password for the keystore and location for truststore by setting `oozie.https.keystore.file`,
     `oozie.https.keystore.pass`, `oozie.https.truststore.file`.
 
-    **Note:** `oozie.https.truststore.file` can be overridden by setting `javax.net.ssl.trustStore` system property.
+    **Note:** `oozie.https.truststore.file` can be overridden by setting `javax.net.ssl.trustStore` system property,
+    `oozie.https.keystore.pass` by setting `javax.net.ssl.trustStorePassword`.
 
     The default HTTPS port Oozie listens on for secure connections is 11443; it can be changed via `oozie.https.port`.
 

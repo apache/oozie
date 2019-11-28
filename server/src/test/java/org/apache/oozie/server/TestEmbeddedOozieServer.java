@@ -28,7 +28,6 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.After;
 import org.junit.Assert;
@@ -95,6 +94,7 @@ public class TestEmbeddedOozieServer {
 
     @After public void tearDown() {
         System.clearProperty(EmbeddedOozieServer.TRUSTSTORE_PATH_SYSTEM_PROPERTY);
+        System.clearProperty(EmbeddedOozieServer.TRUSTSTORE_PASS_SYSTEM_PROPERTY);
 
         verify(mockServices).get(ConfigurationService.class);
 
@@ -135,6 +135,23 @@ public class TestEmbeddedOozieServer {
         verify(mockConfiguration, never()).get(EmbeddedOozieServer.OOZIE_HTTPS_TRUSTSTORE_FILE);
     }
 
+    /**
+     * test case for when the trustore password is set via system property
+     * expected result: the password is used from the system property and the value is not even retrieved from the config file
+     */
+    @Test
+    public void testServerSetupTruststorePassSetViaSystemProperty() throws Exception {
+        final String trustStorePassword = "myTrustedPassword";
+        doReturn(String.valueOf(false)).when(mockConfiguration).get("oozie.https.enabled");
+        System.setProperty(EmbeddedOozieServer.TRUSTSTORE_PASS_SYSTEM_PROPERTY, trustStorePassword);
+
+        embeddedOozieServer.setup();
+        verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+        verify(oozieFilterMapper).addFilters();
+
+        Assert.assertEquals(trustStorePassword, System.getProperty("javax.net.ssl.trustStorePassword"));
+        verify(mockConfiguration, never()).get(EmbeddedOozieServer.OOZIE_HTTPS_TRUSTSTORE_PASS);
+    }
 
     @Test
     public void testSecureServerSetup() throws Exception {
