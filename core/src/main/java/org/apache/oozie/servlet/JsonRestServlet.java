@@ -295,11 +295,11 @@ public abstract class JsonRestServlet extends HttpServlet {
         requestCron.set(cron);
         try {
             cron.start();
+            TOTAL_REQUESTS_SAMPLER_COUNTER.incrementAndGet();
+            samplerCounter.incrementAndGet();
             validateRestUrl(request.getMethod(), getResourceName(request), request.getParameterMap());
             XLog.Info.get().clear();
             String user = getUser(request);
-            TOTAL_REQUESTS_SAMPLER_COUNTER.incrementAndGet();
-            samplerCounter.incrementAndGet();
             //If trace is enabled then display the request headers
             XLog log = XLog.getLog(getClass());
             if (log.isTraceEnabled()){
