@@ -2057,7 +2057,7 @@
                     <!-- DO NOT CHANGE THIS VALUES, TESTCASES CANNOT RUN IN PARALLEL -->
                     <parallel>classes</parallel>
                     <threadCount>1</threadCount>
-                    <perCoreThreadCount>1</perCoreThreadCount>
+                    <perCoreThreadCount>true</perCoreThreadCount>
                     <classpathDependencyExcludes>
                         <classpathDependencyExclude>javax.servlet:servlet-api</classpathDependencyExclude>
                     </classpathDependencyExcludes>

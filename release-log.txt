@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3538 Invalid <perCoreThreadCount> value is pom.xml (nobigo via asalamon74)
 OOZIE-3549 Add back support for truststore passwords (matijhs via asalamon74)
 OOZIE-3561 Forkjoin validation is slow when there are many actions in chain (dionusos, pbacsko via asalamon74)
 OOZIE-3491 Confusing System ID error message (matijhs via asalamon74)
