@@ -1991,7 +1991,7 @@
                 <configuration>
                     <rules>
                         <requireMavenVersion>
-                            <version>[3.0.0,)</version>
+                            <version>[3.5.0,)</version>
                         </requireMavenVersion>
                         <requireJavaVersion>
                             <version>${minJavaVersion}</version>

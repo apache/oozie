@@ -10,7 +10,7 @@
 
    * Unix box (tested on Mac OS X and Linux)
    * Java JDK 1.8+
-   * [Maven 3.0.1+](http://maven.apache.org/)
+   * [Maven 3.5.0+](http://maven.apache.org/)
    * [Hadoop 2.6.0+](http://hadoop.apache.org/core/releases.html)
    * [Pig 0.10.1+](http://hadoop.apache.org/pig/releases.html)
 
