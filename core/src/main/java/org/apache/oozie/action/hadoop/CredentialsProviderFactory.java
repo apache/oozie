@@ -61,18 +61,18 @@ public class CredentialsProviderFactory {
                 String type = str[0];
                 String classname = str[1];
                 if (classname != null) {
-                    LOG.debug("Creating Credential type : '{0}', class Name : '{1}'", type, classname);
+                    LOG.debug("Creating Credential type : {0}, class Name : {1}", type, classname);
                     Class<?> klass = null;
                     try {
                         klass = Thread.currentThread().getContextClassLoader().loadClass(classname);
                     }
                     catch (ClassNotFoundException ex) {
-                        LOG.warn("Exception while loading the class '{0}'", classname, ex);
+                        LOG.warn("Exception while loading the class {0}", classname, ex);
                         throw ex;
                     }
                     providerCache.put(type, (Class<CredentialsProvider>) klass);
                 } else {
-                    LOG.warn("Credential provider class is null for '{0}', skipping", type);
+                    LOG.warn("Credential provider class is null for {0}, skipping", type);
                 }
             }
         }
