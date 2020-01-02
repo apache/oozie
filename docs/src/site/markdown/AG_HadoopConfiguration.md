@@ -15,14 +15,14 @@ Oozie supports whitelisting Hadoop services (JobTracker, HDFS), via 2 configurat
         <name>oozie.service.HadoopAccessorService.jobTracker.whitelist</name>
         <value> </value>
         <description>
-            Whitelisted job tracker for Oozie service.
+            Comma separated list of whitelisted job trackers for Oozie service.
         </description>
     </property>
     <property>
         <name>oozie.service.HadoopAccessorService.nameNode.whitelist</name>
         <value> </value>
         <description>
-            Whitelisted job tracker for Oozie service.
+            Comma separated list of whitelisted name nodes for Oozie service.
         </description>
     </property>
 ...

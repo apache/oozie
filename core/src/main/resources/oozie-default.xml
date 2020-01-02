@@ -106,7 +106,7 @@
         <description>
             Oozie server timezone. Valid values are UTC and GMT(+/-)####, for example 'GMT+0530' would be India
             timezone. All dates parsed and genered dates by Oozie Coordinator/Bundle will be done in the specified
-            timezone. The default value of 'UTC' should not be changed under normal circumtances. If for any reason
+            timezone. The default value of 'UTC' should not be changed under normal circumstances. If for any reason
             is changed, note that GMT(+/-)#### timezones do not observe DST changes.
         </description>
     </property>
@@ -298,8 +298,8 @@
             oozie.service.AuthorizationService.security.enabled
         </value>
         <description>
-            Specifies "oozie.*" properties to cannot be overriden via Java system properties.
-            Property names must be separted by commas.
+            Specifies "oozie.*" properties to cannot be overridden via Java system properties.
+            Property names must be separated by commas.
         </description>
     </property>
 
@@ -2165,7 +2165,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.service.HadoopAccessorService.jobTracker.whitelist</name>
         <value> </value>
         <description>
-            Whitelisted job tracker for Oozie service.
+            Comma separated list of whitelisted job trackers for Oozie service.
         </description>
     </property>
 
@@ -2173,7 +2173,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.service.HadoopAccessorService.nameNode.whitelist</name>
         <value> </value>
         <description>
-            Whitelisted job tracker for Oozie service.
+            Comma separated list of whitelisted name nodes for Oozie service.
         </description>
     </property>
 
@@ -2533,6 +2533,10 @@ will be the requeue interval for the actions which are waiting for a long time w
     <property>
         <name>oozie.service.EventHandlerService.event.listeners</name>
         <value>org.apache.oozie.jms.JMSJobEventListener</value>
+        <description>
+            List of implementations for JobEventListener and SLAEventListener to calculate SLA and send Email/JMS SLA
+            and JMS job notifications. In case of multiple classes, names must be separated by commas.
+        </description>
     </property>
 
     <property>
@@ -2749,7 +2753,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <value></value>
         <description>
             Password to the TrustStore.
-        </description>TestSSLServerConnectorFactory
+        </description>
     </property>
 
     <property>
