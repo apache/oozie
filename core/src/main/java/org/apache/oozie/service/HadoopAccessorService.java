@@ -30,6 +30,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.hadoop.mapreduce.v2.api.HSClientProtocol;
 import org.apache.hadoop.mapreduce.v2.api.MRClientProtocol;
 import org.apache.hadoop.mapreduce.v2.api.protocolrecords.GetDelegationTokenRequest;
@@ -185,6 +186,17 @@ public class HadoopAccessorService implements Service {
         }
 
         setConfigForHadoopSecurityUtil(conf);
+        initializeMRLimits(conf);
+    }
+
+    /**
+     * This method initializes the MapReduce's Limits class so the user can define more than 120 counters
+     * in their map reduce action. For more details please see OOZIE-3578.
+     *
+     * @param conf the loaded hadoop configurations including mapred-site.xml
+     */
+    private void initializeMRLimits(Configuration conf) {
+        Limits.init(conf);
     }
 
     private void setConfigForHadoopSecurityUtil(Configuration conf) {

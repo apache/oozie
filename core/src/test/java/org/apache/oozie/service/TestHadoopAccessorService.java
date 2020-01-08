@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.ipc.RemoteException;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
@@ -35,6 +36,7 @@ import org.apache.oozie.util.IOUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
@@ -387,6 +389,17 @@ public class TestHadoopAccessorService extends XFsTestCase {
         assertEquals("The two configuration object shall be the same", base, result);
         assertEquals("Key foo.bar shall be present in result configuration", "baz", result.get("foo.bar"));
         assertSame("The two configuration object shall be the same", base, result);
+    }
+
+    public void testIfMRLimitsIsInitialized() throws IOException, ServiceException {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-mapred-site.xml");
+        OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/hadoop-confx", "mapred-site.xml"));
+        IOUtils.copyStream(is, os);
+        HadoopAccessorService has = new HadoopAccessorService();
+        has.init(Services.get());
+        Assert.assertEquals("Limits class shall not use default value for number of counters.",
+                500,
+                has.createConfiguration("jt").getInt(MRJobConfig.COUNTERS_MAX_KEY, 120));
     }
 
     public FileSystem createFileSystemWithCustomProperties(
