@@ -25,6 +25,10 @@ import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.workflow.WorkflowException;
+import org.apache.oozie.workflow.lite.NodeDef;
+import org.apache.oozie.workflow.lite.NodeHandler;
+import org.mockito.Mockito;
 
 public class TestLiteWorkflowStoreService extends XTestCase {
 
@@ -82,5 +86,50 @@ public class TestLiteWorkflowStoreService extends XTestCase {
         assertTrue(allowedRetryCodes.contains(LiteWorkflowStoreService.USER_ERROR_CODE_ALL));
     }
 
+    public void testGetUserRetryMax() throws WorkflowException {
+        NodeHandler.Context context = Mockito.mock(NodeHandler.Context.class);
+        NodeDef nodeDef = Mockito.mock(NodeDef.class);
+        Mockito.when(context.getNodeDef()).thenReturn(nodeDef);
+
+        assertEquals("System defined user retry max should be 3",
+                3, ConfigurationService.getInt("oozie.service.LiteWorkflowStoreService.user.retry.max"));
+        assertEquals("System defined user retry default should be 0",
+                0, ConfigurationService.getInt("oozie.service.LiteWorkflowStoreService.user.retry.default"));
+
+        // User defined retry-max not greater than system max
+        Mockito.when(nodeDef.getUserRetryMax()).thenReturn("2");
+        assertEquals("Should return user defined if user defined is not over system max",
+                2, LiteWorkflowStoreService.getUserRetryMax(context));
+
+        // User defined retry-max greater than system max
+        ConfigurationService.set("oozie.service.LiteWorkflowStoreService.user.retry.max", "1");
+        ConfigurationService.set("oozie.service.LiteWorkflowStoreService.user.retry.default", "0");
+        Mockito.when(nodeDef.getUserRetryMax()).thenReturn("2");
+        assertEquals("Should return system max if user defined is over system max",
+                1, LiteWorkflowStoreService.getUserRetryMax(context));
+
+        // User defined retry-max is an invalid number
+        Mockito.when(nodeDef.getUserRetryMax()).thenReturn("abc");
+        try {
+            LiteWorkflowStoreService.getUserRetryMax(context);
+            fail("Should have thrown exception because user defined retry-max is an invalid number");
+        } catch (WorkflowException ex) {
+            // Pass
+        }
+
+        // User defined retry-max is null, return system default
+        ConfigurationService.set("oozie.service.LiteWorkflowStoreService.user.retry.max", "3");
+        ConfigurationService.set("oozie.service.LiteWorkflowStoreService.user.retry.default", "2");
+        Mockito.when(nodeDef.getUserRetryMax()).thenReturn("null");
+        assertEquals("Should return system default if user defined is null",
+                2, LiteWorkflowStoreService.getUserRetryMax(context));
+
+        // User defined retry-max is null, and system default greater than system max, return system max
+        ConfigurationService.set("oozie.service.LiteWorkflowStoreService.user.retry.max", "1");
+        ConfigurationService.set("oozie.service.LiteWorkflowStoreService.user.retry.default", "2");
+        Mockito.when(nodeDef.getUserRetryMax()).thenReturn("null");
+        assertEquals("Should return system max if user defined is null and system default is over system max",
+                1, LiteWorkflowStoreService.getUserRetryMax(context));
+    }
 
 }

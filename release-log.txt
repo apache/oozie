@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3066 Possibility to set retry-max globally (qsbao via asalamon74)
 OOZIE-3578 MapReduce counters cannot be used over 120 (dionusos via pbacsko, gezapeti)
 OOZIE-3573 Fix oozie-default.xml descriptions (arvaiadam via asalamon74)
 OOZIE-3571 Wrong log string substitution in CredentialsProviderFactory class (arvaiadam via asalamon74)

@@ -2293,6 +2293,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.default</name>
+        <value>0</value>
+        <description>
+            Default automatic retry count for workflow action.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.inteval</name>
         <value>10</value>
         <description>

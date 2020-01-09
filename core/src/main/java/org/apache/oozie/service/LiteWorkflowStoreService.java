@@ -53,11 +53,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
 
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "LiteWorkflowStoreService.";
     public static final String CONF_PREFIX_USER_RETRY = CONF_PREFIX + "user.retry.";
     public static final String CONF_USER_RETRY_MAX = CONF_PREFIX_USER_RETRY + "max";
+    public static final String CONF_USER_RETRY_DEFAULT = CONF_PREFIX_USER_RETRY + "default";
     public static final String CONF_USER_RETRY_INTEVAL = CONF_PREFIX_USER_RETRY + "inteval";
     public static final String CONF_USER_RETRY_POLICY = CONF_PREFIX_USER_RETRY + "policy";
     public static final String CONF_USER_RETRY_ERROR_CODE = CONF_PREFIX_USER_RETRY + "error.code";
@@ -155,7 +158,8 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
         return ret;
     }
 
-    private static int getUserRetryMax(NodeHandler.Context context) throws WorkflowException {
+    @VisibleForTesting
+    protected static int getUserRetryMax(NodeHandler.Context context) throws WorkflowException {
         XLog log = XLog.getLog(LiteWorkflowStoreService.class);
         int ret = ConfigurationService.getInt(CONF_USER_RETRY_MAX);
         int max = ret;
@@ -174,7 +178,11 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
             }
         }
         else {
-            ret = 0;
+            ret = ConfigurationService.getInt(CONF_USER_RETRY_DEFAULT);
+            if (ret > max) {
+                log.warn(ErrorCode.E0823.getTemplate(), ret, max);
+                ret = max;
+            }
         }
         return ret;
     }

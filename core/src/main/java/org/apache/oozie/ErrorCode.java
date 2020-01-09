@@ -182,6 +182,7 @@ public enum ErrorCode {
     E0820(XLog.STD, "Action user retry max [{0}] is over system defined max [{1}], re-assign to use system max."),
     E0821(XLog.STD, "Received early callback for action still in PREP state; will wait [{0}]ms and requeue up to [{1}] more times"),
     E0822(XLog.STD, "Received early callback for action [{0}] while still in PREP state and exhausted all requeues"),
+    E0823(XLog.STD, "System defined default user retry [{0}] is over system defined max [{1}], re-assign to use system max."),
 
     E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
     E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),

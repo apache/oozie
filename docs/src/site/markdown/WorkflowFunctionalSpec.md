@@ -2700,13 +2700,16 @@ User-Retry allows user to give certain number of reties (must not exceed system 
 that problem and fix them when action is in `USER_RETRY` state. If failure or error does not go away after max retries,
 the action becomes `FAILED` or `ERROR` and Oozie marks workflow job to `FAILED` or `KILLED`.
 
+Oozie administrator can define system default retries by adding this configuration
+`oozie.service.LiteWorkflowStoreService.user.retry.default` to `oozie-site.xml`.
+
 Oozie administrator can allow more error codes to be handled for User-Retry. By adding this configuration
-`oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext` to `oozie.site.xml`
+`oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext` to `oozie-site.xml`
 and error codes as value, these error codes will be considered as User-Retry after system restart.
 
 Since Oozie 4.3, User-retry allows user to mention retry policy. The value for policy can be `periodic`
 or `exponential`, `periodic` being the default. Oozie administrator can define user retry policy for all workflow
-actions by adding this configuration `oozie.service.LiteWorkflowStoreService.user.retry.policy` to `oozie.site.xml`.
+actions by adding this configuration `oozie.service.LiteWorkflowStoreService.user.retry.policy` to `oozie-site.xml`.
 This value will be considered as user retry policy after system restart. This value can be overridden while defining
 actions in workflow xml if needed. The `retry-interval` should be specified in minutes.
 
