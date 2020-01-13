@@ -1,0 +1,5 @@
+imports dslVersion:"1.2", {
+  targetRootDir id:"default",{
+    artifactFile "com.sap.bds.ats-altiscale:sap-ext-js:zip:2.2"
+  }
+}
