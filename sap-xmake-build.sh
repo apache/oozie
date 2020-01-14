@@ -33,9 +33,54 @@ mvn -version
 echo ""
 
 echo "Current Directory: $(pwd)"
+echo ""
+
+# Extraction and repackaging of nexus tomcat zip into tomcat tar.gz that the distro module requires
+export TOMCAT_VERSION=6.0.44
+echo "Extraction and repackaging of Nexus Apache Tomcat ${TOMCAT_VERSION} zip into tar.gz file that the distro module requires"
+echo ""
+
+DISTRO_DOWNLOADS_DIR=${MY_DIR}/distro/downloads
+EXTRACTION_DIR=${DISTRO_DOWNLOADS_DIR}/tomcat
+
+echo "[INFO] mkdir -p --mode=0755 ${EXTRACTION_DIR}"
+mkdir --mode=0755 -p ${EXTRACTION_DIR}
+echo ""
+
+echo "[INFO] cp /imports/apache-tomcat-${TOMCAT_VERSION}.zip ${EXTRACTION_DIR}"
+cp /imports/apache-tomcat-${TOMCAT_VERSION}.zip ${EXTRACTION_DIR}
+echo ""
+
+echo "pushd ${EXTRACTION_DIR}"
+pushd ${EXTRACTION_DIR}
+echo ""
+
+# Extract Apache Tomcat from the Nexus zip file
+echo "unzip apache-tomcat-${TOMCAT_VERSION}.zip in $(pwd)"
+unzip apache-tomcat-${TOMCAT_VERSION}.zip
+rm apache-tomcat-${TOMCAT_VERSION}.zip
+echo ""
+
+# Repackage Apache tomcat into the tar.gz file expected by oozie distro build
+echo "tar -czvf ${DISTRO_DOWNLOADS_DIR}/tomcat-${TOMCAT_VERSION}.tar.gz ."
+echo ""
+tar -czvf ${DISTRO_DOWNLOADS_DIR}/tomcat-${TOMCAT_VERSION}.tar.gz .
+echo ""
+
+# Remove the extraction directory
+echo "rm -rf ${EXTRACTION_DIR}"
+rm -rf ${EXTRACTION_DIR}
+echo ""
+
+echo "Running popd"
+popd
+echo ""
+
+echo "Current Directory: $(pwd)"
 
 echo "[INFO] Building oozie ${OOZIE_VERSION} client and server"
-mvn package assembly:single versions:set -DnewVersion=${OOZIE_VERSION} -DincludeHadoopJars=true -DskipTests=true -Phadoop-2 -Dhadoop.version=${HADOOP_VERSION} -Dpig.version=${PIG_VERSION} -Dhive.version=${HIVE_VERSION} -Dhadoop.auth.version=${HADOOP_VERSION} -Dhcatalog.version=${HIVE_VERSION} -Dsqoop.version=${SQOOP_VERSION}
+
+mvn package assembly:single versions:set -DnewVersion=${OOZIE_VERSION} -DincludeHadoopJars=true -DskipTests=true -Phadoop-2 -Dhadoop.version=${HADOOP_VERSION} -Dpig.version=${PIG_VERSION} -Dhive.version=${HIVE_VERSION} -Dhadoop.auth.version=${HADOOP_VERSION} -Dhcatalog.version=${HIVE_VERSION} -Dsqoop.version=${SQOOP_VERSION} -Dtomcat.version=$TOMCAT_VERSION
 
 echo "[INFO] Finished building oozie ${OOZIE_VERSION}"
 echo ""
@@ -145,8 +190,8 @@ echo "[INFO] cp ${MY_DIR}/distro/target/oozie-${OOZIE_VERSION}-distro/oozie-${OO
 cp ${MY_DIR}/distro/target/oozie-${OOZIE_VERSION}-distro/oozie-${OOZIE_VERSION}/oozie.war ${RPM_BUILD_DIR} 
 
 cd ${RPM_BUILD_DIR}/libext
-echo "[INFO] cp /imports/sap-ext-js-2.2.zip ${RPM_BUILD_DIR}/libext/ext-2.2.zip"
-cp /imports/sap-ext-js-2.2.zip ./ext-2.2.zip
+echo "[INFO] cp /imports/sap-ext-js-2.2.0.0.zip ${RPM_BUILD_DIR}/libext/ext-2.2.zip"
+cp /imports/sap-ext-js-2.2.0.0.zip ./ext-2.2.zip
 
 cd ${RPM_BUILD_DIR}/conf
 rm -rf hadoop-conf
