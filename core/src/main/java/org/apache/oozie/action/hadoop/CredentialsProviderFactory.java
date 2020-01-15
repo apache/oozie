@@ -18,10 +18,6 @@
 
 package org.apache.oozie.action.hadoop;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -30,10 +26,16 @@ import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XLog;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 public class CredentialsProviderFactory {
     public static final String CRED_KEY = "oozie.credentials.credentialclasses";
     private static final XLog LOG = XLog.getLog(CredentialsProviderFactory.class);
-    public static final String HDFS = "hdfs";
+    public static final String FS = "filesystem";
+    public static final String NAMENODE_FS = "namenode_fs";
+    public static final String WORKFLOW_APP_FS = "workflow_app_fs";
     public static final String YARN = "yarnRM";
     public static final String JHS = "jhs";
     private static CredentialsProviderFactory instance;
@@ -76,7 +78,7 @@ public class CredentialsProviderFactory {
                 }
             }
         }
-        providerCache.put(HDFS, HDFSCredentials.class);
+        providerCache.put(FS, FileSystemCredentials.class);
         providerCache.put(YARN, YarnRMCredentials.class);
         providerCache.put(JHS, JHSCredentials.class);
     }

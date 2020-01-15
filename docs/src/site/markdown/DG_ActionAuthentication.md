@@ -110,6 +110,8 @@ Oozie currently comes with the following Credentials implementations:
    1. HCatalog and Hive Metastore: `org.apache.oozie.action.hadoop.HCatCredentials`
    1. HBase: `org.apache.oozie.action.hadoop.HBaseCredentials`
    1. Hive Server 2: `org.apache.oozie.action.hadoop.Hive2Credentials`
+   1. File system (for workflows that require cross cluster or cloud storage access):
+   `org.apache.oozie.action.hadoop.FileSystemCredentials`
 
 HCatCredentials requires these two properties:
 
@@ -123,9 +125,12 @@ HBase does not require any additional properties since the hbase-site.xml on the
 to obtain a delegation token; though properties can be overwritten here if desired.
 
 Hive2Credentials requires these two properties:
-
    1. `hive2.server.principal`
    1. `hive2.jdbc.url`
+
+FileSystemCredentials requires the following property:
+
+   1. `filesystem.path` - Cloud storage bucket or namenode path, where the action will need access rights in runtime.
 
 [::Go back to Oozie Documentation Index::](index.html)
 

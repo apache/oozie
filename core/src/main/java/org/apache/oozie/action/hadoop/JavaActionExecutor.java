@@ -19,33 +19,12 @@
 package org.apache.oozie.action.hadoop;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.security.PrivilegedExceptionAction;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -113,14 +92,37 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.security.PrivilegedExceptionAction;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-
+import static org.apache.oozie.action.hadoop.CredentialsProviderFactory.JHS;
+import static org.apache.oozie.action.hadoop.CredentialsProviderFactory.NAMENODE_FS;
+import static org.apache.oozie.action.hadoop.CredentialsProviderFactory.WORKFLOW_APP_FS;
+import static org.apache.oozie.action.hadoop.CredentialsProviderFactory.YARN;
+import static org.apache.oozie.action.hadoop.FileSystemCredentials.FILESYSTEM_PATH;
 
 public class JavaActionExecutor extends ActionExecutor {
     public static final String RUNNING = "RUNNING";
@@ -1071,15 +1073,17 @@ public class JavaActionExecutor extends ActionExecutor {
             Credentials credentials = new Credentials();
             Configuration launcherConf = createLauncherConf(actionFs, context, action, actionXml, actionConf);
             yarnClient = createYarnClient(context, launcherConf);
-            Map<String, CredentialsProperties> credentialsProperties = setCredentialPropertyToActionConf(context,
+            Map<String, CredentialsProperties> credPropertiesMap = setCredentialPropertyToActionConf(context,
                     action, actionConf);
             if (UserGroupInformation.isSecurityEnabled()) {
-                addHadoopCredentialPropertiesToActionConf(credentialsProperties);
+                addNameNodeCredentials(actionConf, credPropertiesMap);
+                addWorkflowAppFileSystemCredentials(context, credPropertiesMap);
+                addYarnCredentials(credPropertiesMap);
             }
             // Adding if action need to set more credential tokens
             Configuration credentialsConf = new Configuration(false);
             XConfiguration.copy(actionConf, credentialsConf);
-            setCredentialTokens(credentials, credentialsConf, context, action, credentialsProperties);
+            setCredentialTokens(credentials, credentialsConf, context, action, credPropertiesMap);
 
             // copy back new entries from credentialsConf
             for (Entry<String, String> entry : credentialsConf) {
@@ -1189,11 +1193,25 @@ public class JavaActionExecutor extends ActionExecutor {
         return context.getVar(OOZIE_ACTION_NAME);
     }
 
-    private void addHadoopCredentialPropertiesToActionConf(Map<String, CredentialsProperties> credentialsProperties) {
-        LOG.info("Adding default credentials for action: hdfs, yarn and jhs");
-        addHadoopCredentialProperties(credentialsProperties, CredentialsProviderFactory.HDFS);
-        addHadoopCredentialProperties(credentialsProperties, CredentialsProviderFactory.YARN);
-        addHadoopCredentialProperties(credentialsProperties, CredentialsProviderFactory.JHS);
+    void addNameNodeCredentials(Configuration actionConf, Map<String, CredentialsProperties> credPropertiesMap) {
+        LOG.info("Adding default credentials for action: namenode");
+        final String jobNameNodes = actionConf.get(MRJobConfig.JOB_NAMENODES);
+        CredentialsProperties hdfsCredProps = new CredentialsProperties(NAMENODE_FS, CredentialsProviderFactory.FS);
+        hdfsCredProps.getProperties().put(FILESYSTEM_PATH, jobNameNodes);
+        credPropertiesMap.put(NAMENODE_FS, hdfsCredProps);
+    }
+
+    void addWorkflowAppFileSystemCredentials(Context context, Map<String, CredentialsProperties> credPropertiesMap) {
+        LOG.info("Adding workflow application file system credentials for action");
+        CredentialsProperties fsCredProps = new CredentialsProperties(WORKFLOW_APP_FS, CredentialsProviderFactory.FS);
+        fsCredProps.getProperties().put(FILESYSTEM_PATH, context.getWorkflow().getAppPath());
+        credPropertiesMap.put(WORKFLOW_APP_FS, fsCredProps);
+    }
+
+    private void addYarnCredentials(Map<String, CredentialsProperties> credPropertiesMap) {
+        LOG.info("Adding default credentials for action: yarn and jhs");
+        addHadoopCredentialProperties(credPropertiesMap, YARN);
+        addHadoopCredentialProperties(credPropertiesMap, JHS);
     }
 
     private void addHadoopCredentialProperties(Map<String, CredentialsProperties> credentialsProperties, String type) {
@@ -1533,7 +1551,6 @@ public class JavaActionExecutor extends ActionExecutor {
             return;
         }
 
-        setActionTokenProperties(jobconf);
         // Make sure we're logged into Kerberos; if not, or near expiration, it will relogin
         CredentialsProviderFactory.ensureKerberosLogin();
         for (Entry<String, CredentialsProperties> entry : credPropertiesMap.entrySet()) {
@@ -1548,7 +1565,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 } else {
                     LOG.debug("Credentials object is null for name= " + credName + ", type=" + credProps.getType());
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA020",
-                            "Could not load credentials of type [{0}] with name [{1}]]; perhaps it was not defined"
+                            "Could not load credentials of type [{0}] with name [{1}]; perhaps it was not defined"
                                     + " in oozie-site.xml?", credProps.getType(), credName);
                 }
             }
@@ -1559,15 +1576,6 @@ public class JavaActionExecutor extends ActionExecutor {
                                                          final WorkflowAction action,
                                                          final Map<String, CredentialsProperties> credPropertiesMap) {
         return context != null && action != null && credPropertiesMap != null;
-    }
-
-    /**
-     * Subclasses may override this method in order to take additional actions required for obtaining credential token(s).
-     *
-     * @param jobconf workflow action configuration
-     */
-    protected void setActionTokenProperties(final Configuration jobconf) {
-        // nop
     }
 
     protected HashMap<String, CredentialsProperties> getActionCredentialsProperties(Context context,
@@ -1624,7 +1632,7 @@ public class JavaActionExecutor extends ActionExecutor {
             }
             if (credProp == null && credName != null) {
                 throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "JA021",
-                        "Could not load credentials with name [{0}]].", credName);
+                        "Could not load credentials with name [{0}].", credName);
             }
         } else {
             LOG.debug("credentials is null for the action");

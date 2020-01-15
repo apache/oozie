@@ -22,25 +22,27 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.oozie.action.ActionExecutorException;
-import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XLog;
 import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class DistcpActionExecutor extends JavaActionExecutor{
-    public static final String CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS = "org.apache.oozie.action.hadoop.DistcpMain";
+import static org.apache.oozie.action.hadoop.CredentialsProviderFactory.FS;
+import static org.apache.oozie.action.hadoop.CredentialsProviderFactory.NAMENODE_FS;
+import static org.apache.oozie.action.hadoop.FileSystemCredentials.FILESYSTEM_PATH;
+
+public class DistcpActionExecutor extends JavaActionExecutor {
+    private static final String CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS = "org.apache.oozie.action.hadoop.DistcpMain";
     private static final String DISTCP_MAIN_CLASS_NAME = "org.apache.hadoop.tools.DistCp";
     public static final String CLASS_NAMES = "oozie.actions.main.classnames";
     private static final XLog LOG = XLog.getLog(DistcpActionExecutor.class);
-    public static final String DISTCP_TYPE = "distcp";
 
     /**
      * Comma separated list of NameNode hosts to obtain delegation token(s) for.
      */
-    private static final String OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS = "oozie.launcher.mapreduce.job.hdfs-servers";
+    static final String OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS = "oozie.launcher.mapreduce.job.hdfs-servers";
 
     /**
      * Comma separated list to instruct ResourceManagers on either cluster to skip delegation token renewal for NameNode hosts.
@@ -67,32 +69,10 @@ public class DistcpActionExecutor extends JavaActionExecutor{
         List<Class<?>> classes = new ArrayList<>();
         try {
             classes.add(Class.forName(CONF_OOZIE_DISTCP_ACTION_MAIN_CLASS));
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException("Class not found", e);
         }
         return classes;
-    }
-
-    /**
-     * This function returns the Action classes names from the configuration
-     *
-     * @param type This is type of the action classes
-     * @return Name of the class from the configuration
-     */
-    public static String getClassNamebyType(String type){
-        String classname = null;
-        for (String function : ConfigurationService.getStrings(CLASS_NAMES)) {
-            function = StringUtils.trim(function);
-            LOG.debug("class for Distcp Action: " + function);
-            String[] str = function.split("=");
-            if (str.length > 0) {
-                if(type.equalsIgnoreCase(str[0])){
-                    classname = new String(str[1]);
-                }
-            }
-        }
-        return classname;
     }
 
     /**
@@ -114,17 +94,25 @@ public class DistcpActionExecutor extends JavaActionExecutor{
     /**
      * Extracts information required for DistCp action between secure clusters (in the same or distinct Kerberos realms)
      *
-     * @param jobconf workflow action configuration
+     * @param actionConf workflow action configuration
+     * @param credPropertiesMap Map of defined workflow credentials
      */
     @Override
-    protected void setActionTokenProperties(final Configuration jobconf) {
-        final String hdfsServers = jobconf.get(OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS);
+    void addNameNodeCredentials(Configuration actionConf, Map<String, CredentialsProperties> credPropertiesMap) {
+        String hdfsServers = actionConf.get(OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS);
         if (hdfsServers != null) {
-            jobconf.set(MRJobConfig.JOB_NAMENODES, hdfsServers);
-            final String tokenRenewalExclude = jobconf.get(OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS_TOKEN_RENEWAL_EXCLUDE);
+            LOG.info("Overriding {0} default value from action config with {1}",
+                    MRJobConfig.JOB_NAMENODES, hdfsServers);
+            actionConf.set(MRJobConfig.JOB_NAMENODES, hdfsServers);
+            final String tokenRenewalExclude = actionConf.get(OOZIE_LAUNCHER_MAPREDUCE_JOB_HDFS_SERVERS_TOKEN_RENEWAL_EXCLUDE);
             if (tokenRenewalExclude != null) {
-                jobconf.set(JOB_NAMENODES_TOKEN_RENEWAL_EXCLUDE, tokenRenewalExclude);
+                actionConf.set(JOB_NAMENODES_TOKEN_RENEWAL_EXCLUDE, tokenRenewalExclude);
             }
+            CredentialsProperties fsCredentialProperties = new CredentialsProperties(NAMENODE_FS, FS);
+            fsCredentialProperties.getProperties().put(FILESYSTEM_PATH, hdfsServers);
+            credPropertiesMap.put(NAMENODE_FS, fsCredentialProperties);
+        } else {
+            super.addNameNodeCredentials(actionConf, credPropertiesMap);
         }
     }
 }
