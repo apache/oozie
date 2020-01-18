@@ -1093,6 +1093,17 @@ in oozie-site.xml :
      </property>>
 ```
 
+We also have a prometheus compatible metrics endpoint `admin/prometheus`, where all the available metrics are exposed in prometheus
+format. Here is an example prometheus scrape config:
+
+```yaml
+scrape_configs:
+  - job_name: 'oozie'
+    metrics_path: '/oozie/v2/admin/prometheus'
+    static_configs:
+     - targets: ['oozie:11000']
+```
+
 <a name="HA"></a>
 ### High Availability (HA)
 

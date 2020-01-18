@@ -165,6 +165,8 @@ public interface RestConstants {
 
     String ADMIN_METRICS_RESOURCE = "metrics";
 
+    String ADMIN_PROMETHEUS_RESOURCE = "prometheus";
+
     String OOZIE_ERROR_CODE = "oozie-error-code";
 
     String OOZIE_ERROR_MESSAGE = "oozie-error-message";

@@ -186,6 +186,9 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
         else if (resource.equals(RestConstants.ADMIN_METRICS_RESOURCE)) {
             sendMetricsResponse(response);
         }
+        else if (resource.equals(RestConstants.ADMIN_PROMETHEUS_RESOURCE)) {
+            sendPrometheusResponse(response);
+        }
     }
 
     private String schedulePurgeCommand(HttpServletRequest request) throws XServletException {
@@ -475,4 +478,6 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     protected abstract Map<String, String> getOozieURLs() throws XServletException;
 
     protected abstract void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException;
+
+    protected abstract void sendPrometheusResponse(HttpServletResponse response) throws IOException, XServletException;
 }

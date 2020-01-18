@@ -101,4 +101,9 @@ public class V0AdminServlet extends BaseAdminServlet {
     protected void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
     }
+
+    @Override
+    protected void sendPrometheusResponse(HttpServletResponse response) throws IOException, XServletException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
 }

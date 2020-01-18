@@ -19,12 +19,15 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.JMSConnectionInfoBean;
@@ -113,6 +116,20 @@ public class V2AdminServlet extends V1AdminServlet {
             } finally {
                 response.getOutputStream().close();
             }
+        } else {
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "MetricsInstrumentationService is not running");
+        }
+    }
+
+    @Override
+    protected void sendPrometheusResponse(HttpServletResponse response) throws IOException, XServletException {
+        if (metricsInstrumentation != null) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType(TextFormat.CONTENT_TYPE_004);
+            Writer writer = response.getWriter();
+            TextFormat.write004(writer, CollectorRegistry.defaultRegistry.metricFamilySamples());
+            writer.flush();
         } else {
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "MetricsInstrumentationService is not running");

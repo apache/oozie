@@ -38,6 +38,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import info.ganglia.gmetric4j.gmetric.GMetric;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
 import org.apache.oozie.service.ConfigurationService;
 
 import java.io.IOException;
@@ -202,6 +204,7 @@ public class MetricsInstrumentation extends Instrumentation {
             jmxReporter  = JmxReporter.forRegistry(metricRegistry).build();
             jmxReporter.start();
         }
+        CollectorRegistry.defaultRegistry.register(new DropwizardExports(metricRegistry));
     }
 
     /**
@@ -229,6 +232,8 @@ public class MetricsInstrumentation extends Instrumentation {
         if (jmxReporter != null) {
             jmxReporter.stop();
         }
+
+        CollectorRegistry.defaultRegistry.clear();
     }
 
     /**

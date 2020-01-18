@@ -1569,6 +1569,18 @@
                 <version>${dropwizard.metrics.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_dropwizard</artifactId>
+                <version>0.8.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_common</artifactId>
+                <version>0.8.0</version>
+            </dependency>
+
             <!-- Draw runtime DAG -->
             <dependency>
                 <groupId>guru.nidi</groupId>

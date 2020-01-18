@@ -18,6 +18,7 @@
 
 package org.apache.oozie.servlet;
 
+import io.prometheus.client.exporter.common.TextFormat;
 import org.apache.commons.io.IOUtils;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
@@ -128,6 +129,21 @@ public class TestAdminServlet extends DagServletTestCase {
                 JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
                         StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.INSTR_COUNTERS));
+                return null;
+            }
+        });
+    }
+
+    public void testPrometheus() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_PROMETHEUS_RESOURCE, Collections.EMPTY_MAP);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(conn.getHeaderField("content-type"), TextFormat.CONTENT_TYPE_004);
+                String string = IOUtils.toString(conn.getInputStream(), StandardCharsets.UTF_8);
+                assertTrue("Prometheus metrics does not show up", string.contains("jobstatus_SUCCEEDED"));
                 return null;
             }
         });
