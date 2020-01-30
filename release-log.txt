@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3569 SSH Action should add checking success file (zuston via asalamon74)
 OOZIE-3305 Prometheus /metrics http endpoint for monitoring integration (qsbao via gezapeti)
 OOZIE-3575 Add credential support for cloud file systems (matijhs via gezapeti)
 OOZIE-3579 [docs] Fix typos in coordinator documentation (qsbao via asalamon74)

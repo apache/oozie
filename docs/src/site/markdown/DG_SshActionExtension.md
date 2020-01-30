@@ -32,6 +32,11 @@ Note: Ssh Action will fail if oozie fails to ssh connect to host for action stat
 The first retry will wait a configurable period of time ( 3 seconds by default) before check.
 The following retries will wait 2 times of previous wait time.
 
+Note: [OOZIE-3569](https://issues.apache.org/jira/browse/OOZIE-3569)  patch fixes the bug that
+SSH Action will be incorrectly determined to be successful when Oozie pid is killed externally.
+It's released in version 5.3.0.
+Please note that this is an incompatible change and may cause some SSH Action tasks to fail during updating.
+
 **Syntax:**
 
 

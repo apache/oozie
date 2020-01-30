@@ -27,19 +27,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.util.StringUtils;
-
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.util.BufferDrainer;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.PropertiesUtils;
@@ -48,6 +46,8 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Ssh action executor. <ul> <li>Execute the shell commands on the remote host</li> <li>Copies the base and wrapper
@@ -595,17 +595,26 @@ public class SshActionExecutor extends ActionExecutor {
             aStatus = Status.RUNNING;
         }
         else {
-            String outFile = getRemoteFileName(context, action, "error", false, true);
-            String checkErrorCmd = SSH_COMMAND_BASE + action.getTrackerUri() + " ls " + outFile;
-            int retVal = getReturnValue(checkErrorCmd);
-            if (retVal == 0) {
+            if (checkSSHActionFileExistence(context, action, "error")) {
                 aStatus = Status.ERROR;
             }
             else {
-                aStatus = Status.OK;
+                if (checkSSHActionFileExistence(context, action, "success")) {
+                    aStatus = Status.OK;
+                } else {
+                    aStatus = Status.ERROR;
+                }
             }
         }
         return aStatus;
+    }
+
+    private boolean checkSSHActionFileExistence(final Context context, final WorkflowAction action,
+            String fileExtension) throws ActionExecutorException {
+        String outFile = getRemoteFileName(context, action, fileExtension, false, true);
+        String checkCmd = SSH_COMMAND_BASE + action.getTrackerUri() + " ls " + outFile;
+        int retVal = getReturnValue(checkCmd);
+        return retVal == 0 ? true : false;
     }
 
     private long handleRetry(long sleepBeforeRetryMs, final int retries) {
