@@ -18,6 +18,18 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
@@ -32,19 +44,6 @@ import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 
 import static org.apache.oozie.action.hadoop.JavaActionExecutor.ACTION_SHARELIB_FOR;
 import static org.apache.oozie.action.hadoop.JavaActionExecutor.SHARELIB_EXCLUDE_SUFFIX;
@@ -96,6 +95,12 @@ public class TestJavaActionExecutorLibAddition extends ActionExecutorTestCase {
             "archive.tar",
             "rootArchive.tar",
     };
+
+    @Override
+    protected void beforeSetUp() throws Exception {
+        super.beforeSetUp();
+        setSystemProperty("oozie.test.hadoop.minicluster2", "true");
+    }
 
     @Override
     protected void setSystemProps() throws Exception {
@@ -303,10 +308,21 @@ public class TestJavaActionExecutorLibAddition extends ActionExecutorTestCase {
         return actionLibPath;
     }
 
+    private Path getActionLibPathWithFs2() throws Exception {
+        Path actionLibPath = new Path(getFs2TestCaseDir(), "actionlibs");
+        makeDirWithFs2(actionLibPath);
+        return actionLibPath;
+    }
+
     private List<Path> createTestActionLibPaths(Path... paths) throws Exception{
         final Path actionLibPath = new Path(getFsTestCaseDir(), "actionlibs");
         makeDirs(actionLibPath);
         createFiles(Arrays.asList(paths));
+        return Arrays.asList(paths);
+    }
+
+    private List<Path> createTestActionLibPathsWithFs2(Path... paths) throws Exception{
+        createFilesWithFs2(Arrays.asList(paths));
         return Arrays.asList(paths);
     }
 
@@ -317,6 +333,17 @@ public class TestJavaActionExecutorLibAddition extends ActionExecutorTestCase {
                 new Path(getActionLibPath(), "jar2.jar"));
 
         Context context = createContextUsingSharelib(getActionLibPath());
+        Configuration jobConf = createActionExecutorAndSetLibFilesArchives(context);
+        assertContainsJars(getDistributedCacheFilesStr(jobConf), expectedJars);
+    }
+
+    public void testAddingActionLibDirWhenActionJarsWithFs2() throws Exception {
+        Path baseActionLibPath = getActionLibPathWithFs2();
+        List<Path> expectedJars = createTestActionLibPathsWithFs2(
+                new Path(baseActionLibPath, "jar1.jar"),
+                new Path(baseActionLibPath, "jar2.jar"));
+
+        Context context = createContextUsingSharelib(baseActionLibPath);
         Configuration jobConf = createActionExecutorAndSetLibFilesArchives(context);
         assertContainsJars(getDistributedCacheFilesStr(jobConf), expectedJars);
     }

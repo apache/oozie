@@ -718,7 +718,7 @@ public class JavaActionExecutor extends ActionExecutor {
         if (files == null) return;
         for (FileStatus file : files) {
             if (!shareLibExcluder.shouldExclude(file.getPath().toUri())) {
-                addToCache(conf, appPath, file.getPath().toUri().getPath(), false);
+                addToCache(conf, appPath, file.getPath().toString(), false);
             }
         }
     }
@@ -734,7 +734,7 @@ public class JavaActionExecutor extends ActionExecutor {
                         Path actionLibsPath = new Path(actionLibsStr);
                         String user = conf.get("user.name");
                         FileSystem fs = Services.get().get(HadoopAccessorService.class).createFileSystem(user,
-                                appPath.toUri(), conf);
+                                actionLibsPath.toUri(), conf);
                         if (fs.exists(actionLibsPath)) {
                             addFilesToCacheIfNotExcluded(appPath, conf, fs.listStatus(actionLibsPath));
                         }

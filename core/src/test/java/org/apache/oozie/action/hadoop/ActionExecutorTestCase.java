@@ -18,6 +18,31 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -42,8 +67,8 @@ import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.ShareLibService;
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.test.XHCatTestCase;
@@ -57,32 +82,6 @@ import org.apache.oozie.workflow.WorkflowLib;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Collection;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileInputStream;
-
-import java.text.SimpleDateFormat;
 
 public abstract class ActionExecutorTestCase extends XHCatTestCase {
     protected static final int JOB_TIMEOUT = 100_000;
@@ -517,9 +516,21 @@ public abstract class ActionExecutorTestCase extends XHCatTestCase {
         }
     }
 
+    void createFilesWithFs2(Collection<Path> paths) throws Exception{
+        for(Path p : paths){
+            getFileSystem2().create(p);
+        }
+    }
+
     void makeDirs(Path... dirs) throws Exception{
         for(Path p : dirs){
             getFileSystem().mkdirs(p);
+        }
+    }
+
+    void makeDirWithFs2(Path... dirs) throws IOException {
+        for(Path p : dirs){
+            getFileSystem2().mkdirs(p);
         }
     }
 
