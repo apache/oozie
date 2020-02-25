@@ -124,7 +124,7 @@ public class SLACalculatorMemory implements SLACalculator {
                 try {
                     boolean isDone = SLAXCommandFactory.getSLAJobHistoryXCommand(jobId).call();
                     if (isDone) {
-                        LOG.debug("[{0}] job is finished and processed. Removing from history");
+                        LOG.debug("[{0}] job is finished and processed. Removing from history", jobId);
                         jobItr.remove();
                     }
                 }
