@@ -219,9 +219,10 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                 deleteList.add(actions.get(i));
                 LOG.info("Deleting Action[{0}] for re-run", actions.get(i).getId());
             }
-            else {
-                copyActionData(newWfInstance, oldWfInstance);
-            }
+        }
+
+        if (deleteList.size() < actions.size()) {
+            copyActionData(newWfInstance, oldWfInstance);
         }
 
         wfBean.setAppPath(conf.get(OozieClient.APP_PATH));
