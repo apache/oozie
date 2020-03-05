@@ -334,9 +334,6 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     }
 
     public synchronized void fail(String nodeName) throws WorkflowException {
-        if (status.isEndState()) {
-            throw new WorkflowException(ErrorCode.E0718);
-        }
         String failedNode = failNode(nodeName);
         if (failedNode != null) {
             log.warn(XLog.STD, "Workflow Failed. Failing node [{0}]", failedNode);
@@ -344,11 +341,20 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         else {
             //TODO failed attempting to fail the action. EXCEPTION
         }
-        List<String> killedNodes = killNodes();
-        if (killedNodes.size() > 1) {
-            log.warn(XLog.STD, "Workflow Failed, killing [{0}] nodes", killedNodes.size());
+
+        if (status.isEndState()) {
+            if (status == Status.FAILED) {
+                log.warn(XLog.STD, "An attempt was made to fail the workflow, which is already failed");
+            } else {
+                throw new WorkflowException(ErrorCode.E0718);
+            }
+        } else {
+            List<String> killedNodes = killNodes();
+            if (killedNodes.size() > 1) {
+                log.warn(XLog.STD, "Workflow Failed, killing [{0}] nodes", killedNodes.size());
+            }
+            status = Status.FAILED;
         }
-        status = Status.FAILED;
     }
 
     public synchronized void kill() throws WorkflowException {
