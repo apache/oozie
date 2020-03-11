@@ -26,6 +26,7 @@ import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -219,23 +220,50 @@ public class SparkMain extends LauncherMain {
     }
 
     /**
-     * Convert URIs into the default format which Spark expects
-     * Also filters out duplicate entries
-     * @param files
+     * Convert URIs into the default format which Spark expects.
+     * Filters out duplicate entries.
+     * @param uris
      * @return
      * @throws IOException
      * @throws URISyntaxException
      */
-    static Map<String, URI> fixFsDefaultUrisAndFilterDuplicates(final URI[] files) throws IOException, URISyntaxException {
-        final Map<String, URI> map= new LinkedHashMap<>();
-        if (files == null) {
+    static Map<String, URI> fixFsDefaultUrisAndFilterDuplicates(final URI[] uris)
+            throws IOException, URISyntaxException {
+        final Map<String, URI> map = new LinkedHashMap<>();
+        if (uris == null) {
             return map;
         }
         final FileSystem fs = FileSystem.get(new Configuration(true));
-        for (int i = 0; i < files.length; i++) {
-            final URI fileUri = files[i];
-            final Path p = new Path(fileUri);
-            map.put(p.getName(), HadoopUriFinder.getFixedUri(fs, fileUri));
+        for (URI uri : uris) {
+            final Path p = new Path(uri);
+            map.put(p.getName(), HadoopUriFinder.getFixedUri(fs, uri));
+        }
+        return map;
+    }
+
+    /**
+     * Convert URIs into the default format which Spark expects.
+     * Filters out duplicate entries and checks if the file was added earlier with --keytab option.
+     * @param uris
+     * @param elementNotToAdd
+     * @return
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    static Map<String, URI> fixFsDefaultUrisAndFilterDuplicates(final URI[] uris, String elementNotToAdd)
+            throws IOException, URISyntaxException {
+        final Map<String, URI> map = new LinkedHashMap<>();
+        if (uris == null) {
+            return map;
+        }
+        final FileSystem fs = FileSystem.get(new Configuration(true));
+        for (URI uri : uris) {
+            final Path p = new Path(uri);
+            URI fullFileUri = HadoopUriFinder.getFixedUri(fs, uri);
+            String symlinkInFile = fullFileUri.getFragment();
+            if (!Objects.equals(symlinkInFile, elementNotToAdd) && !p.getName().equals(elementNotToAdd)) {
+                map.put(p.getName(), fullFileUri);
+            }
         }
         return map;
     }

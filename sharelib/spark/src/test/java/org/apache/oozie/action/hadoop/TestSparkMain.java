@@ -25,13 +25,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.util.IOUtils;
@@ -147,5 +150,62 @@ public class TestSparkMain extends MainTestCase {
         List<File> filesToDelete = super.getFilesToDelete();
         filesToDelete.add(new File(SparkMain.HIVE_SITE_CONF));
         return filesToDelete;
+    }
+
+    public void testFixFsDefaultUrisAndFilterDuplicates() throws URISyntaxException, IOException {
+        URI[] uris = new URI[2];
+        URI uri1 = new URI("/foo/bar.keytab#foo.bar");
+        URI uri2 = new URI("/foo/bar.keytab#bar.foo");
+
+        uris[0] = uri1;
+        uris[1] = uri2;
+
+        Map<String, URI> result1 = SparkMain.fixFsDefaultUrisAndFilterDuplicates(uris);
+        assertEquals("Duplication elimination was not successful. " +
+                "Reason: Keytab added twice, but the result map contained more or less.",
+                1, result1.size());
+    }
+
+    public void testFixFsDefaultUrisAndFilterDuplicatesNoDuplication() throws URISyntaxException, IOException {
+        URI[] uris = new URI[2];
+        URI uri1 = new URI("/bar/foo.keytab#foo.bar");
+        URI uri2 = new URI("/foo/bar.keytab#bar.foo");
+
+        uris[0] = uri1;
+        uris[1] = uri2;
+
+        Map<String, URI> result = SparkMain.fixFsDefaultUrisAndFilterDuplicates(uris);
+        assertEquals("Duplication elimination was not successful. " +
+                "Reason: Two different keytabs were added, but the result map contained more or less.",
+                2,  result.size());
+    }
+
+    public void testFixFsDefaultUrisAndFilterDuplicatesWithKeytabSymNotToAdd() throws URISyntaxException, IOException {
+        URI[] uris = new URI[2];
+        URI uri1 = new URI("/bar/foo.keytab#foo.bar");
+        URI uri2 = new URI("/foo/bar.keytab#bar.foo");
+
+        uris[0] = uri1;
+        uris[1] = uri2;
+
+        Map<String, URI> result = SparkMain.fixFsDefaultUrisAndFilterDuplicates(uris, "foo.bar");
+        assertEquals("Duplication elimination was not successful. " +
+                "Reason: foo.bar exists in the URI array, but the deletion did not happen.",
+                1, result.size());
+    }
+
+    public void testFixFsDefaultUrisAndFilterDuplicatesWithKeytabNameNotToAdd() throws URISyntaxException, IOException {
+        URI[] uris = new URI[2];
+
+        URI uri1 = new URI("/bar/foo.keytab#foo.bar");
+        URI uri2 = new URI("/foo/bar.keytab#bar.foo");
+
+        uris[0] = uri1;
+        uris[1] = uri2;
+
+        Map<String, URI> result = SparkMain.fixFsDefaultUrisAndFilterDuplicates(uris, "foo.keytab");
+        assertEquals("Duplication elimination was not successful. " +
+                "Reason: foo.keytab exists in the URI array, but the deletion did not happen.",
+                1, result.size());
     }
 }
