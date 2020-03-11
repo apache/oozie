@@ -415,42 +415,9 @@ public class LauncherAM {
             System.out.println();
             actionMainExecutedProperly = true;
         } catch (InvocationTargetException ex) {
-            ex.printStackTrace(System.out);
-            // Get what actually caused the exception
-            Throwable cause = ex.getCause();
-            // If we got a JavaMainException from JavaMain, then we need to unwrap it
-            if (JavaMain.JavaMainException.class.isInstance(cause)) {
-                cause = cause.getCause();
-            }
-            if (LauncherMainException.class.isInstance(cause)) {
-                int errorCode = ((LauncherMainException) ex.getCause()).getErrorCode();
-                String mainClass = launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
-                eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" +
-                        errorCode + "]");
-                eHolder.setErrorCode(errorCode);
-            } else if (SecurityException.class.isInstance(cause)) {
-                if (launcherSecurityManager.getExitInvoked()) {
-                    final int exitCode = launcherSecurityManager.getExitCode();
-                    System.out.println("Intercepting System.exit(" + exitCode + ")");
-                    // if 0 main() method finished successfully
-                    // ignoring
-                    if (exitCode != 0) {
-                        eHolder.setErrorCode(exitCode);
-                        String mainClass = launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
-                        eHolder.setErrorMessage("Main Class [" + mainClass + "],"
-                                + " exit code [" + eHolder.getErrorCode() + "]");
-                    } else {
-                        actionMainExecutedProperly = true;
-                    }
-                } else {
-                    // just SecurityException, no exit was invoked
-                    eHolder.setErrorCode(0);
-                    eHolder.setErrorCause(cause);
-                    eHolder.setErrorMessage(cause.getMessage());
-                }
-            } else {
-                eHolder.setErrorMessage(cause.getMessage());
-                eHolder.setErrorCause(cause);
+            actionMainExecutedProperly = handleInvocationError(eHolder, ex);
+            if(!eHolder.isErrorIgnorable()){
+                ex.printStackTrace(System.out);
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -459,6 +426,46 @@ public class LauncherAM {
         } finally {
             // Disable LauncherSecurityManager
             launcherSecurityManager.disable();
+        }
+        return actionMainExecutedProperly;
+    }
+
+    private boolean handleInvocationError(ErrorHolder eHolder, InvocationTargetException ex) {
+        boolean actionMainExecutedProperly = false;
+        // Get what actually caused the exception
+        Throwable cause = ex.getCause();
+        // If we got a JavaMainException from JavaMain, then we need to unwrap it
+        if (cause instanceof JavaMain.JavaMainException) {
+            cause = cause.getCause();
+        }
+        if (cause instanceof LauncherMainException) {
+            int errorCode = ((LauncherMainException) ex.getCause()).getErrorCode();
+            String mainClass = launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
+            eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" + errorCode + "]");
+            eHolder.setErrorCode(errorCode);
+        } else if (cause instanceof SecurityException) {
+            if (launcherSecurityManager.getExitInvoked()) {
+                final int exitCode = launcherSecurityManager.getExitCode();
+                System.out.println("Intercepting System.exit(" + exitCode + ")\n");
+                // if 0 main() method finished successfully
+                // ignoring
+                if (exitCode != 0) {
+                    eHolder.setErrorCode(exitCode);
+                    String mainClass = launcherConf.get(CONF_OOZIE_ACTION_MAIN_CLASS);
+                    eHolder.setErrorMessage("Main Class [" + mainClass + "], exit code [" + eHolder.getErrorCode() + "]");
+                } else {
+                    eHolder.markErrorIgnorable();
+                    actionMainExecutedProperly = true;
+                }
+            } else {
+                // just SecurityException, no exit was invoked
+                eHolder.setErrorCode(0);
+                eHolder.setErrorCause(cause);
+                eHolder.setErrorMessage(cause.getMessage());
+            }
+        } else {
+            eHolder.setErrorMessage(cause.getMessage());
+            eHolder.setErrorCause(cause);
         }
         return actionMainExecutedProperly;
     }

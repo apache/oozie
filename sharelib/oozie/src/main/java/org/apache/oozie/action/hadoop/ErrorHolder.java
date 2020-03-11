@@ -22,6 +22,7 @@ public class ErrorHolder {
     private Throwable errorCause = null;
     private String errorMessage = null;
     private boolean populated = false;
+    private boolean errorIgnorable = false;
 
     public int getErrorCode() {
         return errorCode;
@@ -48,6 +49,14 @@ public class ErrorHolder {
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
         this.populated = true;
+    }
+
+    public void markErrorIgnorable() {
+        errorIgnorable = true;
+    }
+
+    public boolean isErrorIgnorable() {
+        return errorIgnorable;
     }
 
     public boolean isPopulated() {

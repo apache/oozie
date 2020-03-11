@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3592 Do not print misleading SecurityException for successful jobs (matijhs via asalamon74)
 OOZIE-3584 Fork-join action issue when action param cannot be resolved (jmakai via asalamon74)
 OOZIE-3589 Avoid calling copyActionData method multiple times in ReRunXCommand (zuston via asalamon74)
 OOZIE-3590 Fix missing log expression parameter in SLACalculatorMemory (zuston via asalamon74)

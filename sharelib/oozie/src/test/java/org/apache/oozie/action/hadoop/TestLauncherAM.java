@@ -55,6 +55,8 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Properties;
@@ -66,11 +68,13 @@ import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
 import org.apache.oozie.action.hadoop.LauncherAM.OozieActionResult;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.junit.Assert;
 import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -133,12 +137,27 @@ public class TestLauncherAM {
 
     private ExpectedFailureDetails failureDetails = new ExpectedFailureDetails();
 
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private final PrintStream originalOut = System.out;
+
     @Before
     public void setup() throws Exception {
         configureMocksForHappyPath();
         launcherJobConfig.set(LauncherAMUtils.OOZIE_ACTION_RECOVERY_ID, "1");
         launcherJobConfig.set(LauncherAM.OOZIE_SUBMITTER_USER, System.getProperty("user.name"));
         instantiateLauncher();
+    }
+
+    /**
+     * Setup method to assert for stack trace printed to stdout
+     */
+    public void setupStreams() {
+        System.setOut(new PrintStream(outContent));
+    }
+
+    @After
+    public void restoreStreams() {
+        System.setOut(originalOut);
     }
 
     @Test
@@ -281,18 +300,21 @@ public class TestLauncherAM {
     }
 
     @Test
-    public void testActionThrowsSecurityExceptionWithExitCode0() throws Exception {
+    public void testActionThrowsSecurityExceptionWithExitCode0AndDoesNotPrintStackTrace() throws Exception {
+        setupStreams();
         setupArgsForMainClass(SECURITY_EXCEPTION);
         given(launcherSecurityManagerMock.getExitInvoked()).willReturn(true);
         given(launcherSecurityManagerMock.getExitCode()).willReturn(0);
 
         executeLauncher();
 
+        Assert.assertFalse(outContent.toString().contains("java.lang.SecurityException"));
         assertSuccessfulExecution(OozieActionResult.SUCCEEDED);
     }
 
     @Test
-    public void testActionThrowsSecurityExceptionWithExitCode1() throws Exception {
+    public void testActionThrowsSecurityExceptionWithExitCode1AndPrintsStackTrace() throws Exception {
+        setupStreams();
         setupArgsForMainClass(SECURITY_EXCEPTION);
         given(launcherSecurityManagerMock.getExitInvoked()).willReturn(true);
         given(launcherSecurityManagerMock.getExitCode()).willReturn(1);
@@ -304,6 +326,7 @@ public class TestLauncherAM {
             .expectedErrorReason("exit code ["+ EXIT_CODE_1 + "]")
             .withoutStackTrace();
 
+        Assert.assertTrue(outContent.toString().contains("java.lang.SecurityException"));
         assertFailedExecution();
     }
 
