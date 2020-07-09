@@ -1,5 +1,6 @@
 -- Oozie 5.2.1 release (unreleased)
 
+OOZIE-3601 Upgrade quartz to 2.3.2 (dengliming via matijhs)
 OOZIE-3549 Add back support for truststore passwords (matijhs via asalamon74)
 
 -- Oozie 5.2.0 release
