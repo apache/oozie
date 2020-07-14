@@ -435,7 +435,7 @@ public class OozieDBCLI {
             ddlQueries.add("ALTER TABLE WF_ACTIONS MODIFY (execution_path VARCHAR2(1024))");
             // change wf_action.error_message from clob to varchar2(500)
             ddlQueries.add("ALTER TABLE WF_ACTIONS ADD (error_message_temp VARCHAR2(500))");
-            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = dbms_lob.substr(error_message,500,1)");
+            ddlQueries.add("UPDATE WF_ACTIONS SET error_message_temp = dbms_lob.substr(error_message,1,500)");
             ddlQueries.add("ALTER TABLE WF_ACTIONS DROP COLUMN error_message");
             ddlQueries.add("ALTER TABLE WF_ACTIONS RENAME COLUMN error_message_temp TO error_message");
             // change coord_jobs.frequency from int to varchar(255)
