@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3608 Coordinator emits wrong WARN about TimeZones (larsfrancke via gezapeti)
 OOZIE-3601 Upgrade quartz to 2.3.2 (dengliming via matijhs)
 OOZIE-3586 Oozie spark actions using --keytab fail due to duplicate dist. cache (jmakai via asalamon74)
 OOZIE-3592 Do not print misleading SecurityException for successful jobs (matijhs via asalamon74)

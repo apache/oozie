@@ -143,8 +143,8 @@ public class DateUtils {
         TimeZone tz = TimeZone.getTimeZone(tzId);
 
         // Check whether tzID can handle DST shifts
-        if (!isThreeLetterTZName(tzId)) {
-            LOG.warn("GMT, UTC or Region/City Timezone formats are preferred instead of " + tzId);
+        if (isThreeLetterTZName(tzId)) {
+            LOG.warn("GMT, UTC or Region/City Timezone formats are preferred instead of [" + tzId + "]");
         }
 
         // If these are not equal, it means that the tzId is not valid (invalid tzId's return GMT)
