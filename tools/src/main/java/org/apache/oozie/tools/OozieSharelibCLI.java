@@ -388,7 +388,7 @@ public class OozieSharelibCLI {
     @VisibleForTesting
     static final class CopyTaskCallable implements Callable<CopyTaskConfiguration> {
 
-        private final static short REPLICATION_FACTOR = 3;
+        private final short REPLICATION_FACTOR;
         private final FileSystem fileSystem;
         private final File file;
         private final Path destinationPath;
@@ -409,6 +409,8 @@ public class OozieSharelibCLI {
             this.destinationPath = copyTask.dstPath;
             this.failedCopyTasks = failedCopyTasks;
             this.fileSystem = copyTask.fs;
+            this.REPLICATION_FACTOR = (short) this.fileSystem.getConf().getInt(
+                    DFSConfigKeys.DFS_REPLICATION_KEY, DFSConfigKeys.DFS_REPLICATION_DEFAULT);
             this.blockSize = blockSize;
             this.targetName = trgName;
         }
