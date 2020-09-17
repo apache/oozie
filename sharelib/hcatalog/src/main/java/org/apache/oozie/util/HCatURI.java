@@ -37,13 +37,13 @@ public class HCatURI {
     private URI uri;
     private String db;
     private String table;
-    private Map<String, String> partitions;
+    private Map<String, String> partitions = new LinkedHashMap<String, String>();
 
     /**
      * Constructor using default configuration
      *
      * @param s HCat URI String
-     * @throws URISyntaxException
+     * @throws URISyntaxException if the parameter is not well formatted
      */
     public HCatURI(String s) throws URISyntaxException {
         this(new URI(s));
@@ -55,6 +55,7 @@ public class HCatURI {
 
     private void parse(URI uri) throws URISyntaxException {
 
+        uri = HCatURIParser.parseURI(uri);
         this.uri = uri;
 
         if (uri.getAuthority() == null) {
@@ -63,13 +64,12 @@ public class HCatURI {
 
         String[] paths = uri.getPath().split(PATH_SEPARATOR);
 
-        if (paths.length != 4) {
+        if (paths.length < 3 || paths.length > 4) {
             throw new URISyntaxException(uri.toString(), "URI path is not in expected format");
         }
 
         db = paths[1];
         table = paths[2];
-        String partRaw = paths[3];
 
         if (db == null || db.length() == 0) {
             throw new URISyntaxException(uri.toString(), "DB name is missing");
@@ -77,22 +77,25 @@ public class HCatURI {
         if (table == null || table.length() == 0) {
             throw new URISyntaxException(uri.toString(), "Table name is missing");
         }
-        if (partRaw == null || partRaw.length() == 0) {
-            throw new URISyntaxException(uri.toString(), "Partition details are missing");
-        }
 
-        partitions = new LinkedHashMap<String, String>();
-        String[] parts = partRaw.split(PARTITION_SEPARATOR);
-        for (String part : parts) {
-            if (part == null || part.length() == 0) {
-                continue;
+        if (paths.length == 4) {
+            String partRaw = paths[3];
+            if (partRaw == null || partRaw.length() == 0) {
+                throw new URISyntaxException(uri.toString(), "Partition details are missing");
             }
-            String[] keyVal = part.split(PARTITION_KEYVAL_SEPARATOR);
-            if (keyVal.length != 2) {
-                throw new URISyntaxException(uri.toString(), "Partition key value pair is not specified properly in ("
-                        + part + ")");
+
+            String[] parts = partRaw.split(PARTITION_SEPARATOR);
+            for (String part : parts) {
+                if (part == null || part.length() == 0) {
+                    continue;
+                }
+                String[] keyVal = part.split(PARTITION_KEYVAL_SEPARATOR);
+                if (keyVal.length != 2) {
+                    throw new URISyntaxException(uri.toString(), "Partition key value pair is not specified properly in ("
+                            + part + ")");
+                }
+                partitions.put(keyVal[0], keyVal[1]);
             }
-            partitions.put(keyVal[0], keyVal[1]);
         }
     }
 
@@ -102,6 +105,26 @@ public class HCatURI {
 
     public String toURIString() {
         return uri.toString();
+    }
+
+    /**
+     * Return server end points with given scheme
+     * @param scheme uri scheme
+     * @return server end point with given scheme
+     */
+    public String getServerEndPointWithScheme(String scheme) {
+        String authority = uri.getAuthority();
+        String[] authorities = authority.split(",");
+        StringBuilder builder = new StringBuilder();
+        for (String auth : authorities) {
+            if (builder.length() != 0) {
+                builder.append(",");
+            }
+            builder.append(scheme);
+            builder.append("://");
+            builder.append(auth);
+        }
+        return builder.toString();
     }
 
     /**
@@ -171,11 +194,12 @@ public class HCatURI {
     /**
      * static method to create HCatalog URI String
      *
-     * @param server
-     * @param db
-     * @param table
+     * @param scheme the scheme to use
+     * @param server  the server address
+     * @param db the database name
+     * @param table the table name
      * @param partitions Partition Map
-     * @return
+     * @return the constructed HCat URI
      */
     public static String getHCatURI(String scheme, String server, String db, String table, Map<String, String> partitions) {
 
@@ -266,7 +290,7 @@ public class HCatURI {
      * In case of type hive-export, it can be used to create entire partition value string
      * that can be used in Hive query for partition export/import.
      *
-     * type hive-export
+     * @param type must be "hive-export"
      * @return partition value string
      */
     public String toPartitionValueString(String type) {

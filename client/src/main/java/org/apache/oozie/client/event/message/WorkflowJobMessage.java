@@ -20,11 +20,11 @@ package org.apache.oozie.client.event.message;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * Class holding attributes related to a workflow job message
@@ -72,7 +72,7 @@ public class WorkflowJobMessage extends JobMessage {
 
     /**
      * Set the workflow job status
-     * @param status
+     * @param status the status
      */
     public void setStatus(WorkflowJob.Status status) {
         this.status = status;
@@ -88,7 +88,7 @@ public class WorkflowJobMessage extends JobMessage {
 
     /**
      * Set the workflow error code
-     * @param errorCode
+     * @param errorCode the error code
      */
     public void setErrorCode(String errorCode) {
         this.errorCode = errorCode;
@@ -104,7 +104,7 @@ public class WorkflowJobMessage extends JobMessage {
 
     /**
      * Set the workflow error message
-     * @param errorMessage
+     * @param errorMessage the error message
      */
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;

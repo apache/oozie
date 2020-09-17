@@ -60,7 +60,7 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
     /**
      * Constructor for loading a coordinator job information
      * @param id coord jobId
-     * @param filterMap
+     * @param filterMap filters
      * @param offset starting index in the list of actions belonging to the job
      * @param length number of actions to be returned
      * @param desc boolean for whether the actions returned are in descending order
@@ -88,39 +88,24 @@ public class CoordJobXCommand extends CoordinatorXCommand<CoordinatorJobBean> {
         this.getActionInfo = getActionInfo;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.id;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected CoordinatorJobBean execute() throws CommandException {
         try {

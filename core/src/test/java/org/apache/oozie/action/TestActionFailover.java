@@ -20,6 +20,7 @@ package org.apache.oozie.action;
 
 
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.io.Reader;
 import java.io.Writer;
@@ -61,7 +62,7 @@ public class TestActionFailover extends XFsTestCase {
     public void testFsFailover() throws Exception {
         Path wf = new Path(getFsTestCaseDir(), "workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("failover-fs-wf.xml", -1);
-        Writer writer = new OutputStreamWriter(getFileSystem().create(wf));
+        Writer writer = new OutputStreamWriter(getFileSystem().create(wf), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final OozieClient wfClient = LocalOozie.getClient();

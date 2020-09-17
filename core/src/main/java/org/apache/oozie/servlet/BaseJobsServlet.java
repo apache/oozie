@@ -18,26 +18,33 @@
 
 package org.apache.oozie.servlet;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.AuthorizationException;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.JobsFilterUtils;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.json.simple.JSONObject;
 
 public abstract class BaseJobsServlet extends JsonRestServlet {
+    private static final XLog LOG = XLog.getLog(BaseJobsServlet.class);
 
     private static final JsonRestServlet.ResourceInfo RESOURCES_INFO[] = new JsonRestServlet.ResourceInfo[1];
 
@@ -81,8 +88,9 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
          */
         validateContentType(request, RestConstants.XML_CONTENT_TYPE);
 
-        request.setAttribute(AUDIT_OPERATION, request
-                .getParameter(RestConstants.ACTION_PARAM));
+        String action = request.getParameter(RestConstants.ACTION_PARAM);
+        request.setAttribute(AUDIT_OPERATION,
+                (action != null) ? action : RestConstants.JOB_ACTION_SUBMIT);
 
         XConfiguration conf = new XConfiguration(request.getInputStream());
 
@@ -91,18 +99,51 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
         conf = conf.trim();
         conf = conf.resolve();
 
-        validateJobConfiguration(conf);
         String requestUser = getUser(request);
         if (!requestUser.equals(UNDEF)) {
             conf.set(OozieClient.USER_NAME, requestUser);
         }
+
+        final String fsUser = request.getParameter(RestConstants.USER_PARAM) == null
+                ? conf.get(OozieClient.USER_NAME)
+                : request.getParameter(RestConstants.USER_PARAM);
+
+        checkAndWriteApplicationXMLToHDFS(fsUser, ensureJobApplicationPath(conf));
+
         BaseJobServlet.checkAuthorizationForApp(conf);
+
         JobUtils.normalizeAppPath(conf.get(OozieClient.USER_NAME), conf.get(OozieClient.GROUP_NAME), conf);
 
         JSONObject json = submitJob(request, conf);
         startCron();
         sendJsonResponse(response, HttpServletResponse.SC_CREATED, json);
     }
+
+    private XConfiguration ensureJobApplicationPath(final XConfiguration configuration) {
+        if (!Strings.isNullOrEmpty(configuration.get(XOozieClient.IS_PROXY_SUBMISSION))
+                && Boolean.valueOf(configuration.get(XOozieClient.IS_PROXY_SUBMISSION))) {
+            LOG.debug("Proxy submission in progress, no need to set application path.");
+            return configuration;
+        }
+
+        if (Strings.isNullOrEmpty(configuration.get(OozieClient.APP_PATH))
+                && Strings.isNullOrEmpty(configuration.get(OozieClient.COORDINATOR_APP_PATH))
+                && Strings.isNullOrEmpty(configuration.get(OozieClient.BUNDLE_APP_PATH))) {
+            final String generatedJobApplicationPath = ConfigurationService.get("oozie.fluent-job-api.generated.path")
+                    + File.separator + "gen_app_" + new Date().getTime();
+            LOG.debug("Parameters [{0}], [{1}], and [{2}] were all missing, setting to generated path [{3}]",
+                    OozieClient.APP_PATH,
+                    OozieClient.COORDINATOR_APP_PATH,
+                    OozieClient.BUNDLE_APP_PATH,
+                    generatedJobApplicationPath);
+            configuration.set(OozieClient.APP_PATH, generatedJobApplicationPath);
+        }
+
+        return configuration;
+    }
+
+    protected abstract void checkAndWriteApplicationXMLToHDFS(final String requestUser, final Configuration conf)
+            throws XServletException;
 
     /**
      * Return information about jobs.
@@ -181,11 +222,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to kill jobs based ona filter param. The jobs could be workflow, coordinator or bundle jobs
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JSONObject of all jobs being killed
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -193,11 +234,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to suspend jobs based ona filter param. The jobs could be workflow, coordinator or bundle jobs
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JSONObject of all jobs being suspended
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -205,11 +246,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to resume jobs based ona filter param. The jobs could be workflow, coordinator or bundle jobs
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JSONObject of all jobs being resumed
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -217,11 +258,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
      * abstract method to submit a job, either workflow or coordinator in the case of workflow job, there is an optional
      * flag in request to indicate if want this job to be started immediately or not
      *
-     * @param request
-     * @param conf
+     * @param request the request
+     * @param conf the job configuration
      * @return JSONObject of job id
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject submitJob(HttpServletRequest request, Configuration conf)
     throws XServletException, IOException;
@@ -229,11 +270,11 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to get a job from external ID
      *
-     * @param request
-     * @param externalId
+     * @param request the request
+     * @param externalId the external id you you want the job id from
      * @return JSONObject for the requested job
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject getJobIdForExternalId(HttpServletRequest request,
             String externalId) throws XServletException, IOException;
@@ -241,18 +282,12 @@ public abstract class BaseJobsServlet extends JsonRestServlet {
     /**
      * abstract method to get a list of workflow jobs
      *
-     * @param request
+     * @param request the request
      * @return JSONObject of the requested jobs
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException depends on implementation
+     * @throws IOException depends on implementation
      */
     abstract JSONObject getJobs(HttpServletRequest request)
     throws XServletException, IOException;
 
-    static void validateJobConfiguration(Configuration conf) throws XServletException {
-        if (conf.get(OozieClient.USER_NAME) == null) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0401,
-                    OozieClient.USER_NAME);
-        }
-    }
 }

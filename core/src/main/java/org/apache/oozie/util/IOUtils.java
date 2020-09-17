@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.jar.JarOutputStream;
@@ -45,7 +47,7 @@ public abstract class IOUtils {
      * @throws IOException thrown if the directory could not be deleted.
      */
     public static void delete(File file) throws IOException {
-        ParamChecker.notNull(file, "file");
+        Objects.requireNonNull(file, "file cannot be null");
         if (file.getAbsolutePath().length() < 5) {
             throw new RuntimeException(XLog.format("Path[{0}] is too short, not deleting", file.getAbsolutePath()));
         }
@@ -73,8 +75,8 @@ public abstract class IOUtils {
      * @throws IOException thrown if the resource could not be read.
      */
     public static String getReaderAsString(Reader reader, int maxLen) throws IOException {
-        ParamChecker.notNull(reader, "reader");
-        StringBuffer sb = new StringBuffer();
+        Objects.requireNonNull(reader, "reader cannot be null");
+        StringBuilder sb = new StringBuilder();
         char[] buffer = new char[2048];
         int read;
         int count = 0;
@@ -116,7 +118,7 @@ public abstract class IOUtils {
      * @throws IOException thrown if the resource could not be read.
      */
     public static Reader getResourceAsReader(String path, int maxLen) throws IOException {
-        return new InputStreamReader(getResourceAsStream(path, maxLen));
+        return new InputStreamReader(getResourceAsStream(path, maxLen), StandardCharsets.UTF_8);
     }
 
     /**
@@ -133,7 +135,7 @@ public abstract class IOUtils {
         if (is == null) {
             throw new IllegalArgumentException(XLog.format("resource [{0}] not found", path));
         }
-        Reader reader = new InputStreamReader(is);
+        Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
         return getReaderAsString(reader, maxLen);
     }
 
@@ -145,8 +147,8 @@ public abstract class IOUtils {
      * @throws IOException thrown if the copy failed.
      */
     public static void copyStream(InputStream is, OutputStream os) throws IOException {
-        ParamChecker.notNull(is, "is");
-        ParamChecker.notNull(os, "os");
+        Objects.requireNonNull(is, "is cannot be null");
+        Objects.requireNonNull(os, "os cannot be null");
         byte[] buffer = new byte[4096];
         int read;
         while ((read = is.read(buffer)) > -1) {
@@ -164,8 +166,8 @@ public abstract class IOUtils {
      * @throws IOException thrown if the copy failed.
      */
     public static void copyCharStream(Reader reader, Writer writer) throws IOException {
-        ParamChecker.notNull(reader, "reader");
-        ParamChecker.notNull(writer, "writer");
+        Objects.requireNonNull(reader, "reader cannot be null");
+        Objects.requireNonNull(writer, "writer cannot be null");
         char[] buffer = new char[4096];
         int read;
         while ((read = reader.read(buffer)) > -1) {
@@ -190,31 +192,34 @@ public abstract class IOUtils {
 
     private static void zipDir(File dir, String relativePath, ZipOutputStream zos, boolean start) throws IOException {
         String[] dirList = dir.list();
-        for (String aDirList : dirList) {
-            File f = new File(dir, aDirList);
-            if (!f.isHidden()) {
-                if (f.isDirectory()) {
-                    if (!start) {
-                        ZipEntry dirEntry = new ZipEntry(relativePath + f.getName() + "/");
-                        zos.putNextEntry(dirEntry);
+
+        if (dirList != null) {
+            for (String aDirList : dirList) {
+                File f = new File(dir, aDirList);
+                if (!f.isHidden()) {
+                    if (f.isDirectory()) {
+                        if (!start) {
+                            ZipEntry dirEntry = new ZipEntry(relativePath + f.getName() + "/");
+                            zos.putNextEntry(dirEntry);
+                            zos.closeEntry();
+                        }
+                        String filePath = f.getPath();
+                        File file = new File(filePath);
+                        zipDir(file, relativePath + f.getName() + "/", zos, false);
+                    }
+                    else {
+                        ZipEntry anEntry = new ZipEntry(relativePath + f.getName());
+                        zos.putNextEntry(anEntry);
+                        InputStream is = new FileInputStream(f);
+                        byte[] arr = new byte[4096];
+                        int read = is.read(arr);
+                        while (read > -1) {
+                            zos.write(arr, 0, read);
+                            read = is.read(arr);
+                        }
+                        is.close();
                         zos.closeEntry();
                     }
-                    String filePath = f.getPath();
-                    File file = new File(filePath);
-                    zipDir(file, relativePath + f.getName() + "/", zos, false);
-                }
-                else {
-                    ZipEntry anEntry = new ZipEntry(relativePath + f.getName());
-                    zos.putNextEntry(anEntry);
-                    InputStream is = new FileInputStream(f);
-                    byte[] arr = new byte[4096];
-                    int read = is.read(arr);
-                    while (read > -1) {
-                        zos.write(arr, 0, read);
-                        read = is.read(arr);
-                    }
-                    is.close();
-                    zos.closeEntry();
                 }
             }
         }

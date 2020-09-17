@@ -56,9 +56,9 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
     /**
      * This JPA Executor gets the workflows info for the range.
      *
-     * @param filter
-     * @param start
-     * @param len
+     * @param filter filter
+     * @param start start element of range
+     * @param len length of range
      */
     public WorkflowsJobGetJPAExecutor(Map<String, List<String>> filter, int start, int len) {
         this.filter = filter;
@@ -66,9 +66,6 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         this.len = len;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public WorkflowsInfo execute(EntityManager em) throws JPAExecutorException {
@@ -330,9 +327,6 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
         return new WorkflowsInfo(wfBeansList, start, len, realLen);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowsJobGetJPAExecutor";
@@ -348,21 +342,21 @@ public class WorkflowsJobGetJPAExecutor implements JPAExecutor<WorkflowsInfo> {
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addDays(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), offset);
                     break;
                 case 'h':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addHours(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addHours(new Date(), offset);
                     break;
                 case 'm':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addMinutes(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addMinutes(new Date(), offset);
                     break;
                 case 'Z':
                     createdTime = DateUtils.parseDateUTC(time);

@@ -89,16 +89,12 @@ public class TestXLogService extends XTestCase {
 
     public void testLog4jReload() throws Exception {
         File log4jFile = new File(getTestCaseConfDir(), XLogService.DEFAULT_LOG4J_PROPERTIES);
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        InputStream is = cl.getResourceAsStream("test-oozie-log4j.properties");
-        IOUtils.copyStream(is, new FileOutputStream(log4jFile));
+        copyResourceToFile("test-oozie-log4j.properties", log4jFile);
         setSystemProperty(XLogService.LOG4J_RELOAD, "1");
         XLogService ls = new XLogService();
         ls.init(null);
-        assertTrue(LogFactory.getLog("a").isTraceEnabled());
-        sleep(1 * 1000);
-        is = cl.getResourceAsStream("test-custom-log4j.properties");
-        IOUtils.copyStream(is, new FileOutputStream(log4jFile));
+        assertTrue("Trace should be enabled", LogFactory.getLog("a").isTraceEnabled());
+        writeToFileTillLastModifiedChanges("test-custom-log4j.properties", log4jFile);
         float originalRatio = XTestCase.WAITFOR_RATIO;
         try {
             XTestCase.WAITFOR_RATIO = 1;
@@ -108,12 +104,31 @@ public class TestXLogService extends XTestCase {
                     return !LogFactory.getLog("a").isTraceEnabled();
                 }
             });
-            assertFalse(LogFactory.getLog("a").isTraceEnabled());
+            assertFalse("Trace should not be enabled", LogFactory.getLog("a").isTraceEnabled());
         }
         finally {
             XTestCase.WAITFOR_RATIO = originalRatio;
         }
         ls.destroy();
+    }
+
+    private void copyResourceToFile(String resourceName, File file) throws Exception {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        try (InputStream is = cl.getResourceAsStream(resourceName)) {
+            IOUtils.copyStream(is, new FileOutputStream(file));
+        }
+    }
+
+    private void writeToFileTillLastModifiedChanges(String resourceName, File file) throws Exception {
+        long originalLastModifiedTime = file.lastModified();
+        long lastModifiedTime = file.lastModified();
+        int fileWriteNumber = 1;
+        while (lastModifiedTime <= originalLastModifiedTime && fileWriteNumber < 30) {
+            sleep(100);
+            copyResourceToFile(resourceName, file);
+            lastModifiedTime = file.lastModified();
+            ++fileWriteNumber;
+        }
     }
 
     public void testInfoParameters() throws Exception {

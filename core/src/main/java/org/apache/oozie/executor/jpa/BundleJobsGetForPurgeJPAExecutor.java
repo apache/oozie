@@ -46,17 +46,11 @@ public class BundleJobsGetForPurgeJPAExecutor implements JPAExecutor<List<String
         this.limit = limit;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobsGetForPurgeJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<String> execute(EntityManager em) throws JPAExecutorException {

@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the CoordinatorAction into a Bean and return it.
@@ -35,21 +35,14 @@ public class CoordActionGetJPAExecutor implements JPAExecutor<CoordinatorActionB
     private String coordActionId = null;
 
     public CoordActionGetJPAExecutor(String coordActionId) {
-        ParamChecker.notNull(coordActionId, "coordActionId");
-        this.coordActionId = coordActionId;
+        this.coordActionId = Objects.requireNonNull(coordActionId, "coordActionId cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {

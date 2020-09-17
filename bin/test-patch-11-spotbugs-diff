@@ -1,0 +1,386 @@
+#!/usr/bin/env bash
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+if [ "${TESTPATCHDEBUG}" == "true" ] ; then
+  set -x
+fi
+
+BASEDIR=$(pwd)
+TASKNAME="SPOTBUGS_DIFF"
+OP=""
+TEMPDIR=${BASEDIR}/tmp
+REPORTDIR=""
+SUMMARYFILE=""
+SUMMARYFILE_FULL=""
+STDOUT="/dev/null"
+MVNPASSTHRU=""
+FINDBUGS_JAR=findbugs-diff-0.1.0-all.jar
+FINDBUGS_JAR_URL=https://repo1.maven.org/maven2/me/andrz/findbugs/findbugs-diff/0.1.0/$FINDBUGS_JAR
+# Priorities.HIGH_PRIORITY and Priorities.NORMAL_PRIORITY
+SPOTBUGS_PRIORITY_THRESHOLD=2
+# Scariest and scary
+SPOTBUGS_RANK_THRESHOLD=9
+SPOTBUGS_XML_NAME=spotbugsXml.xml
+BUG_LIMIT_PER_PROJECT=5
+FINDBUGS_DIFF_XML=findbugs-new.xml
+
+
+cleanup_and_exit() {
+  remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}"
+  remove_file_if_present "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+  exit "$1"
+}
+
+
+remove_file_if_present() {
+  FILE_NAME=$1
+
+  if [ -f "${FILE_NAME}" ]; then
+    rm -f "${FILE_NAME}"
+    echo "[TRACE] File [${FILE_NAME}] removed"
+  fi
+}
+
+print_usage() {
+  echo "Usage: $0 --taskname | (--op=pre|post|report --tempdir=<TEMP DIR> --reportdir=<REPORT DIR> --summaryfile=<SUMMARY FILE> --summaryfile-full=<FULL SUMMARY FILE>) [--verbose] [-D<VALUE>...] [-P<VALUE>...]"
+  echo
+}
+
+
+parse_args() {
+  for i in "$@"; do
+    case $i in
+    --taskname)
+      echo ${TASKNAME}
+      exit 0
+      ;;
+    --op=*)
+      OP=${i#*=}
+      ;;
+    --tempdir=*)
+      TEMPDIR=${i#*=}
+      ;;
+    --reportdir=*)
+      REPORTDIR=${i#*=}
+      ;;
+    --summaryfile=*)
+      SUMMARYFILE=${i#*=}
+      ;;
+    --summaryfile-full=*)
+      SUMMARYFILE_FULL=${i#*=}
+      ;;
+    --verbose)
+      STDOUT="/dev/stdout"
+      ;;
+    -D*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    -P*)
+      MVNPASSTHRU="${MVNPASSTHRU} $i"
+      ;;
+    esac
+  done
+  if [[ "${TASKNAME}" == "" || "${OP}" == "" || "${TEMPDIR}" == "" || "${REPORTDIR}" == "" || "${SUMMARYFILE}" == "" || "${SUMMARYFILE_FULL}" == "" ]] ; then
+    echo "Missing options"
+    echo
+    print_usage
+    cleanup_and_exit 1
+  fi
+  if [[ "${OP}" != "pre" && "${OP}" != "post" && "${OP}" != "report" ]] ; then
+    echo "Invalid operation"
+    echo
+    print_usage
+    cleanup_and_exit 1
+  fi
+}
+
+
+verify_and_save_spotbugs_output() {
+  SPOTBUGS_OUTPUT_DIR=$1
+  BRANCH_LABEL=$2
+  REPORT_SUFFIX=$3
+
+  echo "[TRACE] Verifying and saving SpotBugs output in ${BRANCH_LABEL}"
+  echo "[TRACE] mvn clean compile test-compile spotbugs:check -Dspotbugs.failOnError=false -Dcheckstyle.failOnViolation=false -DskipTests ${MVNPASSTHRU} | tee ${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt >> ${STDOUT}"
+
+  mvn clean compile test-compile spotbugs:check -Dspotbugs.failOnError=false -Dcheckstyle.failOnViolation=false -DskipTests ${MVNPASSTHRU} | tee "${REPORTDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt" >> ${STDOUT}
+
+  if [ ! -d "$SPOTBUGS_OUTPUT_DIR" ]; then
+    mkdir -p "${SPOTBUGS_OUTPUT_DIR}"
+  fi
+
+  find . -name ${SPOTBUGS_XML_NAME} ! -path '*/test-patch/*' -exec rsync -avqR {} "${SPOTBUGS_OUTPUT_DIR}" ";"
+
+  if [ -n "$(ls -A "${SPOTBUGS_OUTPUT_DIR}")" ] ; then
+    echo "{color:green}+1{color} ${BRANCH_LABEL} produces SpotBugs output" >> "${TEMPDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt"
+  else
+    echo "{color:red}-1{color} ${BRANCH_LABEL} does not produce SpotBugs output" >> "${TEMPDIR}/${TASKNAME}-${REPORT_SUFFIX}.txt"
+  fi
+
+  echo "[TRACE] SpotBugs output in ${BRANCH_LABEL} verified and saved"
+}
+
+
+create_missing_spotbugs_files() {
+  PRE_DIR=$1
+  POST_DIR=$2
+
+  create_missing_xml "${PRE_DIR}" "pre" "post"
+  create_missing_xml "${POST_DIR}" "post" "pre"
+}
+
+create_missing_xml() {
+  sourceFolder=$1
+  sourcePart=$2
+  targetPart=$3
+
+  sourceXmlFiles=()
+  while IFS= read -r -d '' fn; do
+    sourceXmlFiles+=("${fn}")
+  done <   <(find "${sourceFolder}" -name ${SPOTBUGS_XML_NAME} -print0)
+
+  for index in "${!sourceXmlFiles[@]}"; do
+    targetXmlFile=${sourceXmlFiles[index]/${sourcePart}/${targetPart}}
+    targetFolder=${targetXmlFile%${SPOTBUGS_XML_NAME}}
+
+    if [ ! -d "${targetFolder}" ]; then
+      echo "[TRACE] Folder [${targetFolder}] does not exist, creating"
+      mkdir -p "${targetFolder}"
+    fi
+
+    if [ ! -f "${targetXmlFile}" ]; then
+      echo "[TRACE] XML file [${targetXmlFile}] does not exist, creating"
+      echo "<BugCollection />" > "${targetXmlFile}"
+    fi
+  done
+}
+
+
+download_and_check_findbugs_diff_jar() {
+  DIFF_DIR=$1
+  BASH_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  mkdir -p "${DIFF_DIR}"
+
+  echo "[TRACE] Downloading FindBugs diff JAR from ${FINDBUGS_JAR_URL}"
+
+  curl -Ls ${FINDBUGS_JAR_URL} > "${DIFF_DIR}/${FINDBUGS_JAR}"
+
+  echo "[TRACE] FindBugs diff JAR downloaded"
+
+  if hash md5 2>/dev/null; then
+    echo "[TRACE] Calculating md5 content using md5"
+    md5Content="$(md5 -q "${DIFF_DIR}/${FINDBUGS_JAR}")"
+  elif hash md5sum 2>/dev/null; then
+    echo "[TRACE] Calculating md5 content using md5sum"
+    md5Content="$(md5sum "${DIFF_DIR}/${FINDBUGS_JAR}" | awk '{ print $1 }')"
+  else
+    echo "[ERROR] Neither md5 nor md5sum are present, cannot check FindBugs diff JAR"
+    summary_both "{color:red}-1{color} Neither md5 nor md5sum are present, cannot check FindBugs diff JAR."
+    cleanup_and_exit 1
+  fi
+  echo "${md5Content}" > "${DIFF_DIR}/${FINDBUGS_JAR}.md5"
+
+  jarMd5DiffCount=$(diff "${BASH_DIR}"/${FINDBUGS_JAR}.md5 "${DIFF_DIR}"/${FINDBUGS_JAR}.md5 | wc -l)
+
+  if [ "${jarMd5DiffCount}" -gt "0" ]; then
+    echo "[TRACE] md5 hash of FindBugs diff jar is $(cat "${DIFF_DIR}"/${FINDBUGS_JAR}.md5)"
+    echo "[ERROR] FindBugs diff JAR has a weird MD5 sum, rejecting"
+    summary_both "{color:red}-1{color} FindBugs diff JAR has a weird MD5 sum, rejecting."
+    cleanup_and_exit 1
+  fi
+
+  echo "[TRACE] FindBugs diff JAR checked, is safe to use"
+
+}
+
+
+perform_spotbugs_diffs() {
+  PRE_DIR=$1
+  POST_DIR=$2
+  DIFF_DIR=$3
+
+  echo "[TRACE] Performing SpotBugs diffs"
+
+  sourceXmlFiles=()
+  while IFS= read -r -d '' fn; do
+    preSpotbugsDiffs+=("${fn}")
+  done <   <(find "${PRE_DIR}" -name ${SPOTBUGS_XML_NAME} -print0)
+
+  postSpotbugsDiffs=()
+  while IFS= read -r -d '' fn; do
+    postSpotbugsDiffs+=("${fn}")
+  done <   <(find "${POST_DIR}" -name ${SPOTBUGS_XML_NAME} -print0)
+
+  for index in "${!preSpotbugsDiffs[@]}"; do
+    preSpotbugsDir=${preSpotbugsDiffs[index]}
+    diffDirPostfix=${preSpotbugsDir/*${TASKNAME}/${TASKNAME}}
+    diffDirPostfix=${diffDirPostfix:18}
+    diffDirPostfix=${diffDirPostfix%%/target/spotbugs/$SPOTBUGS_XML_NAME}
+
+    check_minimum_file_size "${preSpotbugsDiffs[index]}"
+    check_minimum_file_size "${postSpotbugsDiffs[index]}"
+
+    java -jar -Dorg.slf4j.simpleLogger.defaultLogLevel=ERROR "${DIFF_DIR}"/${FINDBUGS_JAR} --outDir="${DIFF_DIR}/${diffDirPostfix}" "${preSpotbugsDiffs[index]}" "${postSpotbugsDiffs[index]}"
+  done
+
+  echo "[TRACE] SpotBugs diffs performed"
+}
+
+
+check_minimum_file_size() {
+  FILE_NAME=$1
+
+  actualSize=$(wc -c < "${FILE_NAME}")
+  minimumSize=10
+  if [ "${actualSize}" -le "${minimumSize}" ]; then
+    echo "[ERROR] File [${FILE_NAME}] is below minimum size (has only [${actualSize}] bytes), cannot perform SpotBugs diff"
+    cleanup_and_exit 1
+  fi
+}
+
+
+check_spotbugs_diffs_and_create_reports() {
+  DIFF_DIR=$1
+  REPORT=()
+  REPORT_FULL=()
+
+  echo "[TRACE] Checking SpotBugs diffs and creating reports"
+
+  belowThresholdCount=0
+  totalCount=0
+  while IFS= read -r -d '' fn; do
+    componentDir=${fn/*${TASKNAME}/${TASKNAME}}
+    componentDir=${componentDir:19}
+    htmlFileName=${componentDir%%.xml}.html
+    componentDir=${componentDir%%/$FINDBUGS_DIFF_XML}
+
+    xmlLintXPathCompatible=$(xmllint | grep -ce '\-\-xpath')
+    if [ "${xmlLintXPathCompatible}" -eq "0" ]; then
+      echo "[TRACE] Old XMLLib present, calling 'xmllint --shell' to get bug instance counts"
+      newBugTotalCount=$(xmllint --shell "${fn}" <<< 'xpath count(/BugCollection/BugInstance)' | grep -oE '[^ ]+$')
+      newBugBelowThresholdCount=$(xmllint --shell "${fn}" <<< 'xpath count(/BugCollection/BugInstance[@priority <= "${SPOTBUGS_PRIORITY_THRESHOLD}" or @rank <= "${SPOTBUGS_RANK_THRESHOLD}"])' | grep -oE '[^ ]+$')
+    else
+      echo "[TRACE] New XMLLib present, calling 'xmllint --xpath' to get bug instance counts"
+      newBugTotalCount=$(xmllint --xpath "count(/BugCollection/BugInstance)" "${fn}")
+      newBugBelowThresholdCount=$(xmllint --xpath "count(/BugCollection/BugInstance[@priority <= ${SPOTBUGS_PRIORITY_THRESHOLD} or @rank <= ${SPOTBUGS_RANK_THRESHOLD}])" "${fn}")
+    fi
+
+    belowThresholdCount=$((belowThresholdCount + newBugBelowThresholdCount))
+    totalCount=$((totalCount + newBugTotalCount))
+
+    if [ "${newBugBelowThresholdCount}" -gt "0" ]; then
+      echo "[ERROR] There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}]."
+      REPORT_FULL+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed.")
+      if [ "${newBugBelowThresholdCount}" -gt "${BUG_LIMIT_PER_PROJECT}" ]; then
+        REPORT+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed, listing only the first [${BUG_LIMIT_PER_PROJECT}] ones.")
+      else
+        REPORT+=("{color:red}-1{color} There are [${newBugBelowThresholdCount}] new bugs found below threshold in [${componentDir}] that must be fixed.")
+      fi
+      echo "[DEBUG] You can find the SpotBugs diff here (look for the red and orange ones): ${htmlFileName}"
+      REPORT+=("You can find the SpotBugs diff here (look for the red and orange ones): ${htmlFileName}")
+      REPORT_FULL+=("You can find the SpotBugs diff here (look for the red and orange ones): ${htmlFileName}")
+      REPORT_FULL+=("The most important SpotBugs errors are:")
+      if [ "${newBugBelowThresholdCount}" -gt "${BUG_LIMIT_PER_PROJECT}" ]; then
+        REPORT+=("The top [${BUG_LIMIT_PER_PROJECT}] most important SpotBugs errors are:")
+      else
+        REPORT+=("The most important SpotBugs errors are:")
+      fi
+
+      lineCount=0
+      while IFS= read -r line; do
+        REPORT_FULL+=( "${line}" );
+        if [ "${lineCount}" -lt "${BUG_LIMIT_PER_PROJECT}" ]; then
+          REPORT+=( "${line}" );
+        fi
+        lineCount=$((lineCount + 1))
+      done < <(echo cat "/BugCollection/BugInstance[@priority <= ${SPOTBUGS_PRIORITY_THRESHOLD} or @rank <= ${SPOTBUGS_RANK_THRESHOLD}]/SourceLine/Message/text() | /BugCollection/BugInstance[@priority <= 2 or @rank <= 9]/LongMessage/text()" \
+      | xmllint --shell "${fn}" | grep -v '\-\-\-\-\-\-\-' | grep -v '/ >' | sed -e 'N;s/\(.*\)\n\(.*\)/\2: \1/')
+    elif [ "${newBugTotalCount}" -gt "0" ]; then
+      echo "[WARN] There are [${newBugTotalCount}] new bugs found in [${componentDir}]."
+      REPORT+=("{color:orange}0{color} There are [${newBugTotalCount}] new bugs found in [${componentDir}] that would be nice to have fixed.")
+      REPORT_FULL+=("{color:orange}0{color} There are [${newBugTotalCount}] new bugs found in [${componentDir}] that would be nice to have fixed.")
+      echo "[DEBUG] You can find the SpotBugs diff here: ${htmlFileName}"
+      REPORT+=("You can find the SpotBugs diff here: ${htmlFileName}")
+      REPORT_FULL+=("You can find the SpotBugs diff here: ${htmlFileName}")
+    else
+      echo "[DEBUG] There are no new bugs found in [${componentDir}]."
+      REPORT+=("{color:green}+1{color} There are no new bugs found in [${componentDir}].")
+      REPORT_FULL+=("{color:green}+1{color} There are no new bugs found in [${componentDir}].")
+    fi
+
+  done <   <(find "${DIFF_DIR}" -name ${FINDBUGS_DIFF_XML} -print0)
+
+  if [ "${belowThresholdCount}" -gt "0" ]; then
+    echo "[ERROR] There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed."
+    summary_both "{color:red}-1{color} There are [${belowThresholdCount}] new bugs found below threshold in total that must be fixed."
+  elif [ "${totalCount}" -gt "0" ]; then
+    echo "[WARN] There are [${totalCount}] new bugs found in total that would be nice to have fixed."
+    summary_both "{color:orange}0{color} There are [${totalCount}] new bugs found in total that would be nice to have fixed."
+  else
+    echo "[INFO] There are no new bugs found totally]."
+    summary_both "{color:green}+1{color} There are no new bugs found in total."
+  fi
+
+  for line in "${REPORT[@]}" ; do
+    summary ".    ${line}"
+  done
+
+  for line in "${REPORT_FULL[@]}" ; do
+    summary_full ".    ${line}"
+  done
+
+  echo "[TRACE] SpotBugs diffs checked and reports created"
+}
+
+
+summary() {
+  LINE=$1
+  echo "${LINE}" >> "${SUMMARYFILE}"
+}
+
+
+summary_full() {
+  LINE=$1
+  echo "${LINE}" >> "${SUMMARYFILE_FULL}"
+}
+
+
+summary_both() {
+  LINE=$1
+  echo "${LINE}" >> "${SUMMARYFILE}"
+  echo "${LINE}" >> "${SUMMARYFILE_FULL}"
+}
+
+
+parse_args "$@"
+
+case ${OP} in
+  pre)
+    verify_and_save_spotbugs_output "${TEMPDIR}/${TASKNAME}/pre" HEAD clean
+    ;;
+  post)
+    verify_and_save_spotbugs_output "${TEMPDIR}/${TASKNAME}/post" PATCH patch
+    ;;
+  report)
+    create_missing_spotbugs_files "${TEMPDIR}/${TASKNAME}/pre" "${TEMPDIR}/${TASKNAME}/post"
+    download_and_check_findbugs_diff_jar "${TEMPDIR}/${TASKNAME}/diff"
+    perform_spotbugs_diffs "${TEMPDIR}/${TASKNAME}/pre" "${TEMPDIR}/${TASKNAME}/post" "${TEMPDIR}/${TASKNAME}/diff"
+    check_spotbugs_diffs_and_create_reports "${TEMPDIR}/${TASKNAME}/diff"
+    echo "[TRACE] Summary file size is $(wc -c "${SUMMARYFILE}" | awk '{print $1}') bytes"
+    echo "[TRACE] Full summary file size is $(wc -c "${SUMMARYFILE_FULL}" | awk '{print $1}') bytes"
+    ;;
+esac
+
+cleanup_and_exit 0

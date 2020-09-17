@@ -19,7 +19,6 @@
 package org.apache.oozie.service;
 
 import org.apache.oozie.store.StoreException;
-import org.apache.oozie.store.SLAStore;
 import org.apache.oozie.store.Store;
 import org.apache.oozie.store.WorkflowStore;
 import org.apache.oozie.ErrorCode;
@@ -33,15 +32,15 @@ public class StoreService implements Service {
     /**
      * Return instance of store.
      *
+     * @param <S> child type of Store
+     * @param klass store class for this given Store
      * @return {@link Store}.
+     * @throws StoreException if Store cannot be retrieved
      */
     @SuppressWarnings("unchecked")
     public <S extends Store> S getStore(Class<S> klass) throws StoreException {
         if (WorkflowStore.class.equals(klass)) {
             return (S) Services.get().get(WorkflowStoreService.class).create();
-        }
-        else if (SLAStore.class.equals(klass)) {
-            return (S) Services.get().get(SLAStoreService.class).create();
         }
         // to do add checks for other stores - coordinator and SLA stores
         throw new StoreException(ErrorCode.E0607, " can not get store StoreService.getStore(Class)", "");
@@ -50,15 +49,17 @@ public class StoreService implements Service {
     /**
      * Return instance of store with an EntityManager pointing to an existing Store.
      *
+     * @param <S> child type of Store
+     * @param <T> child type of Store
+     * @param klass store class for this given Store
+     * @param store store instance
      * @return {@link Store}.
+     * @throws StoreException if Store cannot be retrieved
      */
     @SuppressWarnings("unchecked")
     public <S extends Store, T extends Store> S getStore(Class<S> klass, T store) throws StoreException {
         if (WorkflowStore.class.equals(klass)) {
             return (S) Services.get().get(WorkflowStoreService.class).create(store);
-        }
-        else if (SLAStore.class.equals(klass)) {
-            return (S) Services.get().get(SLAStoreService.class).create(store);
         }
         throw new StoreException(ErrorCode.E0607, " StoreService.getStore(Class, store)", "");
     }
@@ -78,6 +79,7 @@ public class StoreService implements Service {
      * Initializes the {@link StoreService}.
      *
      * @param services services instance.
+     * @throws ServiceException if JPAService is not available
      */
     public void init(Services services) throws ServiceException {
         jpaService = Services.get().get(JPAService.class);
@@ -94,6 +96,8 @@ public class StoreService implements Service {
 
     /**
      * Return EntityManager
+     *
+     * @return EntityManager of JPA service
      */
     public EntityManager getEntityManager() {
         return jpaService.getEntityManager();

@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>5.3.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.apache.oozie</groupId>
+
     <artifactId>oozie-distro</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>5.3.0-SNAPSHOT</version>
     <description>Apache Oozie Distro</description>
     <name>Apache Oozie Distro</name>
     <packaging>jar</packaging>
@@ -41,6 +41,12 @@
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-client</artifactId>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.oozie</groupId>
@@ -72,6 +78,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <finalName>oozie-${project.version}</finalName>
+                    <tarLongFileMode>gnu</tarLongFileMode>
                     <descriptors>
                         <descriptor>../src/main/assemblies/distro.xml</descriptor>
                     </descriptors>
@@ -87,22 +94,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>loginServerExample</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.oozie</groupId>
-                    <artifactId>oozie-login</artifactId>
-                    <version>${project.version}</version>
-                    <scope>compile</scope>
-                    <type>war</type>
-                </dependency>
-             </dependencies>
-        </profile>
-    </profiles>
 </project>

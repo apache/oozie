@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.SLAEventBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the SLAEventBean bean.
@@ -32,21 +33,15 @@ public class SLAEventInsertJPAExecutor implements JPAExecutor<String> {
     private SLAEventBean slaEvent = null;
 
     public SLAEventInsertJPAExecutor(SLAEventBean slaEvent) {
-        ParamChecker.notNull(slaEvent, "slaEvent");
+        Objects.requireNonNull(slaEvent, "slaEvent cannot be null");
         this.slaEvent = slaEvent;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "SLAEventInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(slaEvent);

@@ -20,7 +20,7 @@ package org.apache.oozie.coord.input.dependency;
 
 import java.io.UnsupportedEncodingException;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.oozie.util.XLog;

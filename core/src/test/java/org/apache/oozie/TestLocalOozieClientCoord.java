@@ -19,21 +19,27 @@
 package org.apache.oozie;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 public class TestLocalOozieClientCoord extends XDataTestCase {
 
@@ -81,7 +87,7 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
     public void testHeaderMethods() {
         OozieClient client = LocalOozie.getCoordClient();
         client.setHeader("h", "v");
-        assertNull(client.getHeader("h"));
+        assertTrue("no-op, should be null/empty", StringUtils.isBlank(client.getHeader("h")));
         Iterator<String> hit = client.getHeaderNames();
         assertFalse(hit.hasNext());
         try {
@@ -92,7 +98,7 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
             // expected
         }
         client.removeHeader("h");
-        assertNull(client.getHeader("h"));
+        assertTrue("no-op, should be null/empty", StringUtils.isBlank(client.getHeader("h")));
     }
 
     public void testGetJobsInfo() {
@@ -135,7 +141,7 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
         File wf = new File(new URI(appPath).getPath());
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iex) {
@@ -163,9 +169,11 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
                 + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>1</concurrency> "
                 + "<execution>LIFO</execution> </controls> <datasets> "
                 + "<dataset name=\"a\" frequency=\"${coord:minutes(20)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template> </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template> </dataset> "
                 + "<dataset name=\"local_a\" frequency=\"${coord:minutes(20)}\" initial-instance=\"2009-02-01T01:00Z\" "
-                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template> </dataset> "
+                + "timezone=\"UTC\"> <uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}")
+                + "</uri-template> </dataset> "
                 + "</datasets> <input-events> "
                 + "<data-in name=\"A\" dataset=\"a\"> <instance>${coord:latest(0)}</instance> </data-in>  " + "</input-events> "
                 + "<output-events> <data-out name=\"LOCAL_A\" dataset=\"local_a\"> "
@@ -191,5 +199,69 @@ public class TestLocalOozieClientCoord extends XDataTestCase {
 
         List<CoordinatorJob> list = client.getCoordJobsInfo("", 1, 5);
         assertEquals(2, list.size());
+    }
+
+    public void testJobsOperations() throws Exception {
+        final OozieClient client = LocalOozie.getCoordClient();
+
+        // Just in case, check that there are no Coord job records left by previous tests:
+        List<CoordinatorJob> list0 = client.getCoordJobsInfo("", 1, 100);
+        assertEquals(0, list0.size());
+        Properties conf = client.createConfiguration();
+        String appPath = storedCoordAppPath();
+
+        conf.setProperty(OozieClient.COORDINATOR_APP_PATH, appPath);
+        final String jobId0 = client.run(conf);
+        final String jobId1 = client.run(conf);
+        final String jobId2 = client.run(conf);
+        waitFor(client, jobId0);
+        waitFor(client, jobId1);
+        waitFor(client, jobId2);
+        list0 = client.getCoordJobsInfo("name=NAME", 1, 10);
+        assertEquals(3, list0.size());
+
+        JSONObject jsonObject = client.suspendJobs("name=NAME", "coord", 1, 3);
+        assertEquals(3, jsonObject.get("total"));
+        assertEquals(3, ((JSONArray) jsonObject.get("coordinatorjobs")).size());
+        assertEquals(Job.Status.SUSPENDED, client.getCoordJobInfo(jobId0).getStatus());
+        assertEquals(Job.Status.SUSPENDED, client.getCoordJobInfo(jobId1).getStatus());
+        assertEquals(Job.Status.SUSPENDED, client.getCoordJobInfo(jobId2).getStatus());
+
+        jsonObject = client.resumeJobs("name=NAME", "coord", 1, 3);
+        assertEquals(3, jsonObject.get("total"));
+        assertEquals(3, ((JSONArray) jsonObject.get("coordinatorjobs")).size());
+        assertEquals(Job.Status.RUNNING, client.getCoordJobInfo(jobId0).getStatus());
+        assertEquals(Job.Status.RUNNING, client.getCoordJobInfo(jobId1).getStatus());
+        assertEquals(Job.Status.RUNNING, client.getCoordJobInfo(jobId2).getStatus());
+
+        jsonObject = client.killJobs("name=NAME", "coord", 1, 3);
+        assertEquals(3, jsonObject.get("total"));
+        assertEquals(3, ((JSONArray) jsonObject.get("coordinatorjobs")).size());
+        assertEquals(Job.Status.KILLED, client.getCoordJobInfo(jobId0).getStatus());
+        assertEquals(Job.Status.KILLED, client.getCoordJobInfo(jobId1).getStatus());
+        assertEquals(Job.Status.KILLED, client.getCoordJobInfo(jobId2).getStatus());
+    }
+
+    private void waitFor(final OozieClient client, final String jobId) {
+        waitFor(10 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                Job.Status status = client.getCoordJobInfo(jobId).getStatus();
+                return status != Job.Status.PREP;
+            }
+        });
+    }
+
+    private String storedCoordAppPath() throws Exception {
+        String appPath = getTestCaseFileUri("coordinator.xml");
+        String appXml = "<coordinator-app name=\"NAME\" frequency=\"${coord:minutes(20)}\" "
+                + "start=\"2009-02-01T01:00Z\" end=\"2009-02-01T03:00Z\" timezone=\"UTC\" "
+                + "xmlns=\"uri:oozie:coordinator:0.1\"> <controls> <timeout>10</timeout> <concurrency>1</concurrency> "
+                + "<execution>LIFO</execution> </controls> "
+                + " <action> <workflow> "
+                + "<app-path>hdfs:///tmp/workflows/</app-path> "
+                +" </workflow> </action> </coordinator-app>";
+        writeToFile(appXml, appPath);
+        return appPath;
     }
 }

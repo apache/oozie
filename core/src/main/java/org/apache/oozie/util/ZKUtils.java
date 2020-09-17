@@ -157,7 +157,7 @@ public class ZKUtils {
      *
      * @param user The calling class
      * @return the ZKUtils singleton
-     * @throws Exception
+     * @throws Exception if there is an issue when connecting to ZooKeeper
      */
     public static synchronized ZKUtils register(Object user) throws Exception {
         if (zk == null) {
@@ -177,9 +177,7 @@ public class ZKUtils {
         // If there are no more classes using ZooKeeper, we should teardown everything.
         users.remove(user);
         if (users.isEmpty() && zk != null) {
-            if (ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
-                zk.teardown();
-            }
+            zk.teardown();
             zk = null;
         }
     }

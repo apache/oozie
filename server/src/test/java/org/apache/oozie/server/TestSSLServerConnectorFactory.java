@@ -19,17 +19,33 @@
 package org.apache.oozie.server;
 
 import org.apache.hadoop.conf.Configuration;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.mockito.Matchers.anyString;
+import static org.apache.oozie.server.HttpConfigurationWrapper.OOZIE_HTTP_REQUEST_HEADER_SIZE;
+import static org.apache.oozie.server.HttpConfigurationWrapper.OOZIE_HTTP_RESPONSE_HEADER_SIZE;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_EXCLUDE_PROTOCOLS;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCLUDE_CIPHER_SUITES;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCLUDE_PROTOCOLS;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_FILE;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_PASS;
+import static org.apache.oozie.util.ConfigUtils.OOZIE_HTTP_PORT;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -40,7 +56,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class TestSSLServerConnectorFactory {
     @Mock private SslContextFactory mockSSLContextFactory;
     @Mock private SSLServerConnectorFactory mockSSLServerConnectorFactory;
-    @Mock private Server mockServer;
+    @Spy  private Server mockServer;
     @Mock private ServerConnector mockServerConnector;
 
     private Configuration testConfig;
@@ -48,64 +64,35 @@ public class TestSSLServerConnectorFactory {
 
     @Before public void setUp() {
         testConfig = new Configuration();
-        testConfig.set("oozie.https.truststore.file", "test_truststore_file");
-        testConfig.set("oozie.https.truststore.pass", "trustpass");
-        testConfig.set("oozie.https.keystore.file", "test_keystore_file");
-        testConfig.set("oozie.https.keystore.pass", "keypass");
-        testConfig.set("oozie.http.port", "11000");
-        testConfig.set("oozie.http.request.header.size", "65536");
-        testConfig.set("oozie.http.response.header.size", "65536");
-        testConfig.set("oozie.https.include.protocols", "TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2");
-        testConfig.set("oozie.https.exclude.cipher.suites",
+        testConfig.set(OOZIE_HTTPS_KEYSTORE_FILE, "test_keystore_file");
+        testConfig.set(OOZIE_HTTPS_KEYSTORE_PASS, "keypass");
+        testConfig.set(OOZIE_HTTP_PORT, "11000");
+        testConfig.set(OOZIE_HTTP_REQUEST_HEADER_SIZE, "65536");
+        testConfig.set(OOZIE_HTTP_RESPONSE_HEADER_SIZE, "65536");
+        testConfig.set(OOZIE_HTTPS_INCLUDE_PROTOCOLS, "TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2");
+        testConfig.set(OOZIE_HTTPS_EXCLUDE_PROTOCOLS, "");
+        testConfig.set(OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES,
                 "TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_DES_CBC_SHA," +
                 "SSL_DHE_RSA_WITH_DES_CBC_SHA,SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA," +
                 "SSL_RSA_WITH_RC4_128_MD5");
-
+        testConfig.set(OOZIE_HTTPS_INCLUDE_CIPHER_SUITES, "");
         sslServerConnectorFactory = new SSLServerConnectorFactory(mockSSLContextFactory);
     }
 
     @After
     public void tearDown() {
-        verify(mockSSLContextFactory).setTrustStorePath(anyString());
-        verify(mockSSLContextFactory).setTrustStorePassword(anyString());
+        testConfig.clear();
         verify(mockSSLContextFactory).setKeyStorePath(anyString());
-        verify(mockSSLContextFactory).setKeyManagerPassword(anyString());
+        verify(mockSSLContextFactory).setKeyStorePassword(anyString());
         verifyNoMoreInteractions(
                 mockServerConnector,
                 mockSSLServerConnectorFactory);
     }
 
-    private void verifyDefaultExcludeCipherSuites() {
-        verify(mockSSLContextFactory).setExcludeCipherSuites(
-                "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
-                "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
-                "SSL_RSA_WITH_DES_CBC_SHA",
-                "SSL_DHE_RSA_WITH_DES_CBC_SHA",
-                "SSL_RSA_EXPORT_WITH_RC4_40_MD5",
-                "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
-                "SSL_RSA_WITH_RC4_128_MD5");
-    }
-
-    private void verifyDefaultIncludeProtocols() {
-        verify(mockSSLContextFactory).setIncludeProtocols(
-                "TLSv1",
-                "SSLv2Hello",
-                "TLSv1.1",
-                "TLSv1.2");
-    }
-
     @Test
-    public void includeProtocolsHaveDefaultValues() throws Exception {
-        sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
-
-        verifyDefaultIncludeProtocols();
-        verifyDefaultExcludeCipherSuites();
-    }
-
-    @Test
-    public void includeProtocolsCanBeSetViaConfigFile() throws Exception {
+    public void includeProtocolsCanBeSetViaConfig() throws Exception {
         SSLServerConnectorFactory sslServerConnectorFactory = new SSLServerConnectorFactory(mockSSLContextFactory);
-        testConfig.set("oozie.https.include.protocols", "TLSv1,TLSv1.2");
+        testConfig.set(OOZIE_HTTPS_INCLUDE_PROTOCOLS, "TLSv1,TLSv1.2");
         sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
 
         verify(mockSSLContextFactory).setIncludeProtocols(
@@ -114,17 +101,45 @@ public class TestSSLServerConnectorFactory {
     }
 
     @Test
-    public void excludeCipherSuitesHaveDefaultValues() throws Exception {
+    public void emptyExcludeProtocolsAreNotSet() throws Exception {
         sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
-
-        verifyDefaultExcludeCipherSuites();
-        verifyDefaultIncludeProtocols();
+        verify(mockSSLContextFactory, never()).setExcludeProtocols(anyString());
     }
 
     @Test
-    public void excludeCipherSuitesCanBeSetViaConfigFile() throws Exception {
-        testConfig.set("oozie.https.exclude.cipher.suites","TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,"
-                + "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA");
+    public void excludeProtocolsCanBeSetViaConfig() throws Exception {
+        SSLServerConnectorFactory sslServerConnectorFactory = new SSLServerConnectorFactory(mockSSLContextFactory);
+        testConfig.set(OOZIE_HTTPS_INCLUDE_PROTOCOLS, "TLSv1,TLSv1.2");
+        testConfig.set(OOZIE_HTTPS_EXCLUDE_PROTOCOLS, "TLSv1");
+        sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
+
+        verify(mockSSLContextFactory).setIncludeProtocols(
+                "TLSv1",
+                "TLSv1.2");
+
+        verify(mockSSLContextFactory).setExcludeProtocols(
+                "TLSv1");
+    }
+
+    @Test
+    public void emptyIncludeCipherSuitesAreNotSet() throws Exception {
+        sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
+        verify(mockSSLContextFactory, never()).setIncludeCipherSuites(anyString());
+    }
+
+    @Test
+    public void includeCipherSuitesCanBeSetViaConfig() throws Exception {
+        testConfig.set(OOZIE_HTTPS_INCLUDE_CIPHER_SUITES, "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA");
+
+        sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
+        verify(mockSSLContextFactory).setIncludeCipherSuites("SSL_RSA_EXPORT_WITH_DES40_CBC_SHA");
+    }
+
+
+    @Test
+    public void excludeCipherSuitesCanBeSetViaConfig() throws Exception {
+        testConfig.set(OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES, "TLS_ECDHE_RSA_WITH_RC4_128_SHA,"
+                + "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA");
 
         sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
 
@@ -132,6 +147,32 @@ public class TestSSLServerConnectorFactory {
                 "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
                 "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
                 "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA");
-        verifyDefaultIncludeProtocols();
+    }
+
+    @Test
+    public void testHSTSDefault() {
+        checkHSTSMaxAge(SSLServerConnectorFactory.OOZIE_DEFAULT_HSTS_MAX_AGE);
+    }
+
+    @Test
+    public void testHSTSDisabled() {
+        long maxAge = -1;
+        testConfig.setLong(SSLServerConnectorFactory.OOZIE_HSTS_MAX_AGE_SECONDS,maxAge);
+        checkHSTSMaxAge(maxAge);
+    }
+
+    @Test
+    public void testHSTSCustomMaxAge() {
+        long maxAge = 3600;
+        testConfig.setLong(SSLServerConnectorFactory.OOZIE_HSTS_MAX_AGE_SECONDS,maxAge);
+        checkHSTSMaxAge(maxAge);
+
+    }
+
+    private void checkHSTSMaxAge(final long expectedMaxAge) {
+        ServerConnector connector = sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
+        HttpConnectionFactory factory = (HttpConnectionFactory)connector.getConnectionFactory(HttpVersion.HTTP_1_1.asString());
+        long actualMaxAge = factory.getHttpConfiguration().getCustomizer(SecureRequestCustomizer.class).getStsMaxAge();
+        assertEquals("HSTS max age mismatch", expectedMaxAge, actualMaxAge);
     }
 }

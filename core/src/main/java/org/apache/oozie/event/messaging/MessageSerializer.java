@@ -18,7 +18,8 @@
 
 package org.apache.oozie.event.messaging;
 
-import org.codehaus.jackson.map.ObjectMapper;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Message Serializer to serialize the java object
@@ -30,13 +31,13 @@ public abstract class MessageSerializer {
     /**
      * Get the serialized string from object
      * @param object the java object
-     * @return
+     * @return returns serialized string from object
      */
     public abstract String getSerializedObject(Object object);
 
     /**
      * Get the message format for the serializer
-     * @return
+     * @return returns message format for the serializer
      */
     public abstract String getMessageFormat();
 

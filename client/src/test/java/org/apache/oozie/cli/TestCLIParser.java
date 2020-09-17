@@ -23,8 +23,9 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
-import junit.framework.TestCase;
+
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -33,7 +34,12 @@ import org.junit.Test;
 
 import com.google.common.io.ByteStreams;
 
-public class TestCLIParser extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class TestCLIParser {
 
     @Test
     public void testEmptyParser() throws Exception {
@@ -104,12 +110,12 @@ public class TestCLIParser extends TestCase {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PipedOutputStream pipeOut = new PipedOutputStream();
         PipedInputStream pipeIn = new PipedInputStream(pipeOut, 1024 * 10);
-        System.setOut(new PrintStream(pipeOut));
+        System.setOut(new PrintStream(pipeOut, false, StandardCharsets.UTF_8.name()));
 
         parser.showHelp(c.getCommandLine());
         pipeOut.close();
         ByteStreams.copy(pipeIn, outBytes);
         pipeIn.close();
-        return new String(outBytes.toByteArray());
+        return new String(outBytes.toByteArray(), StandardCharsets.UTF_8);
     }
 }

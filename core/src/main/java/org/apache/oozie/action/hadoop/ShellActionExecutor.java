@@ -19,10 +19,13 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.yarn.util.Apps;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
 import org.jdom.Element;
@@ -30,28 +33,20 @@ import org.jdom.Namespace;
 
 public class ShellActionExecutor extends JavaActionExecutor {
 
-    /**
-     * Config property name to set the child environment
-     */
-    public String OOZIE_LAUNCHER_CHILD_ENV = "mapred.child.env";
-    public String OOZIE_LAUNCHER_MAP_ENV = "mapreduce.map.env";
-
     public ShellActionExecutor() {
         super("shell");
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public List<Class> getLauncherClasses() {
+    public List<Class<?>> getLauncherClasses() {
         return null;
     }
 
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, ShellMain.class.getName());
+        return launcherConf.get(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, ShellMain.class.getName());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
@@ -92,17 +87,18 @@ public class ShellActionExecutor extends JavaActionExecutor {
      * This method read a list of tag from an XML element and set the
      * Configuration accordingly
      *
-     * @param tag
-     * @param actionXml
-     * @param actionConf
-     * @param key
-     * @param checkKeyValue
-     * @throws ActionExecutorException
+     * @param tag xml tag to read
+     * @param actionXml action xml element
+     * @param actionConf action configuration
+     * @param key environment variable key
+     * @param checkKeyValue set to true to check key=value syntax
+     * @throws ActionExecutorException if environment variable setting is incorrect
      */
     protected void setListInConf(String tag, Element actionXml, Configuration actionConf, String key,
             boolean checkKeyValue) throws ActionExecutorException {
         String[] strTagValue = null;
         Namespace ns = actionXml.getNamespace();
+        @SuppressWarnings("unchecked")
         List<Element> eTags = actionXml.getChildren(tag, ns);
         if (eTags != null && eTags.size() > 0) {
             strTagValue = new String[eTags.size()];
@@ -113,13 +109,13 @@ public class ShellActionExecutor extends JavaActionExecutor {
                 }
             }
         }
-        MapReduceMain.setStrings(actionConf, key, strTagValue);
+        ActionUtils.setStrings(actionConf, key, strTagValue);
     }
 
     /**
      * Check if the key=value pair is appropriately formatted
-     * @param pair
-     * @throws ActionExecutorException
+     * @param pair key=value pair
+     * @throws ActionExecutorException if environment variable setting is incorrect
      */
     private void checkPair(String pair) throws ActionExecutorException {
         String[] varValue = pair.split("=");
@@ -130,31 +126,16 @@ public class ShellActionExecutor extends JavaActionExecutor {
     }
 
     @Override
-    protected Configuration setupLauncherConf(Configuration conf, Element actionXml, Path appPath, Context context)
-            throws ActionExecutorException {
-        super.setupLauncherConf(conf, actionXml, appPath, context);
-        addDefaultChildEnv(conf);
-        return conf;
-    }
-
-    /**
-     * This method sets the PATH to current working directory for the launched
-     * map task from where shell command will run.
-     *
-     * @param conf
-     */
-    protected void addDefaultChildEnv(Configuration conf) {
-        String envValues = "PATH=.:$PATH";
-        updateProperty(conf, OOZIE_LAUNCHER_MAP_ENV, envValues);
-        updateProperty(conf, OOZIE_LAUNCHER_CHILD_ENV, envValues);
+    protected void addActionSpecificEnvVars(Map<String, String> env) {
+        Apps.setEnvFromInputString(env, "PATH=.:$PATH", File.pathSeparator);
     }
 
     /**
      * Utility method to append the new value to any property.
      *
-     * @param conf
-     * @param propertyName
-     * @param appendValue
+     * @param conf configuration
+     * @param propertyName name of property to update
+     * @param appendValue new value to append to property
      */
     private void updateProperty(Configuration conf, String propertyName, String appendValue) {
         if (conf != null) {

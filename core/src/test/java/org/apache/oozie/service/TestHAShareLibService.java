@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -65,11 +66,11 @@ public class TestHAShareLibService extends ZKXTestCase {
         Path launcherlibPath = Services.get().get(WorkflowAppService.class).getSystemLibPath();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = launcherlibPath.toUri();
-        fs = FileSystem.get(has.createJobConf(uri.getAuthority()));
+        fs = FileSystem.get(has.createConfiguration(uri.getAuthority()));
         Date time = new Date(System.currentTimeMillis());
 
         Path basePath = new Path(Services.get().getConf().get(WorkflowAppService.SYSTEM_LIB_PATH));
-        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dateFormat.format(time));
+        Path libpath = new Path(basePath, ShareLibService.SHARE_LIB_PREFIX + ShareLibService.dt.get().format(time));
         fs.mkdirs(libpath);
 
         Path pigPath = new Path(libpath.toString() + Path.SEPARATOR + "pig");
@@ -100,7 +101,7 @@ public class TestHAShareLibService extends ZKXTestCase {
             GetMethod method = new GetMethod(url);
             int statusCode = client.executeMethod(method);
             assertEquals(HttpURLConnection.HTTP_OK, statusCode);
-            Reader reader = new InputStreamReader(method.getResponseBodyAsStream());
+            Reader reader = new InputStreamReader(method.getResponseBodyAsStream(), StandardCharsets.UTF_8);
             JSONArray sharelib = (JSONArray) JSONValue.parse(reader);
             assertEquals(2, sharelib.size());
             // 1st server update is successful
@@ -118,7 +119,7 @@ public class TestHAShareLibService extends ZKXTestCase {
 
             statusCode = client.executeMethod(method);
             assertEquals(HttpURLConnection.HTTP_OK, statusCode);
-            reader = new InputStreamReader(method.getResponseBodyAsStream());
+            reader = new InputStreamReader(method.getResponseBodyAsStream(),StandardCharsets.UTF_8);
             sharelib = (JSONArray) JSONValue.parse(reader);
             assertEquals(3, sharelib.size());
 

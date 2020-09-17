@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="demo-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="demo-wf">
 
     <start to="cleanup-node"/>
 
@@ -34,7 +34,7 @@
 
     <action name="pig-node">
         <pig>
-            <job-tracker>${jobTracker}</job-tracker>
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node"/>
@@ -59,7 +59,7 @@
 
     <action name="streaming-node">
         <map-reduce>
-            <job-tracker>${jobTracker}</job-tracker>
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node"/>
@@ -93,7 +93,7 @@
     
     <action name="mr-node">
         <map-reduce>
-            <job-tracker>${jobTracker}</job-tracker>
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node"/>

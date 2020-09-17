@@ -22,14 +22,14 @@ package org.apache.oozie.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import com.google.common.base.Preconditions;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceInstanceBuilder;
 import org.apache.curator.x.discovery.ServiceType;
@@ -56,7 +56,7 @@ public class FixedJsonInstanceSerializer<T> implements InstanceSerializer<T>
     public FixedJsonInstanceSerializer(final Class<T> pPayloadClass, final ObjectMapper pMapper) {
         mPayloadClass = pPayloadClass;
         mMapper = pMapper;
-        mMapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @Override
@@ -68,32 +68,32 @@ public class FixedJsonInstanceSerializer<T> implements InstanceSerializer<T>
     }
 
     private String getTextField(final JsonNode pNode, final String pFieldName) {
-        Preconditions.checkNotNull(pNode);
-        Preconditions.checkNotNull(pFieldName);
-        return pNode.get(pFieldName) != null ? pNode.get(pFieldName).getTextValue() : null;
+        Objects.requireNonNull(pNode, "pNode cannot be null");
+        Objects.requireNonNull(pFieldName, "pFieldName  cannot be null");
+        return pNode.get(pFieldName) != null ? pNode.get(pFieldName).textValue() : null;
     }
 
     private Integer getIntegerField(final JsonNode pNode, final String pFieldName) {
-        Preconditions.checkNotNull(pNode);
-        Preconditions.checkNotNull(pFieldName);
+        Objects.requireNonNull(pNode, "pNode cannot be null");
+        Objects.requireNonNull(pFieldName, "pFieldName cannot be null");
         return (pNode.get(pFieldName) != null && pNode.get(pFieldName).isNumber()) ? pNode.get(pFieldName)
-            .getIntValue() : null;
+            .intValue() : null;
     }
 
     private Long getLongField(final JsonNode pNode, final String pFieldName) {
-        Preconditions.checkNotNull(pNode);
-        Preconditions.checkNotNull(pFieldName);
-        return (pNode.get(pFieldName) != null && pNode.get(pFieldName).isLong()) ? pNode.get(pFieldName).getLongValue()
+        Objects.requireNonNull(pNode, "pNode cannot be null");
+        Objects.requireNonNull(pFieldName, "pFieldName cannot be null");
+        return (pNode.get(pFieldName) != null && pNode.get(pFieldName).isLong()) ? pNode.get(pFieldName).longValue()
             : null;
     }
 
     private <O> O getObject(final JsonNode pNode, final String pFieldName, final Class<O> pObjectClass)
         throws JsonParseException, JsonMappingException, IOException {
-        Preconditions.checkNotNull(pNode);
-        Preconditions.checkNotNull(pFieldName);
-        Preconditions.checkNotNull(pObjectClass);
+        Objects.requireNonNull(pNode, "pNode cannot be null");
+        Objects.requireNonNull(pFieldName, "pFieldName cannot be null");
+        Objects.requireNonNull(pObjectClass, "pObjectClass cannot be null");
         if (pNode.get(pFieldName) != null && pNode.get(pFieldName).isObject()) {
-            return mMapper.readValue(pNode.get(pFieldName), pObjectClass);
+            return mMapper.readValue(pNode.get(pFieldName).toString(), pObjectClass);
         } else {
             return null;
         }

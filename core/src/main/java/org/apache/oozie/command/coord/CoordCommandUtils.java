@@ -25,8 +25,6 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.TimeZone;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Date;
 import java.util.Calendar;
@@ -58,6 +56,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
+import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -65,16 +64,19 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.quartz.CronExpression;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.CoordinatorJobBean;
 
 public class CoordCommandUtils {
-    public static int CURRENT = 0;
-    public static int LATEST = 1;
-    public static int FUTURE = 2;
-    public static int OFFSET = 3;
-    public static int ABSOLUTE = 4;
-    public static int UNEXPECTED = -1;
+    public static final int CURRENT = 0;
+    public static final int LATEST = 1;
+    public static final int FUTURE = 2;
+    public static final int OFFSET = 3;
+    public static final int ABSOLUTE = 4;
+    public static final int ENDOFMONTHS = 5;
+    public static final int ENDOFWEEKS = 6;
+    public static final int ENDOFDAYS = 7;
+    public static final int UNEXPECTED = -1;
 
     public static final String RESOLVED_UNRESOLVED_SEPARATOR = "!!";
     public static final String UNRESOLVED_INSTANCES_TAG = "unresolved-instances";
@@ -83,17 +85,18 @@ public class CoordCommandUtils {
      * parse a function like coord:latest(n)/future() and return the 'n'.
      * <p>
      *
-     * @param function
-     * @param restArg
+     * @param function function
+     * @param restArg arguments
      * @return int instanceNumber
-     * @throws Exception
+     * @throws Exception when parsing function argument fails
      */
     public static int getInstanceNumber(String function, StringBuilder restArg) throws Exception {
         int funcType = getFuncType(function);
         if (funcType == ABSOLUTE) {
-            return ABSOLUTE;
+            return funcType;
         }
-        if (funcType == CURRENT || funcType == LATEST) {
+        if (funcType == CURRENT || funcType == LATEST || funcType == ENDOFMONTHS || funcType == ENDOFWEEKS
+                || funcType == ENDOFDAYS) {
             return parseOneArg(function);
         }
         else {
@@ -103,12 +106,12 @@ public class CoordCommandUtils {
 
     /**
      * Evaluates function for coord-action-create-inst tag
-     * @param event
-     * @param appInst
-     * @param conf
-     * @param function
+     * @param event event
+     * @param appInst application instance
+     * @param conf configuration
+     * @param function function
      * @return evaluation result
-     * @throws Exception
+     * @throws Exception when evaluating function fails, especially when parsing date/time zone
      */
     private static String evaluateInstanceFunction(Element event, SyncCoordAction appInst, Configuration conf,
             String function) throws Exception {
@@ -171,22 +174,33 @@ public class CoordCommandUtils {
         else if (function.indexOf("absolute") >= 0) {
             return ABSOLUTE;
         }
+        else if (function.indexOf("endOfMonths") >= 0) {
+            return ENDOFMONTHS;
+        }
+        else if (function.indexOf("endOfWeeks") >= 0) {
+            return ENDOFWEEKS;
+        }
+        else if (function.indexOf("endOfDays") >= 0) {
+            return ENDOFDAYS;
+        }
         return UNEXPECTED;
         // throw new RuntimeException("Unexpected instance name "+ function);
     }
 
     /**
-     * @param startInst: EL function name
-     * @param endInst: EL function name
+     * @param startInst EL function name
+     * @param endInst EL function name
      * @throws CommandException if both are not the same function
      */
     public static void checkIfBothSameType(String startInst, String endInst) throws CommandException {
         if (getFuncType(startInst) != getFuncType(endInst)) {
-            if (getFuncType(startInst) == ABSOLUTE) {
+            if (getFuncType(startInst) == ABSOLUTE || getFuncType(startInst) == ENDOFMONTHS
+                    || getFuncType(startInst) == ENDOFWEEKS || getFuncType(startInst) == ENDOFDAYS) {
                 if (getFuncType(endInst) != CURRENT) {
                     throw new CommandException(ErrorCode.E1010,
-                            "Only start-instance as absolute and end-instance as current is supported." + " start = "
-                                    + startInst + "  end = " + endInst);
+                            "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays and end-instance as current is"
+                            + " supported."
+                                    + " start = " + startInst + "  end = " + endInst);
                 }
             }
             else {
@@ -201,12 +215,12 @@ public class CoordCommandUtils {
     /**
      * Resolve list of &lt;instance&gt; &lt;/instance&gt; tags.
      *
-     * @param event
-     * @param instances
-     * @param actionInst
-     * @param conf
-     * @param eval: ELEvalautor
-     * @throws Exception
+     * @param event event
+     * @param instances instances
+     * @param actionInst action instance
+     * @param conf configuration
+     * @param eval ELEvalautor
+     * @throws Exception when function evaluation fails
      */
     public static void resolveInstances(Element event, StringBuilder instances, SyncCoordAction actionInst,
             Configuration conf, ELEvaluator eval) throws Exception {
@@ -224,12 +238,12 @@ public class CoordCommandUtils {
      * Resolve &lt;start-instance&gt; &lt;end-insatnce&gt; tag. Don't resolve any
      * latest()/future()
      *
-     * @param event
-     * @param instances
-     * @param appInst
-     * @param conf
-     * @param eval: ELEvalautor
-     * @throws Exception
+     * @param event event
+     * @param instances instances
+     * @param appInst application instance
+     * @param conf configuration
+     * @param eval ELEvalautor
+     * @throws Exception when function evaluation fails
      */
     public static void resolveInstanceRange(Element event, StringBuilder instances, SyncCoordAction appInst,
             Configuration conf, ELEvaluator eval) throws Exception {
@@ -243,6 +257,7 @@ public class CoordCommandUtils {
                                                          // arguments for
                                                          // future
                                                          // function
+
             int startIndex = getInstanceNumber(strStart, restArg);
             String startRestArg = restArg.toString();
             restArg.delete(0, restArg.length());
@@ -251,16 +266,20 @@ public class CoordCommandUtils {
             int funcType = getFuncType(strStart);
 
             if (funcType == ABSOLUTE) {
-                StringBuffer bf = new StringBuffer();
-                bf.append("${coord:absoluteRange(\"").append(parseOneStringArg(strStart))
-                        .append("\",").append(endIndex).append(")}");
-                String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
-                if (matInstance != null && !matInstance.isEmpty()) {
-                    if (instances.length() > 0) {
-                        instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
-                    }
-                    instances.append(matInstance);
-                }
+                resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                        parseOneStringArg(strStart));
+            }
+            else if (funcType == ENDOFMONTHS) {
+                resolveInstanceRangeEndOfDuration(TimeUnit.MONTH, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
+            }
+            else if (funcType == ENDOFWEEKS) {
+                resolveInstanceRangeEndOfDuration(TimeUnit.WEEK, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
+            }
+            else if (funcType == ENDOFDAYS) {
+                resolveInstanceRangeEndOfDuration(TimeUnit.DAY, event, instances, appInst, conf, eval, strStart,
+                        startIndex, endIndex);
             }
             else {
                 if (funcType == OFFSET) {
@@ -326,16 +345,39 @@ public class CoordCommandUtils {
         }
     }
 
+    private static void resolveAbsoluteRange(Element event, StringBuilder instances, SyncCoordAction appInst,
+            Configuration conf, ELEvaluator eval, String strStart, int endIndex, String rangeStr) throws Exception {
+        StringBuilder bf = new StringBuilder();
+        bf.append("${coord:absoluteRange(\"").append(rangeStr).append("\",")
+                .append(endIndex).append(")}");
+        String matInstance = materializeInstance(event, bf.toString(), appInst, conf, eval);
+        if (matInstance != null && !matInstance.isEmpty()) {
+            if (instances.length() > 0) {
+                instances.append(CoordELFunctions.INSTANCE_SEPARATOR);
+            }
+            instances.append(matInstance);
+        }
+    }
+
+    private static void resolveInstanceRangeEndOfDuration(TimeUnit duration, Element event, StringBuilder instances,
+            SyncCoordAction appInst, Configuration conf, ELEvaluator eval, String strStart, int startIndex,
+            int endIndex) throws Exception {
+        Calendar startInstance = new StartInstanceFinder(startIndex, duration, CoordELFunctions.getDatasetTZ(eval),
+                appInst.getNominalTime()).getStartInstance();
+        resolveAbsoluteRange(event, instances, appInst, conf, eval, strStart, endIndex,
+                DateUtils.formatDateOozieTZ(startInstance));
+    }
+
     /**
      * Materialize one instance like current(-2)
      *
      * @param event : &lt;data-in&gt;
      * @param expr : instance like current(-1)
      * @param appInst : application specific info
-     * @param conf
+     * @param conf configuration
      * @param evalInst :ELEvaluator
      * @return materialized date string
-     * @throws Exception
+     * @throws Exception when function evaluation fails
      */
     public static String materializeInstance(Element event, String expr, SyncCoordAction appInst, Configuration conf,
             ELEvaluator evalInst) throws Exception {
@@ -350,9 +392,9 @@ public class CoordCommandUtils {
     /**
      * Create two new tags with &lt;uris&gt; and &lt;unresolved-instances&gt;.
      *
-     * @param event
-     * @param instances
-     * @throws Exception
+     * @param event event
+     * @param instances instances
+     * @throws Exception when function evaluation fails
      */
     private static String separateResolvedAndUnresolved(Element event, StringBuilder instances)
             throws Exception {
@@ -386,7 +428,7 @@ public class CoordCommandUtils {
      * @param unresolvedInstances : list of instance with latest function
      * @param urisWithDoneFlag : list of URIs with the done flag appended
      * @return : list of URIs separated by ";" as a string.
-     * @throws Exception
+     * @throws Exception when function evaluation fails
      */
     public static String createEarlyURIs(Element event, String instances, StringBuilder unresolvedInstances,
             StringBuilder urisWithDoneFlag) throws Exception {
@@ -429,11 +471,11 @@ public class CoordCommandUtils {
     }
 
     /**
-     * @param eAction
-     * @param coordAction
-     * @param conf
+     * @param eAction action xml element
+     * @param coordAction coordinator action
+     * @param conf configuration
      * @return boolean to determine whether the SLA element is present or not
-     * @throws CoordinatorJobException
+     * @throws CoordinatorJobException in case of coordinator problem
      */
     public static boolean materializeSLA(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
             throws CoordinatorJobException {
@@ -478,7 +520,7 @@ public class CoordCommandUtils {
      * @param conf job configuration
      * @param actionBean CoordinatorActionBean to materialize
      * @return one materialized action for specific nominal time
-     * @throws Exception
+     * @throws Exception when materialization fails due to url checks or evaluation
      */
     @SuppressWarnings("unchecked")
     public static String materializeOneInstance(String jobId, boolean dryrun, Element eAction, Date nominalTime,
@@ -555,8 +597,8 @@ public class CoordCommandUtils {
     /**
      * @param eAction the actionXml related element
      * @param actionBean the coordinator action bean
-     * @return
-     * @throws Exception
+     * @return actionXml returns actionXml as String
+     * @throws Exception when materialization fails due to url checks or evaluation
      */
     static String dryRunCoord(Element eAction, CoordinatorActionBean actionBean) throws Exception {
         String action = XmlUtils.prettyPrint(eAction).toString();
@@ -610,10 +652,10 @@ public class CoordCommandUtils {
      * tags Create uris for resolved instances. Create unresolved instance for
      * latest()/future().
      *
-     * @param events
-     * @param appInst
-     * @param conf
-     * @throws Exception
+     * @param events events
+     * @param appInst application instance
+     * @param conf configuration
+     * @throws Exception when materialization fails due to url checks or evaluation
      */
     private static void materializeOutputDataEvents(List<Element> events, SyncCoordAction appInst, Configuration conf)
             throws Exception {
@@ -674,7 +716,7 @@ public class CoordCommandUtils {
                 .createPullInputDependencies(isInputLogicSpecified);
         CoordInputDependency coordPushInputDependency = CoordInputDependencyFactory
                 .createPushInputDependencies(isInputLogicSpecified);
-        Map<String, String> unresolvedList = new HashMap<String, String>();
+        List<Pair<String, String>> unresolvedList = new ArrayList<Pair<String, String>>();
 
         URIHandlerService uriService = Services.get().get(URIHandlerService.class);
 
@@ -713,11 +755,11 @@ public class CoordCommandUtils {
 
             String tmpUnresolved = event.getChildTextTrim(UNRESOLVED_INSTANCES_TAG, event.getNamespace());
             if (tmpUnresolved != null) {
-                unresolvedList.put(name, tmpUnresolved);
+                unresolvedList.add(new Pair<String,String>(name, tmpUnresolved));
             }
         }
-        for(String unresolvedDatasetName:unresolvedList.keySet()){
-            coordPullInputDependency.addUnResolvedList(unresolvedDatasetName, unresolvedList.get(unresolvedDatasetName));
+        for (Pair<String, String> unresolvedDataset : unresolvedList) {
+            coordPullInputDependency.addUnResolvedList(unresolvedDataset.getFirst(), unresolvedDataset.getSecond());
         }
         actionBean.setPullInputDependencies(coordPullInputDependency);
         actionBean.setPushInputDependencies(coordPushInputDependency);
@@ -728,9 +770,9 @@ public class CoordCommandUtils {
     /**
      * Get resolved string from missDepList
      *
-     * @param missDepList
-     * @param resolved
-     * @param unresolved
+     * @param missDepList missing dependencies
+     * @param resolved resolved dependencies
+     * @param unresolved unresolved dependencies
      * @return resolved string
      */
     public static String getResolvedList(String missDepList, StringBuilder resolved, StringBuilder unresolved) {
@@ -750,9 +792,10 @@ public class CoordCommandUtils {
     /**
      * Get the next action time after a given time
      *
-     * @param targetDate
-     * @param coordJob
+     * @param targetDate target date
+     * @param coordJob coordinator job
      * @return the next valid action time
+     * @throws ParseException if parsing time fails
      */
     public static Date getNextValidActionTimeForCronFrequency(Date targetDate, CoordinatorJobBean coordJob) throws ParseException {
 
@@ -831,8 +874,8 @@ public class CoordCommandUtils {
      * @param coordJob The Coordinator Job
      * @param coordAction The Coordinator Action
      * @return the nominal time of the next action
-     * @throws ParseException
-     * @throws JDOMException
+     * @throws ParseException if parsing time fails
+     * @throws JDOMException in case of xml parsing error
      */
     public static Date computeNextNominalTime(CoordinatorJobBean coordJob, CoordinatorActionBean coordAction)
             throws ParseException, JDOMException {
@@ -881,6 +924,68 @@ public class CoordCommandUtils {
             URIHandlerException {
         String user = ParamChecker.notEmpty(actionConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         return pathExists(sPath, actionConf, user);
+    }
+
+    public static String getFirstMissingDependency(CoordinatorActionBean coordAction) {
+        CoordInputDependency coordPullInputDependency = coordAction.getPullInputDependencies();
+        CoordInputDependency coordPushInputDependency = coordAction.getPushInputDependencies();
+        String firstMissingDependencies = coordPullInputDependency.getFirstMissingDependency();
+        if (StringUtils.isEmpty(firstMissingDependencies) || firstMissingDependencies.trim().startsWith("${coord:")) {
+            firstMissingDependencies = coordPushInputDependency.getFirstMissingDependency();
+        }
+        return firstMissingDependencies;
+    }
+
+    /**
+     * Class to find get start instance
+     */
+    private static class StartInstanceFinder {
+
+        private int startIndex;
+        private TimeUnit timeUnit;
+        private TimeZone datasetTimeZone;
+        private Date nominalTime;
+
+        /**
+         * @param startIndex dataset index
+         * @param timeUnit time unit
+         * @param datasetTimeZone time zone of data set
+         * @param nominalTime nominal time of action
+         */
+        public StartInstanceFinder(int startIndex, TimeUnit timeUnit, TimeZone datasetTimeZone, Date nominalTime) {
+            this.startIndex = startIndex;
+            this.timeUnit = timeUnit;
+            this.datasetTimeZone = datasetTimeZone;
+            this.nominalTime = nominalTime;
+        }
+
+        /**
+         * Calculates the start instance. It put the start instance to the start
+         * of a day i.e. 00:00:00.
+         */
+        public Calendar getStartInstance() throws Exception {
+            Calendar startInstance = Calendar.getInstance(datasetTimeZone);
+            startInstance.setTime(nominalTime);
+            startInstance.set(Calendar.HOUR_OF_DAY, 0);
+            startInstance.set(Calendar.MINUTE, 0);
+            startInstance.set(Calendar.SECOND, 0);
+            switch (timeUnit) {
+                case WEEK:
+                    startInstance.set(Calendar.DAY_OF_WEEK, startInstance.getFirstDayOfWeek());
+                    startInstance.add(Calendar.WEEK_OF_YEAR, startIndex + 1);
+                    break;
+                case MONTH:
+                    int FIRST_DAY_OF_MONTH = 1;
+                    startInstance.set(Calendar.DAY_OF_MONTH, FIRST_DAY_OF_MONTH);
+                    startInstance.add(Calendar.MONTH, startIndex + 1);
+                    break;
+                case DAY:
+                    startInstance.add(Calendar.DATE, startIndex + 1);
+                    break;
+                default:
+            }
+            return startInstance;
+        }
     }
 
 }

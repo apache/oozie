@@ -54,31 +54,55 @@ import org.json.simple.JSONObject;
 
 @Entity
 @NamedQueries( {
-        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath = :appPath,w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency, w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.createdTimestamp = :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp = :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime, w.statusStr = :status, w.timeUnitStr = :timeUnit, w.appNamespace = :appNamespace, w.bundleId = :bundleId, w.matThrottling = :matThrottling  where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB", query = "update CoordinatorJobBean w set w.appName = :appName, w.appPath "
+                + "= :appPath,w.concurrency = :concurrency, w.conf = :conf, w.externalId = :externalId, w.frequency = :frequency,"
+                + " w.lastActionNumber = :lastActionNumber, w.timeOut = :timeOut, w.timeZone = :timeZone, w.createdTimestamp "
+                + "= :createdTime, w.endTimestamp = :endTime, w.execution = :execution, w.jobXml = :jobXml, w.lastActionTimestamp"
+                + " = :lastAction, w.lastModifiedTimestamp = :lastModifiedTime, w.nextMaterializedTimestamp "
+                + "= :nextMaterializedTime, w.origJobXml = :origJobXml, w.slaXml=:slaXml, w.startTimestamp = :startTime,"
+                + " w.statusStr = :status, w.timeUnitStr = :timeUnit, w.appNamespace = :appNamespace, w.bundleId = :bundleId,"
+                + " w.matThrottling = :matThrottling  where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS", query = "update CoordinatorJobBean w set w.statusStr =:status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS", query = "update CoordinatorJobBean w set w.statusStr =:status,"
+                + " w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_PENDING", query = "update CoordinatorJobBean w set w.pending = :pending, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_PENDING", query = "update CoordinatorJobBean w set w.pending = :pending,"
+                + " w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_BUNDLEID", query = "update CoordinatorJobBean w set w.bundleId = :bundleId where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_BUNDLEID", query = "update CoordinatorJobBean w set w.bundleId = :bundleId "
+                + "where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_APPNAMESPACE", query = "update CoordinatorJobBean w set w.appNamespace = :appNamespace where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_APPNAMESPACE", query = "update CoordinatorJobBean w set w.appNamespace "
+                + "= :appNamespace where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING", query = "update CoordinatorJobBean w set w.statusStr = :status,"
+                + " w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME", query = "update CoordinatorJobBean w set w.bundleId = :bundleId, w.appNamespace = :appNamespace, w.pauseTimestamp = :pauseTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_BUNDLEID_APPNAMESPACE_PAUSETIME", query = "update CoordinatorJobBean w set"
+                + " w.bundleId = :bundleId, w.appNamespace = :appNamespace, w.pauseTimestamp = :pauseTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_MODTIME", query = "update CoordinatorJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_MODTIME", query = "update CoordinatorJobBean w set w.statusStr = :status,"
+                + " w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING_MODTIME", query = "update CoordinatorJobBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING_MODTIME", query = "update CoordinatorJobBean w set w.statusStr "
+                + "= :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_LAST_MODIFIED_TIME", query = "update CoordinatorJobBean w set w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_LAST_MODIFIED_TIME", query = "update CoordinatorJobBean w set"
+                + " w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING_TIME", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastModifiedTimestamp = :lastModifiedTime, w.suspendedTimestamp = :suspendedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_STATUS_PENDING_TIME", query = "update CoordinatorJobBean w set w.statusStr "
+                + "= :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastModifiedTimestamp "
+                + "= :lastModifiedTime, w.suspendedTimestamp = :suspendedTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_MATERIALIZE", query = "update CoordinatorJobBean w set w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastActionTimestamp = :lastActionTime, w.lastActionNumber = :lastActionNumber, w.nextMaterializedTimestamp = :nextMatdTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_MATERIALIZE", query = "update CoordinatorJobBean w set w.statusStr = :status,"
+                + " w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.lastActionTimestamp = :lastActionTime,"
+                + " w.lastActionNumber = :lastActionNumber, w.nextMaterializedTimestamp = :nextMatdTime where w.id = :id"),
 
-        @NamedQuery(name = "UPDATE_COORD_JOB_CHANGE", query = "update CoordinatorJobBean w set w.endTimestamp = :endTime, w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.concurrency = :concurrency, w.pauseTimestamp = :pauseTime, w.lastActionNumber = :lastActionNumber, w.lastActionTimestamp = :lastActionTime, w.nextMaterializedTimestamp = :nextMatdTime, w.lastModifiedTimestamp = :lastModifiedTime where w.id = :id"),
+        @NamedQuery(name = "UPDATE_COORD_JOB_CHANGE", query = "update CoordinatorJobBean w set w.endTimestamp = :endTime,"
+                + " w.statusStr = :status, w.pending = :pending, w.doneMaterialization = :doneMaterialization, w.concurrency "
+                + "= :concurrency, w.pauseTimestamp = :pauseTime, w.lastActionNumber = :lastActionNumber, w.lastActionTimestamp "
+                + "= :lastActionTime, w.nextMaterializedTimestamp = :nextMatdTime, w.lastModifiedTimestamp = :lastModifiedTime"
+                + " where w.id = :id"),
 
         @NamedQuery(name = "UPDATE_COORD_JOB_CONF", query = "update CoordinatorJobBean w set w.conf = :conf where w.id = :id"),
 
@@ -90,58 +114,103 @@ import org.json.simple.JSONObject;
 
         @NamedQuery(name = "GET_COORD_JOB", query = "select OBJECT(w) from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_USER_APPNAME", query = "select w.user, w.appName from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_USER_APPNAME", query = "select w.user, w.appName from CoordinatorJobBean w "
+                + "where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_INPUT_CHECK", query = "select w.user, w.appName, w.statusStr, w.appNamespace, w.execution, w.frequency, w.timeUnitStr, w.timeZone, w.startTimestamp, w.endTimestamp, w.jobXml from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_INPUT_CHECK", query = "select w.user, w.appName, w.statusStr, w.appNamespace,"
+                + " w.execution, w.frequency, w.timeUnitStr, w.timeZone, w.startTimestamp, w.endTimestamp, w.jobXml "
+                + "from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_ACTION_READY", query = "select w.id, w.user, w.group, w.appName, w.statusStr, w.execution, w.concurrency, w.frequency, w.timeUnitStr, w.timeZone, w.startTimestamp, w.endTimestamp, w.jobXml from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_ACTION_READY", query = "select w.id, w.user, w.group, w.appName, w.statusStr,"
+                + " w.execution, w.concurrency, w.frequency, w.timeUnitStr, w.timeZone, w.startTimestamp, w.endTimestamp,"
+                + " w.jobXml from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_ACTION_KILL", query = "select w.id, w.user, w.group, w.appName, w.statusStr from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_ACTION_KILL", query = "select w.id, w.user, w.group, w.appName, w.statusStr "
+                + "from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_MATERIALIZE", query = "select w.id, w.user, w.group, w.appName, w.statusStr, w.frequency, w.matThrottling, w.timeOut, w.timeZone, w.startTimestamp, w.endTimestamp, w.pauseTimestamp, w.nextMaterializedTimestamp, w.lastActionTimestamp, w.lastActionNumber, w.doneMaterialization, w.bundleId, w.conf, w.jobXml, w.appNamespace, w.timeUnitStr, w.execution from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_MATERIALIZE", query = "select w.id, w.user, w.group, w.appName, w.statusStr,"
+                + " w.frequency, w.matThrottling, w.timeOut, w.timeZone, w.startTimestamp, w.endTimestamp, w.pauseTimestamp,"
+                + " w.nextMaterializedTimestamp, w.lastActionTimestamp, w.lastActionNumber, w.doneMaterialization, w.bundleId,"
+                + " w.conf, w.jobXml, w.appNamespace, w.timeUnitStr, w.execution from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_SUSPEND_KILL", query = "select w.id, w.user, w.group, w.appName, w.statusStr, w.bundleId, w.appNamespace, w.doneMaterialization from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_SUSPEND_KILL", query = "select w.id, w.user, w.group, w.appName, w.statusStr,"
+                + " w.bundleId, w.appNamespace, w.doneMaterialization from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_PENDING", query = "select OBJECT(w) from CoordinatorJobBean w where w.pending = 1 order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_PENDING", query = "select OBJECT(w) from CoordinatorJobBean w where w.pending = 1"
+                + " order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_CHANGED", query = "select OBJECT(w) from CoordinatorJobBean w where w.pending = 1 AND w.doneMaterialization = 1 AND w.lastModifiedTimestamp >= :lastModifiedTime"),
+        @NamedQuery(name = "GET_COORD_JOBS_CHANGED", query = "select OBJECT(w) from CoordinatorJobBean w where w.pending = 1 "
+                + "AND w.doneMaterialization = 1 AND w.lastModifiedTimestamp >= :lastModifiedTime"),
 
         @NamedQuery(name = "GET_COORD_JOBS_COUNT", query = "select count(w) from CoordinatorJobBean w"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_COLUMNS", query = "select w.id, w.appName, w.statusStr, w.user, w.group, w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w order by w.createdTimestamp desc"),
+        @NamedQuery(name = "GET_COORD_JOBS_COLUMNS", query = "select w.id, w.appName, w.statusStr, w.user, w.group, "
+                + "w.startTimestamp, w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, "
+                + "w.nextMaterializedTimestamp, w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut, w.bundleId "
+                + "from CoordinatorJobBean w order by w.createdTimestamp desc"),
 
         //TODO need to remove.
-        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN", query = "select OBJECT(w) from CoordinatorJobBean w where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr = 'RUNNINGWITHERROR') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN", query = "select OBJECT(w) from CoordinatorJobBean w "
+                + "where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr "
+                + "= 'RUNNINGWITHERROR') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) "
+                + "AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp "
+                + "AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) "
+                + "order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_OLDER_FOR_MATERIALIZATION", query = "select w.id from CoordinatorJobBean w where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr = 'RUNNINGWITHERROR') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) and w.matThrottling > ( select count(a.jobId) from CoordinatorActionBean a where a.jobId = w.id and a.statusStr = 'WAITING') order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_OLDER_FOR_MATERIALIZATION", query = "select w.id, w.nextMaterializedTimestamp " +
+                "from CoordinatorJobBean w "
+                + "where w.startTimestamp <= :matTime AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' or w.statusStr "
+                + "= 'RUNNINGWITHERROR') AND (w.nextMaterializedTimestamp < :matTime OR w.nextMaterializedTimestamp IS NULL) "
+                + "AND (w.nextMaterializedTimestamp IS NULL OR (w.endTimestamp > w.nextMaterializedTimestamp "
+                + "AND (w.pauseTimestamp IS NULL OR w.pauseTimestamp > w.nextMaterializedTimestamp))) and w.matThrottling "
+                + "> ( select count(a.jobId) from CoordinatorActionBean a where a.jobId = w.id and a.statusStr = 'WAITING') "
+                + "order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w "
+                + "where w.statusStr = :status AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' or w.statusStr = 'KILLED') AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_OLDER_THAN_STATUS", query = "select OBJECT(w) from CoordinatorJobBean w"
+                + " where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' or w.statusStr = 'KILLED') "
+                + "AND w.lastModifiedTimestamp <= :lastModTime order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_WITH_NO_PARENT_OLDER_THAN_STATUS", query = "select w.id from CoordinatorJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' or w.statusStr = 'KILLED' or w.statusStr = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime and w.bundleId is null order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COMPLETED_COORD_JOBS_WITH_NO_PARENT_OLDER_THAN_STATUS", query = "select w.id "
+                + "from CoordinatorJobBean w where ( w.statusStr = 'SUCCEEDED' OR w.statusStr = 'FAILED' or w.statusStr "
+                + "= 'KILLED' or w.statusStr = 'DONEWITHERROR') AND w.lastModifiedTimestamp <= :lastModTime and w.bundleId "
+                + "is null order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_UNPAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PREP' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_UNPAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr "
+                + "= 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'PREP' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_PAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr = 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_PAUSED", query = "select OBJECT(w) from CoordinatorJobBean w where w.statusStr "
+                + "= 'PAUSED' OR w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED' order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE", query = "select OBJECT(w) from CoordinatorJobBean w where w.bundleId = :bundleId order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE", query = "select OBJECT(w) from CoordinatorJobBean w where w.bundleId "
+                + "= :bundleId order by w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_WITH_PARENT_ID", query = "select w.id from CoordinatorJobBean w where w.bundleId = :parentId"),
+        @NamedQuery(name = "GET_COORD_JOBS_WITH_PARENT_ID", query = "select w.id from CoordinatorJobBean w where w.bundleId"
+                + " = :parentId"),
 
-        @NamedQuery(name = "GET_COORD_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from CoordinatorJobBean w where w.bundleId = :parentId and (w.statusStr NOT IN ('SUCCEEDED', 'FAILED', 'KILLED', 'DONEWITHERROR') OR w.lastModifiedTimestamp >= :lastModTime)"),
+        @NamedQuery(name = "GET_COORD_COUNT_WITH_PARENT_ID_NOT_READY_FOR_PURGE", query = "select count(w) from CoordinatorJobBean"
+                + " w where w.bundleId = :parentId and (w.statusStr NOT IN ('SUCCEEDED', 'FAILED', 'KILLED', 'DONEWITHERROR') "
+                + "OR w.lastModifiedTimestamp >= :lastModTime)"),
 
-        @NamedQuery(name = "GET_COORD_JOB_FOR_USER_APPNAME", query = "select w.user, w.appName from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_FOR_USER_APPNAME", query = "select w.user, w.appName from CoordinatorJobBean w "
+                + "where w.id = :id"),
 
         @NamedQuery(name = "GET_COORD_JOB_FOR_USER", query = "select w.user from CoordinatorJobBean w where w.id = :id"),
 
         @NamedQuery(name = "GET_COORD_JOB_STATUS", query = "select w.statusStr from CoordinatorJobBean w where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_JOB_STATUS_PARENTID", query = "select w.statusStr, w.bundleId from CoordinatorJobBean w where w.id = :id"),
+        @NamedQuery(name = "GET_COORD_JOB_STATUS_PARENTID", query = "select w.statusStr, w.bundleId from CoordinatorJobBean w"
+                + " where w.id = :id"),
 
-        @NamedQuery(name = "GET_COORD_IDS_FOR_STATUS_TRANSIT", query = "select DISTINCT w.id from CoordinatorActionBean a, CoordinatorJobBean w where w.id = a.jobId and a.lastModifiedTimestamp >= :lastModifiedTime and (w.statusStr IN ('PAUSED', 'RUNNING', 'RUNNINGWITHERROR', 'PAUSEDWITHERROR') or w.pending = 1)  and w.statusStr <> 'IGNORED'"),
+        @NamedQuery(name = "GET_COORD_IDS_FOR_STATUS_TRANSIT", query = "select DISTINCT w.id from CoordinatorActionBean a,"
+                + " CoordinatorJobBean w where w.id = a.jobId and a.lastModifiedTimestamp >= :lastModifiedTime "
+                + "and (w.statusStr IN ('PAUSED', 'RUNNING', 'RUNNINGWITHERROR', 'PAUSEDWITHERROR') or w.pending = 1)  "
+                + "and w.statusStr <> 'IGNORED'"),
 
-        @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE_BY_APPNAME_ID", query = "select w.id from CoordinatorJobBean w where ( w.appName IN (:appName) OR w.id IN (:appName) )  AND w.bundleId = :bundleId"),
+        @NamedQuery(name = "GET_COORD_JOBS_FOR_BUNDLE_BY_APPNAME_ID", query = "select w.id from CoordinatorJobBean w "
+                + "where ( w.appName IN (:appName) OR w.id IN (:appName) )  AND w.bundleId = :bundleId"),
 
         @NamedQuery(name = "GET_COORD_JOB_CONF", query = "select w.conf from CoordinatorJobBean w where w.id = :id"),
 
@@ -149,7 +218,13 @@ import org.json.simple.JSONObject;
 
 })
 @NamedNativeQueries({
-        @NamedNativeQuery(name = "GET_COORD_FOR_ABANDONEDCHECK", query = "select w.id, w.USER_NAME, w.group_name, w.APP_NAME from coord_jobs w where ( w.STATUS = 'RUNNING' or w.STATUS = 'RUNNINGWITHERROR' ) and w.start_time < ?2 and w.created_time < ?2 and w.id in (select failedJobs.job_id from (select a.job_id from coord_actions a where ( a.STATUS = 'FAILED' or a.STATUS = 'TIMEDOUT'  or a.STATUS = 'SUSPENDED') group by a.job_id having count(*) >= ?1 ) failedJobs LEFT OUTER JOIN (select b.job_id from coord_actions b where b.STATUS = 'SUCCEEDED' group by b.job_id having count(*) > 0 ) successJobs   on  failedJobs.job_id = successJobs.job_id where successJobs.job_id is null )")
+        @NamedNativeQuery(name = "GET_COORD_FOR_ABANDONEDCHECK", query = "select w.id, w.USER_NAME, w.group_name, w.APP_NAME "
+                + "from coord_jobs w where ( w.STATUS = 'RUNNING' or w.STATUS = 'RUNNINGWITHERROR' ) and w.start_time "
+                + "< ?2 and w.created_time < ?2 and w.id in (select failedJobs.job_id from (select a.job_id from coord_actions a "
+                + "where ( a.STATUS = 'FAILED' or a.STATUS = 'TIMEDOUT'  or a.STATUS = 'SUSPENDED') group by a.job_id "
+                + "having count(*) >= ?1 ) failedJobs LEFT OUTER JOIN (select b.job_id from coord_actions b where b.STATUS "
+                + "= 'SUCCEEDED' group by b.job_id having count(*) > 0 ) successJobs   on  failedJobs.job_id "
+                + "= successJobs.job_id where successJobs.job_id is null )")
 
 })
 @Table(name = "COORD_JOBS")
@@ -201,6 +276,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     private int lastActionNumber;
 
     @Basic
+    @Index
     @Column(name = "user_name")
     private String user = null;
 
@@ -232,6 +308,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     private java.sql.Timestamp startTimestamp = null;
 
     @Basic
+    @Index
     @Column(name = "end_time")
     private java.sql.Timestamp endTimestamp = null;
 
@@ -434,7 +511,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     /**
      * Set original job xml
      *
-     * @param origJobXml
+     * @param origJobXml the job xml
      */
     public void setOrigJobXml(String origJobXml) {
         if (this.origJobXml == null) {
@@ -513,6 +590,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set doneMaterialization
+     * @param i value to set
      */
     public void setDoneMaterialization(int i) {
         this.doneMaterialization = i;
@@ -685,6 +763,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set status
+     * @param status the status to set
      */
     public void setStatusStr(String status) {
         this.statusStr = status;
@@ -706,7 +785,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set time unit
-     *
+     * @param timeunit time unit to set
      */
     public void setTimeUnitStr(String timeunit) {
         this.timeUnitStr = timeunit;
@@ -716,9 +795,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.timeUnitStr = timeUnit.toString();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getTimeUnit()
-     */
     @Override
     public Timeunit getTimeUnit() {
         return Timeunit.valueOf(this.timeUnitStr);
@@ -727,15 +803,12 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
     /**
      * Set order
      *
-     * @param order
+     * @param order execution order to set
      */
     public void setExecutionOrder(Execution order) {
         this.execution = order.toString();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getExecutionOrder()
-     */
     @Override
     public Execution getExecutionOrder() {
         return Execution.valueOf(this.execution);
@@ -743,6 +816,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
 
     /**
      * Set execution order
+     * @param order order to set
      */
     public void setExecution(String order) {
         this.execution = order;
@@ -761,9 +835,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.lastActionTimestamp = DateUtils.convertDateToTimestamp(lastAction);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getLastActionTime()
-     */
     @Override
     public Date getLastActionTime() {
         return DateUtils.toDate(lastActionTimestamp);
@@ -782,9 +853,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.nextMaterializedTimestamp = DateUtils.convertDateToTimestamp(nextMaterializedTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getNextMaterializedTime()
-     */
     @Override
     public Date getNextMaterializedTime() {
         return DateUtils.toDate(nextMaterializedTimestamp);
@@ -830,9 +898,6 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.rest.JsonCoordinatorJob#getStartTime()
-     */
     @Override
     public Date getStartTime() {
         return DateUtils.toDate(startTimestamp);
@@ -1114,6 +1179,7 @@ public class CoordinatorJobBean implements Writable, CoordinatorJob, JsonBean {
         json.put(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, JsonUtils.formatDateRfc822(getLastActionTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME,
                 JsonUtils.formatDateRfc822(getNextMaterializedTime(), timeZoneId));
+        json.put(JsonTags.COORDINATOR_JOB_CREATED_TIME, JsonUtils.formatDateRfc822(getCreatedTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_START_TIME, JsonUtils.formatDateRfc822(getStartTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_END_TIME, JsonUtils.formatDateRfc822(getEndTime(), timeZoneId));
         json.put(JsonTags.COORDINATOR_JOB_PAUSE_TIME, JsonUtils.formatDateRfc822(getPauseTime(), timeZoneId));

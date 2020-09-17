@@ -56,20 +56,26 @@ public class StreamingMain extends MapReduceMain {
         if (value != null) {
             jobConf.set("stream.recordreader.class", value);
         }
-        String[] values = getStrings(actionConf, "oozie.streaming.record-reader-mapping");
+        String[] values = ActionUtils.getStrings(actionConf, "oozie.streaming.record-reader-mapping");
         for (String s : values) {
             String[] kv = s.split("=");
             jobConf.set("stream.recordreader." + kv[0], kv[1]);
         }
-        values = getStrings(actionConf, "oozie.streaming.env");
+        values = ActionUtils.getStrings(actionConf, "oozie.streaming.env");
         value = jobConf.get("stream.addenvironment", "");
         if (value.length() > 0) {
             value = value + " ";
         }
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(value);
+
         for (String s : values) {
-            value = value + s + " ";
+            buffer.append(s);
+            buffer.append(" ");
         }
-        jobConf.set("stream.addenvironment", value);
+
+        jobConf.set("stream.addenvironment", buffer.toString());
 
         super.addActionConf(jobConf, actionConf);
     }

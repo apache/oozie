@@ -29,12 +29,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
+
 import org.apache.hadoop.util.Shell;
 import org.mockito.Mockito;
 
-public class TestHostnameFilter extends TestCase {
+import org.junit.Test;
 
+public class TestHostnameFilter {
+
+    @Test
     public void testHostname() throws Exception {
         ServletRequest request = Mockito.mock(ServletRequest.class);
         Mockito.when(request.getRemoteAddr()).thenReturn("localhost");
@@ -61,6 +64,7 @@ public class TestHostnameFilter extends TestCase {
         filter.destroy();
     }
 
+    @Test
   public void testMissingHostname() throws Exception {
     ServletRequest request = Mockito.mock(ServletRequest.class);
     Mockito.when(request.getRemoteAddr()).thenReturn(null);

@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Load the number of pending actions for a status for a coordinator job.
@@ -33,10 +34,8 @@ public class CoordActionsPendingFalseStatusCountGetJPAExecutor implements JPAExe
     private String status = null;
 
     public CoordActionsPendingFalseStatusCountGetJPAExecutor(String coordJobId, String status) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
-        ParamChecker.notNull(status, "status");
-        this.coordJobId = coordJobId;
-        this.status = status;
+        this.coordJobId = Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
+        this.status = Objects.requireNonNull(status, "status cannot be null");
     }
 
     @Override

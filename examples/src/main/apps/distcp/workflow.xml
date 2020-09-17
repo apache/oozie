@@ -15,11 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.3" name="distcp-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="distcp-wf">
     <start to="distcp-node"/>
     <action name="distcp-node">
-        <distcp xmlns="uri:oozie:distcp-action:0.1">
-            <job-tracker>${jobTracker}</job-tracker>
+        <distcp xmlns="uri:oozie:distcp-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>

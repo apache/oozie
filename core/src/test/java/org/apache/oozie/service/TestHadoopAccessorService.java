@@ -18,7 +18,16 @@
 
 package org.apache.oozie.service;
 
-import org.apache.oozie.test.XTestCase;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.ipc.RemoteException;
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.security.authorize.AuthorizationException;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.oozie.test.XFsTestCase;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.fs.FileSystem;
@@ -27,14 +36,17 @@ import org.apache.oozie.util.IOUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.XConfiguration;
+import org.junit.Assert;
 
-public class TestHadoopAccessorService extends XTestCase {
+public class TestHadoopAccessorService extends XFsTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
@@ -97,9 +109,9 @@ public class TestHadoopAccessorService extends XTestCase {
         Services services = Services.get();
         HadoopAccessorService has = services.get(HadoopAccessorService.class);
         assertNotNull(has);
-        assertNotNull(has.createJobConf("*"));
-        assertNotNull(has.createJobConf("jt"));
-        assertEquals("bar", has.createJobConf("jt").get("foo"));
+        assertNotNull(has.createConfiguration("*"));
+        assertNotNull(has.createConfiguration("jt"));
+        assertEquals("bar", has.createConfiguration("jt").get("foo"));
         assertNotNull(has.createActionDefaultConf("*", "action"));
         assertNotNull(has.createActionDefaultConf("jt", "action"));
         assertNotNull(has.createActionDefaultConf("jt", "actionx"));
@@ -140,81 +152,84 @@ public class TestHadoopAccessorService extends XTestCase {
          */
         assertEquals("100", conf.get("action.testprop"));
         assertEquals("1", conf.get("default.testprop"));
-
-        // Check that properties load correctly
         assertEquals("org.apache.log4j.ConsoleAppender", conf.get("log4j.appender.oozie"));
         assertEquals("NONE, null", conf.get("log4j.logger.a"));
-
     }
 
-    public void testAccessor() throws Exception {
-        Services services = Services.get();
-        HadoopAccessorService has = services.get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(getJobTrackerUri());
-        conf.set("mapred.job.tracker", getJobTrackerUri());
-        conf.set("fs.default.name", getNameNodeUri());
-
-        URI uri = new URI(getNameNodeUri());
-
-        //valid user
-        String user = getTestUser();
-        String group = getTestGroup();
-
-        JobClient jc = has.createJobClient(user, conf);
-        assertNotNull(jc);
-        FileSystem fs = has.createFileSystem(user, new URI(getNameNodeUri()), conf);
-        assertNotNull(fs);
-        fs = has.createFileSystem(user, uri, conf);
-        assertNotNull(fs);
-
-        //invalid user
-
-        user = "invalid";
-
-        try {
-            has.createJobClient(user, conf);
-            fail();
-        }
-        catch (Throwable ex) {
-        }
-
-        try {
-            has.createFileSystem(user, uri, conf);
-            fail();
-        }
-        catch (Throwable ex) {
-        }
-    }
-
-    public void testGetMRDelegationTokenRenewer() throws Exception {
+    public void testCreateJobClient() throws Exception {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf jobConf = new JobConf(false);
-        assertEquals(new Text("oozie mr token"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf.set("mapred.job.tracker", "localhost:50300");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("mapreduce.jobtracker.address", "127.0.0.1:50300");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("yarn.resourcemanager.address", "localhost:8032");
-        jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
-        assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
 
-        // Try the above with logical URIs (i.e. for HA)
-        jobConf = new JobConf(false);
-        jobConf.set("mapred.job.tracker", "jt-ha-uri");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("mapreduce.jobtracker.address", "jt-ha-uri");
-        jobConf.set("mapreduce.jobtracker.kerberos.principal", "mapred/_HOST@KDC.DOMAIN.COM");
-        assertEquals(new Text("mapred/localhost@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
-        jobConf = new JobConf(false);
-        jobConf.set("yarn.resourcemanager.address", "rm-ha-uri");
-        jobConf.set("yarn.resourcemanager.principal", "rm/server.com@KDC.DOMAIN.COM");
-        assertEquals(new Text("rm/server.com@KDC.DOMAIN.COM"), has.getMRTokenRenewerInternal(jobConf));
+        JobClient jc = has.createJobClient(getTestUser(), conf);
+        assertNotNull(jc);
+        jc.getAllJobs();
+
+        JobConf conf2 = new JobConf(false);
+        conf2.set("mapred.job.tracker", getJobTrackerUri());
+        try {
+            has.createJobClient(getTestUser(), conf2);
+            fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
+        }
+        catch (HadoopAccessorException ex) {
+            assertEquals(ErrorCode.E0903, ex.getErrorCode());
+        }
+    }
+
+    public void testCreateYarnClient() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
+
+        YarnClient yc = has.createYarnClient(getTestUser(), conf);
+        assertNotNull(yc);
+        yc.getApplications();
+
+        try {
+            yc = has.createYarnClient("invalid-user", conf);
+            assertNotNull(yc);
+            yc.getApplications();
+            fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
+        }
+        catch (AuthorizationException ex) {
+        }
+
+        JobConf conf2 = new JobConf(false);
+        conf2.set("yarn.resourcemanager.address", getJobTrackerUri());
+        try {
+            has.createYarnClient(getTestUser(), conf2);
+            fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
+        }
+        catch (HadoopAccessorException ex) {
+            assertEquals(ErrorCode.E0903, ex.getErrorCode());
+        }
+    }
+
+    public void testCreateFileSystem() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
+
+        FileSystem fs = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), conf);
+        assertNotNull(fs);
+        fs.exists(new Path(getNameNodeUri(), "/foo"));
+
+        try {
+            fs = has.createFileSystem("invalid-user", new URI(getNameNodeUri()), conf);
+            assertNotNull(fs);
+            fs.exists(new Path(getNameNodeUri(), "/foo"));
+            fail("Should have thrown exception because not allowed to impersonate 'invalid-user'");
+        }
+        catch (RemoteException ex) {
+            assertEquals(AuthorizationException.class.getName(), ex.getClassName());
+        }
+
+        JobConf conf2 = new JobConf(false);
+        conf2.set("fs.default.name", getNameNodeUri());
+        try {
+            has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), conf2);
+            fail("Should have thrown exception because Configuration not created by HadoopAccessorService");
+        }
+        catch (HadoopAccessorException ex) {
+            assertEquals(ErrorCode.E0903, ex.getErrorCode());
+        }
     }
 
     public void testCheckSupportedFilesystem() throws Exception {
@@ -297,5 +312,112 @@ public class TestHadoopAccessorService extends XTestCase {
                     s1.equals(hae.getMessage()) || s2.equals(hae.getMessage()));
         }
         has.destroy();
+    }
+
+    public void testCreateLocalResourceForConfigurationFile() throws Exception {
+        HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
+        String filename = "foo.xml";
+        Configuration conf = has.createConfiguration(getNameNodeUri());
+        conf.set("foo", "bar");
+        LocalResource lRes = has.createLocalResourceForConfigurationFile(filename, getTestUser(), conf, getFileSystem().getUri(),
+                getFsTestCaseDir());
+        assertNotNull(lRes);
+        assertEquals(LocalResourceType.FILE, lRes.getType());
+        assertEquals(LocalResourceVisibility.APPLICATION, lRes.getVisibility());
+        Path resPath = ConverterUtils.getPathFromYarnURL(lRes.getResource());
+        assertEquals(new Path(getFsTestCaseDir(), "foo.xml"), resPath);
+        Configuration conf2 = new Configuration(false);
+        conf2.addResource(getFileSystem().open(resPath));
+        assertEquals("bar", conf2.get("foo"));
+    }
+
+    public void testCreateS3WithByteBufferProperties() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties(
+                "s3a://somebucket/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "s3a"),
+                "fs.s3a.fast.upload.buffer=bytebuffer,fs.s3a.impl.disable.cache=true");
+        assertEquals("Expected peroperty [bytebuffer] is not set.", "bytebuffer", fs.getConf().get("fs.s3a.fast.upload.buffer"));
+    }
+
+    public void testCreateS3WithDefaultProperties() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("s3a://somebucket/somedirectory/somefile.txt", null, null);
+        assertNotSame("Unxpected peroperty [bytebuffer] is set.", "bytebuffer", fs.getConf().get("fs.s3a.fast.upload.buffer"));
+    }
+
+    public void testCreateHdfsWithoutProperties() throws Exception {
+        createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt", null, null);
+    }
+
+    public void testCreateFileWithoutProperties() throws Exception {
+        createFileSystemWithCustomProperties("file://somebucket/somedirectory/somefile.txt", null, null);
+    }
+
+    public void testCreateWithoutSchemeWithoutProperties() throws Exception {
+        createFileSystemWithCustomProperties("/somebucket/somedirectory/somefile.txt", null, null);
+    }
+
+    public void testCreateHdfsWithInvalidProperties() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "hdfs"),
+                "fs.hdfs.custom.property1=value1,fs.hdfs.custom.property2");
+        Assert.assertEquals("value1", fs.getConf().get("fs.hdfs.custom.property1"));
+        Assert.assertEquals(null, fs.getConf().get("fs.hdfs.custom.property2"));
+    }
+
+    public void testCreateHdfsWithEqualSignInValuePropertiy() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "hdfs"),
+                "fs.hdfs.custom.property1=value1=value2");
+        Assert.assertEquals("value1=value2", fs.getConf().get("fs.hdfs.custom.property1"));
+        Assert.assertEquals(null, fs.getConf().get("value1"));
+        Assert.assertEquals(null, fs.getConf().get("value2"));
+    }
+
+    public void testCreateHdfsWithCommaSeparatedValues() throws Exception {
+        FileSystem fs = createFileSystemWithCustomProperties("hdfs://localhost:1234/somedirectory/somefile.txt",
+                String.format(HadoopAccessorService.FS_PROP_PATTERN, "hdfs"),
+                "fs.hdfs.custom.property1=value1,value2");
+        Assert.assertEquals("value1", fs.getConf().get("fs.hdfs.custom.property1"));
+        Assert.assertEquals(null, fs.getConf().get("value2"));
+    }
+
+    public void testIfNoCustomFsConfigProvidedBaseConfigRemainsTheSame() throws Exception {
+        HadoopAccessorService has = new HadoopAccessorService();
+        Configuration base = new XConfiguration();
+        base.set("foo.bar", "baz");
+        Configuration result = has.extendWithFileSystemSpecificPropertiesIfAny(new URI("hdfs://localhost:1234/"), base);
+        assertEquals("The two configuration object shall be the same", base, result);
+        assertEquals("Key foo.bar shall be present in result configuration", "baz", result.get("foo.bar"));
+        assertSame("The two configuration object shall be the same", base, result);
+    }
+
+    public void testIfMRLimitsIsInitialized() throws IOException, ServiceException {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("test-mapred-site.xml");
+        OutputStream os = new FileOutputStream(new File(getTestCaseConfDir() + "/hadoop-confx", "mapred-site.xml"));
+        IOUtils.copyStream(is, os);
+        HadoopAccessorService has = new HadoopAccessorService();
+        has.init(Services.get());
+        Assert.assertEquals("Limits class shall not use default value for number of counters.",
+                500,
+                has.createConfiguration("jt").getInt(MRJobConfig.COUNTERS_MAX_KEY, 120));
+    }
+
+    public FileSystem createFileSystemWithCustomProperties(
+            final String uri, final String fsKey, final String commaSeparatedKeyValues) throws Exception {
+        final HadoopAccessorService has = new HadoopAccessorService();
+        if (fsKey != null && commaSeparatedKeyValues != null) {
+            ConfigurationService.set(fsKey, commaSeparatedKeyValues);
+        }
+        has.init(new Configuration(false));
+        final Configuration conf = has.createConfiguration(null);
+        setS3CredentialProperties(conf);
+        final FileSystem fs = has.createFileSystem("user", new URI(uri), conf);
+        has.destroy();
+        return fs;
+    }
+
+    private void setS3CredentialProperties(final Configuration conf) {
+        conf.set("fs.s3a.access.key", "someAccessKey");
+        conf.set("fs.s3a.secret.key", "someSecretKey");
     }
 }

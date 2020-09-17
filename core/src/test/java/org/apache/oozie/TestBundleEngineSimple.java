@@ -18,19 +18,23 @@
 
 package org.apache.oozie;
 
-import junit.framework.TestCase;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.rest.BulkResponseImpl;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 /**
  * Test non-argument constructor and methods of {@link BundleEngine} that either throw exceptions or return null.
  * {@link BundleEngineException} covered as well.
  */
-public class TestBundleEngineSimple extends TestCase {
+public class TestBundleEngineSimple {
 
+    @Test
     public void testGetCoordJob1() {
         BundleEngine be = new BundleEngine();
         try {
@@ -42,6 +46,7 @@ public class TestBundleEngineSimple extends TestCase {
         }
     }
 
+    @Test
     public void testGetCoordJob4() {
         BundleEngine be = new BundleEngine();
         try {
@@ -53,6 +58,7 @@ public class TestBundleEngineSimple extends TestCase {
         }
     }
 
+    @Test
     public void testGetJob1() {
         BundleEngine be = new BundleEngine();
         try {
@@ -64,6 +70,7 @@ public class TestBundleEngineSimple extends TestCase {
         }
     }
 
+    @Test
     public void testGetJob3() {
         BundleEngine be = new BundleEngine();
         try {
@@ -76,6 +83,7 @@ public class TestBundleEngineSimple extends TestCase {
     }
 
     @SuppressWarnings("deprecation")
+    @Test
     public void testReRun2() {
         BundleEngine be = new BundleEngine();
         try {
@@ -88,6 +96,7 @@ public class TestBundleEngineSimple extends TestCase {
         }
     }
 
+    @Test
     public void testGetJobForExternalId() throws BundleEngineException {
         BundleEngine be = new BundleEngine();
         String job = be.getJobIdForExternalId("externalFoo");
@@ -98,6 +107,7 @@ public class TestBundleEngineSimple extends TestCase {
      * Test negative cases of the filter parsing by
      * {@link BundleEngine#parseFilter(String)}.
      */
+    @Test
     public void testParseFilterNegative() {
         BundleEngine be = new BundleEngine();
         // no eq sign in token:
@@ -138,6 +148,7 @@ public class TestBundleEngineSimple extends TestCase {
      * Test negative cases of method
      * {@link BundleEngine#parseBulkFilter(String)}
      */
+    @Test
     public void testParseBulkFilterNegative() {
         // incorrect key=value pair syntax:
         try {

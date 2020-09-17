@@ -37,13 +37,13 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 /**
- * Dummy class for testing MR framefork. Sleeps for a defined period 
- * of time in mapper and reducer. Generates fake input for map / reduce 
- * jobs. Note that generated number of input pairs is in the order 
+ * Dummy class for testing MR framefork. Sleeps for a defined period
+ * of time in mapper and reducer. Generates fake input for map / reduce
+ * jobs. Note that generated number of input pairs is in the order
  * of <code>numMappers * mapSleepTime / 100</code>, so the job uses
  * some disk space.
  */
-public class SleepJob extends Configured implements Tool,  
+public class SleepJob extends Configured implements Tool,
              Mapper<IntWritable, IntWritable, IntWritable, NullWritable>,
              Reducer<IntWritable, NullWritable, NullWritable, NullWritable>,
              Partitioner<IntWritable,NullWritable> {
@@ -57,7 +57,7 @@ public class SleepJob extends Configured implements Tool,
   public int getPartition(IntWritable k, NullWritable v, int numPartitions) {
     return k.get() % numPartitions;
   }
-  
+
   public static class EmptySplit implements InputSplit {
     public void write(DataOutput out) throws IOException { }
     public void readFields(DataInput in) throws IOException { }
@@ -113,7 +113,7 @@ public class SleepJob extends Configured implements Tool,
       OutputCollector<IntWritable, NullWritable> output, Reporter reporter)
       throws IOException {
 
-    //it is expected that every map processes mapSleepCount number of records. 
+    //it is expected that every map processes mapSleepCount number of records.
     try {
       reporter.setStatus("Sleeping... (" +
           (mapSleepDuration * (mapSleepCount - count)) + ") ms left");
@@ -139,7 +139,7 @@ public class SleepJob extends Configured implements Tool,
       reporter.setStatus("Sleeping... (" +
           (reduceSleepDuration * (reduceSleepCount - count)) + ") ms left");
         Thread.sleep(reduceSleepDuration);
-      
+
     }
     catch (InterruptedException ex) {
       throw (IOException)new IOException(
@@ -172,14 +172,14 @@ public class SleepJob extends Configured implements Tool,
   public int run(int numMapper, int numReducer, long mapSleepTime,
       int mapSleepCount, long reduceSleepTime,
       int reduceSleepCount) throws IOException {
-    JobConf job = setupJobConf(numMapper, numReducer, mapSleepTime, 
+    JobConf job = setupJobConf(numMapper, numReducer, mapSleepTime,
                   mapSleepCount, reduceSleepTime, reduceSleepCount);
     JobClient.runJob(job);
     return 0;
   }
 
-  public JobConf setupJobConf(int numMapper, int numReducer, 
-                                long mapSleepTime, int mapSleepCount, 
+  public JobConf setupJobConf(int numMapper, int numReducer,
+                                long mapSleepTime, int mapSleepCount,
                                 long reduceSleepTime, int reduceSleepCount) {
     JobConf job = new JobConf(getConf(), SleepJob.class);
     job.setNumMapTasks(numMapper);
@@ -232,11 +232,11 @@ public class SleepJob extends Configured implements Tool,
         recSleepTime = Long.parseLong(args[++i]);
       }
     }
-    
+
     // sleep for *SleepTime duration in Task by recSleepTime per record
     mapSleepCount = (int)Math.ceil(mapSleepTime / ((double)recSleepTime));
     reduceSleepCount = (int)Math.ceil(reduceSleepTime / ((double)recSleepTime));
-    
+
     return run(numMapper, numReducer, mapSleepTime, mapSleepCount,
         reduceSleepTime, reduceSleepCount);
   }

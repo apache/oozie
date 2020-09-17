@@ -29,6 +29,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
@@ -105,7 +106,7 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
      * Test the working of CoordActionKillXCommand by passing range
      * as date
      *
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public void testActionKillCommandDate() throws Exception {
         JPAService jpaService = services.get(JPAService.class);
@@ -122,10 +123,7 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         System.out.println(action.getNominalTime());
         assertEquals(CoordinatorAction.Status.KILLED, action.getStatus());
 
-        sleep(100);
-        WorkflowJobBean wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_FOR_SLA,
-                ids[3]);
-        assertEquals(WorkflowJob.Status.KILLED, wf.getStatus());
+        waitAndAssertWorkflowJobStatus(ids[3], WorkflowJob.Status.KILLED );
 
         CoordinatorJobBean job = jpaService.execute(new CoordJobGetJPAExecutor(ids[0]));
         assertEquals(CoordinatorJob.Status.RUNNING, job.getStatus());
@@ -134,6 +132,27 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
 
         job = jpaService.execute(new CoordJobGetJPAExecutor(ids[0]));
         assertEquals(CoordinatorJob.Status.KILLED, job.getStatus());
+    }
+
+    private void waitAndAssertWorkflowJobStatus(final String workflowJobId, final WorkflowJob.Status status) throws Exception {
+        waitFor(5 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                try {
+                    WorkflowJobBean wf = getWorkflowJobBean(workflowJobId);
+                    return wf.getStatus() == status;
+                }
+                catch (JPAExecutorException se) {
+                    throw new Exception("Workflow Job " + workflowJobId + " was not stored properly in db");
+                }
+            }
+        });
+        WorkflowJobBean wf = getWorkflowJobBean(workflowJobId);
+        assertEquals(status, wf.getStatus());
+    }
+
+    private WorkflowJobBean getWorkflowJobBean(String workflowJobId) throws JPAExecutorException {
+        return WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_FOR_SLA, workflowJobId);
     }
 
     private String[] createDBRecords() throws Exception {

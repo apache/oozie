@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
@@ -70,7 +70,7 @@ public class DependencyChecker {
      * @param stopOnFirstMissing Does not continue check for the rest of list if there is a missing
      *        dependency
      * @return ActionDependency which has the list of missing and available dependencies
-     * @throws CommandException
+     * @throws CommandException when dependency uri is malformed or resource is inaccessible
      */
     public static ActionDependency checkForAvailability(String missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {
@@ -86,7 +86,7 @@ public class DependencyChecker {
      * @param stopOnFirstMissing Does not continue check for the rest of list if there is a missing
      *        dependency
      * @return ActionDependency which has the list of missing and available dependencies
-     * @throws CommandException
+     * @throws CommandException when dependency uri is malformed or resource is inaccessible
      */
     public static ActionDependency checkForAvailability(List<String> missingDependencies, Configuration actionConf,
             boolean stopOnFirstMissing) throws CommandException {

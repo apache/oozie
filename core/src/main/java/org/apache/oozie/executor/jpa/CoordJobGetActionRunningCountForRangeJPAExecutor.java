@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 public class CoordJobGetActionRunningCountForRangeJPAExecutor implements JPAExecutor<Long> {
 
@@ -29,8 +30,7 @@ public class CoordJobGetActionRunningCountForRangeJPAExecutor implements JPAExec
     private String startAction, endAction;
 
     public CoordJobGetActionRunningCountForRangeJPAExecutor(String jobId, String startAction, String endAction) {
-        ParamChecker.notNull(jobId, "jobId");
-        this.jobId = jobId;
+        this.jobId = Objects.requireNonNull(jobId, "jobId cannot be null");
         this.startAction = startAction;
         this.endAction = endAction;
     }

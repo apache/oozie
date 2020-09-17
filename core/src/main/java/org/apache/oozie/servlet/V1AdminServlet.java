@@ -18,40 +18,33 @@
 
 package org.apache.oozie.servlet;
 
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.Services;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.ErrorCode;
-import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.client.rest.JMSConnectionInfoBean;
-import org.apache.oozie.client.rest.JsonBean;
-import org.apache.oozie.client.rest.JsonTags;
-import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.jms.JMSJobEventListener;
-import org.apache.oozie.service.CallableQueueService;
-import org.apache.oozie.service.JMSTopicService;
-import org.apache.oozie.service.Services;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 public class V1AdminServlet extends BaseAdminServlet {
 
     private static final long serialVersionUID = 1L;
     private static final String INSTRUMENTATION_NAME = "v1admin";
-    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[13];
+    private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[15];
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
-                                             Arrays.asList(new ParameterInfo(RestConstants.ADMIN_SYSTEM_MODE_PARAM, String.class, true,
+                Arrays.asList(new ParameterInfo(RestConstants.ADMIN_SYSTEM_MODE_PARAM, String.class, true,
                                                                              Arrays.asList("PUT"))));
         RESOURCES_INFO[1] = new ResourceInfo(RestConstants.ADMIN_OS_ENV_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
@@ -77,7 +70,9 @@ public class V1AdminServlet extends BaseAdminServlet {
                 Collections.EMPTY_LIST);
         RESOURCES_INFO[12] = new ResourceInfo(RestConstants.ADMIN_METRICS_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
-
+        RESOURCES_INFO[13] = new ResourceInfo(RestConstants.ADMIN_PURGE, Arrays.asList("PUT"), Collections.EMPTY_LIST);
+        RESOURCES_INFO[14] = new ResourceInfo(RestConstants.ADMIN_PROMETHEUS_RESOURCE, Arrays.asList("GET"),
+                Collections.EMPTY_LIST);
     }
 
     protected V1AdminServlet(String name) {
@@ -89,40 +84,19 @@ public class V1AdminServlet extends BaseAdminServlet {
         this(INSTRUMENTATION_NAME);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#populateOozieMode(org.json.
-     * simple.JSONObject)
-     */
     @SuppressWarnings("unchecked")
     @Override
     protected void populateOozieMode(JSONObject json) {
         json.put(JsonTags.OOZIE_SYSTEM_MODE, Services.get().getSystemMode().toString());
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#setOozieMode(javax.servlet.
-     * http.HttpServletRequest, javax.servlet.http.HttpServletResponse,
-     * java.lang.String)
-     */
     @Override
     protected void setOozieMode(HttpServletRequest request,
                                 HttpServletResponse response, String resourceName)
             throws XServletException {
-        if (resourceName.equals(RestConstants.ADMIN_STATUS_RESOURCE)) {
-            SYSTEM_MODE sysMode = SYSTEM_MODE.valueOf(request.getParameter(modeTag));
-            Services.get().setSystemMode(sysMode);
-            response.setStatus(HttpServletResponse.SC_OK);
-        }
-        else {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST,
-                                        ErrorCode.E0301, resourceName);
-        }
+        SYSTEM_MODE sysMode = SYSTEM_MODE.valueOf(request.getParameter(modeTag));
+        Services.get().setSystemMode(sysMode);
+        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     /**
@@ -131,8 +105,7 @@ public class V1AdminServlet extends BaseAdminServlet {
      * @param json the result json object that contains a JSONArray for the callable dump
      *
      * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple
-     * .JSONObject)
+     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple.JSONObject)
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -169,6 +142,11 @@ public class V1AdminServlet extends BaseAdminServlet {
 
     @Override
     protected void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+    }
+
+    @Override
+    protected void sendPrometheusResponse(HttpServletResponse response) throws IOException, XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
     }
 }

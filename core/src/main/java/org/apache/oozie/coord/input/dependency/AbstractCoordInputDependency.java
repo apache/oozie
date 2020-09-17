@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.command.CommandException;
@@ -111,15 +111,16 @@ public abstract class AbstractCoordInputDependency implements Writable, CoordInp
             missingDependenciesSet = new HashMap<String, List<String>>();
             availableDependenciesSet = new HashMap<String, List<String>>();
 
-            Set<String> keySets = dependencyMap.keySet();
-            for (String key : keySets) {
-                for (CoordInputInstance coordInputInstance : dependencyMap.get(key))
+            for (Entry<String, List<CoordInputInstance>> entry : dependencyMap.entrySet()) {
+                String key = entry.getKey();
+                for (CoordInputInstance coordInputInstance : entry.getValue()) {
                     if (coordInputInstance.isAvailable()) {
                         addToAvailableDependencies(key, coordInputInstance);
                     }
                     else {
                         addToMissingDependencies(key, coordInputInstance);
                     }
+                }
             }
         }
         catch (Exception e) {
@@ -294,7 +295,6 @@ public abstract class AbstractCoordInputDependency implements Writable, CoordInp
         WritableUtils.writeStringAsBytes(out,INTERNAL_VERSION_ID);
         out.writeBoolean(isDependencyMet);
         WritableUtils.writeMapWithList(out, dependencyMap);
-
     }
 
     @Override
@@ -310,6 +310,20 @@ public abstract class AbstractCoordInputDependency implements Writable, CoordInp
             return false;
         }
         return getAvailableDependencies(dataSet).size() == getDependencyMap().get(dataSet).size();
+    }
+
+    @Override
+    public Map<String, ActionDependency> getMissingDependencies(CoordinatorActionBean coordAction)
+            throws CommandException, IOException, JDOMException {
+        Map<String, ActionDependency> missingDependenciesMap = new HashMap<String, ActionDependency>();
+        for (String key : missingDependenciesSet.keySet()) {
+            missingDependenciesMap.put(key, new ActionDependency(missingDependenciesSet.get(key), new ArrayList<String>()));
+        }
+        return missingDependenciesMap;
+    }
+
+    public String getFirstMissingDependency() {
+        return null;
     }
 
 }

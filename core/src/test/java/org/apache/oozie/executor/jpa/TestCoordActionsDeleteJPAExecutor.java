@@ -122,8 +122,8 @@ public class TestCoordActionsDeleteJPAExecutor extends XDataTestCase {
                 jpaService.execute(new CoordActionsDeleteJPAExecutor(deleteList));
                 fail("Should have skipped commit for failover testing");
             }
-            catch (RuntimeException re) {
-                assertEquals("Skipping Commit for Failover Testing", re.getMessage());
+            catch (final JPAExecutorException jee) {
+                assertTrue(jee.getMessage().contains("Skipping Commit for Failover Testing"));
             }
         }
         finally {

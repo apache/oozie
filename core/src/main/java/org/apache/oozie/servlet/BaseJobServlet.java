@@ -41,11 +41,14 @@ import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public abstract class BaseJobServlet extends JsonRestServlet {
 
     private static final ResourceInfo RESOURCES_INFO[] = new ResourceInfo[1];
+
+    final static String NOT_SUPPORTED_MESSAGE = "Not supported in this version";
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo("*", Arrays.asList("PUT", "GET"), Arrays.asList(new ParameterInfo(
@@ -254,7 +257,8 @@ public abstract class BaseJobServlet extends JsonRestServlet {
                     throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0405);
                 }
             }
-            ServletUtilities.ValidateAppPath(wfPath, coordPath, bundlePath);
+
+            ServletUtilities.validateAppPath(wfPath, coordPath, bundlePath);
 
             if (wfPath != null) {
                 auth.authorizeForApp(user, acl, wfPath, "workflow.xml", conf);
@@ -353,6 +357,25 @@ public abstract class BaseJobServlet extends JsonRestServlet {
             json.put(JsonTags.STATUS, status);
             startCron();
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        } else if (show.equals(RestConstants.JOB_SHOW_ACTION_RETRIES_PARAM)) {
+            stopCron();
+            JSONArray retries = getActionRetries(request, response);
+            JSONObject json = new JSONObject();
+            json.put(JsonTags.WORKFLOW_ACTION_RETRIES, retries);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }
+        else if (show.equals(RestConstants.COORD_ACTION_MISSING_DEPENDENCIES)) {
+            stopCron();
+            JSONObject json = getCoordActionMissingDependencies(request, response);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+        }
+        else if (show.equals(RestConstants.JOB_SHOW_WF_ACTIONS_IN_COORD)) {
+            stopCron();
+            JSONObject json = getWfActionByJobIdAndName(request, response);
+            startCron();
+            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
@@ -363,10 +386,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to start a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void startJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -374,10 +397,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to resume a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void resumeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -385,10 +408,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to suspend a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void suspendJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -396,11 +419,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to kill a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @return
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @return a json object about the killed job, depends on implementation
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract JSONObject killJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -408,35 +431,35 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to change a coordinator job
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException TODO
-     */
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
+    */
     abstract void changeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
 
     /**
      * abstract method to re-run a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @param conf
-     * @throws XServletException
-     * @throws IOException TODO
+     * @param request the request
+     * @param response the response
+     * @param conf the configuration to use
+     * @return a json object about the rerun job, depends on implementation
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract JSONObject reRunJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException;
 
     /**
      * abstract method to get a job, either workflow or coordinator, in JsonBean representation
-     *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return JsonBean representation of a job, either workflow or coordinator
-     * @throws XServletException
-     * @throws IOException TODO
-     * @throws BaseEngineException
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
+     * @throws BaseEngineException thrown if the job could not be retrieved
      */
     abstract JsonBean getJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException, BaseEngineException;
@@ -444,11 +467,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get definition of a job, either workflow or coordinator
      *
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return job, either workflow or coordinator, definition in string format
-     * @throws XServletException
-     * @throws IOException TODO
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract String getJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
@@ -456,10 +479,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get and stream log information of job, either workflow or coordinator
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void streamJobLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
@@ -467,10 +490,10 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get and stream error log information of job, either workflow, coordinator or bundle
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
     IOException;
@@ -482,20 +505,21 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to create and stream image for runtime DAG -- workflow only
      *
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract void streamJobGraph(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
 
     /**
      * abstract method to get JMS topic name for a job
-     * @param request
-     * @param response
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return the name of the JMS topic
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract String getJMSTopicName(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
@@ -503,11 +527,11 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     /**
      * abstract method to get workflow job ids from the parent id
      * i.e. coordinator action
-     * @param request
-     * @param response
+     * @param request the request
+     * @param response the response
      * @return comma-separated list of workflow job ids
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case of any servlet error
+     * @throws IOException in case of any I/O error
      */
     abstract JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException;
@@ -570,4 +594,41 @@ public abstract class BaseJobServlet extends JsonRestServlet {
     abstract void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException;
 
+    /**
+     * Gets the action retries.
+     *
+     * @param request the request
+     * @param response the response
+     * @return the action retries
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
+
+    /**
+     * Abstract method to get the coord action missing dependencies.
+     *
+     * @param request the request
+     * @param response the response
+     * @return the coord input dependencies
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    abstract JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException;
+
+    /**
+     * get wf actions by name in coordinator job
+     *
+     * @param request the request
+     * @param response the response
+     * @return JSONObject the JSON object
+     * @throws XServletException the x servlet exception
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    protected JSONObject getWfActionByJobIdAndName(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+    }
 }

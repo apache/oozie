@@ -20,7 +20,6 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <title>Oozie Web Console</title>
         <link rel="stylesheet" type="text/css" href="ext-2.2/resources/css/ext-all.css"/>
-        <link rel="stylesheet" type="text/css" href="ext-2.2/resources/css/xtheme-default.css"/>
         <link rel="stylesheet" type="text/css" href="oozie-console.css"/>
 
         <!-- jquery needs to be before extjs -->
@@ -55,11 +54,15 @@
             import="org.apache.oozie.sla.service.SLAService"
             import="org.apache.oozie.service.InstrumentationService"
             import="org.apache.oozie.service.MetricsInstrumentationService"
+            import="org.apache.oozie.service.AuthorizationService"
+            import="org.apache.oozie.service.Services"
+
         %>
         <%
             boolean isSLAServiceEnabled = SLAService.isEnabled();
             boolean isInstrumentationServiceEnabled = InstrumentationService.isEnabled();
             boolean isMetricsInstrumentationServiceEnabled = MetricsInstrumentationService.isEnabled();
+            boolean showSystemInfo = !Services.get().get(AuthorizationService.class).isAuthorizedSystemInfo();
         %>
         <div id="oozie-body" style="padding:2">
             <div class="x-tab-panel-header x-unselectable x-tab-strip-top" style="width:1048">
@@ -69,6 +72,7 @@
                     var isSLAServiceEnabled = "<%=isSLAServiceEnabled%>";
                     var isInstrumentationServiceEnabled = "<%=isInstrumentationServiceEnabled%>";
                     var isMetricsInstrumentationServiceEnabled = "<%=isMetricsInstrumentationServiceEnabled%>";
+                    var showSystemInfo = "<%=showSystemInfo%>";
                     document.title = msg;
                     document.write(msg);
                  </script>

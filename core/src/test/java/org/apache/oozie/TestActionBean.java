@@ -19,8 +19,7 @@
 package org.apache.oozie;
 
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.test.XTestCase;
-import org.apache.oozie.WorkflowActionBean;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,8 +27,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Date;
 
-public class TestActionBean extends XTestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+public class TestActionBean {
+
+    @Test
     public void testAction() {
         WorkflowActionBean action = new WorkflowActionBean();
         action.setJobId("id");
@@ -64,6 +68,7 @@ public class TestActionBean extends XTestCase {
         assertEquals("job1,job2", action.getExternalChildIDs());
     }
 
+    @Test
     public void testEmptyWriteRead() throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -75,7 +80,4 @@ public class TestActionBean extends XTestCase {
         action.readFields(dis);
     }
 
-    public void testFullWriteRead() throws Exception {
-        //TODO
-    }
 }

@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<mappings xmlns="http://dozermapper.github.io/schema/bean-mapping"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://dozermapper.github.io/schema/bean-mapping
+          https://dozermapper.github.io/schema/bean-mapping.xsd">
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.Delete</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.DELETE</class-b>
+
+        <field>
+            <a>path</a>
+            <b>path</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.Mkdir</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.MKDIR</class-b>
+
+        <field>
+            <a>path</a>
+            <b>path</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.Prepare</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.PREPARE</class-b>
+
+        <field>
+            <a is-accessible="true">deletes</a>
+            <b is-accessible="true">delete</b>
+        </field>
+
+        <field>
+            <a is-accessible="true">mkdirs</a>
+            <b is-accessible="true">mkdir</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.Streaming</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.STREAMING</class-b>
+
+        <field>
+            <a>mapper</a>
+            <b>mapper</b>
+        </field>
+
+        <field>
+            <a>reducer</a>
+            <b>reducer</b>
+        </field>
+
+        <field>
+            <a>recordReader</a>
+            <b>recordReader</b>
+        </field>
+
+        <field>
+            <a>recordReaderMappings</a>
+            <b>recordReaderMapping</b>
+        </field>
+
+        <field>
+            <a>envs</a>
+            <b>env</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.Pipes</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.PIPES</class-b>
+
+        <field>
+            <a>map</a>
+            <b>map</b>
+        </field>
+
+        <field>
+            <a>reduce</a>
+            <b>reduce</b>
+        </field>
+
+        <field>
+            <a>inputformat</a>
+            <b>inputformat</b>
+        </field>
+
+        <field>
+            <a>partitioner</a>
+            <b>partitioner</b>
+        </field>
+
+        <field>
+            <a>writer</a>
+            <b>writer</b>
+        </field>
+
+        <field>
+            <a>program</a>
+            <b>program</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.MapReduceAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.MAPREDUCE</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field>
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field>
+            <a>streaming</a>
+            <b>streaming</b>
+        </field>
+
+        <field>
+            <a>pipes</a>
+            <b>pipes</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>configClass</a>
+            <b>configClass</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.DistcpAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.distcp.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.DistcpPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.DistcpConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>javaOpts</a>
+            <b>javaOpts</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>arg</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.HiveAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.hive.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.HivePrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.HiveLauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.HiveConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>script</a>
+            <b>script</b>
+        </field>
+
+        <field>
+            <a>query</a>
+            <b>query</b>
+        </field>
+
+        <field>
+            <a>params</a>
+            <b>param</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>argument</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.Hive2Action</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.hive2.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.Hive2PrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.Hive2LauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.Hive2ConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>jdbcUrl</a>
+            <b>jdbcUrl</b>
+        </field>
+
+        <field>
+            <a>password</a>
+            <b>password</b>
+        </field>
+
+        <field>
+            <a>script</a>
+            <b>script</b>
+        </field>
+
+        <field>
+            <a>query</a>
+            <b>query</b>
+        </field>
+
+        <field>
+            <a>params</a>
+            <b>param</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>argument</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.JavaAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.JAVA</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowLauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>mainClass</a>
+            <b>mainClass</b>
+        </field>
+
+        <field>
+            <a>javaOptsString</a>
+            <b>javaOpts</b>
+        </field>
+
+        <field>
+            <a>javaOpts</a>
+            <b>javaOpt</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>arg</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.BooleanToFLAGConverter">
+            <a get-method="isCaptureOutput">captureOutput</a>
+            <b>captureOutput</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.PigAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.PIG</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowLauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.InlineWorkflowConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>script</a>
+            <b>script</b>
+        </field>
+
+        <field>
+            <a>params</a>
+            <b>param</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>argument</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.ShellAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.shell.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.ShellPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.ShellLauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.ShellConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>executable</a>
+            <b>exec</b>
+        </field>
+
+        <field>
+            <a>environmentVariables</a>
+            <b>envVar</b>
+        </field>
+
+        <field>
+            <a>arguments</a>
+            <b>argument</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.BooleanToShellFLAGConverter">
+            <a get-method="isCaptureOutput">captureOutput</a>
+            <b>captureOutput</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.SparkAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.spark.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.SparkPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.SparkLauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.SparkConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>master</a>
+            <b>master</b>
+        </field>
+
+        <field>
+            <a>mode</a>
+            <b>mode</b>
+        </field>
+
+        <field>
+            <a>actionName</a>
+            <b>name</b>
+        </field>
+
+        <field>
+            <a>actionClass</a>
+            <b>clazz</b>
+        </field>
+
+        <field>
+            <a>jar</a>
+            <b>jar</b>
+        </field>
+
+        <field>
+            <a>sparkOpts</a>
+            <b>sparkOpts</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>arg</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.SqoopAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.sqoop.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.SqoopPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.SqoopLauncherConverter">
+            <a>launcher</a>
+            <b>launcher</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.SqoopConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field>
+            <a>command</a>
+            <b>command</b>
+        </field>
+
+        <field>
+            <a>arguments</a>
+            <b>arg</b>
+        </field>
+
+        <field>
+            <a>files</a>
+            <b>file</b>
+        </field>
+
+        <field>
+            <a>archives</a>
+            <b>archive</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.SshAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.ssh.ACTION</class-b>
+
+        <field>
+            <a>host</a>
+            <b>host</b>
+        </field>
+
+        <field>
+            <a>command</a>
+            <b>command</b>
+        </field>
+
+        <field>
+            <a>args</a>
+            <b>args</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.BooleanToSshFLAGConverter">
+            <a get-method="isCaptureOutput">captureOutput</a>
+            <b>captureOutput</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.EmailAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.email.ACTION</class-b>
+
+        <field>
+            <a is-accessible="true">to</a>
+            <b>to</b>
+        </field>
+
+        <field>
+            <a>cc</a>
+            <b>cc</b>
+        </field>
+
+        <field>
+            <a>bcc</a>
+            <b>bcc</b>
+        </field>
+
+        <field>
+            <a>subject</a>
+            <b>subject</b>
+        </field>
+
+        <field>
+            <a>body</a>
+            <b>body</b>
+        </field>
+
+        <field>
+            <a>contentType</a>
+            <b>contentType</b>
+        </field>
+
+        <field>
+            <a>attachment</a>
+            <b>attachment</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.FSAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.FS</class-b>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field>
+            <a>jobXmls</a>
+            <b>jobXml</b>
+        </field>
+
+        <field relationship-type="cumulative">
+            <a>deletes</a>
+            <b>deleteOrMkdirOrMove</b>
+            <b-hint>org.apache.oozie.fluentjob.api.generated.workflow.DELETE</b-hint>
+        </field>
+
+        <field relationship-type="cumulative">
+            <a>mkdirs</a>
+            <b>deleteOrMkdirOrMove</b>
+            <b-hint>org.apache.oozie.fluentjob.api.generated.workflow.MKDIR</b-hint>
+        </field>
+
+        <field relationship-type="cumulative">
+            <a>moves</a>
+            <b>deleteOrMkdirOrMove</b>
+            <b-hint>org.apache.oozie.fluentjob.api.generated.workflow.MOVE</b-hint>
+        </field>
+
+        <field relationship-type="cumulative">
+            <a>chmods</a>
+            <b>deleteOrMkdirOrMove</b>
+            <b-hint>org.apache.oozie.fluentjob.api.generated.workflow.CHMOD</b-hint>
+        </field>
+
+        <field relationship-type="cumulative">
+            <a>touchzs</a>
+            <b>deleteOrMkdirOrMove</b>
+            <b-hint>org.apache.oozie.fluentjob.api.generated.workflow.TOUCHZ</b-hint>
+        </field>
+
+        <field relationship-type="cumulative">
+            <a>chgrps</a>
+            <b>deleteOrMkdirOrMove</b>
+            <b-hint>org.apache.oozie.fluentjob.api.generated.workflow.CHGRP</b-hint>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.SubWorkflowAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.workflow.SUBWORKFLOW</class-b>
+
+        <field>
+            <a>appPath</a>
+            <b>appPath</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.BooleanToFLAGConverter">
+            <a get-method="isPropagatingConfiguration">propagateConfiguration</a>
+            <b>propagateConfiguration</b>
+        </field>
+
+        <field>
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+    </mapping>
+
+    <mapping type="one-way">
+        <class-a>org.apache.oozie.fluentjob.api.action.GitAction</class-a>
+        <class-b>org.apache.oozie.fluentjob.api.generated.action.git.ACTION</class-b>
+
+        <field>
+            <a>resourceManager</a>
+            <b>resourceManager</b>
+        </field>
+
+        <field>
+            <a>nameNode</a>
+            <b>nameNode</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.GitPrepareConverter">
+            <a>prepare</a>
+            <b>prepare</b>
+        </field>
+
+        <field custom-converter="org.apache.oozie.fluentjob.api.mapping.GitConfigurationConverter">
+            <a>configuration</a>
+            <b>configuration</b>
+        </field>
+
+        <field>
+            <a>gitUri</a>
+            <b>gitUri</b>
+        </field>
+
+        <field>
+            <a>branch</a>
+            <b>branch</b>
+        </field>
+
+        <field>
+            <a>keyPath</a>
+            <b>keyPath</b>
+        </field>
+
+        <field>
+            <a>destinationUri</a>
+            <b>destinationUri</b>
+        </field>
+    </mapping>
+</mappings>

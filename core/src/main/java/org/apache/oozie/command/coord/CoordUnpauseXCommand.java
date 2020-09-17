@@ -43,51 +43,26 @@ public class CoordUnpauseXCommand extends UnpauseTransitionXCommand {
         this.coordJob = coordJob;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return coordJob.getId();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     public void loadState() throws CommandException {
         prevStatus = coordJob.getStatus();
         LogUtils.setLogInfo(coordJob);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
         // update bundle action
@@ -97,21 +72,11 @@ public class CoordUnpauseXCommand extends UnpauseTransitionXCommand {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return coordJob;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() throws CommandException {
         try {

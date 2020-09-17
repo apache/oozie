@@ -74,6 +74,7 @@ public class EmailActionExecutor extends ActionExecutor {
     public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
     public static final String EMAIL_SMTP_PASS = CONF_PREFIX + "smtp.password";
     public static final String EMAIL_SMTP_FROM = CONF_PREFIX + "from.address";
+    public static final String EMAIL_SMTP_STARTTLS = CONF_PREFIX + "smtp.starttls.enable";
     public static final String EMAIL_SMTP_SOCKET_TIMEOUT_MS = CONF_PREFIX + "smtp.socket.timeout.ms";
     public static final String EMAIL_ATTACHMENT_ENABLED = CONF_PREFIX + "attachment.enabled";
 
@@ -87,7 +88,7 @@ public class EmailActionExecutor extends ActionExecutor {
     private final static String CONTENT_TYPE = "content_type";
 
     private final static String DEFAULT_CONTENT_TYPE = "text/plain";
-    private XLog LOG = XLog.getLog(getClass());
+    private final XLog LOG = XLog.getLog(getClass());
     public static final String EMAIL_ATTACHMENT_ERROR_MSG =
             "\n Note: This email is missing configured email attachments "
             + "as sending attachments in email action is disabled in the Oozie server. "
@@ -104,6 +105,7 @@ public class EmailActionExecutor extends ActionExecutor {
 
     @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Starting action");
         try {
             context.setStartData("-", "-", "-");
             Element actionXml = XmlUtils.parseXml(action.getConf());
@@ -131,7 +133,7 @@ public class EmailActionExecutor extends ActionExecutor {
         // <to> - One ought to exist.
         String text = element.getChildTextTrim(TO, ns);
         if (text.isEmpty()) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM001", "No receipents were specified in the to-address field.");
+            throw new ActionExecutorException(ErrorType.ERROR, "EM001", "No recipients were specified in the to-address field.");
         }
         tos = text.split(COMMA);
 
@@ -184,6 +186,7 @@ public class EmailActionExecutor extends ActionExecutor {
         Boolean smtpAuthBool = ConfigurationService.getBoolean(EMAIL_SMTP_AUTH);
         String smtpUser = ConfigurationService.get(EMAIL_SMTP_USER);
         String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
+        Boolean smtpStarttlsBool = ConfigurationService.getBoolean(EMAIL_SMTP_STARTTLS);
         String fromAddr = ConfigurationService.get(EMAIL_SMTP_FROM);
         Integer timeoutMillisInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS);
 
@@ -191,6 +194,7 @@ public class EmailActionExecutor extends ActionExecutor {
         properties.setProperty("mail.smtp.host", smtpHost);
         properties.setProperty("mail.smtp.port", smtpPortInt.toString());
         properties.setProperty("mail.smtp.auth", smtpAuthBool.toString());
+        properties.setProperty("mail.smtp.starttls.enable", smtpStarttlsBool.toString());
 
         // Apply sensible timeouts, as defaults are infinite. See https://s.apache.org/javax-mail-timeouts
         properties.setProperty("mail.smtp.connectiontimeout", timeoutMillisInt.toString());
@@ -216,9 +220,11 @@ public class EmailActionExecutor extends ActionExecutor {
             from = new InternetAddress(fromAddr);
             message.setFrom(from);
         } catch (AddressException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM002", "Bad from address specified in ${oozie.email.from.address}.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM002",
+                    "Bad from address specified in ${oozie.email.from.address}.", e);
         } catch (MessagingException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM003", "Error setting a from address in the message.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM003",
+                    "Error setting a from address in the message.", e);
         }
 
         try {
@@ -247,10 +253,10 @@ public class EmailActionExecutor extends ActionExecutor {
             if (attachments != null && attachments.length > 0 && ConfigurationService.getBoolean(EMAIL_ATTACHMENT_ENABLED)) {
                 Multipart multipart = new MimeMultipart();
 
-                // Set body text
-                MimeBodyPart bodyTextPart = new MimeBodyPart();
-                bodyTextPart.setText(body);
-                multipart.addBodyPart(bodyTextPart);
+                // Set body text/content
+                MimeBodyPart bodyPart = new MimeBodyPart();
+                bodyPart.setContent(body, contentType);
+                multipart.addBodyPart(bodyPart);
 
                 for (String attachment : attachments) {
                     URI attachUri = new URI(attachment);
@@ -273,12 +279,13 @@ public class EmailActionExecutor extends ActionExecutor {
                 }
                 message.setContent(body, contentType);
             }
+            message.saveChanges();
         }
         catch (AddressException e) {
             throw new ActionExecutorException(ErrorType.ERROR, "EM004", "Bad address format in <to> or <cc> or <bcc>.", e);
         }
         catch (MessagingException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM005", "An error occured while adding recipients.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM005", "An error occurred while adding recipients.", e);
         }
         catch (URISyntaxException e) {
             throw new ActionExecutorException(ErrorType.ERROR, "EM008", "Encountered an error when attaching a file", e);
@@ -292,10 +299,13 @@ public class EmailActionExecutor extends ActionExecutor {
             // (Session+Message has adequate details.)
             Transport.send(message);
         } catch (NoSuchProviderException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM006", "Could not find an SMTP transport provider to email.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM006",
+                    "Could not find an SMTP transport provider to email.", e);
         } catch (MessagingException e) {
-            throw new ActionExecutorException(ErrorType.ERROR, "EM007", "Encountered an error while sending the email message over SMTP.", e);
+            throw new ActionExecutorException(ErrorType.ERROR, "EM007",
+                    "Encountered an error while sending the email message over SMTP.", e);
         }
+        LOG.info("Email sent to [{0}]", to);
     }
 
     @Override
@@ -304,6 +314,7 @@ public class EmailActionExecutor extends ActionExecutor {
         WorkflowAction.Status status = externalStatus.equals("OK") ? WorkflowAction.Status.OK :
                                        WorkflowAction.Status.ERROR;
         context.setEndData(status, getActionSignal(status));
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
     }
 
     @Override
@@ -346,7 +357,7 @@ public class EmailActionExecutor extends ActionExecutor {
         URI uri;
         public URIDataSource(URI uri, String user) throws HadoopAccessorException {
             this.uri = uri;
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             fs = has.createFileSystem(user, uri, fsConf);
         }
 

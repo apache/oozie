@@ -25,10 +25,10 @@ import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.CoordinatorEngine.FILTER_COMPARATORS;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.Pair;
-import org.apache.oozie.util.ParamChecker;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Load the number of running actions for a coordinator job.
@@ -39,7 +39,7 @@ public class CoordActionsCountForJobIdJPAExecutor implements JPAExecutor<Integer
     private Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap;
 
     public CoordActionsCountForJobIdJPAExecutor(String coordJobId, Map<Pair<String, FILTER_COMPARATORS>, List<Object>> filterMap) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
+        Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
         this.coordJobId = coordJobId;
         this.filterMap = filterMap;
     }

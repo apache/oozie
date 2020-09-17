@@ -88,11 +88,10 @@ public class TestZKUtils extends ZKXTestCase {
             assertEquals(ZK_ID, meta.getId());
             assertEquals("servers", meta.getName());
             Map<String, String> data = meta.getPayload();
-            assertEquals(3, data.size());
+            assertEquals(2, data.size());
             assertEquals(ZK_ID, data.get("OOZIE_ID"));
             String url = ConfigUtils.getOozieURL(false);
             assertEquals(url, data.get("OOZIE_URL"));
-            assertEquals("java.util.HashMap", data.get("@class"));
         }
         finally {
             du.unregister();

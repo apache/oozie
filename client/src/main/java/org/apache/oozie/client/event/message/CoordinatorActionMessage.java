@@ -20,11 +20,11 @@ package org.apache.oozie.client.event.message;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * Class holding attributes related to Coordinator action message
@@ -81,7 +81,7 @@ public class CoordinatorActionMessage extends JobMessage {
 
     /**
      * Set the status of coordinator action
-     * @param status
+     * @param status the status to set
      */
     public void setStatus(CoordinatorAction.Status status) {
         this.status = status;
@@ -97,7 +97,7 @@ public class CoordinatorActionMessage extends JobMessage {
 
     /**
      * Set the nominal time
-     * @param nominalTime
+     * @param nominalTime the nominal time to set
      */
     public void setNominalTime(Date nominalTime) {
         this.nominalTime = nominalTime;
@@ -113,7 +113,7 @@ public class CoordinatorActionMessage extends JobMessage {
 
     /**
      * Set the error code
-     * @param errorCode
+     * @param errorCode the error code to set
      */
     public void setErrorCode(String errorCode) {
         this.errorCode = errorCode;
@@ -129,7 +129,7 @@ public class CoordinatorActionMessage extends JobMessage {
 
     /**
      * Set the error message
-     * @param errorMessage
+     * @param errorMessage the error message to set
      */
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
@@ -145,7 +145,7 @@ public class CoordinatorActionMessage extends JobMessage {
 
     /**
      * Set the missing dependency
-     * @param missingDependency
+     * @param missingDependency the missing dependency to set
      */
     public void setMissingDependency(String missingDependency) {
         this.missingDependency = missingDependency;

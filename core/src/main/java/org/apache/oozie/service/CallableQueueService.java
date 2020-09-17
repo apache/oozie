@@ -45,8 +45,11 @@ import org.apache.oozie.util.NamedThreadFactory;
 import org.apache.oozie.util.PollablePriorityDelayQueue;
 import org.apache.oozie.util.PriorityDelayQueue;
 import org.apache.oozie.util.PriorityDelayQueue.QueueElement;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * The callable queue service queues {@link XCallable}s for asynchronous execution.
@@ -69,6 +72,7 @@ import org.apache.oozie.util.XLog;
  * execution of Commands via a ThreadPool. Sets up a Delayed Queue to handle actions which will be ready for execution
  * sometime in the future.
  */
+@SuppressWarnings("deprecation")
 public class CallableQueueService implements Service, Instrumentable {
     private static final String INSTRUMENTATION_GROUP = "callablequeue";
     private static final String INSTR_IN_QUEUE_TIME_TIMER = "time.in.queue";
@@ -82,26 +86,33 @@ public class CallableQueueService implements Service, Instrumentable {
 
     public static final String CONF_QUEUE_SIZE = CONF_PREFIX + "queue.size";
     public static final String CONF_THREADS = CONF_PREFIX + "threads";
+    public static final String CONF_NEWIMPL = CONF_PREFIX + "queue.newImpl";
+    public static final String CONF_QUEUE_AWAIT_TERMINATION_TIMEOUT_SECONDS =
+            CONF_PREFIX + "queue.awaitTermination.timeout.seconds";
+    public static final String CONF_DELAYED_CALLABLE_THREADS = CONF_PREFIX + "delayedcallable.threads";
     public static final String CONF_CALLABLE_CONCURRENCY = CONF_PREFIX + "callable.concurrency";
     public static final String CONF_CALLABLE_NEXT_ELIGIBLE = CONF_PREFIX + "callable.next.eligible";
     public static final String CONF_CALLABLE_INTERRUPT_TYPES = CONF_PREFIX + "InterruptTypes";
     public static final String CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE = CONF_PREFIX + "InterruptMapMaxSize";
 
     public static final int CONCURRENCY_DELAY = 500;
-
     public static final int SAFE_MODE_DELAY = 60000;
+    public static final int MAX_CALLABLE_WAITTIME_MS = 30_000;
+    public static final int PRIORITIES = 3;
 
     private final Map<String, AtomicInteger> activeCallables = new HashMap<String, AtomicInteger>();
 
     private final Map<String, Date> uniqueCallables = new ConcurrentHashMap<String, Date>();
 
-    private final ConcurrentHashMap<String, Set<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<String, Set<XCallable<?>>>();
+    private final ConcurrentHashMap<String, Set<XCallable<?>>> interruptCommandsMap = new ConcurrentHashMap<>();
 
-    public static final HashSet<String> INTERRUPT_TYPES = new HashSet<String>();
+    private Set<String> interruptTypes;
 
     private int interruptMapMaxSize;
 
     private int maxCallableConcurrency;
+
+    private int queueAwaitTerminationTimeoutSeconds;
 
     private boolean callableBegin(XCallable<?> callable) {
         synchronized (activeCallables) {
@@ -122,11 +133,16 @@ public class CallableQueueService implements Service, Instrumentable {
         synchronized (activeCallables) {
             AtomicInteger counter = activeCallables.get(callable.getType());
             if (counter == null) {
-                throw new IllegalStateException("It should not happen");
+                throw new IllegalStateException("Counter value should not be null");
             }
             else {
                 counter.decrementAndGet();
             }
+        }
+
+        if (newImpl) {
+            asyncXCommandExecutor.commandFinished();
+            asyncXCommandExecutor.checkMaxConcurrency(callable.getType());
         }
     }
 
@@ -139,6 +155,21 @@ public class CallableQueueService implements Service, Instrumentable {
             else {
                 int i = counter.get();
                 return i < maxCallableConcurrency;
+            }
+        }
+    }
+
+    public boolean canSubmitCallable(XCallable<?> callable) {
+        synchronized (activeCallables) {
+            AtomicInteger counter = activeCallables.get(callable.getType());
+            if (counter == null) {
+                counter = new AtomicInteger(1);
+                activeCallables.put(callable.getType(), counter);
+                return true;
+            }
+            else {
+                int i = counter.get();
+                return i <= maxCallableConcurrency;
             }
         }
     }
@@ -277,7 +308,7 @@ public class CallableQueueService implements Service, Instrumentable {
                 separator = ",";
             }
             sb.append("]");
-            name = sb.toString();
+            name = StringUtils.intern(sb.toString());
         }
 
         @Override
@@ -344,11 +375,6 @@ public class CallableQueueService implements Service, Instrumentable {
             return null;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Object#toString()
-         */
         @Override
         public String toString() {
             if (callables.size() == 0) {
@@ -416,9 +442,11 @@ public class CallableQueueService implements Service, Instrumentable {
     private XLog log = XLog.getLog(getClass());
 
     private int queueSize;
-    private PriorityDelayQueue<CallableWrapper> queue;
+    private PriorityDelayQueue<CallableWrapper<?>> queue;
     private ThreadPoolExecutor executor;
     private Instrumentation instrumentation;
+    private boolean newImpl = false;
+    private AsyncXCommandExecutor asyncXCommandExecutor;
 
     /**
      * Convenience method for instrumentation counters.
@@ -452,13 +480,18 @@ public class CallableQueueService implements Service, Instrumentable {
         int threads = ConfigurationService.getInt(conf, CONF_THREADS);
         boolean callableNextEligible = ConfigurationService.getBoolean(conf, CONF_CALLABLE_NEXT_ELIGIBLE);
 
+        interruptTypes = new HashSet<>();
         for (String type : ConfigurationService.getStrings(conf, CONF_CALLABLE_INTERRUPT_TYPES)) {
             log.debug("Adding interrupt type [{0}]", type);
-            INTERRUPT_TYPES.add(type);
+            interruptTypes.add(type);
         }
+        interruptTypes = ImmutableSet.copyOf(interruptTypes);
 
         if (!callableNextEligible) {
-            queue = new PriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
+            queue = new PriorityDelayQueue<CallableWrapper<?>>(PRIORITIES,
+                    MAX_CALLABLE_WAITTIME_MS,
+                    TimeUnit.MILLISECONDS,
+                    queueSize) {
                 @Override
                 protected void debug(String msgTemplate, Object... msgArgs) {
                     log.trace(msgTemplate, msgArgs);
@@ -471,7 +504,10 @@ public class CallableQueueService implements Service, Instrumentable {
             // which has not yet reach max concurrency.Overrided method
             // 'eligibleToPoll' to check if the
             // element of this queue has reached the maximum concurrency.
-            queue = new PollablePriorityDelayQueue<CallableWrapper>(3, 1000 * 30, TimeUnit.MILLISECONDS, queueSize) {
+            queue = new PollablePriorityDelayQueue<CallableWrapper<?>>(PRIORITIES,
+                    MAX_CALLABLE_WAITTIME_MS,
+                    TimeUnit.MILLISECONDS,
+                    queueSize) {
                 @Override
                 protected void debug(String msgTemplate, Object... msgArgs) {
                     log.trace(msgTemplate, msgArgs);
@@ -493,28 +529,47 @@ public class CallableQueueService implements Service, Instrumentable {
 
         interruptMapMaxSize = ConfigurationService.getInt(conf, CONF_CALLABLE_INTERRUPT_MAP_MAX_SIZE);
 
+        newImpl = ConfigurationService.getBoolean(CONF_NEWIMPL, true);
+        log.info("Using new queue implementation: [{0}]", newImpl);
+        queueAwaitTerminationTimeoutSeconds = ConfigurationService.getInt(conf, CONF_QUEUE_AWAIT_TERMINATION_TIMEOUT_SECONDS);
+
+        if (newImpl) {
+            int delayedCallableThreads = ConfigurationService.getInt(CONF_DELAYED_CALLABLE_THREADS, 1);
+
+            asyncXCommandExecutor = new AsyncXCommandExecutor(threads,
+                    delayedCallableThreads,
+                    callableNextEligible,
+                    this,
+                    queueSize,
+                    MAX_CALLABLE_WAITTIME_MS,
+                    PRIORITIES,
+                    queueAwaitTerminationTimeoutSeconds);
+
+            executor = asyncXCommandExecutor.getExecutorService();
+        } else {
+            executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue,
+                    new NamedThreadFactory("CallableQueue")) {
+                protected void beforeExecute(Thread t, Runnable r) {
+                    super.beforeExecute(t,r);
+                    XLog.Info.get().clear();
+                }
+                protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+                    return (RunnableFuture<T>)callable;
+                }
+            };
+        }
+
         // IMPORTANT: The ThreadPoolExecutor does not always the execute
         // commands out of the queue, there are
         // certain conditions where commands are pushed directly to a thread.
         // As we are using a queue with DELAYED semantics (i.e. execute the
         // command in 5 mins) we need to make
         // sure that the commands are always pushed to the queue.
-        // To achieve this (by looking a the ThreadPoolExecutor.execute()
+        // To achieve this (by looking at the ThreadPoolExecutor.execute()
         // implementation, we are making the pool
         // minimum size equals to the maximum size (thus threads are keep always
         // running) and we are warming up
         // all those threads (the for loop that runs dummy runnables).
-        executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, (BlockingQueue) queue,
-                new NamedThreadFactory("CallableQueue")) {
-            protected void beforeExecute(Thread t, Runnable r) {
-                super.beforeExecute(t,r);
-                XLog.Info.get().clear();
-            }
-            protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-                return (RunnableFuture<T>)callable;
-            }
-        };
-
         for (int i = 0; i < threads; i++) {
             executor.execute(new Runnable() {
                 public void run() {
@@ -537,14 +592,20 @@ public class CallableQueueService implements Service, Instrumentable {
     @Override
     public void destroy() {
         try {
-            long limit = System.currentTimeMillis() + 30 * 1000;// 30 seconds
-            executor.shutdown();
             queue.clear();
-            while (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
-                log.info("Waiting for executor to shutdown");
-                if (System.currentTimeMillis() > limit) {
-                    log.warn("Gave up, continuing without waiting for executor to shutdown");
-                    break;
+            if (newImpl) {
+                asyncXCommandExecutor.shutdown();
+            }
+            else {
+                long limit = System.currentTimeMillis() + queueAwaitTerminationTimeoutSeconds * 1000;
+                executor.shutdown();
+                queue.clear();
+                while (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
+                    log.info("Waiting for executor to shutdown");
+                    if (System.currentTimeMillis() > limit) {
+                        log.warn("Gave up, continuing without waiting for executor to shutdown");
+                        break;
+                    }
                 }
             }
         }
@@ -567,29 +628,39 @@ public class CallableQueueService implements Service, Instrumentable {
      * @return int size of queue
      */
     public synchronized int queueSize() {
-        return queue.size();
+        return newImpl ? asyncXCommandExecutor.getSize() : queue.size();
     }
 
-    private synchronized boolean queue(CallableWrapper wrapper, boolean ignoreQueueSize) {
-        if (!ignoreQueueSize && queue.size() >= queueSize) {
-            log.warn("queue full, ignoring queuing for [{0}]", wrapper.getElement().getKey());
-            return false;
-        }
-        if (!executor.isShutdown()) {
-            if (wrapper.filterDuplicates()) {
-                wrapper.addToUniqueCallables();
-                try {
-                    executor.execute(wrapper);
-                }
-                catch (Throwable ree) {
-                    wrapper.removeFromUniqueCallables();
-                    throw new RuntimeException(ree);
+    private synchronized boolean queue(CallableWrapper<?> wrapper, boolean ignoreQueueSize) {
+        if (newImpl) {
+            if (asyncXCommandExecutor.isShutDown() || asyncXCommandExecutor.isTerminated()) {
+                log.warn("Async executor shutting down, ignoring queueing of [{0}]", wrapper.getElement().getKey());
+            }
+            else {
+                asyncXCommandExecutor.queue(wrapper, ignoreQueueSize);
+            }
+        } else {
+            if (!ignoreQueueSize && queue.size() >= queueSize) {
+                log.warn("queue full, ignoring queuing for [{0}]", wrapper.getElement().getKey());
+                return false;
+            }
+            if (!executor.isShutdown()) {
+                if (wrapper.filterDuplicates()) {
+                    wrapper.addToUniqueCallables();
+                    try {
+                        executor.execute(wrapper);
+                    }
+                    catch (Throwable ree) {
+                        wrapper.removeFromUniqueCallables();
+                        throw new RuntimeException(ree);
+                    }
                 }
             }
+            else {
+                log.warn("Executor shutting down, ignoring queueing of [{0}]", wrapper.getElement().getKey());
+            }
         }
-        else {
-            log.warn("Executor shutting down, ignoring queueing of [{0}]", wrapper.getElement().getKey());
-        }
+
         return true;
     }
 
@@ -637,7 +708,7 @@ public class CallableQueueService implements Service, Instrumentable {
         }
         else {
             checkInterruptTypes(callable);
-            queued = queue(new CallableWrapper(callable, delay), false);
+            queued = queue(new CallableWrapper<>(callable, delay), false);
             if (queued) {
                 incrCounter(INSTR_QUEUED_COUNTER, 1);
             }
@@ -700,8 +771,11 @@ public class CallableQueueService implements Service, Instrumentable {
 
     /**
      * check the interrupt map for the existence of an interrupt commands if
-     * exist a List of Interrupt Callable for the same lock key will bereturned,
+     * exist a List of Interrupt Callable for the same lock key will be returned,
      * otherwise it will return null
+     *
+     * @param lockKey key to check
+     * @return Set of interrupt callables
      */
     public Set<XCallable<?>> checkInterrupts(String lockKey) {
 
@@ -715,17 +789,17 @@ public class CallableQueueService implements Service, Instrumentable {
      * check if the callable is of an interrupt type and insert it into the map
      * accordingly
      *
-     * @param callable
+     * @param callable callable
      */
     public void checkInterruptTypes(XCallable<?> callable) {
         if ((callable instanceof CompositeCallable) && (((CompositeCallable) callable).getCallables() != null)) {
             for (XCallable<?> singleCallable : ((CompositeCallable) callable).getCallables()) {
-                if (INTERRUPT_TYPES.contains(singleCallable.getType())) {
+                if (interruptTypes.contains(singleCallable.getType())) {
                     insertCallableIntoInterruptMap(singleCallable);
                 }
             }
         }
-        else if (INTERRUPT_TYPES.contains(callable.getType())) {
+        else if (interruptTypes.contains(callable.getType())) {
             insertCallableIntoInterruptMap(callable);
         }
     }
@@ -734,7 +808,7 @@ public class CallableQueueService implements Service, Instrumentable {
      * insert a new callable in the Interrupt Command Map add a new element to
      * the list or create a new list accordingly
      *
-     * @param callable
+     * @param callable callable
      */
     public void insertCallableIntoInterruptMap(XCallable<?> callable) {
         if (interruptCommandsMap.size() < interruptMapMaxSize) {
@@ -762,14 +836,18 @@ public class CallableQueueService implements Service, Instrumentable {
      * @return the list of string that representing each CallableWrapper
      */
     public List<String> getQueueDump() {
-        List<String> list = new ArrayList<String>();
-        for (QueueElement<CallableWrapper> qe : queue) {
-            if (qe.toString() == null) {
-                continue;
+        if (newImpl) {
+            return asyncXCommandExecutor.getQueueDump();
+        } else {
+            List<String> list = new ArrayList<String>();
+            for (QueueElement<CallableWrapper<?>> qe : queue) {
+                if (qe.toString() == null) {
+                    continue;
+                }
+                list.add(qe.toString());
             }
-            list.add(qe.toString());
+            return list;
         }
-        return list;
     }
 
     /**
@@ -791,4 +869,7 @@ public class CallableQueueService implements Service, Instrumentable {
         return executor.invokeAll(tasks);
     }
 
+    public Set<String> getInterruptTypes() {
+        return interruptTypes;
+    }
 }

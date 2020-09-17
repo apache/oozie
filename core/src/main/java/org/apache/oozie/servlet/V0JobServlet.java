@@ -24,11 +24,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.BaseEngineException;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.apache.oozie.ErrorCode;
 
@@ -36,6 +38,8 @@ import org.apache.oozie.ErrorCode;
 public class V0JobServlet extends BaseJobServlet {
 
     private static final String INSTRUMENTATION_NAME = "v0job";
+
+    final static String NOT_SUPPORTED_MESSAGE = "Not supported in v0";
 
     public V0JobServlet() {
         super(INSTRUMENTATION_NAME);
@@ -189,7 +193,7 @@ public class V0JobServlet extends BaseJobServlet {
         try {
             dagEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
-        catch (DagEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -225,39 +229,53 @@ public class V0JobServlet extends BaseJobServlet {
     @Override
     protected JSONObject getJobsByParentId(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected String getJobStatus(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaDisableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
+
+    @Override
+    JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+    }
+
+    @Override
+    protected JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+
+    }
+
 }

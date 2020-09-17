@@ -16,12 +16,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.5" name="hive2-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="hive2-wf">
     <start to="hive2-node"/>
 
     <action name="hive2-node">
-        <hive2 xmlns="uri:oozie:hive2-action:0.1">
-            <job-tracker>${jobTracker}</job-tracker>
+        <hive2 xmlns="uri:oozie:hive2-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/hive2"/>

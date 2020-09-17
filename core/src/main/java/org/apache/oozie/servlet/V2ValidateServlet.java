@@ -44,6 +44,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class V2ValidateServlet extends JsonRestServlet {
@@ -53,7 +54,7 @@ public class V2ValidateServlet extends JsonRestServlet {
             new ResourceInfo("", Arrays.asList("POST"), Arrays.asList(
                     new ParameterInfo(RestConstants.FILE_PARAM, String.class, true, Arrays.asList("POST")),
                     new ParameterInfo(RestConstants.USER_PARAM, String.class, true, Arrays.asList("POST"))));
-
+    public static final String VALID_WORKFLOW_APP = "Valid workflow-app";
 
     public V2ValidateServlet() {
         super(INSTRUMENTATION_NAME, RESOURCE_INFO);
@@ -77,19 +78,18 @@ public class V2ValidateServlet extends JsonRestServlet {
             try {
                 URI uri = new URI(file);
                 HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-                Configuration fsConf = has.createJobConf(uri.getAuthority());
+                Configuration fsConf = has.createConfiguration(uri.getAuthority());
                 FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
                 Path path = new Path(uri.getPath());
-                IOUtils.copyCharStream(new InputStreamReader(fs.open(path)), stringWriter);
-
+                IOUtils.copyCharStream(new InputStreamReader(fs.open(path), StandardCharsets.UTF_8), stringWriter);
             } catch (Exception e) {
                 throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0505,
                         "File does not exist, "+ file);
             }
         }
         else {
-            IOUtils.copyCharStream(new InputStreamReader(request.getInputStream()), stringWriter);
+            IOUtils.copyCharStream(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8), stringWriter);
         }
         try {
             validate(stringWriter.toString());
@@ -98,12 +98,12 @@ public class V2ValidateServlet extends JsonRestServlet {
                     file + ", " + e.toString());
         }
 
-        JSONObject json = createJSON("Valid workflow-app");
+        JSONObject json = createJSON(VALID_WORKFLOW_APP);
         startCron();
         sendJsonResponse(response, HttpServletResponse.SC_OK, json);
     }
 
-    private void validate(String xml) throws Exception{
+    public void validate(String xml) throws Exception {
         SchemaService schemaService = Services.get().get(SchemaService.class);
         Schema[] schemas = {schemaService.getSchema(SchemaService.SchemaName.WORKFLOW),
                 schemaService.getSchema(SchemaService.SchemaName.COORDINATOR),
@@ -122,7 +122,7 @@ public class V2ValidateServlet extends JsonRestServlet {
                 }
                 // Check the root element declaration(workflow-app, coordinator-app, bundle-app).
                 // If invalid, move to next schema validation.
-                if (!e.getMessage().contains("cvc-elt.1.a")) {
+                if (!e.getMessage().contains("cvc-elt.1")) {
                     exception = e;
                     break;
                 }
@@ -137,8 +137,8 @@ public class V2ValidateServlet extends JsonRestServlet {
     }
 
     private void validateSchema(Schema schema, Reader src) throws SAXException, IOException, OozieCLIException{
-            Validator validator = schema.newValidator();
-            validator.validate(new StreamSource(src));
+        Validator validator = SchemaService.getValidator(schema);
+        validator.validate(new StreamSource(src));
     }
 
     private JSONObject createJSON(String content) {
@@ -146,5 +146,4 @@ public class V2ValidateServlet extends JsonRestServlet {
         jsonObject.put(JsonTags.VALIDATE, content);
         return jsonObject;
     }
-
 }

@@ -21,47 +21,26 @@ package org.apache.oozie.executor.jpa;
 import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
-import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.XLog;
 
 /**
  * Base Class of Query Executor
  */
 public abstract class QueryExecutor<T, E extends Enum<E>> {
-    private static XLog LOG;
 
     protected QueryExecutor() {
     }
 
     public abstract int executeUpdate(E namedQuery, T jobBean) throws JPAExecutorException;
 
-    public void insert(JsonBean bean) throws JPAExecutorException {
+    public void insert(final JsonBean bean) throws JPAExecutorException {
         if (bean != null) {
             JPAService jpaService = Services.get().get(JPAService.class);
-            EntityManager em = jpaService.getEntityManager();
-            try {
-                em.getTransaction().begin();
-                em.persist(bean);
-                em.getTransaction().commit();
-            }
-            catch (PersistenceException e) {
-                throw new JPAExecutorException(ErrorCode.E0603, e);
-            }
-            finally {
-                if (em.getTransaction().isActive()) {
-                    LOG.warn("insert ended with an active transaction, rolling back");
-                    em.getTransaction().rollback();
-                }
-                if (em.isOpen()) {
-                    em.close();
-                }
-            }
+            jpaService.execute(new JsonBeanPersisterExecutor(bean));
         }
     }
 

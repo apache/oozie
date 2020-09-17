@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.CoordinatorJobBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the CoordinatorJob bean.
@@ -31,21 +32,15 @@ public class CoordJobInsertJPAExecutor implements JPAExecutor<String> {
     private CoordinatorJobBean coordJob = null;
 
     public CoordJobInsertJPAExecutor(CoordinatorJobBean coordJob) {
-        ParamChecker.notNull(coordJob, "coordJob");
+        Objects.requireNonNull(coordJob, "coordJob cannot be null");
         this.coordJob = coordJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
     	return "CoordJobInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(coordJob);

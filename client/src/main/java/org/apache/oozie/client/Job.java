@@ -113,7 +113,7 @@ public interface Job {
     /**
      * Set the status of the job
      *
-     * @param status
+     * @param status the status to set
      */
     void setStatus(Job.Status status);
 

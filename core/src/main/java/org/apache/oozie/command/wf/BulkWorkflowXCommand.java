@@ -45,6 +45,7 @@ public class BulkWorkflowXCommand extends WorkflowXCommand<WorkflowsInfo> {
      * @param start starting from this index in the list of workflows matching the filter are killed
      * @param length number of workflows to be killed from the list of workflows matching the filter and starting from
      *        index "start".
+     * @param operation operation type
      */
     public BulkWorkflowXCommand(Map<String, List<String>> filter, int start, int length, OperationType operation) {
         super("bulkkill", "bulkkill", 1, true);
@@ -54,9 +55,6 @@ public class BulkWorkflowXCommand extends WorkflowXCommand<WorkflowsInfo> {
         this.operation = operation;
     }
 
-    /* (non-Javadoc)
-    * @see org.apache.oozie.command.XCommand#execute()
-    */
     @Override
     protected WorkflowsInfo execute() throws CommandException {
         try {
@@ -93,33 +91,21 @@ public class BulkWorkflowXCommand extends WorkflowXCommand<WorkflowsInfo> {
         }
     }
 
-    /* (non-Javadoc)
-    * @see org.apache.oozie.command.XCommand#getEntityKey()
-    */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         loadJobs();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
     }

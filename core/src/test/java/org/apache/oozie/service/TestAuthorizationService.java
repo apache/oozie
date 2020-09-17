@@ -19,15 +19,18 @@
 package org.apache.oozie.service;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -79,22 +82,37 @@ public class TestAuthorizationService extends XDataTestCase {
     private Services services;
 
     private void init(boolean useDefaultGroup, boolean useAdminUsersFile) throws Exception {
+        boolean useAdminGroups = !useAdminUsersFile;
+        init(useDefaultGroup, StringUtils.EMPTY, useAdminUsersFile, false, useAdminGroups);
+    }
+
+    private void init(boolean useDefaultGroup, String systemInfoAuthUsers,
+                      boolean useAdminUsersFile, boolean useOozieSiteForAdminUsers, boolean useAdminGroups) throws
+            Exception {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
         services = new Services();
         Configuration conf = services.getConf();
         if (useAdminUsersFile) {
             Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
-            Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));
+            Writer adminListWriter = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseConfDir(),
+                    "adminusers.txt")), StandardCharsets.UTF_8);
             IOUtils.copyCharStream(adminListReader, adminListWriter);
         }
-        else {
+        if (useAdminGroups) {
             conf.set(AuthorizationService.CONF_ADMIN_GROUPS, getTestGroup());
         }
+
+        if (useOozieSiteForAdminUsers) {
+            conf.set(AuthorizationService.CONF_ADMIN_USERS, getAdminUser());
+        }
+
+        conf.set(AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS, systemInfoAuthUsers);
         conf.set(Services.CONF_SERVICE_CLASSES,
-                 conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() +
-                 "," + DummyGroupsService.class.getName());
+                conf.get(Services.CONF_SERVICE_CLASSES) + "," + AuthorizationService.class.getName() + ","
+                        + DummyGroupsService.class.getName());
         conf.set(AuthorizationService.CONF_DEFAULT_GROUP_AS_ACL, Boolean.toString(useDefaultGroup));
+        conf.setBoolean(AuthorizationService.CONF_AUTHORIZATION_ENABLED, true);
         services.init();
         services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, true);
         services.get(AuthorizationService.class).init(services);
@@ -121,7 +139,8 @@ public class TestAuthorizationService extends XDataTestCase {
     private void _testAuthorizationService(boolean useDefaultGroup) throws Exception {
         init(useDefaultGroup, true);
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
@@ -144,7 +163,7 @@ public class TestAuthorizationService extends XDataTestCase {
 
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
-        Configuration fsConf = has.createJobConf(uri.getAuthority());
+        Configuration fsConf = has.createConfiguration(uri.getAuthority());
         FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
 
         Path path = new Path(fileSystem.getWorkingDirectory(), UUID.randomUUID().toString());
@@ -227,9 +246,9 @@ public class TestAuthorizationService extends XDataTestCase {
 
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         URI uri = getFileSystem().getUri();
-        Configuration fsConf = has.createJobConf(uri.getAuthority());
+        Configuration fsConf = has.createConfiguration(uri.getAuthority());
         FileSystem fileSystem = has.createFileSystem(getTestUser(), uri, fsConf);
-        
+
         try {
             as.authorizeForGroup(getTestUser3(), getTestGroup());
             fail();
@@ -304,8 +323,10 @@ public class TestAuthorizationService extends XDataTestCase {
         }
     }
 
-    private void _testAdminUsers(boolean useAdminFile, String adminUser, String regularUser) throws Exception {
-        init(true, useAdminFile);
+
+    private void _testAdminUsers(boolean useAdminFile, String adminUser, String regularUser,
+                                 boolean adminUserFromOozieSite, boolean useAdminGroup) throws Exception {
+        init(true, StringUtils.EMPTY, useAdminFile, adminUserFromOozieSite, useAdminGroup );
 
         AuthorizationService as = services.get(AuthorizationService.class);
         as.authorizeForAdmin(adminUser, false);
@@ -316,19 +337,68 @@ public class TestAuthorizationService extends XDataTestCase {
         }
         catch (AuthorizationException ex) {
         }
+    }
+
+    public void testAdminUsersWithAdminFile() throws Exception {
+        _testAdminUsers(true, "admin", getTestUser(), false, false);
+    }
+
+    public void testAdminUsersWithAdminGroup() throws Exception {
+        _testAdminUsers(false, getTestUser(), getTestUser2(), false, true);
+    }
+
+    public void testAuthorizedSystemInfoDefaultSuccess() throws Exception {
+        //AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS is empty
+        init(true, StringUtils.EMPTY, false, false, true);
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser", "proxyUser");
+    }
+
+    public void testAuthorizedSystemInfoSuccess() throws Exception {
+        //Set AuthorizationService.CONF_SYSTEM_INFO_AUTHORIZED_USERS to proxyUser,regularUser
+        init(true, "proxyUser,regularUser", false, false, true);
+
+        //Use proxyUser in request
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", "proxyUser");
+
+        //Use regularUser in request
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser", "proxyUser1");
+
+        //The proxy user and regular user used in the request are different. Proxy user belongs to one of the
+        //admin groups in AuthorizationService.CONF_ADMIN_GROUPS
+        services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", getTestUser());
+    }
+
+    public void testAuthorizedSystemInfoFailure() throws Exception {
+        init(true, "proxyUser,regularUser", false, false, true);
         try {
-            as.authorizeForAdmin(regularUser, true);
+            services.get(AuthorizationService.class).authorizeForSystemInfo("regularUser1", "proxyUser1");
+            fail("Should have thrown exception because regularUser1 or proxyUser1 are not authorized to access system info");
+        }
+        catch (AuthorizationException ex) {
+            assertEquals("Exception message is different than expected",
+                    "E0503: User [regularUser1] does not have admin " + "privileges", ex.getMessage());
+        }
+    }
+
+    public void testWhenDefinedInConfigurationThenAdminPrivilegesAllowed() throws Exception {
+        _testAdminUsers(false, getAdminUser(), getTestUser(), true, false);
+    }
+
+    public void testWhenDefinedInAdminFileAndConfigurationThenAllowBothAdmins() throws Exception {
+        init(true, StringUtils.EMPTY, true, true, false );
+
+        AuthorizationService as = services.get(AuthorizationService.class);
+        as.authorizeForAdmin(getAdminUser(), false);
+        as.authorizeForAdmin(getAdminUser(), true);
+        as.authorizeForAdmin("admin", false);
+        as.authorizeForAdmin("admin", true);
+        try {
+            as.authorizeForAdmin(getTestUser(), true);
             fail();
         }
         catch (AuthorizationException ex) {
         }
-    }
 
-    public void testAdminUsersWithAdminFile() throws Exception {
-        _testAdminUsers(true, "admin", getTestUser());
-    }
 
-    public void testAdminUsersWithAdminGroup() throws Exception {
-        _testAdminUsers(false, getTestUser(), getTestUser2());
     }
 }

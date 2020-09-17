@@ -34,9 +34,6 @@ import org.apache.oozie.util.DateUtils;
 public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
     Services services;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.test.XFsTestCase#setUp()
-     */
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -44,9 +41,6 @@ public class TestBundleJobsGetForPurgeJPAExecutor extends XDataTestCase {
         services.init();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.test.XFsTestCase#tearDown()
-     */
     @Override
     protected void tearDown() throws Exception {
         services.destroy();

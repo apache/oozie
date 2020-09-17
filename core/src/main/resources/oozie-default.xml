@@ -88,12 +88,25 @@
     </property>
 
     <property>
+        <name>oozie.action.dependency.deduplicate</name>
+        <value>false</value>
+        <description>
+            If true, then Oozie will remove all the duplicates from the list of dependencies when they are passed to
+            the jobtracker. Higher priority dependencies will remain as the following:
+            Original list: "/a/a.jar#a.jar,/a/b.jar#b.jar,/b/a.jar,/b/b.jar,/c/d.jar"
+            Deduplicated list: "/a/a.jar#a.jar,/a/b.jar#b.jar,/c/d.jar"
+            With other words, priority order is: action jar > user workflow libs > action libs > system lib,
+            where dependency with greater prio is used.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.processing.timezone</name>
         <value>UTC</value>
         <description>
             Oozie server timezone. Valid values are UTC and GMT(+/-)####, for example 'GMT+0530' would be India
             timezone. All dates parsed and genered dates by Oozie Coordinator/Bundle will be done in the specified
-            timezone. The default value of 'UTC' should not be changed under normal circumtances. If for any reason
+            timezone. The default value of 'UTC' should not be changed under normal circumstances. If for any reason
             is changed, note that GMT(+/-)#### timezones do not observe DST changes.
         </description>
     </property>
@@ -102,7 +115,7 @@
 
     <property>
         <name>oozie.base.url</name>
-        <value>http://localhost:8080/oozie</value>
+        <value>http://${oozie.http.hostname}:${oozie.http.port}/oozie</value>
         <description>
              Base Oozie URL.
         </description>
@@ -138,7 +151,7 @@
         <name>oozie.services</name>
         <value>
             org.apache.oozie.service.SchedulerService,
-            org.apache.oozie.service.InstrumentationService,
+            org.apache.oozie.service.MetricsInstrumentationService,
             org.apache.oozie.service.MemoryLocksService,
             org.apache.oozie.service.UUIDService,
             org.apache.oozie.service.ELService,
@@ -152,7 +165,6 @@
             org.apache.oozie.service.LiteWorkflowAppService,
             org.apache.oozie.service.JPAService,
             org.apache.oozie.service.StoreService,
-            org.apache.oozie.service.SLAStoreService,
             org.apache.oozie.service.DBLiteWorkflowStoreService,
             org.apache.oozie.service.CallbackService,
             org.apache.oozie.service.ActionService,
@@ -192,7 +204,23 @@
     <property>
         <name>oozie.service.XLogStreamingService.buffer.len</name>
         <value>4096</value>
-        <description>4K buffer for streaming the logs progressively</description>
+        <description>4K buffer for streaming the logs progressively
+        </description>
+    </property>
+    <property>
+        <name>oozie.service.XLogStreamingService.error.buffer.len</name>
+        <value>2048</value>
+        <description>2K buffer for streaming the error logs
+            progressively
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.XLogStreamingService.audit.buffer.len</name>
+        <value>3</value>
+        <description>Number of lines for streaming the audit logs
+            progressively
+        </description>
     </property>
 
  <!-- HCatAccessorService -->
@@ -208,6 +236,17 @@
         defined jndi.properties. jndi.properties files is retrieved from the application classpath.
         Mapping rules can also be provided for mapping Hcatalog servers to corresponding JMS providers.
         hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;java.naming.provider.url#tcp://broker.${2}:61616
+        </description>
+   </property>
+
+ <!-- HCatAccessorService -->
+   <property>
+        <name>oozie.service.HCatAccessorService.jms.use.canonical.hostname</name>
+        <value>false</value>
+        <description>The JMS messages published from a HCat server usually contains the canonical hostname of the HCat server
+        in standalone mode or the canonical name of the VIP in a case of multiple nodes in a HA setup. This setting is used
+        to translate the HCat server hostname or its aliases specified by the user in the HCat URIs of the coordinator dependencies
+        to its canonical name so that they can be exactly matched with the JMS dependency availability notifications.
         </description>
    </property>
 
@@ -259,8 +298,8 @@
             oozie.service.AuthorizationService.security.enabled
         </value>
         <description>
-            Specifies "oozie.*" properties to cannot be overriden via Java system properties.
-            Property names must be separted by commas.
+            Specifies "oozie.*" properties to cannot be overridden via Java system properties.
+            Property names must be separated by commas.
         </description>
     </property>
 
@@ -284,7 +323,7 @@
     </property>
 
     <!--  AuthorizationService -->
-    
+
     <property>
         <name>oozie.service.AuthorizationService.authorization.enabled</name>
         <value>false</value>
@@ -299,6 +338,22 @@
         <value>false</value>
         <description>
             Enables old behavior where the User's default group is the job's ACL.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.serviceAuthorizationService.admin.users</name>
+        <value></value>
+        <description>
+            Comma separated list of users with admin access for the Authorization service.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.AuthorizationService.system.info.authorized.users</name>
+        <value></value>
+        <description>
+            Comma separated list of users authorized for web service calls to get system configuration.
         </description>
     </property>
 
@@ -321,7 +376,7 @@
             Completed workflow jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.PurgeService.coord.older.than</name>
         <value>7</value>
@@ -329,7 +384,7 @@
             Completed coordinator jobs older than this value, in days, will be purged by the PurgeService.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.PurgeService.bundle.older.than</name>
         <value>7</value>
@@ -347,15 +402,16 @@
             specified in oozie.service.PurgeService.older.than.
         </description>
     </property>
-    
+
     <property>
-		<name>oozie.service.PurgeService.purge.limit</name>
-		<value>100</value>
-		<description>
-			Completed Actions purge - limit each purge to this value
+        <name>oozie.service.PurgeService.purge.limit</name>
+        <value>100</value>
+        <description>
+            Batch size of individual DB operations used for building the list of items
+            to be purged and performing actual purge.
         </description>
-	</property>
-	
+    </property>
+
     <property>
         <name>oozie.service.PurgeService.purge.interval</name>
         <value>3600</value>
@@ -363,7 +419,15 @@
             Interval at which the purge service will run, in seconds.
         </description>
     </property>
-    
+
+    <property>
+        <name>oozie.service.PurgeService.enable.command.line</name>
+        <value>true</value>
+        <description>
+            Enable/Disable oozie admin purge command. By default, it is enabled.
+        </description>
+    </property>
+
     <!-- RecoveryService -->
 
     <property>
@@ -416,7 +480,7 @@
         </description>
     </property>
 
-	<property>
+    <property>
         <name>oozie.service.RecoveryService.bundle.older.than</name>
         <value>600</value>
         <description>
@@ -439,6 +503,45 @@
     </property>
 
     <property>
+        <name>oozie.service.CallableQueueService.delayedcallable.threads</name>
+        <value>1</value>
+        <description>
+            The number of threads where delayed tasks are executed. Upon expiration, the tasks are immediately
+            inserted into the main queue to properly handle priorities. This means that no actual business logic
+            is executed in this thread pool, so under normal circumstances, this value can be set to a low number.
+
+            Note that this property is completely unrelated to oozie.service.SchedulerService.threads which
+            tells how many scheduled background tasks can run in parallel at the same time (like PurgeService,
+            StatusTransitService, etc).
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.CallableQueueService.queue.newImpl</name>
+        <value>true</value>
+        <description>
+            If set to true, then CallableQueueService will use a faster, less CPU-intensive queuing mechanism to execute
+            asynchronous tasks internally.
+            The old implementation generates noticeable CPU load even if Oozie is completely idle, especially when
+            oozie.service.CallableQueueService.threads is set to a large number. The previous queuing mechanism is kept as a
+            fallback option.
+            This is an experimental feature in Oozie 5.1.0 that needs to be re-evaluated upon an upcoming minor release,
+            meaning the old implementation and this feature flag will also be removed.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.CallableQueueService.queue.awaitTermination.timeout.seconds</name>
+        <value>30</value>
+        <description>
+            Number of seconds while awaiting termination of ThreadPoolExecutor instances when CallableQueueService#destroy()
+            is called, in seconds.
+            The more elements you tend to have in your callable queue, the more you want CallableQueueService to wait
+            before shutting down its thread pools.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.CallableQueueService.callable.concurrency</name>
         <value>3</value>
         <description>
@@ -449,7 +552,7 @@
             the action type as the callable type.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.CallableQueueService.callable.next.eligible</name>
         <value>true</value>
@@ -527,23 +630,23 @@
         <value>120</value>
         <description>Default timeout for a coordinator action input check (in minutes) for normal job.
             -1 means infinite timeout</description>
-	</property>
+    </property>
 
-	<property>
-		<name>oozie.service.coord.default.max.timeout
-		</name>
-		<value>86400</value>
-		<description>Default maximum timeout for a coordinator action input check (in minutes). 86400= 60days
+    <property>
+        <name>oozie.service.coord.default.max.timeout
+        </name>
+        <value>86400</value>
+        <description>Default maximum timeout for a coordinator action input check (in minutes). 86400= 60days
         </description>
-	</property>
+    </property>
 
-	<property>
-		<name>oozie.service.coord.input.check.requeue.interval
-		</name>
-		<value>60000</value>
-		<description>Command re-queue interval for coordinator data input check (in millisecond).
+    <property>
+        <name>oozie.service.coord.input.check.requeue.interval
+        </name>
+        <value>60000</value>
+        <description>Command re-queue interval for coordinator data input check (in millisecond).
         </description>
-	</property>
+    </property>
 
     <property>
         <name>oozie.service.coord.input.check.requeue.interval.additional.delay</name>
@@ -562,28 +665,28 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-		<name>oozie.service.coord.default.concurrency
-		</name>
-		<value>1</value>
-		<description>Default concurrency for a coordinator job to determine how many maximum action should
-		be executed at the same time. -1 means infinite concurrency.</description>
-	</property>
+        <name>oozie.service.coord.default.concurrency
+        </name>
+        <value>1</value>
+        <description>Default concurrency for a coordinator job to determine how many maximum action should
+        be executed at the same time. -1 means infinite concurrency.</description>
+    </property>
 
     <property>
-		<name>oozie.service.coord.default.throttle
-		</name>
-		<value>12</value>
-		<description>Default throttle for a coordinator job to determine how many maximum action should 
-		be in WAITING state at the same time.</description>
-	</property>
+        <name>oozie.service.coord.default.throttle
+        </name>
+        <value>12</value>
+        <description>Default throttle for a coordinator job to determine how many maximum action should
+         be in WAITING state at the same time.</description>
+    </property>
 
-	<property>
-		<name>oozie.service.coord.materialization.throttling.factor
-		</name>
-		<value>0.05</value>
-		<description>Determine how many maximum actions should be in WAITING state for a single job at any time. The value is calculated by 
-		this factor X the total queue size.</description>
-	</property>
+    <property>
+        <name>oozie.service.coord.materialization.throttling.factor
+        </name>
+        <value>0.05</value>
+        <description>Determine how many maximum actions should be in WAITING state for a single job at any time. The value is calculated by
+         this factor X the total queue size.</description>
+    </property>
 
     <property>
         <name>oozie.service.coord.check.maximum.frequency</name>
@@ -595,9 +698,9 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-	<!-- ELService -->
+    <!-- ELService -->
     <!--  List of supported groups for ELService -->
-	<property>
+    <property>
         <name>oozie.service.ELService.groups</name>
         <value>job-submit,workflow,wf-sla-submit,coord-job-submit-freq,coord-job-submit-nofuncs,coord-job-submit-data,coord-job-submit-instances,coord-sla-submit,coord-action-create,coord-action-create-inst,coord-sla-create,coord-action-start,coord-job-wait-timeout,bundle-submit,coord-job-submit-initial-instance</value>
         <description>List of groups for different ELServices</description>
@@ -734,7 +837,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <!-- Resolve SLA information during Workflow job submission -->
-	<property>
+    <property>
         <name>oozie.service.ELService.constants.wf-sla-submit</name>
         <value>
             MINUTES=org.apache.oozie.util.ELConstantsFunctions#SUBMIT_MINUTES,
@@ -804,6 +907,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             coord:minutes=org.apache.oozie.coord.CoordELFunctions#ph1_coord_minutes,
             coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfDays,
             coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfMonths,
+            coord:endOfWeeks=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfWeeks,
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
@@ -961,6 +1065,9 @@ will be the requeue interval for the actions which are waiting for a long time w
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph1_coord_absolute_echo,
+            coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfMonths_echo,
+            coord:endOfWeeks=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfWeeks_echo,
+            coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph1_coord_endOfDays_echo,
             hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf,
             coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateOffset_echo,
             coord:dateTzOffset=org.apache.oozie.coord.CoordELFunctions#ph1_coord_dateTzOffset_echo
@@ -1046,7 +1153,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <!-- Resolve SLA information during Coordinator job submission -->
-	<property>
+    <property>
         <name>oozie.service.ELService.constants.coord-sla-submit</name>
         <value>
             MINUTES=org.apache.oozie.coord.CoordELConstants#SUBMIT_MINUTES,
@@ -1148,6 +1255,9 @@ will be the requeue interval for the actions which are waiting for a long time w
             coord:conf=org.apache.oozie.coord.CoordELFunctions#coord_conf,
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
+            coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph2_coord_endOfMonths_echo,
+            coord:endOfWeeks=org.apache.oozie.coord.CoordELFunctions#ph2_coord_endOfWeeks_echo,
+            coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph2_coord_endOfDays_echo,
             coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
             hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf
         </value>
@@ -1207,6 +1317,9 @@ will be the requeue interval for the actions which are waiting for a long time w
             coord:user=org.apache.oozie.coord.CoordELFunctions#coord_user,
             coord:absolute=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_echo,
             coord:absoluteRange=org.apache.oozie.coord.CoordELFunctions#ph2_coord_absolute_range,
+            coord:endOfMonths=org.apache.oozie.coord.CoordELFunctions#ph2_coord_endOfMonths_echo,
+            coord:endOfWeeks=org.apache.oozie.coord.CoordELFunctions#ph2_coord_endOfWeeks_echo,
+            coord:endOfDays=org.apache.oozie.coord.CoordELFunctions#ph2_coord_endOfDays_echo,
             hadoop:conf=org.apache.oozie.action.hadoop.HadoopELFunctions#hadoop_conf,
             coord:dateOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateOffset,
             coord:dateTzOffset=org.apache.oozie.coord.CoordELFunctions#ph2_coord_dateTzOffset
@@ -1226,9 +1339,9 @@ will be the requeue interval for the actions which are waiting for a long time w
             include all the built in ones.
         </description>
     </property>
-    
+
         <!-- Resolve SLA information during Action creation/materialization -->
-	<property>
+    <property>
         <name>oozie.service.ELService.constants.coord-sla-create</name>
         <value> </value>
         <description>
@@ -1400,6 +1513,16 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <!-- Database import CLI: batch size -->
+
+    <property>
+        <name>oozie.db.import.batch.size</name>
+        <value>1000</value>
+        <description>
+            How many entities are imported in a single transaction by the Oozie DB import CLI tool to avoid OutOfMemoryErrors.
+        </description>
+    </property>
+
    <!-- StoreService -->
 
     <property>
@@ -1421,17 +1544,17 @@ will be the requeue interval for the actions which are waiting for a long time w
             If the 'oozie.service.JPAService.create.db.schema' property is set to true, this property is ignored.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.JPAService.validate.db.connection.eviction.interval</name>
         <value>300000</value>
         <description>
             Validates DB connections from the DB connection pool.
-            When validate db connection 'TestWhileIdle' is true, the number of milliseconds to sleep 
-            between runs of the idle object evictor thread.
+            When validate db connection 'TestWhileIdle' is true, the number of milliseconds to sleep
+             between runs of the idle object evictor thread.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.JPAService.validate.db.connection.eviction.num</name>
         <value>10</value>
@@ -1445,9 +1568,13 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.service.JPAService.connection.data.source</name>
-        <value>org.apache.commons.dbcp.BasicDataSource</value>
+        <value>org.apache.oozie.util.db.BasicDataSourceWrapper</value>
         <description>
-            DataSource to be used for connection pooling.
+            DataSource to be used for connection pooling. If you want the property
+            openJpa.connectionProperties="DriverClassName=..." to have a real effect, set this to
+            org.apache.oozie.util.db.BasicDataSourceWrapper.
+            A DBCP bug (https://issues.apache.org/jira/browse/DBCP-333) prevents otherwise the JDBC driver
+            setting to have a real effect while using custom class loader.
         </description>
     </property>
 
@@ -1518,22 +1645,49 @@ will be the requeue interval for the actions which are waiting for a long time w
        </description>
     </property>
 
+    <property>
+        <name>oozie.service.JPAService.retry.initial-wait-time.ms</name>
+        <value>100</value>
+        <description>
+          Initial wait time in milliseconds between the first failed database operation and the re-attempted operation. The wait
+          time is doubled at each retry.
+       </description>
+    </property>
+
+    <property>
+        <name>oozie.service.JPAService.retry.maximum-wait-time.ms</name>
+        <value>30000</value>
+        <description>
+          Maximum wait time between database retry attempts.
+       </description>
+    </property>
+
+    <property>
+        <name>oozie.service.JPAService.retry.max-retries</name>
+        <value>10</value>
+        <description>
+          Maximum number of retries for a failed database operation.
+       </description>
+    </property>
+
    <!-- SchemaService -->
 
     <property>
         <name>oozie.service.SchemaService.wf.schemas</name>
         <value>
+            oozie-common-1.0.xsd,
             oozie-workflow-0.1.xsd,oozie-workflow-0.2.xsd,oozie-workflow-0.2.5.xsd,oozie-workflow-0.3.xsd,oozie-workflow-0.4.xsd,
-            oozie-workflow-0.4.5.xsd,oozie-workflow-0.5.xsd,
-            shell-action-0.1.xsd,shell-action-0.2.xsd,shell-action-0.3.xsd,
+            oozie-workflow-0.4.5.xsd,oozie-workflow-0.5.xsd,oozie-workflow-1.0.xsd,
+            shell-action-0.1.xsd,shell-action-0.2.xsd,shell-action-0.3.xsd,shell-action-1.0.xsd,
             email-action-0.1.xsd,email-action-0.2.xsd,
-            hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,hive-action-0.6.xsd,
-            sqoop-action-0.2.xsd,sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,
+            hive-action-0.2.xsd,hive-action-0.3.xsd,hive-action-0.4.xsd,hive-action-0.5.xsd,hive-action-0.6.xsd,hive-action-1.0.xsd,
+            sqoop-action-0.2.xsd,sqoop-action-0.3.xsd,sqoop-action-0.4.xsd,sqoop-action-1.0.xsd,
             ssh-action-0.1.xsd,ssh-action-0.2.xsd,
-            distcp-action-0.1.xsd,distcp-action-0.2.xsd,
+            distcp-action-0.1.xsd,distcp-action-0.2.xsd,distcp-action-1.0.xsd,
             oozie-sla-0.1.xsd,oozie-sla-0.2.xsd,
-            hive2-action-0.1.xsd, hive2-action-0.2.xsd,
-            spark-action-0.1.xsd,spark-action-0.2.xsd
+            hive2-action-0.1.xsd,hive2-action-0.2.xsd,hive2-action-1.0.xsd,
+            spark-action-0.1.xsd,spark-action-0.2.xsd,spark-action-1.0.xsd,
+            git-action-1.0.xsd
         </value>
         <description>
             List of schemas for workflows (separated by commas).
@@ -1671,7 +1825,8 @@ will be the requeue interval for the actions which are waiting for a long time w
             org.apache.oozie.action.ssh.SshActionExecutor,
             org.apache.oozie.action.oozie.SubWorkflowActionExecutor,
             org.apache.oozie.action.email.EmailActionExecutor,
-            org.apache.oozie.action.hadoop.SparkActionExecutor
+            org.apache.oozie.action.hadoop.SparkActionExecutor,
+            org.apache.oozie.action.hadoop.GitActionExecutor
         </value>
         <description>
             List of ActionExecutors classes (separated by commas).
@@ -1724,7 +1879,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             The frequency in seconds at which the StatusTransitService will run.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.StatusTransitService.backward.support.for.coord.status</name>
         <value>false</value>
@@ -1737,7 +1892,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             4. PREPSUSPENDED becomes SUSPENDED in coordinator job
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.StatusTransitService.backward.support.for.states.without.error</name>
         <value>true</value>
@@ -1759,7 +1914,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-    <!-- LauncherMapper -->
+    <!-- LauncherAMUtils -->
     <property>
         <name>oozie.action.max.output.data</name>
         <value>2048</value>
@@ -1786,31 +1941,6 @@ will be the requeue interval for the actions which are waiting for a long time w
             Multiple instances of launcher jobs can happen due to RM non-work preserving recovery on RM restart, AM recovery
             due to crashes or AM network connectivity loss. This could also lead to orphaned child jobs of the old AM attempts
             leading to conflicting runs. This kills child jobs of previous attempts using YARN application tags.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.action.launcher.mapreduce.job.ubertask.enable</name>
-        <value>true</value>
-        <description>
-            Enables Uber Mode for the launcher job in YARN/Hadoop 2 (no effect in Hadoop 1) for all action types by default.
-            This can be overridden on a per-action-type basis by setting
-            oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable in oozie-site.xml (where #action-type# is the action
-            type; for example, "pig").  And that can be overridden on a per-action basis by setting
-            oozie.launcher.mapreduce.job.ubertask.enable in an action's configuration section in a workflow.  In summary, the
-            priority is this:
-            1. action's configuration section in a workflow
-            2. oozie.action.#action-type#.launcher.mapreduce.job.ubertask.enable in oozie-site
-            3. oozie.action.launcher.mapreduce.job.ubertask.enable in oozie-site
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.action.shell.launcher.mapreduce.job.ubertask.enable</name>
-        <value>false</value>
-        <description>
-            The Shell action may have issues with the $PATH environment when using Uber Mode, and so Uber Mode is disabled by
-            default for it.  See oozie.action.launcher.mapreduce.job.ubertask.enable
         </description>
     </property>
 
@@ -1853,8 +1983,7 @@ will be the requeue interval for the actions which are waiting for a long time w
     <property>
         <name>oozie.action.shell.setup.hadoop.conf.dir.log4j.content</name>
         <value>
-            log4j.rootLogger=${hadoop.root.logger}
-            hadoop.root.logger=INFO,console
+            log4j.rootLogger=INFO,console
             log4j.appender.console=org.apache.log4j.ConsoleAppender
             log4j.appender.console.target=System.err
             log4j.appender.console.layout=org.apache.log4j.PatternLayout
@@ -1870,6 +1999,15 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.action.shell.max-print-size-kb</name>
+        <value>128</value>
+        <description>
+            When an oozie shell action starts, the shell script will be printed. Scripts larger than the size configured here
+            (in KiB) will not be printed. If this value is less than or equal to zero, the script will not be printed.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.action.launcher.yarn.timeline-service.enabled</name>
         <value>false</value>
         <description>
@@ -1878,6 +2016,14 @@ will be the requeue interval for the actions which are waiting for a long time w
             distributed cache.
             This can be overridden on a per-action basis by setting
             oozie.launcher.yarn.timeline-service.enabled in an action's configuration section in a workflow.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.pig.log.expandedscript</name>
+        <value>true</value>
+        <description>
+            Log the expanded pig script in launcher stdout log
         </description>
     </property>
 
@@ -1943,13 +2089,29 @@ will be the requeue interval for the actions which are waiting for a long time w
             Used when the ouptut of the ssh action is captured.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.action.ssh.allow.user.at.host</name>
         <value>true</value>
         <description>
             Specifies whether the user specified by the ssh action is allowed or is to be replaced
             by the Job user
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.ssh.check.retries.max</name>
+        <value>3</value>
+        <description>
+            Maximal retry count for ssh action status check
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.ssh.check.initial.retry.wait.time</name>
+        <value>3000</value>
+        <description>
+            init wait time that the first retry check needs to wait
         </description>
     </property>
 
@@ -2003,7 +2165,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.service.HadoopAccessorService.jobTracker.whitelist</name>
         <value> </value>
         <description>
-            Whitelisted job tracker for Oozie service.
+            Comma separated list of whitelisted job trackers for Oozie service.
         </description>
     </property>
 
@@ -2011,7 +2173,7 @@ will be the requeue interval for the actions which are waiting for a long time w
         <name>oozie.service.HadoopAccessorService.nameNode.whitelist</name>
         <value> </value>
         <description>
-            Whitelisted job tracker for Oozie service.
+            Comma separated list of whitelisted name nodes for Oozie service.
         </description>
     </property>
 
@@ -2054,6 +2216,18 @@ will be the requeue interval for the actions which are waiting for a long time w
             not loaded on server, instead loaded on launcher node.
             This is only done for pig and hive actions which handle loading those files
             automatically from the classpath on launcher task. It defaults to true.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.HadoopAccessorService.fs.s3a</name>
+        <value> </value>
+        <description>
+            You can configure custom s3a file system properties globally.
+            Value shall be a comma separated list of key=value pairs. For example:
+            fs.s3a.fast.upload.buffer=bytebuffer,fs.s3a.impl.disable.cache=true
+            Limitation: the custom file system properties cannot contain comma neither
+            in key nor in value.
         </description>
     </property>
 
@@ -2119,6 +2293,14 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.default</name>
+        <value>0</value>
+        <description>
+            Default automatic retry count for workflow action.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.inteval</name>
         <value>10</value>
         <description>
@@ -2149,7 +2331,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             ALL is the any kind of error in action executor.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.user.retry.error.code.ext</name>
         <value> </value>
@@ -2158,7 +2340,7 @@ will be the requeue interval for the actions which are waiting for a long time w
             ALL is the any kind of error in action executor.
         </description>
     </property>
-    
+
     <property>
         <name>oozie.service.LiteWorkflowStoreService.node.def.version</name>
         <value>_oozie_inst_v_2</value>
@@ -2183,6 +2365,14 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             Defines authentication used for Oozie server communicating to other Oozie server over HTTP(s).
             Supported values are: simple | kerberos | #AUTHENTICATOR_CLASSNAME#
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.server.connection.timeout.seconds</name>
+        <value>180</value>
+        <description>
+            Defines connection timeout used for Oozie server communicating to other Oozie server over HTTP(s). Default is 3 min.
         </description>
     </property>
 
@@ -2251,22 +2441,22 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <!-- Coordinator Actions default length -->
-	<property>
-		<name>oozie.coord.actions.default.length</name>
-		<value>1000</value>
-		<description>
-			Default number of coordinator actions to be retrieved by the info command
-		</description>
-	</property>
+    <property>
+        <name>oozie.coord.actions.default.length</name>
+        <value>1000</value>
+        <description>
+            Default number of coordinator actions to be retrieved by the info command
+        </description>
+    </property>
 
-	<!-- ForkJoin validation -->
-	<property>
-		<name>oozie.validate.ForkJoin</name>
-		<value>true</value>
-		<description>
-			If true, fork and join should be validated at wf submission time.
-		</description>
-	</property>
+    <!-- ForkJoin validation -->
+    <property>
+        <name>oozie.validate.ForkJoin</name>
+        <value>true</value>
+        <description>
+            If true, fork and join should be validated at wf submission time.
+        </description>
+    </property>
 
     <property>
         <name>oozie.workflow.parallel.fork.action.start</name>
@@ -2277,23 +2467,23 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-	<property>
-		<name>oozie.coord.action.get.all.attributes</name>
-		<value>false</value>
-		<description>
-			Setting to true is not recommended as coord job/action info will bring all columns of the action in memory.
-			Set it true only if backward compatibility for action/job info is required.
-		</description>
-	</property>
+    <property>
+        <name>oozie.coord.action.get.all.attributes</name>
+        <value>false</value>
+        <description>
+            Setting to true is not recommended as coord job/action info will bring all columns of the action in memory.
+            Set it true only if backward compatibility for action/job info is required.
+        </description>
+    </property>
 
-	<property>
-		<name>oozie.service.HadoopAccessorService.supported.filesystems</name>
-		<value>hdfs,hftp,webhdfs</value>
-		<description>
-			Enlist the different filesystems supported for federation. If wildcard "*" is specified,
-			then ALL file schemes will be allowed.
-		</description>
-	</property>
+    <property>
+        <name>oozie.service.HadoopAccessorService.supported.filesystems</name>
+        <value>hdfs,hftp,webhdfs</value>
+        <description>
+            Enlist the different filesystems supported for federation. If wildcard "*" is specified,
+            then ALL file schemes will be allowed.
+        </description>
+    </property>
 
     <property>
         <name>oozie.service.URIHandlerService.uri.handlers</name>
@@ -2351,6 +2541,10 @@ will be the requeue interval for the actions which are waiting for a long time w
     <property>
         <name>oozie.service.EventHandlerService.event.listeners</name>
         <value>org.apache.oozie.jms.JMSJobEventListener</value>
+        <description>
+            List of implementations for JobEventListener and SLAEventListener to calculate SLA and send Email/JMS SLA
+            and JMS job notifications. In case of multiple classes, names must be separated by commas.
+        </description>
     </property>
 
     <property>
@@ -2436,6 +2630,17 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.sla.service.SLAService.maximum.retry.count</name>
+        <value>3</value>
+        <description>
+            Number of times an SLA calculator status will be tried to get updated when any database related error occurs.
+            It's possible that multiple WorkflowJobBean / CoordActionBean instances being inserted won't have SLACalcStatus entries
+            inside SLACalculatorMemory#slaMap by the time written to database, and thus, no SLA will be tracked.
+            In those rare cases, preconfigured maximum retry count can be extended.
+        </description>
+    </property>
+
     <!-- ZooKeeper configuration -->
     <property>
         <name>oozie.zookeeper.connection.string</name>
@@ -2483,6 +2688,14 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             If true, Oozie server will shutdown itself on ZK
             connection timeout.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.service.ZKLocksService.lock.release.retry.time.limit.minutes</name>
+        <value>30</value>
+        <description>
+            On exception while releasing the lock, Oozie will exponentially retry till specified minutes before giving up.
         </description>
     </property>
 
@@ -2537,7 +2750,7 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.https.truststore.file</name>
-        <value>custom.truststore</value>
+        <value></value>
         <description>
             Path to a TrustStore file.
         </description>
@@ -2545,7 +2758,7 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.https.truststore.pass</name>
-        <value>cloudera</value>
+        <value></value>
         <description>
             Password to the TrustStore.
         </description>
@@ -2576,6 +2789,22 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.https.exclude.protocols</name>
+        <value></value>
+        <description>
+            Disabled TLS protocols.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.https.include.cipher.suites</name>
+        <value></value>
+        <description>
+            List of Cipher suites to include.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.https.exclude.cipher.suites</name>
         <value>TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_DES_CBC_SHA,SSL_DHE_RSA_WITH_DES_CBC_SHA,SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5</value>
         <description>
@@ -2584,19 +2813,18 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
-        <name>oozie.jsp.tmp.dir</name>
-        <value>/tmp</value>
+        <name>oozie.hsts.max.age.seconds</name>
+        <value>31536000</value>
         <description>
-            Temporary directory for compiling JSP pages.
+            Strict Transport Security max age in seconds if SSL is enabled. Ideally it is set to one year (31536000 sec).
         </description>
     </property>
 
     <property>
-        <name>oozie.instance.id</name>
-        <value>${oozie.http.hostname}</value>
+        <name>oozie.jsp.tmp.dir</name>
+        <value>/tmp</value>
         <description>
-            Each Oozie server should have its own unique instance id. The default is system property
-            =${OOZIE_HTTP_HOSTNAME}= (i.e. the hostname).
+            Temporary directory for compiling JSP pages.
         </description>
     </property>
 
@@ -2615,11 +2843,12 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             Sharelib mapping files contains list of key=value,
             where key will be the sharelib name for the action and value is a comma separated list of
-            DFS directories or jar files.
+            DFS or local filesystem directories or jar files.
             Example.
             oozie.pig_10=hdfs:///share/lib/pig/pig-0.10.1/lib/
             oozie.pig=hdfs:///share/lib/pig/pig-0.11.1/lib/
             oozie.distcp=hdfs:///share/lib/hadoop-2.2.0/share/hadoop/tools/lib/hadoop-distcp-2.2.0.jar
+            oozie.hive=file:///usr/local/oozie/share/lib/hive/
         </description>
 
     </property>
@@ -2836,13 +3065,23 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.service.SparkConfigurationService.spark.configurations.blacklist</name>
+        <value>spark.yarn.jar,spark.yarn.jars</value>
+        <description>
+             Comma separated list of properties to ignore from any Spark configurations specified in
+             oozie.service.SparkConfigurationService.spark.configurations property.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.SparkConfigurationService.spark.configurations.ignore.spark.yarn.jar</name>
         <value>true</value>
         <description>
-            If true, Oozie will ignore the "spark.yarn.jar" property from any Spark configurations specified in
-            oozie.service.SparkConfigurationService.spark.configurations.  If false, Oozie will not ignore it.  It is recommended
-            to leave this as true because it can interfere with the jars in the Spark sharelib.
-        </description>
+             Deprecated. Use oozie.service.SparkConfigurationService.spark.configurations.blacklist instead.
+             If true, Oozie will ignore the "spark.yarn.jar" property from any Spark configurations specified in
+             oozie.service.SparkConfigurationService.spark.configurations.  If false, Oozie will not ignore it.  It is recommended
+             to leave this as true because it can interfere with the jars in the Spark sharelib.
+         </description>
     </property>
 
     <property>
@@ -2876,6 +3115,14 @@ will be the requeue interval for the actions which are waiting for a long time w
       <description>
           Boolean property that toggles if authentication is to be done or not when using email actions.
       </description>
+    </property>
+
+    <property>
+        <name>oozie.email.smtp.starttls.enable</name>
+        <value>false</value>
+        <description>
+            Boolean property that toggles if use TLS in communication or not.
+        </description>
     </property>
 
     <property>
@@ -2931,6 +3178,17 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.actions.default.resource-manager</name>
+        <value> </value>
+        <description>
+            The default value to use for the &lt;resource-manager&gt; element in applicable action types.  This value will be used
+            when neither the action itself nor the global section specifies a &lt;resource-managerr&gt;.  As expected, it should
+            be of the form "HOST:PORT". If both oozie.actions.default.job-tracker and oozie.actions.default.resource-manager are
+            specified, oozie.actions.default.resource-manager takes precedence.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.SchemaCheckerService.check.interval</name>
         <value>168</value>
         <description>
@@ -2945,6 +3203,277 @@ will be the requeue interval for the actions which are waiting for a long time w
         <description>
             When set to false, the schema checker will consider extra (unused) tables, columns, and indexes to be incorrect.  When
             set to true, these will be ignored.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.hcat.uri.regex.pattern</name>
+        <value>([a-z]+://[\w\.\-]+:\d+[,]*)+/\w+/\w+/?[\w+=;\-]*</value>
+        <description>Regex pattern for HCat URIs. The regex can be modified by users as per requirement
+            for parsing/splitting the HCat URIs.</description>
+    </property>
+
+    <property>
+        <name>oozie.action.null.args.allowed</name>
+        <value>true</value>
+        <description>
+            When set to true, empty arguments (like &lt;arg&gt;&lt;/arg&gt;) will be passed as "null" to the main method of a
+            given action. That is, the args[] array will contain "null" elements. When set to false, then "nulls" are removed.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.javax.xml.parsers.DocumentBuilderFactory</name>
+        <value>org.apache.xerces.jaxp.DocumentBuilderFactoryImpl</value>
+        <description>
+            Oozie will set the javax.xml.parsers.DocumentBuilderFactory Java System Property to this value.  This helps speed up
+            XML handling because the JVM doesn't have to search for the proper class every time.  An empty or whitespace value
+            skips setting the System Property.  The default implementation that Oozie uses is Xerces.
+            Most users should not have to change this.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.graphviz.timeout.seconds</name>
+        <value>60</value>
+        <description>
+            The default number of seconds Graphviz graph generation will timeout.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.vcores</name>
+        <value>1</value>
+        <description>
+            The default number of vcores that are allocated for the Launcher AMs
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.memory.mb</name>
+        <value>2048</value>
+        <description>
+            The default amount of memory in MBs that is allocated for the Launcher AMs
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.priority</name>
+        <value>0</value>
+        <description>
+            The default YARN priority of the Launcher AM
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.queue</name>
+        <value>default</value>
+        <description>
+            The default YARN queue where the Launcher AM is placed
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.default.max.attempts</name>
+        <value>2</value>
+        <description>
+            The default YARN maximal attempt count of the Launcher AM
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override</name>
+        <value>true</value>
+        <description>
+            Whether oozie.launcher.override.* and oozie.launcher.prepend.* parameters have to be considered when submitting a YARN
+            LauncherAM. That is, existing MapReduce v1, MapReduce v2, or YARN parameters used in the action configuration should be
+            populated to the Application Master launcher configuration, or not. Generally, first &lt;launcher/&gt; tag specific user
+            settings, then YARN configuration settings, then MapReduce v2, and at last, MapReduce v1 properties are copied to
+            launcher configuration.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.max.attempts</name>
+        <value>mapreduce.map.maxattempts,mapred.map.max.attempts</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override the max attempts of the MapReduce
+            Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.memory.mb</name>
+        <value>yarn.app.mapreduce.am.resource.mb,mapreduce.map.memory.mb,mapred.job.map.memory.mb</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override the memory amount in MB of the
+            MapReduce Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.vcores</name>
+        <value>yarn.app.mapreduce.am.resource.cpu-vcores,mapreduce.map.cpu.vcores</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override the CPU vcore count of the
+            MapReduce Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.log.level</name>
+        <value>mapreduce.map.log.level,mapred.map.child.log.level</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override the logging level of the MapReduce
+            Application Master. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.javaopts</name>
+        <value>yarn.app.mapreduce.am.command-opts,mapreduce.map.java.opts,mapred.child.java.opts</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override MapReduce Application Master JVM
+            options. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.prepend.javaopts</name>
+        <value>yarn.app.mapreduce.am.admin-command-opts</value>
+        <description>
+            A comma separated list of YARN properties to prepend to MapReduce Application Master JVM options. The first one that is
+            found will be prepended to the list of JVM options.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.env</name>
+        <value>yarn.app.mapreduce.am.env,mapreduce.map.env,mapred.child.env</value>
+        <description>
+            A comma separated list of MapReduce v1, MapReduce v2, and YARN properties to override MapReduce Application Master
+            environment variable settings. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.prepend.env</name>
+        <value>yarn.app.mapreduce.am.admin.user.env</value>
+        <description>
+            A comma separated list of YARN properties to prepend to MapReduce Application Master environment settings. The first one
+            that is found will be prepended to the list of environment settings.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.priority</name>
+        <value>mapreduce.job.priority,mapred.job.priority</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 to override MapReduce Application Master job priority. The first
+            one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.queue</name>
+        <value>mapreduce.job.queuename,mapred.job.queue.name</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override MapReduce Application Master job queue
+            name. The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.view.acl</name>
+        <value>mapreduce.job.acl-view-job</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override MapReduce View ACL settings.
+            The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.launcher.override.modify.acl</name>
+        <value>mapreduce.job.acl-modify-job</value>
+        <description>
+            A comma separated list of MapReduce v1 and MapReduce v2 properties to override MapReduce Modify ACL settings.
+            The first one that is found will be used.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.distcp</name>
+        <value>true</value>
+        <description>
+        Whether to add MapReduce jars to the DistCp action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.hive</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Hive action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.hive2</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Hive2 action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.java</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Java action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.map-reduce</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Map-Reduce action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.pig</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Pig action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.mapreduce.needed.for.sqoop</name>
+        <value>true</value>
+        <description>
+            Whether to add MapReduce jars to the Sqoop action's classpath's by default.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.action.sqoop.shellsplitter</name>
+        <value>false</value>
+        <description>
+            Whether to use shell splitter instead of the space-based tokenizer during sqoop command splitting.
+        </description>
+    </property>
+
+    <property>
+        <name>oozie.fluent-job-api.generated.path</name>
+        <value>/user/${user.name}/oozie-fluent-job-api-generated</value>
+        <description>
+            HDFS path to store workflow / coordinator / bundle definitions generated by fluent-job-api artifact.
+            The XML files are first generated out of the fluent-job-api JARs submitted by the user at command line, then stored
+            under this HDFS folder structure for later retrieval / resubmit / check.
+            Note that the submitting user needs r/w permissions under this HDFS folder.
+            Note further that this folder structure, when does not exist, will be created.
         </description>
     </property>
 

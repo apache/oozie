@@ -18,12 +18,18 @@
 
 package org.apache.oozie.dependency;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ActionDependency {
 
     private List<String> missingDependencies;
     private List<String> availableDependencies;
+    private String uriTemplate;
+
+    public ActionDependency() {
+        this(new ArrayList<String>(), new ArrayList<String>());
+    }
 
     public ActionDependency(List<String> missingDependencies, List<String> availableDependencies) {
         this.missingDependencies = missingDependencies;
@@ -36,6 +42,14 @@ public class ActionDependency {
 
     public List<String> getAvailableDependencies() {
         return availableDependencies;
+    }
+
+    public String getUriTemplate() {
+        return uriTemplate;
+    }
+
+    public void setUriTemplate(String uriTemplate) {
+        this.uriTemplate = uriTemplate;
     }
 
 }

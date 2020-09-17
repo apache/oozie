@@ -21,6 +21,7 @@ package org.apache.oozie.executor.jpa;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -28,7 +29,6 @@ import javax.persistence.Query;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load coordinator action by nominal time.
@@ -39,8 +39,7 @@ public class CoordJobGetActionForNominalTimeJPAExecutor implements JPAExecutor<C
     private Date nominalTime = null;
 
     public CoordJobGetActionForNominalTimeJPAExecutor(String jobId, Date nominalTime) {
-        ParamChecker.notNull(jobId, "jobId");
-        this.jobId = jobId;
+        this.jobId = Objects.requireNonNull(jobId, "jobId cannot be null");
         this.nominalTime = nominalTime;
     }
 

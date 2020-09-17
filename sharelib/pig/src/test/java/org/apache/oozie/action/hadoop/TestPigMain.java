@@ -25,14 +25,19 @@ import org.apache.oozie.util.IOUtils;
 import org.json.simple.JSONValue;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.io.FileWriter;
-import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.net.URL;
 
 public class TestPigMain extends PigTestCase {
@@ -53,17 +58,25 @@ public class TestPigMain extends PigTestCase {
     }
 
     @Override
+    protected List<File> getFilesToDelete() {
+        List<File> filesToDelete = super.getFilesToDelete();
+        filesToDelete.add(new File("pig.properties"));
+        return filesToDelete;
+    }
+
+    @Override
     public Void call() throws Exception {
         FileSystem fs = getFileSystem();
 
         Path script = new Path(getTestCaseDir(), "script.pig");
-        Writer w = new FileWriter(script.toString());
+        Writer w = new OutputStreamWriter(new FileOutputStream(script.toString()), StandardCharsets.UTF_8);
         w.write(pigScript);
         w.close();
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         fs.mkdirs(inputDir);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 
@@ -111,27 +124,12 @@ public class TestPigMain extends PigTestCase {
         assertEquals(props.getProperty("oozie.pig.args.size"), "1");
         File pigProps = new File(classPathDir, "pig.properties");
 
-        new LauncherSecurityManager();
         String user = System.getProperty("user.name");
         try {
-            Writer wr = new FileWriter(pigProps);
+            Writer wr = new OutputStreamWriter(new FileOutputStream(pigProps), StandardCharsets.UTF_8);
             props.store(wr, "");
             wr.close();
             PigMain.main(null);
-        }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                if (failOnException) {
-                    if (LauncherSecurityManager.getExitCode() != 0) {
-                        fail();
-                    }
-                }
-            }
-            else {
-                throw ex;
-            }
         }
         finally {
             pigProps.delete();
@@ -141,7 +139,8 @@ public class TestPigMain extends PigTestCase {
         // Stats should be stored only if option to write stats is set to true
         if (writeStats) {
             assertTrue(statsDataFile.exists());
-            String stats = IOUtils.getReaderAsString(new FileReader(statsDataFile), -1);
+            String stats = IOUtils.getReaderAsString(new InputStreamReader(
+                    new FileInputStream(statsDataFile), StandardCharsets.UTF_8), -1);
             // check for some of the expected key values in the stats
             Map m = (Map) JSONValue.parse(stats);
             // check for expected 1st level JSON keys
@@ -151,10 +150,31 @@ public class TestPigMain extends PigTestCase {
         }
         //File exist only if there is external child jobID.
         if (hadoopIdsFile.exists()) {
-            String externalChildIds = IOUtils.getReaderAsString(new FileReader(hadoopIdsFile), -1);
+            String externalChildIds =
+                    IOUtils.getReaderAsString(new InputStreamReader(new FileInputStream(hadoopIdsFile),
+                                    StandardCharsets.UTF_8), -1);
             assertTrue(externalChildIds.contains("job_"));
         }
         return null;
+    }
+
+    public void testJobIDPattern() {
+        List<String> lines = new ArrayList<String>();
+        lines.add("HadoopJobId: job_001");
+        lines.add("Submitted application application_002");
+        // Non-matching ones
+        lines.add("HadoopJobId is set. job_003");
+        lines.add("HadoopJobId: abc004");
+        lines.add("Submitted application = job_005");
+        lines.add("Submitted application. job_006");
+        Set<String> jobIds = new LinkedHashSet<String>();
+        for (String line : lines) {
+            LauncherMain.extractJobIDs(line, PigMain.PIG_JOB_IDS_PATTERNS, jobIds);
+        }
+        Set<String> expected = new LinkedHashSet<String>();
+        expected.add("job_001");
+        expected.add("job_002");
+        assertEquals(expected, jobIds);
     }
 
 }

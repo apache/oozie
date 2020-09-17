@@ -19,11 +19,10 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Get the Workflow ID with given external ID which will be assigned for the subworkflows.
@@ -33,21 +32,14 @@ public class WorkflowIdGetForExternalIdJPAExecutor implements JPAExecutor<String
     private String externalId = null;
 
     public WorkflowIdGetForExternalIdJPAExecutor(String externalId) {
-        ParamChecker.notNull(externalId, "externalId");
-        this.externalId = externalId;
+        this.externalId = Objects.requireNonNull(externalId, "externalId cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowIdGetForExternalIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public String execute(EntityManager em) throws JPAExecutorException {

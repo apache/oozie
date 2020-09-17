@@ -23,14 +23,13 @@ import java.util.Date;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
-import org.apache.oozie.client.event.message.EventMessage;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class SLAMessage extends EventMessage {
@@ -138,7 +137,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set nominal time for message
      *
-     * @param nominalTime
+     * @param nominalTime the nominal time
      */
     public void setNominalTime(Date nominalTime) {
         this.nominalTime = nominalTime;
@@ -156,7 +155,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set expected start time for message
      *
-     * @param expectedStartTime
+     * @param expectedStartTime the expected start time
      */
     public void setExpectedStartTime(Date expectedStartTime) {
         this.expectedStartTime = expectedStartTime;
@@ -174,7 +173,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set actual start time for message
      *
-     * @param actualStartTime
+     * @param actualStartTime the actual start time
      */
     public void setActualStartTime(Date actualStartTime) {
         this.actualStartTime = actualStartTime;
@@ -192,7 +191,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set expected end time for message
      *
-     * @param expectedEndTime
+     * @param expectedEndTime the expected end time
      */
     public void setExpectedEndTime(Date expectedEndTime) {
         this.expectedEndTime = expectedEndTime;
@@ -210,7 +209,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set actual end time for message
      *
-     * @param actualEndTime
+     * @param actualEndTime the actual end time
      */
     public void setActualEndTime(Date actualEndTime) {
         this.actualEndTime = actualEndTime;
@@ -264,7 +263,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set notification message
      *
-     * @param notificationMessage
+     * @param notificationMessage the message
      */
     public void setNotificationMessage(String notificationMessage) {
         this.notificationMessage = notificationMessage;
@@ -282,7 +281,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set upstream app names
      *
-     * @param upstreamApps
+     * @param upstreamApps the upstream app names
      */
     public void setUpstreamApps(String upstreamApps) {
         this.upstreamApps = upstreamApps;
@@ -301,7 +300,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set user name for message
      *
-     * @param user
+     * @param user the user
      */
     public void setUser(String user) {
         this.user = user;
@@ -320,7 +319,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set application name for message
      *
-     * @param appName
+     * @param appName the application name
      */
     public void setAppName(String appName) {
         this.appName = appName;
@@ -339,7 +338,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set event status
      *
-     * @param eventStatus
+     * @param eventStatus the event status
      */
     public void setEventStatus(SLAEvent.EventStatus eventStatus){
         this.eventStatus = eventStatus;
@@ -358,7 +357,7 @@ public class SLAMessage extends EventMessage {
     /**
      * Set SLA status for message
      *
-     * @param slaStatus
+     * @param slaStatus the sla status
      */
     public void setSLAStatus(SLAEvent.SLAStatus slaStatus) {
         this.slaStatus = slaStatus;
@@ -368,7 +367,7 @@ public class SLAMessage extends EventMessage {
      * Set the JMS properties for SLA message
      *
      * @param message the JMS message
-     * @throws JMSException
+     * @throws JMSException in case of a JMS error
      */
     @Override
     @JsonIgnore

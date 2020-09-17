@@ -18,7 +18,7 @@
 
 package org.apache.oozie.util;
 
-import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * Utility class for holding a pair of data
@@ -36,10 +36,10 @@ public class Pair<T, S> {
 
 
     public static <T, S> Pair<T, S> of(T first, S second) {
-        return new Pair(first, second);
+        return new Pair<T,S>(first, second);
     }
 
-    public T getFist() {
+    public T getFirst() {
         return first;
     }
 
@@ -62,7 +62,7 @@ public class Pair<T, S> {
             return false;
         }
 
-        Pair otherPair = (Pair)other;
+        Pair<T, S> otherPair = (Pair<T,S>)other;
         return (ObjectUtils.equals(first, otherPair.first) && ObjectUtils.equals(second, otherPair.second));
     }
 }

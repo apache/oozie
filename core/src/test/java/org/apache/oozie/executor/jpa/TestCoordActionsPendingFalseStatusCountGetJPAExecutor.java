@@ -56,8 +56,9 @@ public class TestCoordActionsPendingFalseStatusCountGetJPAExecutor extends XData
     private void _testPendingFalseStatusCount(String jobId, int expected) throws Exception {
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
-        CoordActionsPendingFalseStatusCountGetJPAExecutor actionSucceededCmd = new CoordActionsPendingFalseStatusCountGetJPAExecutor(
-                jobId, CoordinatorAction.Status.SUCCEEDED.toString());
+        CoordActionsPendingFalseStatusCountGetJPAExecutor actionSucceededCmd
+                = new CoordActionsPendingFalseStatusCountGetJPAExecutor(
+                        jobId, CoordinatorAction.Status.SUCCEEDED.toString());
         int cnt = jpaService.execute(actionSucceededCmd);
         assertEquals(cnt, expected);
     }

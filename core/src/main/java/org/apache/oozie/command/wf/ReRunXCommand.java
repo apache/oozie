@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -93,7 +94,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> deleteList = new ArrayList<JsonBean>();
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     public static final String DISABLE_CHILD_RERUN = "oozie.wf.rerun.disablechild";
 
@@ -103,16 +103,12 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     public ReRunXCommand(String jobId, Configuration conf) {
         super("rerun", "rerun", 1);
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     @Override
@@ -120,9 +116,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         LogUtils.setLogInfo(jobId);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         setupReRun();
@@ -151,7 +144,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
             appPath = conf.get(OozieClient.APP_PATH);
             URI uri = new URI(appPath);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(wfBean.getUser(), uri, fsConf);
 
             Path configDefault = null;
@@ -166,7 +159,8 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
 
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
-                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
+                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_USER_PROPERTIES);
+                PropertiesUtils.checkDefaultDisallowedProperties(defaultConf);
                 XConfiguration.injectDefaults(defaultConf, conf);
             }
 
@@ -225,9 +219,10 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
                 deleteList.add(actions.get(i));
                 LOG.info("Deleting Action[{0}] for re-run", actions.get(i).getId());
             }
-            else {
-                copyActionData(newWfInstance, oldWfInstance);
-            }
+        }
+
+        if (deleteList.size() < actions.size()) {
+            copyActionData(newWfInstance, oldWfInstance);
         }
 
         wfBean.setAppPath(conf.get(OozieClient.APP_PATH));
@@ -287,7 +282,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      * Loading the Wfjob and workflow actions. Parses the config and adds the nodes that are to be skipped to the
      * skipped node list
      *
-     * @throws CommandException
+     * @throws CommandException if loading state fails
      */
     @Override
     protected void eagerLoadState() throws CommandException {
@@ -329,7 +324,7 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
      * Checks the pre-conditions that are required for workflow to recover - Last run of Workflow should be completed -
      * The nodes that are to be skipped are to be completed successfully in the base run.
      *
-     * @throws CommandException
+     * @throws CommandException if verification fails
      * @throws PreconditionException On failure of pre-conditions
      */
     @Override
@@ -398,25 +393,16 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         newWfInstance.setAllVars(newVars);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -429,9 +415,6 @@ public class ReRunXCommand extends WorkflowXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         eagerVerifyPrecondition();

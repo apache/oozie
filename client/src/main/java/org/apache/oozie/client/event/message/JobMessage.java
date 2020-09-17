@@ -25,14 +25,14 @@ import java.util.Map;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.oozie.AppType;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 
 /**
@@ -133,7 +133,7 @@ public class JobMessage extends EventMessage {
     /**
      * Sets the job start time for message
      *
-     * @param startTime
+     * @param startTime the start time
      */
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
@@ -151,7 +151,7 @@ public class JobMessage extends EventMessage {
     /**
      * Sets the job end time for message
      *
-     * @param endTime
+     * @param endTime the end time
      */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
@@ -169,7 +169,7 @@ public class JobMessage extends EventMessage {
     /**
      * Sets the job's app name for message
      *
-     * @param appName
+     * @param appName the application name
      */
     public void setAppName(String appName) {
         this.appName = appName;
@@ -207,7 +207,7 @@ public class JobMessage extends EventMessage {
     /**
      * sets the job user for the msg
      *
-     * @param user
+     * @param user the user
      */
     public void setUser(String user) {
         this.user = user;
@@ -226,7 +226,7 @@ public class JobMessage extends EventMessage {
     /**
      * Sets the event status
      *
-     * @param eventStatus
+     * @param eventStatus the event status
      */
     public void setEventStatus(JobEvent.EventStatus eventStatus) {
         this.eventStatus = eventStatus;

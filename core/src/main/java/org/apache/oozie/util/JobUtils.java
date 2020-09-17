@@ -22,16 +22,19 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
@@ -51,7 +54,7 @@ public class JobUtils {
      * @throws IOException thrown if normalization can not be done properly.
      */
     public static void normalizeAppPath(String user, String group, Configuration conf) throws IOException {
-        ParamChecker.notNull(user, "user");
+        Objects.requireNonNull(user, "user cannot be null");
 
         if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) != null) { // do nothing for proxy submission job;
             return;
@@ -66,7 +69,7 @@ public class JobUtils {
         try {
             URI uri = new Path(appPathStr).toUri();
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             fs = has.createFileSystem(user, uri, fsConf);
         }
         catch (HadoopAccessorException ex) {
@@ -136,34 +139,29 @@ public class JobUtils {
     }
 
     /**
-     * This method provides a wrapper around hadoop 0.20/1.x and 0.23/2.x implementations.
-     * TODO: Remove the workaround when we drop the support for hadoop 0.20.
+     * This method provides a wrapper around hadoop 2.x implementations.
      * @param file Path of the file to be added
      * @param conf Configuration that contains the classpath setting
      * @param fs FileSystem with respect to which path should be interpreted (may be null)
-     * @throws IOException
+     * @throws IOException if the file can't be added to the classpath
      */
     public static void addFileToClassPath(Path file, Configuration conf, FileSystem fs) throws IOException {
         if (fs == null) {
             Configuration defaultConf = Services.get().get(HadoopAccessorService.class)
-                    .createJobConf(conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER));
+                    .createConfiguration(conf.get(JavaActionExecutor.HADOOP_YARN_RM));
             XConfiguration.copy(conf, defaultConf);
             // it fails with conf, therefore we pass defaultConf instead
             fs = file.getFileSystem(defaultConf);
         }
-        // Hadoop 0.20/1.x.
-        if (Services.get().get(HadoopAccessorService.class).getCachedConf().get("yarn.resourcemanager.webapp.address") == null) {
-            // Duplicate hadoop 1.x code to workaround MAPREDUCE-2361 in Hadoop 0.20
-            // Refer OOZIE-1806.
-            String filepath = file.toUri().getPath();
-            String classpath = conf.get("mapred.job.classpath.files");
-            conf.set("mapred.job.classpath.files",
-                    classpath == null ? filepath : classpath + System.getProperty("path.separator") + filepath);
-            URI uri = fs.makeQualified(file).toUri();
-            DistributedCache.addCacheFile(uri, conf);
-        }
-        else { // Hadoop 2.x
-            DistributedCache.addFileToClassPath(file, conf, fs);
-        }
+
+        DistributedCache.addFileToClassPath(file, conf, fs);
+    }
+
+    public static String getRetryKey(WorkflowActionBean wfAction, String key) {
+        return ActionXCommand.RETRY + wfAction.getUserRetryCount() + "." + key;
+    }
+
+    public static String getRetryKey(String key, int retry) {
+        return ActionXCommand.RETRY + retry + "." + key;
     }
 }

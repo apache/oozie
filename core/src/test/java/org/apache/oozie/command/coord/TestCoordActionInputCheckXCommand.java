@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorAction;
@@ -212,6 +214,44 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         if( index < 0) {
             fail("Data should have been in missing dependency list! current list: " + missDepsOrder);
         }
+    }
+
+    public void testActionInputMissingDependenciesWithExceptions() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
+
+        //Creating the files needed for our set missing dependencies
+        Path file1 = new Path(getFsTestCaseDir(), "dir1/_SUCCESS");
+        Path file2 = new Path(getFsTestCaseDir(), "dir2/_SUCCESS");
+        Path file3 = new Path(getFsTestCaseDir(), "dir3/_SUCCESS");
+        Path file4 = new Path(getFsTestCaseDir(), "dir4/_SUCCESS");
+
+        FileSystem fs = getFileSystem();
+        fs.mkdirs(file1);
+        fs.mkdirs(file2);
+        fs.mkdirs(file3);
+        fs.mkdirs(file4);
+
+        //Setting file2 to be inaccessible
+        fs.setPermission(new Path(getFsTestCaseDir(), "dir2"), FsPermission.valueOf("----------"));
+
+        //Set missing dependencies
+        String missDeps = file1.toString() + "#" + file2.toString() + "#" + file3.toString() + "#" + file4.toString();
+        String expected = file2.toString() + "#" + file3.toString() + "#" + file4.toString();
+
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-action-input-check.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-action-for-action-input-check.xml", missDeps);
+
+        new CoordActionInputCheckXCommand(action.getId(), job.getId()).call();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean caBean = jpaService.execute(new CoordActionGetJPAExecutor(action.getId()));
+        log.info("Missing deps list: " + caBean.getMissingDependencies());
+        //Checking case when second missing dependency is inaccessible to see if first one is shown or not.
+        assertEquals(expected, caBean.getMissingDependencies());
     }
 
     public void testActionInputCheckLatestActionCreationTime() throws Exception {
@@ -646,7 +686,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setStatus(CoordinatorJob.Status.RUNNING);
         coordJob.setCreatedTime(new Date());
         coordJob.setLastModifiedTime(new Date());
-        coordJob.setUser("testUser");
+        coordJob.setUser("test");
         coordJob.setGroup("testGroup");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
@@ -755,6 +795,23 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     @Test
+    public void testTimeoutWithUnResolved() throws Exception {
+        String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
+        Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
+        Date endTime = DateUtils.parseDateOozieTZ("2009-02-16T23:59" + TZ);
+        CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime, "latest");
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        CoordinatorActionBean action = CoordActionQueryExecutor.getInstance()
+                .get(CoordActionQuery.GET_COORD_ACTION, job.getId() + "@1");
+        assertEquals(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR + "${coord:latestRange(-3,0)}",
+                action.getMissingDependencies());
+        long timeOutCreationTime = System.currentTimeMillis() - (13 * 60 * 1000);
+        setCoordActionCreationTime(action.getId(), timeOutCreationTime);
+        new CoordActionInputCheckXCommand(action.getId(), action.getJobId()).call();
+        checkCoordActionStatus(action.getId(),  CoordinatorAction.Status.TIMEDOUT);
+    }
+
+    @Test
     public void testTimeoutWithException() throws Exception {
         String missingDeps = "nofs:///dirx/filex";
         String actionId = addInitRecords(missingDeps, null, TZ);
@@ -843,7 +900,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQueryExecutor.CoordJobQuery.UPDATE_COORD_JOB, job);
         String missingDeps = "hdfs:///dirx/filex";
 
-        // nominal time is one hour past. So aciton will be skipped
+        // nominal time is one hour past. So action will be skipped
         String actionId1 = addInitRecords(missingDeps, null, TZ, job, 1);
         Date nomTime = new Date(new Date().getTime() - 60 * 60 * 1000);     // 1 hour ago
         setCoordActionNominalTime(actionId1, nomTime.getTime());
@@ -873,13 +930,54 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     }
 
+    public void testExceptionOnInvalidElFunction() {
+        try {
+            CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-hdfsinput-invalid-elfunction.xml",
+                    CoordinatorJob.Status.RUNNING, false, true);
+
+            CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                    CoordinatorAction.Status.WAITING, "coord-hdfsinput-invalid-elfunction.xml");
+
+            createTestCaseSubDir("2009/01/29/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/22/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/15/_SUCCESS".split("/"));
+            createTestCaseSubDir("2009/01/08/_SUCCESS".split("/"));
+            sleep(3000);
+            final String actionId = action.getId();
+            try {
+                new CoordActionInputCheckXCommand(action.getId(), job.getId()).call();
+                waitFor(6000, new Predicate() {
+                    @Override
+                    public boolean evaluate() throws Exception {
+                        CoordinatorActionBean action = CoordActionQueryExecutor.getInstance()
+                                .get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION, actionId);
+                        return action.getStatus() == CoordinatorAction.Status.FAILED;
+                    }
+                });
+                fail("Should throw an exception");
+            }
+            catch (Exception e) {
+                assertTrue(e.getMessage().contains("Coord Action Input Check Error"));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace(System.out);
+            fail("Unexpected exception");
+        }
+    }
     protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
             CoordinatorAction.Status status, String resourceXmlName) throws Exception {
-        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);
         String missDeps = getTestCaseFileUri("2009/01/29/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/22/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/15/_SUCCESS") + "#"
                 + getTestCaseFileUri("2009/01/08/_SUCCESS");
+
+        return addRecordToCoordActionTableForWaiting(jobId, actionNum, status, resourceXmlName, missDeps);
+        }
+
+    protected CoordinatorActionBean addRecordToCoordActionTableForWaiting(String jobId, int actionNum,
+            CoordinatorAction.Status status, String resourceXmlName, String missDeps) throws Exception {
+        CoordinatorActionBean action = createCoordAction(jobId, actionNum, status, resourceXmlName, 0, TZ, null);
 
         action.setMissingDependencies(missDeps);
 
@@ -910,7 +1008,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         coordJob.setStatus(CoordinatorJob.Status.RUNNING);
         coordJob.setCreatedTime(new Date());
         coordJob.setLastModifiedTime(new Date());
-        coordJob.setUser("testUser");
+        coordJob.setUser("test");
         coordJob.setGroup("testGroup");
         coordJob.setTimeZone("UTC");
         coordJob.setTimeUnit(Timeunit.DAY);
@@ -931,7 +1029,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         String confStr = jobConf.toXmlString(false);
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00" + TZ + "' end='2009-02-03T23:59" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00"
+        + TZ + "' end='2009-02-03T23:59" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
         appXml += "<concurrency>2</concurrency>";
@@ -939,7 +1038,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}" )+ "</uri-template>";
         appXml += "</dataset>";
         if (dataInType.equals("future")) {
@@ -958,7 +1058,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-01-01T01:00" + TZ + "' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("${YEAR}/${MONTH}/${DAY}" )+ "</uri-template>";
         appXml += "</dataset>";
         appXml += "<start-instance>${coord:current(-3)}</start-instance>";

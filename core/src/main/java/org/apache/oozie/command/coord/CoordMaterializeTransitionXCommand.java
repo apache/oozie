@@ -18,7 +18,7 @@
 
 package org.apache.oozie.command.coord;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.AppType;
 import org.apache.oozie.CoordinatorActionBean;
@@ -35,7 +35,6 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorUtil;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
@@ -112,24 +111,20 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         this.endMatdTime = endTime;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.MaterializeTransitionXCommand#transitToNext()
-     */
+    @Override
+    protected void setLogInfo() {
+        LogUtils.setLogInfo(jobId);
+    }
+
     @Override
     public void transitToNext() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() throws CommandException {
         updateList.add(new UpdateEntry(CoordJobQuery.UPDATE_COORD_JOB_MATERIALIZE,coordJob));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.MaterializeTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -162,9 +157,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
@@ -175,9 +167,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         jpaService = Services.get().get(JPAService.class);
@@ -192,11 +181,9 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         catch (JPAExecutorException jex) {
             throw new CommandException(jex);
         }
-
+        LogUtils.setLogInfo(coordJob);
         // calculate start materialize and end materialize time
         calcMatdTime();
-
-        LogUtils.setLogInfo(coordJob);
     }
 
     /**
@@ -224,7 +211,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             endMatdTime = jobEndTime;
         }
 
-        LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end=" + DateUtils.formatDateOozieTZ(endMatdTime)
+        LOG.debug("Materializing coord job id=" + jobId + ", start=" + DateUtils.formatDateOozieTZ(startMatdTime) + ", end="
+                + DateUtils.formatDateOozieTZ(endMatdTime)
                 + ", window=" + materializationWindow);
     }
 
@@ -234,7 +222,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      * case it returns now (to materialize all actions in the past)
      *
      * @param currentMatTime
-     * @return
+     * @return Date returns materialization for window for catch-up jobs
      * @throws CommandException
      * @throws JDOMException
      */
@@ -246,12 +234,14 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                 coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE)) {
             return new Date();
         }
-        int frequency = 0;
+        final int frequency;
         try {
             frequency = Integer.parseInt(coordJob.getFrequency());
         }
-        catch (NumberFormatException e) {
-            return currentMatTime;
+        catch (final NumberFormatException e) {
+            // Cron based frequency: catching up at maximum till the coordinator job's end time,
+            // bounded also by the throttle parameter, aka the number of coordinator actions to materialize
+            return coordJob.getEndTime();
         }
 
         TimeZone appTz = DateUtils.getTimeZone(coordJob.getTimeZone());
@@ -281,9 +271,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if (!(coordJob.getStatus() == CoordinatorJobBean.Status.PREP || coordJob.getStatus() == CoordinatorJobBean.Status.RUNNING
@@ -349,9 +336,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.MaterializeTransitionXCommand#materialize()
-     */
     @Override
     protected void materialize() throws CommandException {
         Instrumentation.Cron cron = new Instrumentation.Cron();
@@ -387,6 +371,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      * Create action instances starting from "startMatdTime" to "endMatdTime" and store them into coord action table.
      *
      * @param dryrun if this is a dry run
+     * @return materialized action(s)
      * @throws Exception thrown if failed to materialize actions
      */
     protected String materializeActions(boolean dryrun) throws Exception {
@@ -455,6 +440,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         boolean firstMater = true;
+
         while (effStart.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
             if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;
@@ -467,9 +453,10 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     effStart.add(Calendar.MINUTE, -1);
                     firstMater = false;
                 }
-
                 nextTime = CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob);
+                Date prevTime = new Date(effStart.getTimeInMillis());
                 effStart.setTime(nextTime);
+                addDSTChangeToNominalTime(prevTime, nextTime, coordJob);
             }
 
             if (effStart.compareTo(end) < 0) {
@@ -526,6 +513,31 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
     }
 
+    /**
+     * Apply DST correction according the job`s timezone, if the difference between the previous nominal time and the actual one
+     * is greater or equal than 24 hours.
+     * Calendar uses a similar approach: applies DST change if the TimeUnit is lower or equal than TimeUnit.DAY. With this approach
+     * a similar behaviour can be achieved.
+     *
+     * @see {@http://oozie.apache.org/docs/5.0.0/CoordinatorFunctionalSpec.html#a7._Handling_Timezones_and_Daylight_Saving_Time}
+     *
+     * @param prevTime nominal time of the previous coordinator action
+     * @param nextTime nominal time of the actual coordinator action
+     * @param coordJob the coordinator job
+     */
+    private void addDSTChangeToNominalTime(Date prevTime, Date nextTime, CoordinatorJobBean coordJob) {
+        final long differenceBetweenTwoActionsInSec = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds
+                (Math.abs(prevTime.getTime() - nextTime.getTime()));
+        final long oneDayInSeconds = java.util.concurrent.TimeUnit.DAYS.toSeconds(1);
+        if (differenceBetweenTwoActionsInSec < oneDayInSeconds) {
+            return;
+        }
+        final long dstOffset = DaylightOffsetCalculator.getDSTOffset(DateUtils
+                .getTimeZone(coordJob.getTimeZone()), coordJob.getStartTime(), nextTime);
+        LOG.debug("[{0}] ms DST offset applied to nominal time for coordinator job: [{1}]", dstOffset, coordJob.getId());
+        nextTime.setTime(nextTime.getTime() + dstOffset);
+    }
+
     private void storeToDB(CoordinatorActionBean actionBean, String actionXml, Configuration jobConf) throws Exception {
         LOG.debug("In storeToDB() coord action id = " + actionBean.getId() + ", size of actionXml = "
                 + actionXml.length());
@@ -555,14 +567,15 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         // if the job endtime == action endtime, we don't need to materialize this job anymore
         Date jobEndTime = job.getEndTime();
 
-
         if (job.getStatus() == CoordinatorJob.Status.PREP){
             LOG.info("[" + job.getId() + "]: Update status from " + job.getStatus() + " to RUNNING");
             job.setStatus(Job.Status.RUNNING);
         }
         job.setPending();
+        Calendar end = Calendar.getInstance();
+        end.setTime(jobEndTime);
 
-        if (jobEndTime.compareTo(endMatdTime) <= 0) {
+        if (end.getTime().compareTo(endMatdTime) <= 0) {
             LOG.info("[" + job.getId() + "]: all actions have been materialized, set pending to true");
             // set doneMaterialization to true when materialization is done
             job.setDoneMaterialization();
@@ -572,17 +585,11 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         job.setNextMaterializedTime(endMatdTime);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getKey()
-     */
     @Override
     public String getKey() {
         return getName() + "_" + jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
         // update bundle action only when status changes in coord job

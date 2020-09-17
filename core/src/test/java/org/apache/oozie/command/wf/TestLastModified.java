@@ -26,9 +26,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 
-import java.io.File;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Properties;
 
@@ -84,12 +84,13 @@ public class TestLastModified extends XFsTestCase {
         fs.mkdirs(new Path(appPath, "lib"));
         fs.mkdirs(new Path("input-data"));
 
-        Writer inputWriter = new OutputStreamWriter(fs.create(new Path("input-data/data1.txt")));
+        Writer inputWriter = new OutputStreamWriter(fs.create(new Path("input-data/data1.txt")),
+                StandardCharsets.UTF_8);
         inputWriter.write("Hello. This is my input data set.");
         inputWriter.close();
 
         Path workflowPath = new Path(appPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(wfApp);
         writer.close();
 

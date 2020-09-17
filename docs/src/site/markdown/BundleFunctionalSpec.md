@@ -1,0 +1,418 @@
+
+
+[::Go back to Oozie Documentation Index::](index.html)
+
+-----
+
+# Oozie Bundle Specification
+
+The goal of this document is to define a new oozie abstraction called bundle system specialized in submitting and maintaining a set of coordinator applications.
+
+
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
+
+## Changelog
+
+## 1. Bundle Overview
+
+Bundle is a higher-level oozie abstraction that will batch a set of coordinator applications. The user will be able to start/stop/suspend/resume/rerun in the bundle level resulting a better and easy operational control.
+
+More specifically, the oozie **Bundle** system allows the user to define and execute a bunch of coordinator applications often called a data pipeline. There is no explicit dependency among the coordinator applications in a bundle. However, a user could use the data dependency of coordinator applications to create an implicit data application pipeline.
+
+
+## 2. Definitions
+
+**Kick-off-time:** The time when a bundle should start and submit coordinator applications.
+
+**Bundle Application:** A bundle application defines a set of coordinator applications and when to start those. Normally, bundle applications are parameterized. A bundle application is written in XML.
+
+**Bundle Job:** A bundle job is an executable instance of a bundle application. A job submission is done by submitting a job configuration that resolves all parameters in the application definition.
+
+**Bundle Definition Language:** The language used to describe bundle applications.
+
+## 3. Expression Language for Parameterization
+
+Bundle application definitions can be parameterized with variables.
+
+At job submission time all the parameters are resolved into concrete values.
+
+The parameterization of bundle definitions is done using JSP Expression Language syntax from the [JSP 2.0 Specification (JSP.2.3)](http://jcp.org/aboutJava/communityprocess/final/jsr152/index.html), allowing not only to support variables as parameters but also complex expressions.
+
+EL expressions can be used in XML attribute values and XML text element values. They cannot be used in XML element and XML attribute names.
+
+
+## 4. Bundle Job
+
+### 4.1. Bundle Job Status
+
+At any time, a bundle job is in one of the following status: **PREP, RUNNING, RUNNINGWITHERROR, SUSPENDED, PREPSUSPENDED, SUSPENDEDWITHERROR, PAUSED, PAUSEDWITHERROR, PREPPAUSED, SUCCEEDED, DONEWITHERROR, KILLED, FAILED**.
+
+### 4.2. Transitions of Bundle Job Status
+
+Valid bundle job status transitions are:
+
+   * **PREP --> PREPSUSPENDED | PREPPAUSED | RUNNING | KILLED**
+   * **RUNNING --> RUNNINGWITHERROR | SUSPENDED | PAUSED | SUCCEEDED | KILLED**
+   * **RUNNINGWITHERROR --> RUNNING | SUSPENDEDWITHERROR | PAUSEDWITHERROR | DONEWITHERROR | FAILED | KILLED**
+   * **PREPSUSPENDED --> PREP | KILLED**
+   * **SUSPENDED --> RUNNING | KILLED**
+   * **SUSPENDEDWITHERROR --> RUNNINGWITHERROR | KILLED**
+   * **PREPPAUSED --> PREP | KILLED**
+   * **PAUSED --> SUSPENDED | RUNNING | KILLED**
+   * **PAUSEDWITHERROR --> SUSPENDEDWITHERROR | RUNNINGWITHERROR | KILLED**
+
+### 4.3. Details of Status Transitions
+When a bundle job is submitted, oozie parses the bundle job XML. Oozie then creates a record for the bundle with status **PREP** and returns a unique ID.
+
+When a user requests to suspend a bundle job that is in **PREP** state, oozie puts the job in status **PREPSUSPENDED**. Similarly, when pause time reaches for a bundle job with **PREP** status, oozie puts the job in status **PREPPAUSED**.
+
+Conversely, when a user requests to resume a **PREPSUSPENDED** bundle job, oozie puts the job in status **PREP**. And when pause time is reset for a bundle job that is in **PREPPAUSED** state, oozie puts the job in status **PREP**.
+
+There are two ways a bundle job could be started.
+
+* If `kick-off-time` (defined in the bundle xml) reaches. The default value is null which means starts coordinators NOW.
+
+* If user sends a start request to START the bundle.
+
+When a bundle job starts, oozie puts the job in status **RUNNING** and it submits all the coordinator jobs. If any coordinator job goes to **FAILED/KILLED/DONEWITHERROR** state, the bundle job is put in **RUNNINGWITHERROR**
+
+When a user requests to kill a bundle job, oozie puts the job in status **KILLED** and it sends kill to all submitted coordinator jobs.
+
+When a user requests to suspend a bundle job that is in **RUNNING** status, oozie puts the job in status **SUSPENDED** and it suspends all submitted coordinator jobs. Similarly, when a user requests to suspend a bundle job that is in **RUNNINGWITHERROR** status, oozie puts the job in status **SUSPENDEDWITHERROR** and it suspends all submitted coordinator jobs.
+
+When pause time reaches for a bundle job that is in **RUNNING** status, oozie puts the job in status **PAUSED**. When pause time reaches for a bundle job that is in **RUNNINGWITHERROR** status, oozie puts the job in status **PAUSEDWITHERROR**.
+
+Conversely, when a user requests to resume a **SUSPENDED** bundle job, oozie puts the job in status **RUNNING**. Similarly, when a user requests to resume a **SUSPENDEDWITHERROR** bundle job, oozie puts the job in status **RUNNINGWITHERROR**. And when pause time is reset for a bundle job and job status is **PAUSED**, oozie puts the job in status **RUNNING**. Similarly, when the pause time is reset for a bundle job and job status is **PAUSEDWITHERROR**, oozie puts the job in status **RUNNINGWITHERROR**
+
+When all the coordinator jobs finish, oozie updates the bundle status accordingly. If all coordinators reaches to the _same_ terminal state, bundle job status also move to the same status. For example, if all coordinators are **SUCCEEDED**, oozie puts the bundle job into **SUCCEEDED** status. However, if all coordinator jobs don't finish with the same status, oozie puts the bundle job into **DONEWITHERROR**.
+
+
+### 4.3.  Bundle Application Definition
+A bundle definition is defined in XML by a name, controls and one or more coordinator application specifications:
+
+   * **<font color="#0000ff"> name: </font>** The name for the bundle job.
+   * **<font color="#0000ff"> controls: </font>** The control specification for the bundle.
+      * **<font color="#0000ff"> kick-off-time: </font>** It defines when the bundle job should start and submit the coordinator applications. This field is optional and the default is **NOW** that means the job should start right-a-way.
+   * **<font color="#0000ff"> coordinator: </font>** Coordinator application specification. There should be at least one coordinator application in any bundle.
+      * **<font color="#0000ff"> name: </font>** Name of the coordinator application. It can be used for referring this application through bundle to control such as kill, suspend, rerun.
+      * **<font color="#0000ff"> enabled: </font>** Enabled can be used to enable or disable a coordinator. It is optional. The default value for enabled is true.
+      * **<font color="#0000ff"> app-path: </font>** Path of the coordinator application definition in hdfs. This is a mandatory element.
+      * **<font color="#0000ff"> configuration: </font>** A hadoop like configuration to parameterize corresponding coordinator application. This is optional.
+    * **<font color="#0000ff"> Parameterization: </font>**  Configuration properties that are a valid Java identifier, [A-Za-z_][0-9A-Za-z_]*, are available as `${NAME}` variables within the bundle application definition. Configuration properties that are not a valid Java identifier, for example `job.tracker`, are available via the `${bundle:conf(String name)}` function. Valid Java identifier properties are available via this function as well.
+
+
+**<font color="#800080">Syntax: </font>**
+
+
+```
+       <bundle-app name=[NAME]  xmlns='uri:oozie:bundle:0.1'>
+  <controls>
+       <kick-off-time>[DATETIME]</kick-off-time>
+  </controls>
+   <coordinator name=[NAME] enabled=[TRUE | FALSE] >
+       <app-path>[COORD-APPLICATION-PATH]</app-path>
+          <configuration>
+            <property>
+              <name>[PROPERTY-NAME]</name>
+              <value>[PROPERTY-VALUE]</value>
+            </property>
+            ...
+         </configuration>
+   </coordinator>
+   ...
+</bundle-app>
+```
+
+
+**<font color="#008000"> Examples: </font>**
+
+**A Bundle Job that maintains two coordinator applications:**
+
+
+```
+<bundle-app name='APPNAME' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.1'>
+  <controls>
+       <kick-off-time>${kickOffTime}</kick-off-time>
+  </controls>
+   <coordinator name="${bundle:conf('coordName1')}" >
+       <app-path>${appPath}</app-path>
+       <configuration>
+         <property>
+              <name>startTime1</name>
+              <value>${bundle:conf('coord1.startTime1')}</value>
+          </property>
+         <property>
+              <name>endTime1</name>
+              <value>${END_TIME}</value>
+          </property>
+      </configuration>
+   </coordinator>
+   <coordinator name='coordJobFromBundle2' >
+       <app-path>${appPath2}</app-path>
+       <configuration>
+         <property>
+              <name>startTime2</name>
+              <value>${START_TIME2}</value>
+          </property>
+         <property>
+              <name>endTime2</name>
+              <value>${END_TIME2}</value>
+          </property>
+      </configuration>
+   </coordinator>
+</bundle-app>
+```
+
+### 4.4.  Bundle Formal Parameters
+As of schema 0.2, a list of formal parameters can be provided which will allow Oozie to verify, at submission time, that said
+properties are actually specified (i.e. before the job is executed and fails). Default values can also be provided.
+
+**Example:**
+
+The previous Bundle Job application definition with formal parameters:
+
+
+```
+<bundle-app name='APPNAME' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns='uri:oozie:bundle:0.2'>
+  <parameters>
+      <property>
+          <name>appPath</name>
+      </property>
+      <property>
+          <name>appPath2</name>
+          <value>hdfs://foo:8020/user/joe/job/job.properties</value>
+      </property>
+  </parameters>
+  <controls>
+       <kick-off-time>${kickOffTime}</kick-off-time>
+  </controls>
+   <coordinator name='coordJobFromBundle1' >
+       <app-path>${appPath}</app-path>
+       <configuration>
+         <property>
+              <name>startTime1</name>
+              <value>${START_TIME}</value>
+          </property>
+         <property>
+              <name>endTime1</name>
+              <value>${END_TIME}</value>
+          </property>
+      </configuration>
+   </coordinator>
+   <coordinator name='coordJobFromBundle2' >
+       <app-path>${appPath2}</app-path>
+       <configuration>
+         <property>
+              <name>startTime2</name>
+              <value>${START_TIME2}</value>
+          </property>
+         <property>
+              <name>endTime2</name>
+              <value>${END_TIME2}</value>
+          </property>
+      </configuration>
+   </coordinator>
+</bundle-app>
+```
+
+In the above example, if `appPath` is not specified, Oozie will print an error message instead of submitting the job. If
+`appPath2` is not specified, Oozie will use the default value, `hdfs://foo:8020/user/joe/job/job.properties`.
+
+
+## 5. User Propagation
+
+When submitting a bundle job, the configuration must contain a `user.name` property. If security is enabled, Oozie must ensure that the value of the `user.name` property in the configuration match the user credentials present in the protocol (web services) request.
+
+When submitting a bundle job, the configuration may contain the `oozie.job.acl` property (the `group.name` property
+has been deprecated). If authorization is enabled, this property is treated as as the ACL for the job, it can contain
+user and group IDs separated by commas.
+
+The specified user and ACL are assigned to the created bundle job.
+
+Oozie must propagate the specified user and ACL to the system executing its children jobs (coordinator jobs).
+
+## 6. Bundle Application Deployment
+
+A bundle application consist exclusively of bundle application definition and associated coordinator application specifications. They must be installed in an HDFS directory. To submit a job for a bundle application, the full HDFS path to bundle application definition must be specified.
+
+### 6.1. Organizing Bundle Applications
+
+TBD.
+
+## 7. Bundle Job Submission
+
+When a bundle job is submitted to Oozie, the submitter must specified all the required job properties plus the HDFS path to the bundle application definition for the job.
+
+The bundle application definition HDFS path must be specified in the 'oozie.bundle.application.path' job property.
+
+All the bundle job properties, the HDFS path for the bundle application, the 'user.name' and 'oozie.job.acl' must be
+submitted to the Oozie using an XML configuration file (Hadoop XML configuration file).
+
+**<font color="#008000"> Example: </font>**:
+
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property>
+        <name>user.name</name>
+        <value>joe</value>
+    </property>
+    <property>
+        <name>oozie.bundle.application.path</name>
+        <value>hdfs://foo:8020/user/joe/mybundles/hello-bundle1.xml</value>
+    </property>
+    ...
+</configuration>
+```
+
+## 8. Bundle Rerun
+### 8.1 Rerunning a Bundle Job
+Oozie provides a way of rerunning a bundle job. The user could request to rerun a subset of coordinators within a bundle by defining a list of coordinator's names. In addition, a user could define a list of dates or ranges of dates (in UTC format) to rerun for those time windows.
+There is a way of asking whether to cleanup all output directories before rerun. By default, oozie will remove all output directories. Moreover, there is an option by which a user could ask to re-calculate the dynamic input directories defined by latest function in coordinators.
+
+### 8.2 Rerun Arguments
+
+
+```
+$oozie job -rerun <bundle_Job_id> [-coordinator <list of coordinator name separate by comma>
+[-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
+  [-nocleanup] [-refresh]
+```
+
+   * The `rerun` option reruns a bundle job that is *not* in (`KILLED`,  `FAILED`, `PREP`, `PREPPAUSED`, `PREPSUSPENDED`).
+   * Rerun a bundle job that is in `PAUSED` state will reset the paused time.
+   * The option -coordinator determines the name of coordinator that will be rerun. By default all coordinators are rerun.
+   * Multiple ranges can be used in -date. See the above examples.
+   * The dates specified in -date must be UTC.
+   * If -nocleanup is given, corresponding coordinator directories will not be removed; otherwise the 'output-event' will be deleted.
+   * If -refresh is set, new dataset is re-evaluated for latest() and future() for the corresponding coordinators.
+   * If -refresh is set, all dependencies will be re-checked; otherwise only missed dependencies will be checked for the corresponding coordinators.
+
+
+After the command is executed the rerun bundle job will be in `RUNNING` status.
+
+Refer to the [Rerunning Coordinator Actions](DG_CoordinatorRerun.html) for details on rerun of coordinator job.
+
+
+## Appendixes
+
+### Appendix A, Oozie Bundle XML-Schema
+
+#### Oozie Bundle Schema 0.1
+
+
+```
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:bundle="uri:oozie:bundle:0.1"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:bundle:0.1">
+
+    <xs:element name="bundle-app" type="bundle:BUNDLE-APP"/>
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39})"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="BUNDLE-APP">
+        <xs:sequence>
+            <xs:element name="controls" type="bundle:CONTROLS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="coordinator" type="bundle:COORDINATOR" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="bundle:IDENTIFIER" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="CONTROLS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="kick-off-time" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="COORDINATOR">
+        <xs:sequence  minOccurs="1" maxOccurs="1">
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="bundle:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="bundle:IDENTIFIER" use="required"/>
+        <xs:attribute name="critical" type="xs:string" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+```
+
+#### Oozie Bundle Schema 0.2
+
+
+```
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:bundle="uri:oozie:bundle:0.2"
+           elementFormDefault="qualified" targetNamespace="uri:oozie:bundle:0.2">
+
+    <xs:element name="bundle-app" type="bundle:BUNDLE-APP"/>
+    <xs:simpleType name="IDENTIFIER">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([a-zA-Z]([\-_a-zA-Z0-9])*){1,39}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="BUNDLE-APP">
+        <xs:sequence>
+            <xs:element name="parameters" type="bundle:PARAMETERS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="controls" type="bundle:CONTROLS" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="coordinator" type="bundle:COORDINATOR" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="PARAMETERS">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CONTROLS">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="kick-off-time" type="xs:string" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="COORDINATOR">
+        <xs:sequence  minOccurs="1" maxOccurs="1">
+            <xs:element name="app-path" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="configuration" type="bundle:CONFIGURATION" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="bundle:IDENTIFIER" use="required"/>
+        <xs:attribute name="critical" type="xs:string" use="optional"/>
+        <xs:attribute name="enabled" type="xs:string" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="CONFIGURATION">
+        <xs:sequence>
+            <xs:element name="property" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="value" minOccurs="1" maxOccurs="1" type="xs:string"/>
+                        <xs:element name="description" minOccurs="0" maxOccurs="1" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+```
+
+
+[::Go back to Oozie Documentation Index::](index.html)
+
+

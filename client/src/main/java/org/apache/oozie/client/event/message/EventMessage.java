@@ -18,17 +18,14 @@
 
 package org.apache.oozie.client.event.message;
 
-import java.util.Map;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.Event.MessageType;
-import org.apache.oozie.client.event.JobEvent.EventStatus;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
 import org.apache.oozie.AppType;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * Base class which holds attributes for event message
@@ -58,7 +55,7 @@ public abstract class EventMessage {
 
     /**
      * Sets the appType for a event
-     * @param appType
+     * @param appType the app type
      */
     public void setAppType(AppType appType) {
         this.appType = appType;
@@ -75,7 +72,7 @@ public abstract class EventMessage {
 
     /**
      * Sets the message type for a event
-     * @param messageType
+     * @param messageType the message type
      */
     public void setMessageType(MessageType messageType) {
         this.messageType = messageType;
@@ -92,8 +89,8 @@ public abstract class EventMessage {
 
     /**
      * Set the JMS selector properties for message object
-     * @param message
-     * @throws JMSException
+     * @param message the message
+     * @throws JMSException in case of a JMS error occurs
      */
     @JsonIgnore
     public void setProperties(Message message) throws JMSException {

@@ -42,6 +42,7 @@ import org.jdom.Element;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
 public class TestFsActionExecutor extends ActionExecutorTestCase {
@@ -320,6 +321,20 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertFalse(handler.exists(hcatURI, conf, getTestUser()));
     }
 
+    public void testDeleteHcatTable() throws Exception {
+        createTestTable();
+        URI hcatURI = getHCatURI(db, table);
+        URIHandler handler = uriService.getURIHandler(hcatURI);
+        FsActionExecutor ae = new FsActionExecutor();
+        Path path = new Path(hcatURI);
+        Path nameNodePath = new Path(getNameNodeUri());
+        Context context = createContext("<fs/>");
+        XConfiguration conf = new XConfiguration();
+        assertTrue(handler.exists(hcatURI, conf, getTestUser()));
+        ae.delete(context, conf, nameNodePath, path, true);
+        assertFalse(handler.exists(hcatURI, conf, getTestUser()));
+    }
+
     public void testDeleteWithGlob() throws Exception {
 
         FsActionExecutor ae = new FsActionExecutor();
@@ -541,9 +556,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
         assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir1")).getPermission().toString());
         assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir2")).getPermission().toString());
         assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/11/dir3")).getPermission().toString());
-        // HDFS-4659 introduced an incompatible change that causes the following to be "rwx------" when run against Hadoop 2.1.x
-        // but in Hadoop 1.x its still "rw-------" so we'll just skip verifying this for now.
-        //assertEquals("rw-------", fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getPermission().toString());
+        assertEquals("rwx------", fs.getFileStatus(new Path(basePath + "/10/dir1/file1")).getPermission().toString());
 
         fs.delete(basePath, true);
     }
@@ -649,7 +662,7 @@ public void testChmodRecursive() throws Exception {
 
         //Test touchz on a non-zero length file
         Path f3 = new Path(dir + "/newfile3");
-        Writer writer = new OutputStreamWriter(fs.create(f3));
+        Writer writer = new OutputStreamWriter(fs.create(f3), StandardCharsets.UTF_8);
         writer.write("This is not a zero length file");
         writer.close();
 
@@ -1201,5 +1214,18 @@ public void testChmodRecursive() throws Exception {
             assertEquals("FS014", ((ActionExecutorException) e).getErrorCode());
             assertEquals(ActionExecutorException.ErrorType.ERROR, ((ActionExecutorException) e).getErrorType());
         }
+    }
+
+    public void testSetRep() throws Exception {
+        FsActionExecutor ae = new FsActionExecutor();
+        FileSystem fs = getFileSystem();
+        Path path = new Path(getFsTestCaseDir(), "dir1");
+        Context context = createContext("<fs/>");
+        fs.mkdirs(path);
+        Path file = new Path(path + "/file");
+        fs.createNewFile(file);
+        final short replicationFactor = (short) 2;
+        ae.setrep(context, path, replicationFactor);
+        assertEquals(replicationFactor, fs.getFileStatus(file).getReplication());
     }
 }

@@ -19,6 +19,7 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 
@@ -28,7 +29,6 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * This JPA Executor is responsible for getting the Workflow job with actions in certain range.
@@ -43,21 +43,18 @@ public class WorkflowInfoWithActionsSubsetGetJPAExecutor implements JPAExecutor<
     /**
      * This will create the WorkflowInfoWithActionsSubsetGetJPAExecutor object. which is responsible for getting the
      * Workflow job with actions in certain range.
-     * 
-     * @param wfJobId
-     * @param start
-     * @param len
+     *
+     * @param wfJobId WF job id
+     * @param start start element of range
+     * @param len length of range
      */
     public WorkflowInfoWithActionsSubsetGetJPAExecutor(String wfJobId, int start, int len) {
-        ParamChecker.notNull(wfJobId, "wfJobId");
+        Objects.requireNonNull(wfJobId, "wfJobId cannot be null");
         this.wfJobId = wfJobId;
         this.start = start;
         this.len = len;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public WorkflowJobBean execute(EntityManager em) throws JPAExecutorException {
         try {
@@ -96,9 +93,6 @@ public class WorkflowInfoWithActionsSubsetGetJPAExecutor implements JPAExecutor<
         return this.workflow;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowInfoWithActionsSubsetGetJPAExecutor";

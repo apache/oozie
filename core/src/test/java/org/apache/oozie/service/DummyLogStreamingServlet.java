@@ -21,6 +21,7 @@ package org.apache.oozie.service;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -36,8 +37,8 @@ public class DummyLogStreamingServlet extends HttpServlet {
     public static String logs = null;
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        lastQueryString = URLDecoder.decode(request.getQueryString(), "UTF-8");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        lastQueryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8.name());
         response.setStatus(HttpServletResponse.SC_OK);
         Writer writer = response.getWriter();
         writer.append(logs);

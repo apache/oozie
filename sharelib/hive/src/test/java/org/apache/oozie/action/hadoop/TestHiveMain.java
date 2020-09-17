@@ -18,30 +18,41 @@
 
 package org.apache.oozie.action.hadoop;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.oozie.test.MiniHCatServer;
-import org.apache.oozie.util.XConfiguration;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.oozie.action.hadoop.security.LauncherSecurityManager;
+import org.apache.oozie.test.MiniHCatServer;
+import org.apache.oozie.util.XConfiguration;
 
 public class TestHiveMain extends MainTestCase {
-    private SecurityManager SECURITY_MANAGER;
-
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
-        SECURITY_MANAGER = System.getSecurityManager();
     }
 
+    @Override
     protected void tearDown() throws Exception {
-        System.setSecurityManager(SECURITY_MANAGER);
         super.tearDown();
+    }
+
+    @Override
+    protected List<File> getFilesToDelete() {
+        List<File> filesToDelete = super.getFilesToDelete();
+        filesToDelete.add(new File(HiveMain.HIVE_SITE_CONF));
+        return filesToDelete;
     }
 
     private static final String NEW_LINE =
@@ -61,6 +72,7 @@ public class TestHiveMain extends MainTestCase {
         return buffer.toString();
     }
 
+    @Override
     public Void call() throws Exception {
         if (System.getenv("HADOOP_HOME") == null) {
             System.out.println("WARNING: 'HADOOP_HOME' env var not defined, TestHiveMain test is not running");
@@ -70,14 +82,16 @@ public class TestHiveMain extends MainTestCase {
 
             Path inputDir = new Path(getFsTestCaseDir(), "input");
             fs.mkdirs(inputDir);
-            Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+            Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                    StandardCharsets.UTF_8);
             writer.write("3\n4\n6\n1\n2\n7\n9\n0\n8\n");
             writer.close();
 
             Path outputDir = new Path(getFsTestCaseDir(), "output");
 
             Path script = new Path(getTestCaseDir(), "script.q");
-            Writer w = new FileWriter(script.toString());
+            Writer w = new OutputStreamWriter(new FileOutputStream(new File(script.toString())),
+                    StandardCharsets.UTF_8);
             w.write(getHiveScript("${IN}", "${OUT}"));
             w.close();
 
@@ -102,10 +116,10 @@ public class TestHiveMain extends MainTestCase {
             SharelibUtils.addToDistributedCache("hive", fs, getFsTestCaseDir(), jobConf);
 
             jobConf.set(HiveActionExecutor.HIVE_SCRIPT, script.toString());
-            MapReduceMain.setStrings(jobConf, HiveActionExecutor.HIVE_PARAMS, new String[]{
+            ActionUtils.setStrings(jobConf, HiveActionExecutor.HIVE_PARAMS, new String[]{
                 "IN=" + inputDir.toUri().getPath(),
                 "OUT=" + outputDir.toUri().getPath()});
-            MapReduceMain.setStrings(jobConf, HiveActionExecutor.HIVE_ARGS,
+            ActionUtils.setStrings(jobConf, HiveActionExecutor.HIVE_ARGS,
                 new String[]{ "-v" });
 
             File actionXml = new File(getTestCaseDir(), "action.xml");
@@ -127,7 +141,8 @@ public class TestHiveMain extends MainTestCase {
             setSystemProperty("oozie.action.conf.xml", actionXml.getAbsolutePath());
             setSystemProperty("oozie.action.externalChildIDs", externalChildIdsFile.getAbsolutePath());
 
-            new LauncherSecurityManager();
+            LauncherSecurityManager launcherSecurityManager = new LauncherSecurityManager();
+            launcherSecurityManager.enable();
             String user = System.getProperty("user.name");
             try {
                 os = new FileOutputStream(hiveSite);
@@ -137,10 +152,10 @@ public class TestHiveMain extends MainTestCase {
                 HiveMain.main(null);
             }
             catch (SecurityException ex) {
-                if (LauncherSecurityManager.getExitInvoked()) {
-                    System.out.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                    System.err.println("Intercepting System.exit(" + LauncherSecurityManager.getExitCode() + ")");
-                    if (LauncherSecurityManager.getExitCode() != 0) {
+                if (launcherSecurityManager.getExitInvoked()) {
+                    System.out.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                    System.err.println("Intercepting System.exit(" + launcherSecurityManager.getExitCode() + ")");
+                    if (launcherSecurityManager.getExitCode() != 0) {
                         fail();
                     }
                 }
@@ -152,10 +167,11 @@ public class TestHiveMain extends MainTestCase {
                 System.setProperty("user.name", user);
                 hiveSite.delete();
                 MiniHCatServer.resetHiveConfStaticVariables();
+                launcherSecurityManager.disable();
             }
 
             assertTrue(externalChildIdsFile.exists());
-            assertNotNull(LauncherMapper.getLocalFileContentStr(externalChildIdsFile, "", -1));
+            assertNotNull(LauncherAMUtils.getLocalFileContentStr(externalChildIdsFile, "", -1));
 
 //TODO: I cannot figure out why when log file is not created in this testcase, it works when running in Launcher
 //            Properties props = new Properties();
@@ -164,5 +180,24 @@ public class TestHiveMain extends MainTestCase {
 //            assertTrue(props.getProperty(LauncherMain.HADOOP_JOBS).trim().length() > 0);
         }
         return null;
+    }
+
+    public void testJobIDPattern() {
+        List<String> lines = new ArrayList<String>();
+        lines.add("Ended Job = job_001");
+        lines.add("Submitted application application_002");
+        // Non-matching ones
+        lines.add("Ended Job = . job_003");
+        lines.add("Ended Job = abc004");
+        lines.add("Submitted application = job_005");
+        lines.add("Submitted application. job_006");
+        Set<String> jobIds = new LinkedHashSet<String>();
+        for (String line : lines) {
+            LauncherMain.extractJobIDs(line, HiveMain.HIVE_JOB_IDS_PATTERNS, jobIds);
+        }
+        Set<String> expected = new LinkedHashSet<String>();
+        expected.add("job_001");
+        expected.add("job_002");
+        assertEquals(expected, jobIds);
     }
 }

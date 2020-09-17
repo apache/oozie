@@ -26,13 +26,9 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
-import org.apache.oozie.client.Job;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
@@ -40,6 +36,7 @@ import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 
 public class TestCoordinatorEngineStreamLog extends XDataTestCase {
     private Services services;
@@ -63,9 +60,9 @@ public class TestCoordinatorEngineStreamLog extends XDataTestCase {
         Date endTime;
 
         @Override
-        public void streamLog(XLogFilter filter1, Date startTime, Date endTime, Writer writer, Map<String, String[]> params)
+        public void streamLog(XLogStreamer logStreamer, Date startTime, Date endTime, Writer writer)
                 throws IOException {
-            filter = filter1;
+            filter = logStreamer.getXLogFilter();
             this.startTime = startTime;
             this.endTime = endTime;
         }

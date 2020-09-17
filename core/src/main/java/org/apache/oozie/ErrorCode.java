@@ -36,7 +36,6 @@ public enum ErrorCode {
     E0022(XLog.OPS, "Configuration file must be a file name [{0}]"),
     E0023(XLog.OPS, "Default configuration file [{0}] not found in classpath"),
     E0024(XLog.OPS, "Oozie configuration directory does not exist [{0}]"),
-    E0025(XLog.OPS, "Configuration service internal error, it should never happen, {0}"),
     E0026(XLog.OPS, "Missing required configuration property [{0}]"),
 
     E0100(XLog.OPS, "Could not initialize service [{0}], {1}"),
@@ -68,12 +67,11 @@ public enum ErrorCode {
     E0307(XLog.STD, "Runtime error [{0}]"),
     E0308(XLog.STD, "Could not parse date range parameter [{0}]"),
 
-
     E0401(XLog.STD, "Missing configuration property [{0}]"),
     E0402(XLog.STD, "Invalid callback ID [{0}]"),
     E0403(XLog.STD, "Invalid callback data, {0}"),
     E0404(XLog.STD, "Only one of the properties are allowed [{0}]"),
-    E0405(XLog.STD, "Submission request doesn''t have any application or lib path"),
+    E0405(XLog.STD, "Submission request does not have any application or lib path"),
 
     E0420(XLog.STD, "Invalid jobs filter [{0}], {1}"),
     E0421(XLog.STD, "Invalid job filter [{0}], {1}"),
@@ -89,6 +87,9 @@ public enum ErrorCode {
     E0508(XLog.OPS, "User [{0}] not authorized for WF job [{1}]"),
     E0509(XLog.OPS, "User [{0}] not authorized for Coord job [{1}]"),
     E0510(XLog.OPS, "Unable to get Credential [{0}]"),
+    E0511(XLog.STD, "No HDFS delegation token present, can''t set credentials. [serverPrincipal={0}]"),
+    E0512(XLog.STD, "Could not get RM delegation token: {0}"),
+    E0513(XLog.STD, "No YARN renewer present, can''t get token. [servicePrincipal={0}]"),
 
     E0550(XLog.OPS, "Could not normalize host name [{0}], {1}"),
     E0551(XLog.OPS, "Missing [{0}] property"),
@@ -105,6 +106,8 @@ public enum ErrorCode {
     E0609(XLog.OPS, "Missing [{0}] ORM file [{1}]"),
     E0610(XLog.OPS, "Missing JPAService, StoreService cannot run without a JPAService"),
     E0611(XLog.OPS, "SQL error in operation [{0}], {1}"),
+    E0612(XLog.OPS, "Could not get coordinator actions"),
+    E0613(XLog.OPS, "Workflow hierarchy error, cycle found {0}"),
 
     E0700(XLog.STD, "XML error, {0}"),
     E0701(XLog.STD, "XML schema error, {0}"),
@@ -173,16 +176,17 @@ public enum ErrorCode {
     E0814(XLog.STD, "SignalCommand for action id=[{0}] is already processed, status=[{1}], , pending=[{2}]"),
     E0815(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionCheck Execution"),
     E0816(XLog.STD, "Action pending=[{0}], status=[{1}]. Skipping ActionStart Execution"),
-    E0817(XLog.STD, "The wf action [{0}] has been udated recently. Ignoring ActionCheck."),
+    E0817(XLog.STD, "The wf action [{0}] has been updated recently. Ignoring ActionCheck."),
     E0818(XLog.STD, "Action [{0}] status is running but WF Job [{1}] status is [{2}]. Expected status is RUNNING or SUSPENDED."),
     E0819(XLog.STD, "Unable to delete the temp dir of job WF Job [{0}]."),
     E0820(XLog.STD, "Action user retry max [{0}] is over system defined max [{1}], re-assign to use system max."),
     E0821(XLog.STD, "Received early callback for action still in PREP state; will wait [{0}]ms and requeue up to [{1}] more times"),
     E0822(XLog.STD, "Received early callback for action [{0}] while still in PREP state and exhausted all requeues"),
+    E0823(XLog.STD, "System defined default user retry [{0}] is over system defined max [{1}], re-assign to use system max."),
 
     E0900(XLog.OPS, "JobTracker [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
     E0901(XLog.OPS, "NameNode [{0}] not allowed, not in Oozie''s whitelist. Allowed values are: {1}"),
-    E0902(XLog.OPS, "Exception occured: [{0}]"),
+    E0902(XLog.OPS, "Exception occurred: [{0}]"),
     E0903(XLog.OPS, "Invalid JobConf, it has not been created by HadoopAccessorService"),
     E0904(XLog.STD, "Scheme [{0}] not supported in uri [{1}]"),
     E0905(XLog.STD, "Scheme not present in uri [{0}]"),
@@ -217,14 +221,15 @@ public enum ErrorCode {
     E1026(XLog.STD, "SLA alert update command failed: {0}"),
     E1027(XLog.STD, "SLA change command failed. {0}"),
     E1028(XLog.STD, "Coord input logic error. {0}"),
-
-
+    E1029(XLog.STD, "Coord action missing dependencies error. {0}"),
 
     E1100(XLog.STD, "Command precondition does not hold before execution, [{0}]"),
 
     E1101(XLog.STD, "SLA <{0}> cannot be empty."),
 
     E1102(XLog.STD, "Invalid operation [{0}] for bulk command"),
+
+    E1111(XLog.STD, "Script failed on remote host with [{0}]"),
 
     E1201(XLog.STD, "State [{0}] is invalid for job [{1}]."),
 

@@ -64,9 +64,9 @@ public class TestLauncherHCatURIHandler extends XHCatTestCase {
         createTable(db, table, "year,month,dt,country");
     }
 
-    private void dropTestTable() throws Exception {
-        dropTable(db, table, false);
-        dropDatabase(db, false);
+    private void dropTestTable(boolean ifExists) throws Exception {
+        dropTable(db, table, ifExists);
+        dropDatabase(db, ifExists);
     }
 
     @Test
@@ -128,7 +128,27 @@ public class TestLauncherHCatURIHandler extends XHCatTestCase {
         assertEquals(1, getPartitions(db, table, "year=2012;month=12;dt=02;country=us").size());
         assertEquals(1, getPartitions(db, table, "year=2012;month=12;dt=03;country=us").size());
 
-        dropTestTable();
+        dropTestTable(false);
+    }
+
+    public void testDeleteTable() throws Exception {
+        try {
+            createTestTable();
+            createPartitionForTestDelete(true, true);
+
+            URI hcatURI = getHCatURI(db, table, "year=2012;month=12;dt=02;country=us");
+            URIHandler uriHandler = uriService.getURIHandler(hcatURI);
+            assertTrue(uriHandler.exists(hcatURI, conf, getTestUser()));
+
+            hcatURI = getHCatURI(db, table);
+            assertTrue(uriHandler.exists(hcatURI, conf, getTestUser()));
+            LauncherURIHandlerFactory uriHandlerFactory = new LauncherURIHandlerFactory(uriService.getLauncherConfig());
+            LauncherURIHandler handler = uriHandlerFactory.getURIHandler(hcatURI);
+            handler.delete(hcatURI, conf);
+            assertFalse(uriHandler.exists(hcatURI, conf, getTestUser()));
+        } finally {
+            dropTestTable(true);
+        }
     }
 
     private void createPartitionForTestDelete(boolean partition1, boolean partition2) throws Exception {

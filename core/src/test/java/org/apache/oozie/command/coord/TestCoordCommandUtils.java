@@ -18,11 +18,17 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
@@ -34,6 +40,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
@@ -41,8 +48,6 @@ import org.jdom.JDOMException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 
 public class TestCoordCommandUtils extends XDataTestCase {
     protected Services services;
@@ -438,7 +443,7 @@ public class TestCoordCommandUtils extends XDataTestCase {
         }
         catch (Exception e) {
             assertTrue(e.getCause().getMessage()
-                    .contains("intial-instance should be equal or earlier than the start-instance"));
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
         }
 
         try {
@@ -455,7 +460,8 @@ public class TestCoordCommandUtils extends XDataTestCase {
         }
         catch (Exception e) {
             assertTrue(e.getMessage().contains(
-                    "Only start-instance as absolute and end-instance as current is supported"));
+                    "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays"
+                            + " and end-instance as current is supported."));
         }
     }
 
@@ -512,6 +518,264 @@ public class TestCoordCommandUtils extends XDataTestCase {
         assertEquals(DateUtils.parseDateOozieTZ("2015-09-10T07:00Z"), CoordCommandUtils.computeNextNominalTime(job, action));
         job.setEndTime(DateUtils.parseDateOozieTZ("2015-09-08T23:00Z"));
         assertNull(CoordCommandUtils.computeNextNominalTime(job, action));
+    }
+
+    @Test
+    public void testCoordEndOfMonthsParamerized() throws Exception {
+        List<?> elementList = getSyncDatasetEvents("coord-dataset-endOfMonths.xml", "coord:endOfMonths(-1)",
+                "coord:current(0)", "2009-08-20T01:00Z", "2009-08-20T01:00Z");
+        Element e1 = (Element) elementList.get(0);
+        Element e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:endOfMonths(-1) i.e.2009-08-01T01:00Z and
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        Calendar start = DateUtils.getCalendar("2009-08-01T01:00Z", DateUtils.UTC);
+        checkUris(e1.getChild("uris", e1.getNamespace()).getTextTrim(), (Calendar) start.clone(), Calendar.DATE, 1,
+                "YYYY/MM/dd");
+
+        // Test parameterized
+        // startInstance = coord:endOfMonths(-1) i.e.2009-08-01T01:00Z and
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        checkUris(e2.getChild("uris", e2.getNamespace()).getTextTrim(), start, Calendar.DATE, 1, "YYYY/MM/dd");
+    }
+
+    public void testCoordEndOfMonthsStartingFromPrevMonth() throws Exception {
+        List<?> elementList = getSyncDatasetEvents("coord-dataset-endOfMonths.xml", "coord:endOfMonths(-2)",
+                "coord:current(0)", "2009-08-20T01:00Z", "2009-08-20T01:00Z");
+        Element e2 = (Element) elementList.get(1);
+        e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:endOfMonths(-2) i.e.2009-07-01T01:00Z and
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        Calendar start = DateUtils.getCalendar("2009-07-01T01:00Z", DateUtils.UTC);
+        checkUris(e2.getChild("uris", e2.getNamespace()).getTextTrim(), start, Calendar.DATE, 1, "YYYY/MM/dd");
+    }
+
+    public void testCoordEndOfMonthsFailOnStartInstanceIsLater() throws Exception {
+        try {
+            // start instance = 2009-10-01T01:00Z
+            // end instance = 2009-08-01T01:00Z
+            getSyncDatasetEvents("coord-dataset-endOfMonths.xml", "coord:endOfMonths(1)",
+                    "coord:current(0)", "2009-08-06T01:00Z", "2009-08-16T01:00Z");
+            fail("Should throw exception because end is earlier than start-instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage()
+                    .contains("start-instance should be equal or earlier than the end-instance"));
+        }
+    }
+
+    public void testCoordEndOfMonthsFailOnInitialInstanceIsLater() throws Exception {
+        try {
+            // start instance = 2009-06-01T01:00Z
+            // initial instance = 2009-08-06T01:00Z
+            getSyncDatasetEvents("coord-dataset-endOfMonths.xml", "coord:endOfMonths(-3)", "coord:current(0)",
+                "2009-08-06T01:00Z", "2009-08-16T01:00Z");
+            fail("Should throw exception because initial instance is later than start instance");
+        }
+        catch (Exception e) {
+            e.printStackTrace(System.out);
+            assertTrue(e.getCause().getMessage()
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
+        }
+    }
+
+    public void testCoordEndOfMonthsFailOnLatestAsEndInstance() throws Exception {
+        try {
+            getSyncDatasetEvents("coord-dataset-endOfMonths.xml", "coord:endOfMonths(-1)",
+                "coord:latest(2)", "2009-08-20T01:00Z", "2009-08-20T01:00Z");
+            fail("Should throw exception because latest is not allowed as end-instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains(
+                    "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays"
+                            + " and end-instance as current is supported."));
+        }
+    }
+
+    public void testCoordEndOfMonthsInitialInstaceNotInPhase() throws Exception {
+        try {
+            getSyncDatasetEvents("out-of-phase-coordinator.xml", "${coord:endOfMonths(-1)}", "${coord:current(0)}",
+                    "2009-08-20T18:00Z", "2009-08-20T18:00Z");
+            fail("Should throw exception because initial instance is not in phase with start instance");
+        }
+        catch (Exception e) {
+            e.printStackTrace(System.out);
+            assertTrue(e.getCause().getMessage().contains("initial-instance is not in phase with start-instance"));
+        }
+    }
+
+    @Test
+    public void testCoordEndOfWeeksParamerized() throws Exception {
+        String nominalTime = "2009-08-20T01:00Z";
+        String startTime = nominalTime;
+        List<?> elementList = getSyncDatasetEvents("coord-dataset-endOfWeeks.xml", "coord:endOfWeeks(-1)",
+                "coord:current(0)", nominalTime, startTime);
+        Element e1 = (Element) elementList.get(0);
+        Element e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:endOfWeeks(-1)
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        Calendar start = DateUtils.getCalendar(nominalTime, DateUtils.UTC);
+        start.add(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek() - start.get(Calendar.DAY_OF_WEEK));
+        checkUris(e1.getChild("uris", e1.getNamespace()).getTextTrim(), (Calendar) start.clone(), Calendar.DATE, 1,
+                "YYYY/MM/dd");
+
+        // Test parameterized
+        // startInstance = coord:endOfWeeks(-1)
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        checkUris(e2.getChild("uris", e2.getNamespace()).getTextTrim(), start, Calendar.DATE, 1, "YYYY/MM/dd");
+    }
+
+    public void testCoordEndOfWeeksStartingFromPrevWeek() throws Exception {
+        List<?> elementList = getSyncDatasetEvents("coord-dataset-endOfWeeks.xml", "coord:endOfWeeks(-2)",
+                "coord:current(0)", "2009-08-20T01:00Z", "2009-08-20T01:00Z");
+        Element e2 = (Element) elementList.get(1);
+        e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:endOfWeeks(-2)
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        Calendar start = DateUtils.getCalendar("2009-08-10T01:00Z", DateUtils.UTC);
+        start.add(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek() - start.get(Calendar.DAY_OF_WEEK));
+        checkUris(e2.getChild("uris", e2.getNamespace()).getTextTrim(), start, Calendar.DATE, 1, "YYYY/MM/dd");
+    }
+
+    public void testCoordEndOfWeeksFailOnStartInstanceIsLater() throws Exception {
+        try {
+            // start instance = coord:endOfWeeks(1) i.e. 2009-08-30T01:00Z
+            // end instance = coord:current(0) i.e. 2009-08-20T01:00Z
+            getSyncDatasetEvents("coord-dataset-endOfWeeks.xml", "coord:endOfWeeks(1)", "coord:current(0)",
+                    "2009-08-20T01:00Z", "2009-08-20T01:00Z");
+            fail("Should throw exception because end is earlier than start-instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage()
+                    .contains("start-instance should be equal or earlier than the end-instance"));
+        }
+    }
+
+    public void testCoordEndOfWeeksFailOnInitialInstanceIsLater() throws Exception {
+        try {
+            // start instance = coord:endOfWeeks(-11) i.e. 2009-05-31T01:00Z
+            // initial instance = 2009-06-06T01:00Z
+            getSyncDatasetEvents("coord-dataset-endOfWeeks.xml", "coord:endOfWeeks(-11)", "coord:current(0)",
+                    "2009-08-06T01:00Z", "2009-08-16T01:00Z");
+            fail("Should throw exception because initial instance is later than start instance");
+        }
+        catch (Exception e) {
+            e.printStackTrace(System.out);
+            assertTrue(e.getCause().getMessage()
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
+        }
+    }
+
+    public void testCoordEndOfWeeksFailOnLatestAsEndInstance() throws Exception {
+        try {
+            getSyncDatasetEvents("coord-dataset-endOfWeeks.xml", "coord:endOfWeeks(-1)", "coord:latest(2)",
+                    "2009-08-20T01:00Z", "2009-08-20T01:00Z");
+            fail("Should throw exception because latest is not allowed as end-instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains(
+                    "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays"
+                            + " and end-instance as current is supported."));
+        }
+    }
+
+    public void testCoordEndOfWeeksInitialInstaceNotInPhase() throws Exception {
+        try {
+            getSyncDatasetEvents("out-of-phase-coordinator.xml", "${coord:endOfWeeks(-1)}", "${coord:current(0)}",
+                    "2009-08-20T18:00Z", "2009-08-20T18:00Z");
+            fail("Should throw exception because initial instance is not in phase with start instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage().contains("initial-instance is not in phase with start-instance"));
+        }
+    }
+
+    @Test
+    public void testCoordEndOfDaysParameterized() throws Exception {
+        List<?> elementList = getSyncDatasetEvents("coord-dataset-endOfDays.xml",
+                "coord:endOfDays(-1)",
+                "coord:current(0)", "2009-08-20T18:00Z", "2009-08-20T18:00Z");
+        Element e1 = (Element) elementList.get(0);
+        Element e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:endOfDays(-1) i.e 2009-08-20T01:00Z and
+        // endInstance = coord:current(0) i.e. 2009-08-20T18:00Z
+        Calendar start = DateUtils.getCalendar("2009-08-20T00:00Z", DateUtils.UTC);
+        checkUris(e1.getChild("uris", e1.getNamespace()).getTextTrim(), (Calendar) start.clone(), Calendar.MINUTE, 30,
+                "YYYY/MM/dd/HH/mm");
+
+        // Test parameterized
+        // startInstance = coord:endOfDays(-1) i.e 2009-08-20T01:00Z and
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        checkUris(e2.getChild("uris", e2.getNamespace()).getTextTrim(), start, Calendar.MINUTE, 30,
+                "YYYY/MM/dd/HH/mm");
+    }
+
+    public void testCoordEndOfDaysStartingFromPrevDay() throws Exception {
+        List<?> elementList = getSyncDatasetEvents("coord-dataset-endOfDays.xml", "coord:endOfDays(-2)",
+                "coord:current(0)", "2009-08-20T18:00Z", "2009-08-20T18:00Z");
+        Element e2 = (Element) elementList.get(1);
+
+        // startInstance = coord:endOfDays(-2) i.e 2009-08-19T01:00Z and
+        // endInstance = coord:current(0) i.e. 2009-08-20T01:00Z
+        Calendar start = DateUtils.getCalendar("2009-08-19T00:00Z", DateUtils.UTC);
+        checkUris(e2.getChild("uris", e2.getNamespace()).getTextTrim(), start, Calendar.MINUTE, 30,
+                "YYYY/MM/dd/HH/mm");
+    }
+
+    public void testCoordEndOfDaysFailOnStartInstanceIsLater() throws Exception {
+        try {
+            // start instance = coord:endOfDays(1) i.e. 2009-08-08T00:00Z
+            // end instance = coord:current(0) i.e. 2009-08-06T18:00Z
+            getSyncDatasetEvents("coord-dataset-endOfDays.xml", "coord:endOfDays(1)",
+                "coord:current(0)", "2009-08-06T18:00Z", "2009-08-16T18:00Z");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage()
+                    .contains("start-instance should be equal or earlier than the end-instance"));
+        }
+    }
+
+    public void testCoordEndOfDaysFailOnInitialInstanceIsLater() throws Exception {
+        try {
+            // start instance = coord:endOfDays(-11) i.e. 2009-07-27T00:00Z
+            // initial instance = 2009-08-01T01:00Z
+            getSyncDatasetEvents("coord-dataset-endOfDays.xml", "coord:endOfDays(-11)", "coord:current(0)",
+                    "2009-08-06T18:00Z", "2009-08-16T18:00Z");
+            fail("Should throw exception because initial instance is later than start instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage()
+                    .contains("initial-instance should be equal or earlier than the start-instance"));
+        }
+    }
+
+    public void testCoordEndOfDaysFailOnLatestAsEndInstance() throws Exception {
+        try {
+            getSyncDatasetEvents("coord-dataset-endOfDays.xml", "coord:endOfDays(-1)",
+                "coord:latest(2)", "2009-08-20T18:00Z", "2009-08-20T18:00Z");
+            fail("Should throw exception. Start-instance is coord:endOfDays and end-instance is latest");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage()
+                    .contains(
+                            "Only start-instance as absolute/endOfMonths/endOfWeeks/endOfDays"
+                                    + " and end-instance as current is supported."));
+        }
+    }
+
+    public void testCoordEndOfDaysInitialInstaceNotInPhase() throws Exception {
+        try {
+            getSyncDatasetEvents("out-of-phase-coordinator.xml", "${coord:endOfDays(-1)}", "${coord:current(0)}"
+                    , "2009-08-20T18:00Z", "2009-08-20T18:00Z");
+            fail("Should throw exception because initial instance is not in phase with start instance");
+        }
+        catch (Exception e) {
+            assertTrue(e.getCause().getMessage().contains("initial-instance is not in phase with start-instance"));
+        }
     }
 
     protected CoordinatorJobBean addRecordToCoordJobTable(CoordinatorJob.Status status, Date startTime, Date endTime,
@@ -596,6 +860,37 @@ public class TestCoordCommandUtils extends XDataTestCase {
         addPartition(db, table, "dt=20120430;country=usa");
         addPartition(db, table, "dt=20120412;country=brazil");
         addPartition(db, table, "dt=20120413;country=brazil");
+    }
+
+    private void checkUris(String uris, Calendar start, int freqUnit ,int freq, String format) {
+        //String format = "YYYY/MM/dd";
+        String[] allUris = uris.split("#");
+        String pathFormat = "hdfs:///tmp/workflows/%s;region=us";
+        for (int i = allUris.length - 1; i >= 0; i--) {
+            String path = String.format(pathFormat, DateUtils.formatDateCustom(start.getTime(), format));
+            assertEquals(allUris[i], path);
+            start.add(freqUnit, freq);
+        }
+    }
+
+    private List<?> getSyncDatasetEvents(String coordXml, String startInstanceParam, String endInstanceParam,
+            String nominalTime, String actualTime) throws Exception {
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting(coordXml, CoordinatorJob.Status.RUNNING, false,
+                true);
+        Path appPath = new Path(getFsTestCaseDir(), "coord");
+        String actionXml = getCoordActionXml(appPath, coordXml);
+        CoordinatorActionBean actionBean = createCoordinatorActionBean(job);
+        Configuration jobConf = new XConfiguration(new StringReader(job.getConf()));
+        Element eAction = createActionElement(actionXml);
+        jobConf.set("startInstance", startInstanceParam);
+        jobConf.set("endInstance", endInstanceParam);
+        String output = CoordCommandUtils.materializeOneInstance("jobId", true, eAction,
+                DateUtils.parseDateOozieTZ(nominalTime), DateUtils.parseDateOozieTZ(actualTime), 1, jobConf,
+                actionBean);
+        eAction = XmlUtils.parseXml(output);
+        List<?> elementList = ((Element) eAction.getChildren("input-events", eAction.getNamespace()).get(0))
+                .getChildren();
+        return elementList;
     }
 
 }

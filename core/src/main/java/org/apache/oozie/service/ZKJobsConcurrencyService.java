@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.x.discovery.ServiceInstance;
@@ -52,7 +53,8 @@ import org.apache.oozie.util.ZKUtils;
  */
 public class ZKJobsConcurrencyService extends JobsConcurrencyService implements Service, Instrumentable {
 
-    private ZKUtils zk;
+    @VisibleForTesting
+    ZKUtils zk;
 
     // This pattern gives us the id number without the extra stuff
     private static final Pattern ID_PATTERN = Pattern.compile("(\\d{7})-.*");
@@ -69,6 +71,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     public void init(Services services) throws ServiceException {
         super.init(services);
         try {
+
             zk = ZKUtils.register(this);
             leaderLatch = new LeaderLatch(zk.getClient(), ZKUtils.ZK_BASE_SERVICES_PATH + "/" + ZK_LEADER_PATH, zk.getZKId());
             leaderLatch.start();
@@ -83,7 +86,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      */
     @Override
     public void destroy() {
-        if (leaderLatch != null && ZKConnectionListener.getZKConnectionState() != ConnectionState.LOST) {
+        if (leaderLatch != null) {
             IOUtils.closeSafely(leaderLatch);
         }
         if (zk != null) {
@@ -120,10 +123,11 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      *
      * @param jobId The jobId to check
      * @return true if this server should process this jobId; false if not
+     * @throws ServiceException if an error occurred during communicating with zookeper
      */
     @Override
-    public boolean isJobIdForThisServer(String jobId) {
-        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
+    public boolean isJobIdForThisServer(String jobId) throws ServiceException {
+        List<ServiceInstance<Map>> oozies = getServiceInstances();
         int numOozies = oozies.size();
         int myIndex = zk.getZKIdIndex(oozies);
         return checkJobIdForServer(jobId, numOozies, myIndex);
@@ -134,12 +138,13 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      * index of this server in ZooKeeper's list of servers is equal to the id of the job mod the number of servers.
      *
      * @param ids The list of job ids to check
-     * @return a filtered list of job ids that this server should process
+     * @return filteredIds a filtered list of job ids that this server should process
+     * @throws ServiceException if an error occurred during communicating with zookeper
      */
     @Override
-    public List<String> getJobIdsForThisServer(List<String> ids) {
-        List<String> filteredIds = new ArrayList<String>();
-        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
+    public List<String> getJobIdsForThisServer(List<String> ids) throws ServiceException {
+        List<String> filteredIds = new ArrayList<>();
+        List<ServiceInstance<Map>> oozies = getServiceInstances();
         int numOozies = oozies.size();
         int myIndex = zk.getZKIdIndex(oozies);
         for(String id : ids) {
@@ -148,6 +153,14 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
             }
         }
         return filteredIds;
+    }
+
+    private List<ServiceInstance<Map>> getServiceInstances() throws ServiceException {
+        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
+        if (oozies == null || oozies.isEmpty()) {
+            throw new ServiceException(ErrorCode.E1700, "Empty oozies list");
+        }
+        return oozies;
     }
 
     /**
@@ -173,7 +186,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      * Return a map of instance id to Oozie server URL.  This implementation always returns a map with where the key is the instance
      * id and the value is the URL of each Oozie server that we can see in the service discovery in ZooKeeper.
      *
-     * @return A map of Oozie instance ids and URLs
+     * @return urls A map of Oozie instance ids and URLs
      */
     @Override
     public Map<String, String> getServerUrls() {
@@ -193,22 +206,12 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
      * where the key is the instance id and the value is the URL of each Oozie server that we can see in the service
      * discovery in ZooKeeper.
      *
-     * @return A map of Oozie instance ids and URLs
+     * @return urls A map of Oozie instance ids and URLs
      */
     @Override
     public Map<String, String> getOtherServerUrls() {
-        Map<String, String> urls = new HashMap<String, String>();
-        List<ServiceInstance<Map>> oozies = zk.getAllMetaData();
-        for (ServiceInstance<Map> oozie : oozies) {
-            Map<String, String> metadata = oozie.getPayload();
-            String id = metadata.get(ZKUtils.ZKMetadataKeys.OOZIE_ID);
-
-            if (id.equals(zk.getZKId())) {
-                continue;
-            }
-            String url = metadata.get(ZKUtils.ZKMetadataKeys.OOZIE_URL);
-            urls.put(id, url);
-        }
+        Map<String, String> urls = getServerUrls();
+        urls.remove(zk.getZKId());
         return urls;
     }
 
@@ -227,7 +230,7 @@ public class ZKJobsConcurrencyService extends JobsConcurrencyService implements 
     /**
      * Return if it is running in HA mode
      *
-     * @return
+     * @return true Return whether or not it is running in HA mode
      */
     @Override
     public boolean isHighlyAvailableMode() {

@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
@@ -101,8 +101,9 @@ public class JobsConcurrencyService implements Service, Instrumentable {
      *
      * @param jobId The jobId to check
      * @return true
+     * @throws ServiceException never thrown in this implementation. Subclasses might throw this exception.
      */
-    public boolean isJobIdForThisServer(String jobId) {
+    public boolean isJobIdForThisServer(String jobId) throws ServiceException {
         return true;
     }
 
@@ -111,8 +112,9 @@ public class JobsConcurrencyService implements Service, Instrumentable {
      *
      * @param ids The list of job ids to check
      * @return ids
+     * @throws ServiceException never thrown in this implementation. Subclasses might throw this exception.
      */
-    public List<String> getJobIdsForThisServer(List<String> ids) {
+    public List<String> getJobIdsForThisServer(List<String> ids) throws ServiceException {
         return ids;
     }
 

@@ -57,6 +57,7 @@ public class TestHAPartitionDependencyManagerService extends ZKXTestCase {
     }
 
     protected void tearDown() throws Exception {
+        services.destroy();
         super.tearDown();
     }
 

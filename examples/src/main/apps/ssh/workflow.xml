@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="ssh-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="ssh-wf">
     <start to="ssh"/>
 
     <action name="ssh">

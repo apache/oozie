@@ -215,6 +215,7 @@
                 <xs:element name="chmod" type="workflow:CHMOD"/>
                 <xs:element name="touchz" type="workflow:TOUCHZ"/>
                 <xs:element name="chgrp" type="workflow:CHGRP"/>
+                <xs:element name="setrep" type="workflow:SETREP"/>
             </xs:choice>
         </xs:sequence>
     </xs:complexType>
@@ -303,6 +304,11 @@
         <xs:attribute name="path" type="xs:string" use="required"/>
         <xs:attribute name="permissions" type="xs:string" use="required"/>
         <xs:attribute name="dir-files" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="SETREP">
+        <xs:attribute name="path" type="xs:string" use="required"/>
+        <xs:attribute name="replication-factor" type="xs:short" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="TOUCHZ">

@@ -19,9 +19,11 @@
 package org.apache.oozie.server;
 
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -34,23 +36,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Factory that is used to configure SSL settings for the Oozie server.
  */
 class SSLServerConnectorFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SSLServerConnectorFactory.class);
-    public static final String OOZIE_HTTPS_TRUSTSTORE_FILE = "oozie.https.truststore.file";
-    public static final String OOZIE_HTTPS_TRUSTSTORE_PASS = "oozie.https.truststore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_PASS = "oozie.https.keystore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_FILE = "oozie.https.keystore.file";
+    public static final String OOZIE_HTTPS_EXCLUDE_PROTOCOLS = "oozie.https.exclude.protocols";
+    public static final String OOZIE_HTTPS_INCLUDE_PROTOCOLS = "oozie.https.include.protocols";
+    public static final String OOZIE_HTTPS_INCLUDE_CIPHER_SUITES = "oozie.https.include.cipher.suites";
+    public static final String OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES = "oozie.https.exclude.cipher.suites";
+    public static final String OOZIE_HSTS_MAX_AGE_SECONDS = "oozie.hsts.max.age.seconds";
+    @VisibleForTesting
+    static final long OOZIE_DEFAULT_HSTS_MAX_AGE = 31536000;
 
     private SslContextFactory sslContextFactory;
     private Configuration conf;
 
     @Inject
     public SSLServerConnectorFactory(final SslContextFactory sslContextFactory) {
-        this.sslContextFactory = Preconditions.checkNotNull(sslContextFactory,  "sslContextFactory is null");
+        this.sslContextFactory = Objects.requireNonNull(sslContextFactory,  "sslContextFactory is null");
     }
 
     /**
@@ -63,15 +71,16 @@ class SSLServerConnectorFactory {
      *  @return ServerConnector
     */
     public ServerConnector createSecureServerConnector(int oozieHttpsPort, Configuration conf, Server server) {
-        this.conf = Preconditions.checkNotNull(conf, "conf is null");
-        Preconditions.checkNotNull(server, "server is null");
+        this.conf = Objects.requireNonNull(conf, "conf is null");
+        Objects.requireNonNull(server, "server is null");
         Preconditions.checkState(oozieHttpsPort >= 1 && oozieHttpsPort <= 65535,
                 String.format("Invalid port number specified: \'%d\'. It should be between 1 and 65535.", oozieHttpsPort));
 
         setIncludeProtocols();
-        setCipherSuites();
-        setTrustStorePath();
-        setTrustStorePass();
+        setExcludeProtocols();
+
+        setIncludeCipherSuites();
+        setExludeCipherSuites();
 
         setKeyStoreFile();
         setKeystorePass();
@@ -83,54 +92,67 @@ class SSLServerConnectorFactory {
 
         secureServerConnector.setPort(oozieHttpsPort);
 
-        LOG.info(String.format("Secure server connector created, listenning on port %d", oozieHttpsPort));
+        LOG.info(String.format("Secure server connector created, listening on port %d", oozieHttpsPort));
         return secureServerConnector;
     }
 
-    private void setCipherSuites() {
-        String excludeCipherList = conf.get("oozie.https.exclude.cipher.suites");
+    private void setExludeCipherSuites() {
+        String excludeCipherList = conf.get(OOZIE_HTTPS_EXCLUDE_CIPHER_SUITES);
         String[] excludeCipherSuites = excludeCipherList.split(",");
         sslContextFactory.setExcludeCipherSuites(excludeCipherSuites);
 
         LOG.info(String.format("SSL context - excluding cipher suites: %s", Arrays.toString(excludeCipherSuites)));
     }
 
+    private void setIncludeCipherSuites() {
+        String includeCipherList = conf.get(OOZIE_HTTPS_INCLUDE_CIPHER_SUITES);
+        if (includeCipherList == null || includeCipherList.isEmpty()) {
+            return;
+        }
+
+        String[] includeCipherSuites = includeCipherList.split(",");
+        sslContextFactory.setIncludeCipherSuites(includeCipherSuites);
+
+        LOG.info(String.format("SSL context - including cipher suites: %s", Arrays.toString(includeCipherSuites)));
+    }
+
     private void setIncludeProtocols() {
-        String enabledProtocolsList = conf.get("oozie.https.include.protocols");
+        String enabledProtocolsList = conf.get(OOZIE_HTTPS_INCLUDE_PROTOCOLS);
         String[] enabledProtocols = enabledProtocolsList.split(",");
         sslContextFactory.setIncludeProtocols(enabledProtocols);
 
         LOG.info(String.format("SSL context - including protocols: %s", Arrays.toString(enabledProtocols)));
     }
 
-    private void setTrustStorePath() {
-        String trustStorePath = conf.get(OOZIE_HTTPS_TRUSTSTORE_FILE);
-        Preconditions.checkNotNull(trustStorePath, "trustStorePath is null");
-        sslContextFactory.setTrustStorePath(trustStorePath);
-    }
-
-    private void setTrustStorePass() {
-        String trustStorePass = conf.get(OOZIE_HTTPS_TRUSTSTORE_PASS);
-        Preconditions.checkNotNull(trustStorePass, "setTrustStorePass is null");
-        sslContextFactory.setTrustStorePassword(trustStorePass);
+    private void setExcludeProtocols() {
+        String excludedProtocolsList = conf.get(OOZIE_HTTPS_EXCLUDE_PROTOCOLS);
+        if (excludedProtocolsList == null || excludedProtocolsList.isEmpty()) {
+            return;
+        }
+        String[] excludedProtocols = excludedProtocolsList.split(",");
+        sslContextFactory.setExcludeProtocols(excludedProtocols);
+        LOG.info(String.format("SSL context - excluding protocols: %s", Arrays.toString(excludedProtocols)));
     }
 
     private void setKeystorePass() {
-        String keystorePass = conf.get(OOZIE_HTTPS_KEYSTORE_PASS);
-        Preconditions.checkNotNull(keystorePass, "keystorePass is null");
-        sslContextFactory.setKeyManagerPassword(keystorePass);
+        String keystorePass = ConfigurationService.getPassword(conf, OOZIE_HTTPS_KEYSTORE_PASS);
+        Objects.requireNonNull(keystorePass, "keystorePass is null");
+        sslContextFactory.setKeyStorePassword(keystorePass);
     }
 
     private void setKeyStoreFile() {
         String keystoreFile = conf.get(OOZIE_HTTPS_KEYSTORE_FILE);
-        Preconditions.checkNotNull(keystoreFile, "keystoreFile is null");
+        Objects.requireNonNull(keystoreFile, "keystoreFile is null");
         sslContextFactory.setKeyStorePath(keystoreFile);
     }
 
     private HttpConfiguration getHttpsConfiguration() {
         HttpConfiguration https = new HttpConfigurationWrapper(conf).getDefaultHttpConfiguration();
         https.setSecureScheme("https");
-        https.addCustomizer(new SecureRequestCustomizer());
+        long htsMaxAgeSeconds = conf.getLong(OOZIE_HSTS_MAX_AGE_SECONDS, OOZIE_DEFAULT_HSTS_MAX_AGE);
+        boolean sniHostCheck = true;
+        boolean stsIncludeSubdomains = false;
+        https.addCustomizer(new SecureRequestCustomizer(sniHostCheck, htsMaxAgeSeconds, stsIncludeSubdomains));
         return https;
     }
 }

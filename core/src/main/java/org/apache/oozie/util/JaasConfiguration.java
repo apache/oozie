@@ -56,7 +56,7 @@ public class JaasConfiguration extends Configuration {
      * <p>
      * javax.security.auth.login.Configuration.setConfiguration(JaasConfiguration.getInstance());
      *
-     * @return
+     * @return me return the singleton
      */
     public static Configuration getInstance() {
         if (me == null) {
@@ -112,7 +112,7 @@ public class JaasConfiguration extends Configuration {
     /**
      * Returns the entries map.
      *
-     * @return the entries map
+     * @return entries the entries map
      */
     public static Map<String, AppConfigurationEntry> getEntries() {
         return entries;

@@ -25,16 +25,24 @@ import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XCallable;
+import org.apache.oozie.util.XLog;
+
+import com.google.common.collect.Multimap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TestCallableQueueService extends XTestCase {
     static AtomicLong EXEC_ORDER = new AtomicLong();
+    private static XLog log = XLog.getLog(TestCallableQueueService.class);
+    private AtomicLong counter = new AtomicLong();
+    private CountDownLatch finished = new CountDownLatch(1);
 
     public static class MyCallable implements XCallable<Void> {
         String type;
@@ -93,6 +101,8 @@ public class TestCallableQueueService extends XTestCase {
             StringBuilder sb = new StringBuilder();
             sb.append("Type:").append(getType());
             sb.append(",Priority:").append(getPriority());
+            sb.append(",Key:").append(getKey());
+            sb.append(",Wait:").append(wait);
             return sb.toString();
         }
 
@@ -409,20 +419,19 @@ public class TestCallableQueueService extends XTestCase {
             queueservice.queue(c, 10);
         }
 
-        float originalRatio = XTestCase.WAITFOR_RATIO;
-        try{
-            XTestCase.WAITFOR_RATIO = 1;
-            waitFor(2000, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return queueservice.queueSize() == 0;
-                }
-            });
-        }
-        finally {
-            XTestCase.WAITFOR_RATIO = originalRatio;
-        }
+        waitFor(3000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                boolean completed = true;
 
-        System.out.println("Callable Queue Size :" + queueservice.queueSize());
+                for (MyCallable callable : callables) {
+                    completed &= (callable.executed != 0);
+                }
+
+                completed &= (callableOther.executed != 0);
+
+                return completed;
+            }
+        });
 
         long last = Long.MIN_VALUE;
         for (MyCallable c : callables) {
@@ -540,9 +549,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithSameKeyInComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithSameKeyInComposite", "QueueUniquenessWithSameKeyInComposite", 0, 200);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -566,9 +578,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithSameKeyInOneComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithSameKeyInOneComposite", "QueueUniquenessWithSameKeyInOneComposite", 0, 100);
 
         CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
@@ -612,9 +627,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithDiffKeyInComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInComposite1", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInComposite2", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInComposite3", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInComposite1", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInComposite2", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInComposite3", "QueueUniquenessWithDiffKeyInComposite", 0, 100);
 
         List<MyCallable> callables = Arrays.asList(callable1, callable2, callable3);
 
@@ -638,9 +656,12 @@ public class TestCallableQueueService extends XTestCase {
 
     public void testQueueUniquenessWithDiffKeyInOneComposite() throws Exception {
         EXEC_ORDER = new AtomicLong();
-        final MyCallable callable1 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite1", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
-        final MyCallable callable2 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite2", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
-        final MyCallable callable3 = new MyCallable("QueueUniquenessWithDiffKeyInOneComposite3", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable1 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInOneComposite1", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable2 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInOneComposite2", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
+        final MyCallable callable3 = new MyCallable(
+                "QueueUniquenessWithDiffKeyInOneComposite3", "QueueUniquenessWithDiffKeyInOneComposite", 0, 100);
 
         CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
 
@@ -875,7 +896,7 @@ public class TestCallableQueueService extends XTestCase {
     }
 
     public void testRemoveUniqueCallables() throws Exception {
-        XCommand command = new XCommand("Test", "type", 100) {
+        XCommand<?> command = new XCommand<Object>("Test", "type", 100) {
             @Override
             protected boolean isLockRequired() {
                 return false;
@@ -915,5 +936,197 @@ public class TestCallableQueueService extends XTestCase {
         List<String> uniquesAfter = queueservice.getUniqueDump();
         uniquesAfter.removeAll(uniquesBefore);
         assertTrue(uniquesAfter.toString(), uniquesAfter.isEmpty());
+    }
+
+    public void testMaxConcurrencyReached() throws Exception {
+        Services.get().destroy();
+        setSystemProperty(CallableQueueService.CONF_QUEUE_SIZE, "100000");
+        new Services().init();
+
+        int partitions = 10;
+        int taskPerPartition = 10000;
+
+        final int taskCount = partitions * taskPerPartition;
+
+        List<DummyCallable> callables = new ArrayList<>(taskCount);
+
+        for (int i = 0; i < partitions; i++) {
+            String type = String.valueOf(i);
+            for (int j = 0; j < taskPerPartition; j++) {
+                String key = type + "_" + UUID.randomUUID().toString();
+                DummyCallable dc = new DummyCallable(taskCount, key, type, 0, 0);
+                callables.add(dc);
+            }
+        }
+
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
+
+        for (int i = 0; i < taskCount; i++) {
+            queueservice.queue(callables.get(i));
+        }
+
+        try {
+            finished.await(100, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Error", e);
+            fail("Exception during test: " + e.getMessage());
+        }
+
+        assertEquals("Not all callables have been executed", counter.get(), taskCount);
+    }
+
+    public void testQueueSizeWithDelayedElements() throws InterruptedException {
+        final int taskCount = 10_000;
+
+        List<DummyCallable> callables = new ArrayList<>(taskCount);
+        for (int i = 0; i < taskCount; i++) {
+            String keyAndType = String.valueOf(i);
+            DummyCallable dc = new DummyCallable(taskCount, keyAndType, keyAndType, 0, 0);
+            callables.add(dc);
+        }
+
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
+
+        for (int i = 0; i < taskCount; i++) {
+            queueservice.queue(callables.get(i), 2000);
+        }
+
+        int queueSizeAfterSubmission = queueservice.queueSize();
+
+        try {
+            finished.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Error", e);
+            fail("Exception during test: " + e.getMessage());
+        }
+
+        assertEquals("Queue size after submission", taskCount, queueSizeAfterSubmission);
+        assertEquals("Queue size after execution", 0, queueservice.queueSize());
+    }
+
+    public void testQueueSizeAfterNormalSubmission() throws InterruptedException {
+        final int taskCount = 10_000;
+
+        List<DummyCallable> callables = new ArrayList<>(taskCount);
+        for (int i = 0; i < taskCount; i++) {
+            String keyAndType = String.valueOf(i);
+            DummyCallable dc = new DummyCallable(taskCount, keyAndType, keyAndType, 0, 0);
+            callables.add(dc);
+        }
+
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
+
+        for (int i = 0; i < taskCount; i++) {
+            queueservice.queue(callables.get(i));
+        }
+
+        // Not an exact number - it's close to 10,000 but keeps fluctuating
+        // We can still verify that it's larger than a certain number though
+        int queueSizeAfterSubmission = queueservice.queueSize();
+        try {
+            finished.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Error", e);
+            fail("Exception during test: " + e.getMessage());
+        }
+        // It's necessary because after finished.await() returns, the last XCallable
+        // could still be running
+        waitFor(1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return queueservice.queueSize() == 0;
+            }
+        });
+
+        assertTrue("Too few elements in the queue: " + queueSizeAfterSubmission + ", should be >9000",
+                queueSizeAfterSubmission > 9000);
+        assertEquals("Queue size after execution", 0, queueservice.queueSize());
+    }
+
+    public void testQueueSizeWhenMaxConcurrencyIsReached() throws InterruptedException {
+        int partitions = 10;
+        int taskPerPartition = 1000;
+
+        final int taskCount = partitions * taskPerPartition;
+
+        List<DummyCallable> callables = new ArrayList<>(taskCount);
+
+        for (int i = 0; i < partitions; i++) {
+            String type = String.valueOf(i);
+            for (int j = 0; j < taskPerPartition; j++) {
+                String key = type + "_" + UUID.randomUUID().toString();
+                DummyCallable dc = new DummyCallable(taskCount, key, type, 0, 0);
+                callables.add(dc);
+            }
+        }
+
+        CallableQueueService queueservice = Services.get().get(CallableQueueService.class);
+
+        for (int i = 0; i < taskCount; i++) {
+            queueservice.queue(callables.get(i));
+        }
+
+        // Not an exact number - it's close to 10,000 but keeps fluctuating
+        // We can still verify that it's larger than a certain number though
+        int queueSizeAfterSubmission = queueservice.queueSize();
+        try {
+            finished.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Error", e);
+            fail("Exception during test: " + e.getMessage());
+        }
+        // It's necessary because after finished.await() returns, the last XCallable
+        // could still be running
+        waitFor(1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return queueservice.queueSize() == 0;
+            }
+        });
+
+        assertTrue("Too few elements in the queue: " + queueSizeAfterSubmission + ", should be >9000",
+                queueSizeAfterSubmission > 9000);
+        assertEquals("Queue size after execution", 0, queueservice.queueSize());
+    }
+
+    private class DummyCallable extends MyCallable {
+        private final int taskCount;
+
+        public DummyCallable(int taskCount, String key, String type, int priority, int wait) {
+            super(key, type, priority, wait);
+            this.taskCount = taskCount;
+        }
+
+        public Void call() throws Exception {
+            if (counter.incrementAndGet() == taskCount) {
+                finished.countDown();
+            }
+
+            return null;
+        }
+    }
+
+    private class BookingCallable extends MyCallable {
+        private final int taskCount;
+        private final Multimap<Integer, Long> executions;
+
+        public BookingCallable(Multimap<Integer, Long> executions,
+                int taskCount,
+                String key,
+                String type,
+                int priority,
+                int wait) {
+            super(key, type, priority, wait);
+            this.taskCount = taskCount;
+            this.executions = executions;
+        }
+
+        public Void call() throws Exception {
+            executions.put(getPriority(), System.currentTimeMillis());
+            if (counter.incrementAndGet() == taskCount) {
+                finished.countDown();
+            }
+            return null;
+        }
     }
 }

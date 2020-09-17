@@ -291,7 +291,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
     }
 
 
-    protected BundleJobBean addRecordToBundleJobTableWithPausedTime(Job.Status jobStatus, boolean pending, Date pausedTime) throws Exception {
+    protected BundleJobBean addRecordToBundleJobTableWithPausedTime(Job.Status jobStatus, boolean pending, Date pausedTime)
+            throws Exception {
         BundleJobBean bundle = createBundleJob(jobStatus, pending);
         bundle.setPauseTime(pausedTime);
         try {
@@ -308,7 +309,8 @@ public class TestBundleRerunXCommand extends XDataTestCase {
         return bundle;
     }
 
-    protected CoordinatorJobBean addRecordToCoordJobTable(String coordId, CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
+    protected CoordinatorJobBean addRecordToCoordJobTable(
+            String coordId, CoordinatorJob.Status status, boolean pending, boolean doneMatd) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, pending, doneMatd);
         coordJob.setId(coordId);
         coordJob.setAppName(coordId);

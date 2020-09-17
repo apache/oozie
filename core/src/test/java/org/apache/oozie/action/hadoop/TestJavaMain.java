@@ -53,7 +53,7 @@ public class TestJavaMain extends MainTestCase {
         // Check Exception handling
         try {
             JavaMain.main(new String[]{"ex2"});
-        } catch(JavaMainException jme) {
+        } catch(JavaMain.JavaMainException jme) {
             assertTrue(jme.getCause() instanceof IOException);
             assertEquals("throwing exception", jme.getCause().getMessage());
         }

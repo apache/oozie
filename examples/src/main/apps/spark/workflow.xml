@@ -15,17 +15,18 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns='uri:oozie:workflow:0.5' name='SparkFileCopy'>
+<workflow-app xmlns='uri:oozie:workflow:1.0' name='SparkFileCopy'>
     <start to='spark-node' />
 
     <action name='spark-node'>
-        <spark xmlns="uri:oozie:spark-action:0.1">
-            <job-tracker>${jobTracker}</job-tracker>
+        <spark xmlns="uri:oozie:spark-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/spark"/>
             </prepare>
             <master>${master}</master>
+            <mode>${mode}</mode>
             <name>Spark-FileCopy</name>
             <class>org.apache.oozie.example.SparkFileCopy</class>
             <jar>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples.jar</jar>

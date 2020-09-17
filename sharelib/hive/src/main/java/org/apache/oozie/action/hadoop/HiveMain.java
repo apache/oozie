@@ -20,17 +20,14 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -40,8 +37,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.hive.conf.HiveConf;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class HiveMain extends LauncherMain {
-    private static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] HIVE_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)"),
             Pattern.compile("Submitted application (application[0-9_]*)")
     };
@@ -125,7 +125,7 @@ public class HiveMain extends LauncherMain {
         return hiveConf;
     }
 
-    public static String setUpHiveLog4J(Configuration hiveConf) throws IOException {
+    private String setUpHiveLog4J(Configuration hiveConf) throws IOException {
         //Logfile to capture job IDs
         String hadoopJobId = System.getProperty("oozie.launcher.job.id");
         if (hadoopJobId == null) {
@@ -134,50 +134,38 @@ public class HiveMain extends LauncherMain {
 
         String logFile = new File("hive-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        Properties hadoopProps = new Properties();
-
-        // Preparing log4j configuration
-        URL log4jFile = Thread.currentThread().getContextClassLoader().getResource("log4j.properties");
-        if (log4jFile != null) {
-            // getting hadoop log4j configuration
-            hadoopProps.load(log4jFile.openStream());
-        }
-
         String logLevel = hiveConf.get("oozie.hive.log.level", "INFO");
-        String rootLogLevel = hiveConf.get("oozie.action." + LauncherMapper.ROOT_LOGGER_LEVEL, "INFO");
+        String rootLogLevel = hiveConf.get("oozie.action." + LauncherAMUtils.ROOT_LOGGER_LEVEL, "INFO");
 
-        hadoopProps.setProperty("log4j.rootLogger", rootLogLevel + ", A");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.org.apache.hadoop.hive", "false");
-        hadoopProps.setProperty("log4j.logger.hive", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.hive", "false");
-        hadoopProps.setProperty("log4j.logger.DataNucleus", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.DataNucleus", "false");
-        hadoopProps.setProperty("log4j.logger.DataStore", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.DataStore", "false");
-        hadoopProps.setProperty("log4j.logger.JPOX", logLevel + ", A");
-        hadoopProps.setProperty("log4j.additivity.JPOX", "false");
-        hadoopProps.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
-        hadoopProps.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.rootLogger", rootLogLevel + ", A");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.hive", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.hive", "false");
+        log4jProperties.setProperty("log4j.logger.hive", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.hive", "false");
+        log4jProperties.setProperty("log4j.logger.DataNucleus", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.DataNucleus", "false");
+        log4jProperties.setProperty("log4j.logger.DataStore", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.DataStore", "false");
+        log4jProperties.setProperty("log4j.logger.JPOX", logLevel + ", A");
+        log4jProperties.setProperty("log4j.additivity.JPOX", "false");
+        log4jProperties.setProperty("log4j.appender.A", "org.apache.log4j.ConsoleAppender");
+        log4jProperties.setProperty("log4j.appender.A.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.A.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
 
-        hadoopProps.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
-        hadoopProps.setProperty("log4j.appender.jobid.file", logFile);
-        hadoopProps.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
-        hadoopProps.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
-        hadoopProps.setProperty("log4j.logger.SessionState", "INFO, jobid");
-        hadoopProps.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
+        log4jProperties.setProperty("log4j.appender.jobid", "org.apache.log4j.FileAppender");
+        log4jProperties.setProperty("log4j.appender.jobid.file", logFile);
+        log4jProperties.setProperty("log4j.appender.jobid.layout", "org.apache.log4j.PatternLayout");
+        log4jProperties.setProperty("log4j.appender.jobid.layout.ConversionPattern", "%d [%t] %-5p %c %x - %m%n");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.hive.ql.exec", "INFO, jobid");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.hive.ql.exec", "false");
+        log4jProperties.setProperty("log4j.logger.SessionState", "INFO, jobid");
+        log4jProperties.setProperty("log4j.additivity.SessionState", "false");
+        log4jProperties.setProperty("log4j.logger.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "INFO, jobid");
+        log4jProperties.setProperty("log4j.additivity.org.apache.hadoop.yarn.client.api.impl.YarnClientImpl", "false");
 
-        String localProps = new File(HIVE_L4J_PROPS).getAbsolutePath();
-        OutputStream os1 = new FileOutputStream(localProps);
-        hadoopProps.store(os1, "");
-        os1.close();
+        createFileWithContentIfNotExists(new File(HIVE_L4J_PROPS).getAbsolutePath(), log4jProperties);
+        createFileWithContentIfNotExists(new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath(), log4jProperties);
 
-        localProps = new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath();
-        os1 = new FileOutputStream(localProps);
-        hadoopProps.store(os1, "");
-        os1.close();
         return logFile;
     }
 
@@ -185,27 +173,12 @@ public class HiveMain extends LauncherMain {
         Configuration hiveConf = initActionConf();
 
         // Write the action configuration out to hive-site.xml
-        OutputStream os = new FileOutputStream(HIVE_SITE_CONF);
-        hiveConf.writeXml(os);
-        os.close();
-
-        System.out.println();
-        System.out.println("Hive Configuration Properties:");
-        System.out.println("------------------------");
-        for (Entry<String, String> entry : hiveConf) {
-            System.out.println(entry.getKey() + "=" + entry.getValue());
-        }
-        System.out.flush();
-        System.out.println("------------------------");
-        System.out.println();
+        URL hiveSiteURL = createFileWithContentIfNotExists(HIVE_SITE_CONF, hiveConf);
+        logMasking("Hive Configuration Properties:", hiveConf);
 
         // Reset the hiveSiteURL static variable as we just created hive-site.xml.
         // If prepare block had a drop partition it would have been initialized to null.
-        Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
-        if (declaredField != null) {
-            declaredField.setAccessible(true);
-            declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
-        }
+        HiveConf.setHiveSiteLocation(hiveSiteURL);
         return hiveConf;
     }
 
@@ -227,7 +200,7 @@ public class HiveMain extends LauncherMain {
         arguments.add("hive.exec.log4j.file=" + new File(HIVE_EXEC_L4J_PROPS).getAbsolutePath());
 
         //setting oozie workflow id as caller context id for hive
-        String callerId = "oozie:" + System.getProperty("oozie.job.id");
+        String callerId = "oozie:" + System.getProperty(LauncherAM.OOZIE_JOB_ID);
         arguments.add("--hiveconf");
         arguments.add("hive.log.trace.id=" + callerId);
 
@@ -241,8 +214,11 @@ public class HiveMain extends LauncherMain {
             File localDir = new File("dummy").getAbsoluteFile().getParentFile();
             System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
             System.out.println("------------------------");
-            for (String file : localDir.list()) {
-                System.out.println("  " + file);
+            String[] files = localDir.list();
+            if (files != null) {
+                for (String file : files) {
+                    System.out.println("  " + file);
+                }
             }
             System.out.println("------------------------");
             System.out.println();
@@ -272,7 +248,7 @@ public class HiveMain extends LauncherMain {
         }
 
         // Pass any parameters to Hive via arguments
-        String[] params = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
+        String[] params = ActionUtils.getStrings(hiveConf, HiveActionExecutor.HIVE_PARAMS);
         if (params.length > 0) {
             System.out.println("Parameters:");
             System.out.println("------------------------");
@@ -292,7 +268,7 @@ public class HiveMain extends LauncherMain {
             System.out.println();
         }
 
-        String[] hiveArgs = MapReduceMain.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
+        String[] hiveArgs = ActionUtils.getStrings(hiveConf, HiveActionExecutor.HIVE_ARGS);
         for (String hiveArg : hiveArgs) {
             if (DISALLOWED_HIVE_OPTIONS.contains(hiveArg)) {
                 throw new RuntimeException("Error: Hive argument " + hiveArg + " is not supported");
@@ -306,7 +282,7 @@ public class HiveMain extends LauncherMain {
         }
         System.out.println();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(hiveConf);
+        LauncherMain.killChildYarnJobs(hiveConf);
 
         System.out.println("=================================================================");
         System.out.println();
@@ -317,13 +293,6 @@ public class HiveMain extends LauncherMain {
         try {
             runHive(arguments.toArray(new String[arguments.size()]));
         }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
-        }
         finally {
             System.out.println("\n<<< Invocation of Hive command completed <<<\n");
             writeExternalChildIDs(logFile, HIVE_JOB_IDS_PATTERNS, "Hive");
@@ -333,7 +302,7 @@ public class HiveMain extends LauncherMain {
     private String createScriptFile(String query) throws IOException {
         String filename = "oozie-hive-query-" + System.currentTimeMillis() + ".hql";
         File f = new File(filename);
-        FileUtils.writeStringToFile(f, query, "UTF-8");
+        FileUtils.writeStringToFile(f, query, StandardCharsets.UTF_8);
         return filename;
     }
 
@@ -345,7 +314,7 @@ public class HiveMain extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(filePath));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {

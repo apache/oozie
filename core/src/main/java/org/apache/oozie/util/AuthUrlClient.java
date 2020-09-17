@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.util;
 
 import java.io.BufferedReader;
@@ -27,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
@@ -37,11 +37,11 @@ import org.apache.hadoop.security.authentication.client.Authenticator;
 import org.apache.hadoop.security.authentication.client.KerberosAuthenticator;
 import org.apache.hadoop.security.authentication.client.PseudoAuthenticator;
 import org.apache.oozie.service.ConfigurationService;
-import org.apache.oozie.service.Services;
 
 public class AuthUrlClient {
 
     public static final String SERVER_SERVER_AUTH_TYPE = "oozie.server.authentication.type";
+    public static final String SERVER_SERVER_CONNECTION_TIMEOUT_SECONDS = "oozie.server.connection.timeout.seconds";
 
     private static XLog LOG = XLog.getLog(AuthUrlClient.class);
 
@@ -64,13 +64,7 @@ public class AuthUrlClient {
         try {
             conn = new AuthenticatedURL(AuthenticatorClass.newInstance()).openConnection(url, token);
         }
-        catch (AuthenticationException ex) {
-            throw new IOException("Could not authenticate, " + ex.getMessage(), ex);
-        }
-        catch (InstantiationException ex) {
-            throw new IOException("Could not authenticate, " + ex.getMessage(), ex);
-        }
-        catch (IllegalAccessException ex) {
+        catch (AuthenticationException | InstantiationException | IllegalAccessException ex) {
             throw new IOException("Could not authenticate, " + ex.getMessage(), ex);
         }
         if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -94,14 +88,16 @@ public class AuthUrlClient {
             throw new IOException("Authentication type must be specified: simple|kerberos|<class>");
         }
         authName = authName.trim();
-        if (authName.equals("simple")) {
-            authClassName = PseudoAuthenticator.class.getName();
-        }
-        else if (authName.equals("kerberos")) {
-            authClassName = KerberosAuthenticator.class.getName();
-        }
-        else {
-            authClassName = authName;
+        switch (authName) {
+            case "simple":
+                authClassName = PseudoAuthenticator.class.getName();
+                break;
+            case "kerberos":
+                authClassName = KerberosAuthenticator.class.getName();
+                break;
+            default:
+                authClassName = authName;
+                break;
         }
 
         authClass = (Class<? extends Authenticator>) Thread.currentThread().getContextClassLoader()
@@ -123,16 +119,17 @@ public class AuthUrlClient {
         }
 
         final URL url = new URL(server);
-        BufferedReader reader = null;
+        BufferedReader reader;
         try {
             reader = UserGroupInformation.getLoginUser().doAs(new PrivilegedExceptionAction<BufferedReader>() {
                 @Override
                 public BufferedReader run() throws IOException {
                     HttpURLConnection conn = getConnection(url);
+                    conn.setConnectTimeout(ConfigurationService.getInt(SERVER_SERVER_CONNECTION_TIMEOUT_SECONDS, 180));
                     BufferedReader reader = null;
                     if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                         InputStream is = conn.getInputStream();
-                        reader = new BufferedReader(new InputStreamReader(is));
+                        reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                     }
                     return reader;
                 }
@@ -155,10 +152,9 @@ public class AuthUrlClient {
                 String value = params.get(key)[0]; // We don't support multi value.
                 stringBuilder.append(key);
                 stringBuilder.append("=");
-                stringBuilder.append(URLEncoder.encode(value,"UTF-8"));
+                stringBuilder.append(URLEncoder.encode(value,StandardCharsets.UTF_8.name()));
             }
         }
         return stringBuilder.toString();
     }
-
 }

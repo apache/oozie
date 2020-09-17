@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,7 +139,7 @@ public class TestOozieClientWithFakeServlet {
         }
 
         @Override
-        protected HttpURLConnection createConnection(URL url, String method) throws IOException, OozieClientException {
+        protected HttpURLConnection createConnection(URL url, String method) throws IOException {
             HttpURLConnection result = mock(HttpURLConnection.class);
             when(result.getResponseCode()).thenReturn(200);
             when(result.getInputStream()).thenReturn(getIs());
@@ -147,24 +148,24 @@ public class TestOozieClientWithFakeServlet {
 
         @SuppressWarnings("unchecked")
         private InputStream getIs() {
-            ByteArrayInputStream result = new ByteArrayInputStream("".getBytes());
+            ByteArrayInputStream result = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
             if (check) {
                 JSONArray array = new JSONArray();
                 array.add(2L);
                 String s = JSONValue.toJSONString(array);
-                result = new ByteArrayInputStream(s.getBytes());
+                result = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
                 check = false;
                 return result;
             }
             if (answer == 0) {
                 JSONObject json = new JSONObject();
                 json.put(JsonTags.JMS_TOPIC_NAME, "topicName");
-                result = new ByteArrayInputStream(json.toJSONString().getBytes());
+                result = new ByteArrayInputStream(json.toJSONString().getBytes(StandardCharsets.UTF_8));
 
             }
             if (answer == 1) {
                 JSONObject json = new JSONObject();
-                result = new ByteArrayInputStream(json.toJSONString().getBytes());
+                result = new ByteArrayInputStream(json.toJSONString().getBytes(StandardCharsets.UTF_8));
 
             }
             if (answer == 2) {
@@ -172,7 +173,7 @@ public class TestOozieClientWithFakeServlet {
                 List<WorkflowJobBean> jsonWorkflows = new ArrayList<WorkflowJobBean>();
                 jsonWorkflows.add(new WorkflowJobBean());
                 json.put(JsonTags.BUNDLE_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));
-                result = new ByteArrayInputStream(json.toJSONString().getBytes());
+                result = new ByteArrayInputStream(json.toJSONString().getBytes(StandardCharsets.UTF_8));
 
             }
             if (answer == 3) {
@@ -187,7 +188,7 @@ public class TestOozieClientWithFakeServlet {
                 jsonWorkflows.add(bulk);
                 jsonWorkflows.add(bulk);
                 json.put(JsonTags.BULK_RESPONSES, BulkResponseImpl.toJSONArray(jsonWorkflows, "GMT"));
-                result = new ByteArrayInputStream(json.toJSONString().getBytes());
+                result = new ByteArrayInputStream(json.toJSONString().getBytes(StandardCharsets.UTF_8));
 
             }
 

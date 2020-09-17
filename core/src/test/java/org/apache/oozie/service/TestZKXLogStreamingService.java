@@ -19,9 +19,11 @@ package org.apache.oozie.service;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +34,9 @@ import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.ZKXTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.XLogErrorStreamer;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.ZKUtils;
 
 public class TestZKXLogStreamingService extends ZKXTestCase {
@@ -198,15 +202,29 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         return doStreamLog(xf, new HashMap<String, String[]>());
     }
 
+    protected String doStreamLog(XLogFilter xf, Date startTime, Date endTime) throws Exception {
+        return doStreamLog(xf, new HashMap<String, String[]>(), false, startTime, endTime);
+    }
+
     protected String doStreamErrorLog(XLogFilter xf) throws Exception {
         return doStreamLog(xf, new HashMap<String, String[]>(), true);
     }
+
+    private String doStreamErrorLog(XLogFilter xf, Date startDate, Date endDate) throws Exception {
+        return doStreamLog(xf, new HashMap<String, String[]>(), true, startDate, startDate);
+    }
+
 
     protected String doStreamLog(XLogFilter xf, Map<String, String[]> param) throws Exception {
         return doStreamLog(xf, param, false);
     }
 
     protected String doStreamLog(XLogFilter xf, Map<String, String[]> param, boolean isErrorLog) throws Exception {
+        return doStreamLog(xf, param, isErrorLog, null, null);
+    }
+
+    protected String doStreamLog(XLogFilter xf, Map<String, String[]> param, boolean isErrorLog, Date startTime,
+            Date endTime) throws Exception {
         StringWriter w = new StringWriter();
         ZKXLogStreamingService zkxlss = new ZKXLogStreamingService();
         try {
@@ -215,10 +233,10 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
             zkxlss.init(services);
             sleep(1000); // Sleep to allow ZKUtils ServiceCache to update
             if (isErrorLog) {
-                zkxlss.streamErrorLog(xf, null, null, w, param);
+                zkxlss.streamLog(new XLogErrorStreamer(xf, param), startTime, endTime, w);
             }
             else {
-                zkxlss.streamLog(xf, null, null, w, param);
+                zkxlss.streamLog(new XLogStreamer(xf, param), startTime, endTime, w);
             }
         }
         finally {
@@ -253,7 +271,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(),
                                 Services.get().get(XLogService.class).getOozieLogName());
         logFile.getParentFile().mkdirs();
-        FileWriter logWriter = new FileWriter(logFile);
+        Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
         // local logs
         logWriter.append("2013-06-10 10:25:44,008 WARN HiveActionExecutor:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] "
                 + "APP[hive-wf] JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] "
@@ -377,7 +395,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(), Services.get()
                 .get(XLogService.class).getOozieLogName());
         logFile.getParentFile().mkdirs();
-        FileWriter logWriter = new FileWriter(logFile);
+        Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
         // local logs
         StringBuffer bf = new StringBuffer();
         bf.append(
@@ -493,7 +511,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         File logFile = new File(Services.get().get(XLogService.class).getOozieErrorLogPath(), Services.get()
                 .get(XLogService.class).getOozieErrorLogName());
         logFile.getParentFile().mkdirs();
-        FileWriter logWriter = new FileWriter(logFile);
+        Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
         // local logs
         StringBuffer bf = new StringBuffer();
         bf.append(
@@ -551,7 +569,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         try {
             container.start();
             dummyOozie = new DummyZKOozie("9876", container.getServletURL("/other-oozie-server/*"));
-            StringBuffer newLog = new StringBuffer();
+            StringBuilder newLog = new StringBuilder();
 
             newLog.append(
                     "2014-02-07 00:26:56,126 WARN CoordActionInputCheckXCommand:545 [pool-2-thread-26] - USER[-] GROUP[-] "
@@ -581,6 +599,32 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
             }
             container.stop();
         }
+    }
+
+    public void testTuncateLog() throws Exception {
+        XLogFilter.reset();
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+        assertFalse(doStreamDisabledCheck());
+        File logFile = new File(Services.get().get(XLogService.class).getOozieLogPath(),
+                                Services.get().get(XLogService.class).getOozieLogName());
+        logFile.getParentFile().mkdirs();
+
+        ConfigurationService.set(XLogFilter.MAX_SCAN_DURATION, "1");
+        Date startDate = new Date();
+        Date endDate = new Date(startDate.getTime() + 60 * 60 * 1000 * 15);
+
+        String log = doStreamLog(new XLogFilter(), startDate, endDate);
+        assertTrue(log.contains("Truncated logs to max log scan duration"));
+        String logError = doStreamErrorLog(new XLogFilter(), startDate, endDate);
+        assertFalse(logError.contains("Truncated logs to max log scan duration"));
     }
 
 }

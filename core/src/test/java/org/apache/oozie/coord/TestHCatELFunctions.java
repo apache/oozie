@@ -19,6 +19,7 @@
 package org.apache.oozie.coord;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagELFunctions;
@@ -65,7 +66,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
     }
 
     @Test
-    public void testHCatExists() throws Exception {
+    public void testHCatPartitionExists() throws Exception {
         dropTable("db1", "table1", true);
         dropDatabase("db1", true);
         createDatabase("db1");
@@ -97,7 +98,7 @@ public class TestHCatELFunctions extends XHCatTestCase {
         wf.setWorkflowInstance(job);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         protoConf.writeXml(baos);
-        wf.setProtoActionConf(baos.toString());
+        wf.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
 
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
@@ -107,6 +108,53 @@ public class TestHCatELFunctions extends XHCatTestCase {
 
         assertEquals(true, (boolean) eval.evaluate("${hcat:exists(wf:conf('partition1'))}", Boolean.class));
         assertEquals(false, (boolean) eval.evaluate("${hcat:exists(wf:conf('partition2'))}", Boolean.class));
+
+        dropTable("db1", "table1", true);
+        dropDatabase("db1", true);
+    }
+
+    @Test
+    public void testHCatTableExists() throws Exception {
+        dropTable("db1", "table1", true);
+        dropDatabase("db1", true);
+        createDatabase("db1");
+        createTable("db1", "table1");
+
+        Configuration protoConf = new Configuration();
+        protoConf.set(OozieClient.USER_NAME, getTestUser());
+        protoConf.set("hadoop.job.ugi", getTestUser() + "," + "group");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, "appPath");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+
+        conf.set("test.dir", getTestCaseDir());
+        conf.set("table1", getHCatURI("db1", "table1").toString());
+        conf.set("table2", getHCatURI("db1", "table2").toString());
+
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "<workflow-app/>", new StartNodeDef(
+                LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).addNode(new EndNodeDef("end",
+                LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        LiteWorkflowInstance job = new LiteWorkflowInstance(def, conf, "wfId");
+
+        WorkflowJobBean wf = new WorkflowJobBean();
+        wf.setId(job.getId());
+        wf.setAppName("name");
+        wf.setAppPath("appPath");
+        wf.setUser(getTestUser());
+        wf.setGroup("group");
+        wf.setWorkflowInstance(job);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        protoConf.writeXml(baos);
+        wf.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
+
+        WorkflowActionBean action = new WorkflowActionBean();
+        action.setId("actionId");
+        action.setName("actionName");
+        ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
+        DagELFunctions.configureEvaluator(eval, wf, action);
+
+        assertEquals(true, (boolean) eval.evaluate("${hcat:exists(wf:conf('table1'))}", Boolean.class));
+        assertEquals(false, (boolean) eval.evaluate("${hcat:exists(wf:conf('table2'))}", Boolean.class));
 
         dropTable("db1", "table1", true);
         dropDatabase("db1", true);
@@ -374,6 +422,17 @@ public class TestHCatELFunctions extends XHCatTestCase {
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         expr = "${coord:databaseOut('ABC')}";
         assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
+
+        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks");
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:databaseIn('ABC')}";
+        assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
+
+        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks");
+        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:databaseOut('ABC')}";
+        assertEquals("mydb", CoordELFunctions.evalAndWrap(eval, expr));
     }
 
     /**
@@ -391,6 +450,17 @@ public class TestHCatELFunctions extends XHCatTestCase {
         assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
 
         eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us");
+        eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:tableOut('ABC')}";
+        assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
+
+        init("coord-action-start", "hcat://hcat.server.com:5080/mydb/clicks");
+        eval.setVariable(".datain.ABC", "hcat://hcat.server.com:5080/mydb/clicks");
+        eval.setVariable(".datain.ABC.unresolved", Boolean.FALSE);
+        expr = "${coord:tableIn('ABC')}";
+        assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
+
+        eval.setVariable(".dataout.ABC", "hcat://hcat.server.com:5080/mydb/clicks");
         eval.setVariable(".dataout.ABC.unresolved", Boolean.FALSE);
         expr = "${coord:tableOut('ABC')}";
         assertEquals("clicks", CoordELFunctions.evalAndWrap(eval, expr));
@@ -581,5 +651,4 @@ public class TestHCatELFunctions extends XHCatTestCase {
         appInst.setName("mycoordinator-app");
         CoordELFunctions.configureEvaluator(eval, ds, appInst);
     }
-
 }

@@ -22,9 +22,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import javax.persistence.EntityManager;
@@ -73,14 +73,14 @@ public class WorkflowStore extends Store {
 
     public WorkflowStore(Connection connection, boolean selectForUpdate) throws StoreException {
         super();
-        conn = ParamChecker.notNull(connection, "conn");
+        conn = Objects.requireNonNull(connection, "conn cannot be null");
         entityManager = getEntityManager();
         this.selectForUpdate = selectForUpdate;
     }
 
     public WorkflowStore(Connection connection, Store store, boolean selectForUpdate) throws StoreException {
         super(store);
-        conn = ParamChecker.notNull(connection, "conn");
+        conn = Objects.requireNonNull(connection, "conn cannot be null");
         entityManager = getEntityManager();
         this.selectForUpdate = selectForUpdate;
     }
@@ -104,11 +104,11 @@ public class WorkflowStore extends Store {
      * Create a Workflow and return a WorkflowJobBean. It also creates the process instance for the job.
      *
      * @param workflow workflow bean
-     * @throws StoreException
+     * @throws StoreException if storing fails
      */
 
     public void insertWorkflow(final WorkflowJobBean workflow) throws StoreException {
-        ParamChecker.notNull(workflow, "workflow");
+        Objects.requireNonNull(workflow, "workflow cannot be null");
 
         doOperation("insertWorkflow", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException {
@@ -125,7 +125,7 @@ public class WorkflowStore extends Store {
      * @param id Workflow ID
      * @param locking true if Workflow is to be locked
      * @return WorkflowJobBean
-     * @throws StoreException
+     * @throws StoreException if getting WF fails
      */
     public WorkflowJobBean getWorkflow(final String id, final boolean locking) throws StoreException {
         ParamChecker.notEmpty(id, "WorkflowID");
@@ -154,7 +154,7 @@ public class WorkflowStore extends Store {
      *
      * @param status Workflow Status.
      * @return number of Workflows with given status.
-     * @throws StoreException
+     * @throws StoreException if getting WF fails
      */
     public int getWorkflowCountWithStatus(final String status) throws StoreException {
         ParamChecker.notEmpty(status, "status");
@@ -175,11 +175,11 @@ public class WorkflowStore extends Store {
      * @param status Workflow Status.
      * @param secs No. of seconds within which the workflow got modified.
      * @return number of Workflows modified within given time with given status.
-     * @throws StoreException
+     * @throws StoreException if getting WF fails
      */
     public int getWorkflowCountWithStatusInLastNSeconds(final String status, final int secs) throws StoreException {
         ParamChecker.notEmpty(status, "status");
-        ParamChecker.notEmpty(status, "secs");
+        ParamChecker.checkGTZero(secs, "secs");
         Integer cnt = doOperation("getWorkflowCountWithStatusInLastNSecs", new Callable<Integer>() {
             public Integer call() throws SQLException {
                 Query q = entityManager.createNamedQuery("GET_WORKFLOWS_COUNT_WITH_STATUS_IN_LAST_N_SECS");
@@ -200,7 +200,7 @@ public class WorkflowStore extends Store {
      * @throws StoreException If Workflow doesn't exist
      */
     public void updateWorkflow(final WorkflowJobBean wfBean) throws StoreException {
-        ParamChecker.notNull(wfBean, "WorkflowJobBean");
+        Objects.requireNonNull(wfBean, "WorkflowJobBean cannot be null");
         doOperation("updateWorkflow", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException, JPAExecutorException {
                 WorkflowJobQueryExecutor.getInstance().executeUpdate(
@@ -217,7 +217,7 @@ public class WorkflowStore extends Store {
      * @throws StoreException If the action is already present
      */
     public void insertAction(final WorkflowActionBean action) throws StoreException {
-        ParamChecker.notNull(action, "WorkflowActionBean");
+        Objects.requireNonNull(action, "WorkflowActionBean cannot be null");
         doOperation("insertAction", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException {
                 entityManager.persist(action);
@@ -274,7 +274,7 @@ public class WorkflowStore extends Store {
      * @throws StoreException if action doesn't exist
      */
     public void updateAction(final WorkflowActionBean action) throws StoreException {
-        ParamChecker.notNull(action, "WorkflowActionBean");
+        Objects.requireNonNull(action, "WorkflowActionBean cannot be null");
         doOperation("updateAction", new Callable<Void>() {
             public Void call() throws SQLException, StoreException, WorkflowException, JPAExecutorException {
                 WorkflowActionQueryExecutor.getInstance().executeUpdate(
@@ -313,19 +313,22 @@ public class WorkflowStore extends Store {
      * @param wfId Workflow ID
      * @param locking true if Actions are to be locked
      * @return A List of WorkflowActionBean
-     * @throws StoreException
+     * @throws StoreException if getting actions fails
      */
     public List<WorkflowActionBean> getActionsForWorkflow(final String wfId, final boolean locking)
             throws StoreException {
         ParamChecker.notEmpty(wfId, "WorkflowID");
         List<WorkflowActionBean> actions = doOperation("getActionsForWorkflow",
                                                        new Callable<List<WorkflowActionBean>>() {
-                                                           public List<WorkflowActionBean> call() throws SQLException, StoreException, WorkflowException,
+                                                           public List<WorkflowActionBean> call() throws SQLException,
+                                                                   StoreException, WorkflowException,
                                                                    InterruptedException {
                                                                List<WorkflowActionBean> actions;
-                                                               List<WorkflowActionBean> actionList = new ArrayList<WorkflowActionBean>();
+                                                               List<WorkflowActionBean> actionList
+                                                                       = new ArrayList<WorkflowActionBean>();
                                                                try {
-                                                                   Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_WORKFLOW");
+                                                                   Query q = entityManager.createNamedQuery(
+                                                                           "GET_ACTIONS_FOR_WORKFLOW");
 
                                                                    /*
                                                                    * OpenJPAQuery oq = OpenJPAPersistence.cast(q);
@@ -362,19 +365,22 @@ public class WorkflowStore extends Store {
      * @param start offset for select statement
      * @param len number of Workflow Actions to be returned
      * @return A List of WorkflowActionBean
-     * @throws StoreException
+     * @throws StoreException if getting actions fails
      */
     public List<WorkflowActionBean> getActionsSubsetForWorkflow(final String wfId, final int start, final int len)
             throws StoreException {
         ParamChecker.notEmpty(wfId, "WorkflowID");
         List<WorkflowActionBean> actions = doOperation("getActionsForWorkflow",
                                                        new Callable<List<WorkflowActionBean>>() {
-                                                           public List<WorkflowActionBean> call() throws SQLException, StoreException, WorkflowException,
+                                                           public List<WorkflowActionBean> call() throws SQLException,
+                                                                   StoreException, WorkflowException,
                                                                    InterruptedException {
                                                                List<WorkflowActionBean> actions;
-                                                               List<WorkflowActionBean> actionList = new ArrayList<WorkflowActionBean>();
+                                                               List<WorkflowActionBean> actionList
+                                                                       = new ArrayList<WorkflowActionBean>();
                                                                try {
-                                                                   Query q = entityManager.createNamedQuery("GET_ACTIONS_FOR_WORKFLOW");
+                                                                   Query q = entityManager.createNamedQuery(
+                                                                           "GET_ACTIONS_FOR_WORKFLOW");
                                                                    OpenJPAQuery oq = OpenJPAPersistence.cast(q);
                                                                    q.setParameter("wfId", wfId);
                                                                    q.setFirstResult(start - 1);
@@ -399,7 +405,7 @@ public class WorkflowStore extends Store {
      *
      * @param minimumPendingAgeSecs Minimum Pending age in seconds
      * @return List of action beans
-     * @throws StoreException
+     * @throws StoreException if getting actions fails
      */
     public List<WorkflowActionBean> getPendingActions(final long minimumPendingAgeSecs) throws StoreException {
         List<WorkflowActionBean> actions = doOperation("getPendingActions", new Callable<List<WorkflowActionBean>>() {
@@ -425,7 +431,7 @@ public class WorkflowStore extends Store {
      *
      * @param checkAgeSecs check age in seconds.
      * @return List of action beans.
-     * @throws StoreException
+     * @throws StoreException if getting actions fails
      */
     public List<WorkflowActionBean> getRunningActions(final long checkAgeSecs) throws StoreException {
         List<WorkflowActionBean> actions = doOperation("getRunningActions", new Callable<List<WorkflowActionBean>>() {
@@ -453,7 +459,7 @@ public class WorkflowStore extends Store {
      *
      * @param wfId String
      * @return List of action beans
-     * @throws StoreException
+     * @throws StoreException if getting actions fails
      */
     public List<WorkflowActionBean> getRetryAndManualActions(final String wfId) throws StoreException {
         List<WorkflowActionBean> actions = doOperation("GET_RETRY_MANUAL_ACTIONS",
@@ -483,7 +489,7 @@ public class WorkflowStore extends Store {
      * @param start offset for select statement
      * @param len number of Workflows to be returned
      * @return A list of workflows
-     * @throws StoreException
+     * @throws StoreException if getting WF fails
      */
     public WorkflowsInfo getWorkflowsInfo(final Map<String, List<String>> filter, final int start, final int len)
             throws StoreException {
@@ -773,7 +779,8 @@ public class WorkflowStore extends Store {
      * Purge the Workflows Completed older than given days.
      *
      * @param olderThanDays number of days for which to preserve the workflows
-     * @throws StoreException
+     * @param limit limit number of affected workflows
+     * @throws StoreException if purging fails
      */
     public void purge(final long olderThanDays, final int limit) throws StoreException {
         doOperation("purge", new Callable<Void>() {
@@ -793,7 +800,8 @@ public class WorkflowStore extends Store {
                         actionDeleted += g.executeUpdate();
                     }
                 }
-                XLog.getLog(getClass()).debug("ENDED Workflow Purge deleted jobs :" + workflows.size() + " and actions " + actionDeleted);
+                XLog.getLog(getClass()).debug("ENDED Workflow Purge deleted jobs :" + workflows.size() + " and actions "
+                            + actionDeleted);
                 return null;
             }
         });

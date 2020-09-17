@@ -1,0 +1,57 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns="uri:oozie:workflow:0.5" name="test-wf">
+    <start to="f1"/>
+
+    <action name="f1">
+        <fs>
+            <mkdir path='/tmp'/>
+        </fs>
+        <ok to="f1a1"/>
+        <error to="f1a1"/>
+    </action>
+
+    <action name="f1a1">
+        <fs>
+            <mkdir path='/tmp'/>
+        </fs>
+        <ok to="f1a2"/>
+        <error to="f1a3"/>
+    </action>
+
+    <action name="f1a2">
+        <fs>
+            <mkdir path='/tmp'/>
+        </fs>
+        <ok to="z"/>
+        <error to="b"/>
+    </action>
+
+    <action name="f1a3">
+        <fs>
+            <mkdir path='/tmp'/>
+        </fs>
+        <ok to="b"/>
+        <error to="b"/>
+    </action>
+
+    <kill name="b">
+        <message>kill</message>
+    </kill>
+    <end name="z"/>
+</workflow-app>

@@ -39,7 +39,6 @@ import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.sla.SLAOperations;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.CommandException;
@@ -68,6 +67,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
 import java.io.IOException;
@@ -88,14 +88,14 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      */
     public SubmitXCommand(Configuration conf) {
         super("submit", "submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     /**
      * Constructor for submitting wf through coordinator
      *
      * @param conf : Configuration for workflow job
-     * @param parentId: the coord action id
+     * @param parentId the coord action id
      */
     public SubmitXCommand(Configuration conf, String parentId) {
         this(conf);
@@ -113,7 +113,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
         this.dryrun = dryrun;
     }
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
 
     static {
@@ -122,10 +121,6 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     @Override
@@ -137,31 +132,56 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
             String user = conf.get(OozieClient.USER_NAME);
             URI uri = new URI(conf.get(OozieClient.APP_PATH));
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
-            Path configDefault = null;
-            Configuration defaultConf = null;
+
+
+            // Generate a list of all default configuration files to be processed
+            // A default-conf.xml in the workflow directory should have higher precedence than service defaults
+            // Adding oozie.default.configuration.path files first will allow default-conf.xml to override duplicates
+            ArrayList<Path> configDefault = new ArrayList<>();
+            Configuration defaultConf = new XConfiguration();
+
+            String[] defaultConfFiles = conf.getStrings(OozieClient.CONFIG_PATH);
+            if (defaultConfFiles != null && defaultConfFiles.length > 0) {
+                for ( String defaultConfFile : defaultConfFiles ) {
+                    if (defaultConfFile.trim().length() > 0) {
+                        configDefault.add(new Path(defaultConfFile.trim()));
+                    }
+
+                }
+            }
+
             // app path could be a directory
             Path path = new Path(uri.getPath());
             if (!fs.isFile(path)) {
-                configDefault = new Path(path, CONFIG_DEFAULT);
+                configDefault.add(new Path(path, CONFIG_DEFAULT));
             } else {
-                configDefault = new Path(path.getParent(), CONFIG_DEFAULT);
+                configDefault.add(new Path(path.getParent(), CONFIG_DEFAULT));
             }
 
-            if (fs.exists(configDefault)) {
-                try {
-                    defaultConf = new XConfiguration(fs.open(configDefault));
-                    PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
-                    XConfiguration.injectDefaults(defaultConf, conf);
+            //
+            for (Path configDefaultFile: configDefault) {
+
+                LOG.debug("Loading Configuration file {0}", configDefaultFile.getName());
+                Configuration defaultConfigs = null;
+                if (fs.exists(configDefaultFile)) {
+                    try {
+                        defaultConfigs = new XConfiguration(fs.open(configDefaultFile));
+                        PropertiesUtils.checkDisallowedProperties(defaultConfigs, DISALLOWED_USER_PROPERTIES);
+                        PropertiesUtils.checkDefaultDisallowedProperties(defaultConfigs);
+                        XConfiguration.injectDefaults(defaultConfigs, conf);
+
+                    }
+                    catch (IOException ex) {
+                        throw new IOException("Failed Loading default configuration file: " +
+                                configDefaultFile.getName() + ex.getMessage(), ex);
+                    }
                 }
-                catch (IOException ex) {
-                    throw new IOException("default configuration file, " + ex.getMessage(), ex);
+                if (defaultConfigs != null) {
+                    XConfiguration.copy(resolveDefaultConfVariables(defaultConfigs),defaultConf);
                 }
-            }
-            if (defaultConf != null) {
-                defaultConf = resolveDefaultConfVariables(defaultConf);
             }
 
             WorkflowApp app = wps.parseDef(conf, defaultConf);
@@ -372,7 +392,7 @@ public class SubmitXCommand extends WorkflowXCommand<String> {
      * @param eSla sla xml element
      * @param evalSla sla evaluator
      * @return sla xml string after evaluation
-     * @throws CommandException
+     * @throws CommandException if command cannot be executed
      */
     public static String resolveSla(Element eSla, ELEvaluator evalSla) throws CommandException {
         // EL evaluation

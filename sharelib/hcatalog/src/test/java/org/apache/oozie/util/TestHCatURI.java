@@ -24,13 +24,33 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.apache.oozie.util.HCatURI;
 
 public class TestHCatURI {
 
     @Test
-    public void testHCatURIParseValidURI() {
+    public void testHCatURIParseValidURI() throws URISyntaxException {
         String input = "hcat://hcat.server.com:5080/mydb/clicks/datastamp=12;region=us";
+        HCatURI uri =  new HCatURI(input);
+        assertEquals(uri.getServerEndPoint(), "hcat://hcat.server.com:5080");
+        assertEquals(uri.getDb(), "mydb");
+        assertEquals(uri.getTable(), "clicks");
+        assertEquals(uri.getPartitionValue("datastamp"), "12");
+        assertEquals(uri.getPartitionValue("region"), "us");
+    }
+    @Test
+    public void whenMultipleHCatURIsAreParsedASingleURIIsExtracted() throws URISyntaxException {
+        String input = "hcat://hcat.server.com:5080,hcat://hcat.server1.com:5080/mydb/clicks/datastamp=12;region=us";
+        HCatURI uri = new HCatURI(input);
+        assertEquals(uri.getServerEndPointWithScheme("hcat"), "hcat://hcat.server.com:5080,hcat://hcat.server1.com:5080");
+        assertEquals(uri.getDb(), "mydb");
+        assertEquals(uri.getTable(), "clicks");
+        assertEquals(uri.getPartitionValue("datastamp"), "12");
+        assertEquals(uri.getPartitionValue("region"), "us");
+    }
+
+    @Test
+    public void testHCatTableURI() {
+        String input = "hcat://hcat.server.com:5080/mydb/clicks";
         HCatURI uri = null;
         try {
             uri = new HCatURI(input);
@@ -41,9 +61,6 @@ public class TestHCatURI {
         assertEquals(uri.getServerEndPoint(), "hcat://hcat.server.com:5080");
         assertEquals(uri.getDb(), "mydb");
         assertEquals(uri.getTable(), "clicks");
-        assertEquals(uri.getPartitionValue("datastamp"), "12");
-        assertEquals(uri.getPartitionValue("region"), "us");
-
     }
 
     @Test(expected = URISyntaxException.class)

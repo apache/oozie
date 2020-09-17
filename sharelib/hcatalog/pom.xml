@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>5.3.0-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
-    <groupId>org.apache.oozie</groupId>
+
     <artifactId>oozie-sharelib-hcatalog</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>5.3.0-SNAPSHOT</version>
     <description>Apache Oozie Share Lib HCatalog</description>
     <name>Apache Oozie Share Lib HCatalog</name>
     <packaging>jar</packaging>
@@ -38,6 +38,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>${joda.time.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.hive.hcatalog</groupId>
             <artifactId>hive-webhcat-java-client</artifactId>
@@ -295,18 +301,6 @@
                         <configuration>
                             <includeScope>compile</includeScope>
                             <outputFile>${project.build.directory}/classpath</outputFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>create-mrapp-generated-classpath</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>build-classpath</goal>
-                        </goals>
-                        <configuration>
-                            <!-- needed to run the unit test for DS to generate the required classpath
-                            that is required in the env of the launch container in the mini mr/yarn cluster -->
-                            <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath</outputFile>
                         </configuration>
                     </execution>
                 </executions>

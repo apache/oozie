@@ -252,7 +252,7 @@ public class TestProxyUserService extends XTestCase {
         conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
                                                                                     ProxyUserService.class.getName())));
         conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "nobody");
+        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "invalidgroup");
         services.init();
         try {
             ProxyUserService proxyUser = services.get(ProxyUserService.class);

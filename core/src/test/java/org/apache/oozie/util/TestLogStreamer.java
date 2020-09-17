@@ -20,18 +20,23 @@ package org.apache.oozie.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.XTestCase;
 
 public class TestLogStreamer extends XTestCase {
@@ -39,9 +44,20 @@ public class TestLogStreamer extends XTestCase {
     static String logStatement = " USER[oozie] GROUP[-] TOKEN[-] APP[-] "
                 + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] ";
 
+    String defaultLog4jFile;
+
     private final static SimpleDateFormat filenameDateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH");
 
+    @Override
+    protected void tearDown() throws Exception {
+        if (null != defaultLog4jFile) {
+            setSystemProperty(XLogService.LOG4J_FILE, defaultLog4jFile);
+        }
+        super.tearDown();
+    }
+
     public void testStreamLog() throws IOException, CommandException, ServiceException, ParseException {
+        setupLog4j();
         new Services().init();
 
         long currTime = System.currentTimeMillis();
@@ -58,7 +74,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be included in the list of files for log retrieval, because the modification time lies
         // between the start and end times of the job
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        Writer fw1 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sb1 = new StringBuilder();
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 -" + logStatement + "End workflow state change\n");
         sb1.append("2009-06-24 02:43:13,961 INFO _L2_:317 -" + logStatement
@@ -70,7 +87,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be included in the list of files for log retrieval, provided the modification time lies
         // between the start and end times of the job
-        FileWriter fw2 = new FileWriter(getTestCaseDir() + "/oozie.log.1");
+        Writer fw2 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log.1"),
+                StandardCharsets.UTF_8);
         StringBuilder sb2 = new StringBuilder();
         sb2.append("2009-06-24 02:43:13,986 WARN _L3_:539 -" + logStatement + "Use GenericOptionsParser for parsing " + "the "
                 + "arguments. " + "\n" + "_L3A_Applications "
@@ -84,7 +102,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be included in the list of files for log retrieval, provided, the modification time lies
         // between the start and end times of the job
-        FileWriter fw3 = new FileWriter(getTestCaseDir() + "/oozie.log.2");
+        Writer fw3 = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir() + "/oozie.log.2")), StandardCharsets.UTF_8);
         StringBuilder sb3 = new StringBuilder();
         sb3.append("2009-06-24 02:43:14,505 INFO _L5_:317 - USER[oozie] GROUP[oozie] TOKEN[-] APP[-] JOB[-] "
                 + "ACTION[-] Released Lock\n");
@@ -99,7 +118,8 @@ public class TestLogStreamer extends XTestCase {
         // This file will not be included in the list of files for log retrieval, since the file name neither is equal
         // to nor does begin with the log file pattern specified in log4j properties file. The default value is
         // "oozie.log"
-        FileWriter fwerr = new FileWriter(getTestCaseDir() + "/testerr.log");
+        Writer fwerr = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/testerr.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sberr = new StringBuilder();
         sberr.append("2009-06-24 02:43:13,958 WARN _L1_:323 -" + logStatement + "End workflow state change\n");
         sberr.append("2009-06-24 02:43:13,961 INFO _L2_:317 -" + logStatement
@@ -151,7 +171,7 @@ public class TestLogStreamer extends XTestCase {
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
         Calendar cal = Calendar.getInstance();
         cal.set(2009, Calendar.JUNE, 24, 2, 43, 0);
-        str.streamLog(sw, cal.getTime(), new Date(currTime - 5 * 3600000), 4096);
+        str.streamLog(sw, cal.getTime(), new Date(currTime - 5 * 3600000));
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length seven lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -172,7 +192,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
         xf.setParameter("JOB", "14-200904160239--example-forkjoinwf");
         XLogStreamer str1 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str1.streamLog(sw1, null, null, 4096);
+        str1.streamLog(sw1, null, null);
         out = sw1.toString().split("\n");
         // Check if the retrieved log content is of length eight lines after filtering based on time window, file name
         // pattern and parameters like JobId, Username etc. and/or based on log level like INFO, DEBUG, etc.
@@ -189,6 +209,7 @@ public class TestLogStreamer extends XTestCase {
     }
 
     public void testStreamLogMultipleHours() throws IOException, CommandException, ServiceException {
+        setupLog4j();
         new Services().init();
         long currTime = System.currentTimeMillis();
         XLogFilter.reset();
@@ -224,7 +245,8 @@ public class TestLogStreamer extends XTestCase {
 
         // This file will be always included in the list of files for log retrieval, provided the modification time lies
         // between the start and end times of the job
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        Writer fw1 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sb1 = new StringBuilder();
         sb1.append("\n2012-04-24 22:43:13,958 DEBUG _L22_:323 -" + logStatement);
         sb1.append("\n2012-04-24 22:43:13,961 INFO _L23_:317 -" + logStatement
@@ -241,9 +263,10 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
         XLogStreamer str2 = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
         Calendar calendarEntry = Calendar.getInstance();
-        // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January), and end time is current time
+        // Setting start-time to 2012-04-24-19 for log stream (month-1 passed as parameter since 0=January),
+        // and end time is current time
         calendarEntry.set(2012, 3, 24, 19, 0);
-        str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()), 4096);
+        str2.streamLog(sw2, calendarEntry.getTime(), new Date(System.currentTimeMillis()));
         String[] out = sw2.toString().split("\n");
 
         // Check if the retrieved log content is of length five lines after filtering based on time window, file name
@@ -259,6 +282,7 @@ public class TestLogStreamer extends XTestCase {
     }
 
     public void testStreamLogNoDash() throws IOException, CommandException, ServiceException {
+        setupLog4j();
         new Services().init();
         long currTime = System.currentTimeMillis();
         XLogFilter.reset();
@@ -274,7 +298,8 @@ public class TestLogStreamer extends XTestCase {
 
         // Previously, a dash ("-") was always required somewhere in a line in order for that line to pass the filter; this test
         // checks that this condition is no longer required
-        FileWriter fw1 = new FileWriter(getTestCaseDir() + "/oozie.log");
+        Writer fw1 = new OutputStreamWriter(new FileOutputStream(getTestCaseDir() + "/oozie.log"),
+                StandardCharsets.UTF_8);
         StringBuilder sb1 = new StringBuilder();
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 -" + logStatement + "End workflow state change\n");
         sb1.append("2009-06-24 02:43:13,958 DEBUG _L2_:323 +" + logStatement + "End workflow state change\n");
@@ -297,7 +322,7 @@ public class TestLogStreamer extends XTestCase {
         xf.setLogLevel("DEBUG|INFO");
 
         XLogStreamer str = new XLogStreamer(xf, getTestCaseDir(), "oozie.log", 1);
-        str.streamLog(sw, null, null, 4096);
+        str.streamLog(sw, null, null);
         String[] out = sw.toString().split("\n");
         // Check if the retrieved log content is of length five lines after filtering; we expect the first five lines because the
         // filtering shouldn't care whether or not there is a dash while the last five lines don't pass the normal filtering
@@ -310,12 +335,35 @@ public class TestLogStreamer extends XTestCase {
         assertEquals(true, out[4].contains("_L5_"));
     }
 
+    public void testBufferLen() throws IOException, CommandException, ServiceException {
+        new Services().init();
+        XLogStreamer str = new XLogStreamer(null, getTestCaseDir(), "oozie.log", 1);
+        assertEquals(4096, str.getBufferLen());
+        str = new XLogErrorStreamer(null);
+        assertEquals(2048, str.getBufferLen());
+        str = new XLogAuditStreamer(null);
+        assertEquals(3, str.getBufferLen());
+    }
+
     static void writeToGZFile(File f, StringBuilder sbr) throws IOException {
         GZIPOutputStream gzout = new GZIPOutputStream(new FileOutputStream(f));
         String strg = sbr.toString();
         // Write log content to the GZip file
-        byte[] buf = strg.getBytes();
+        byte[] buf = strg.getBytes(StandardCharsets.UTF_8);
         gzout.write(buf, 0, buf.length);
         gzout.close();
+    }
+
+    private void setupLog4j() throws IOException {
+        defaultLog4jFile = System.getProperty(XLogService.LOG4J_FILE);
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
     }
 }

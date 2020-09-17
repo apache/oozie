@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  *
@@ -33,26 +34,14 @@ public class WorkflowJobGetForUserJPAExecutor implements JPAExecutor<String> {
     private String wfJobId = null;
 
     public WorkflowJobGetForUserJPAExecutor(String wfJobId) {
-        ParamChecker.notNull(wfJobId, "wfJobId");
-        this.wfJobId = wfJobId;
+        this.wfJobId = Objects.requireNonNull(wfJobId, "wfJobId cannot be null");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobGetForUserJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         try {

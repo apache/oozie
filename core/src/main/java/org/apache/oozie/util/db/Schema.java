@@ -33,7 +33,7 @@ public class Schema {
         /**
          * Name of the Table
          *
-         * @return
+         * @return Name of the Table
          */
         String name();
     }
@@ -73,7 +73,7 @@ public class Schema {
         /**
          * Returns the length of the column
          *
-         * @return
+         * @return Returns the length of the column
          */
         int getLength();
 
@@ -92,7 +92,7 @@ public class Schema {
         /**
          * Column that is to be indexed
          *
-         * @return
+         * @return Column that is to be indexed
          */
         Column column();
     }
@@ -108,8 +108,8 @@ public class Schema {
     /**
      * Returns the appropriate DB type for given column according to the DB Type
      *
-     * @param column
-     * @param dbType
+     * @param column the column that need the type
+     * @param dbType the database type
      * @return column type
      */
     public static String getDbDataType(Column column, DBType dbType) {
@@ -119,7 +119,8 @@ public class Schema {
                 retVal = (dbType.equals(DBType.HSQL) ? "VARCHAR" : (dbType.equals(DBType.ORACLE) ? "CLOB" : "TEXT"));
             }
             else {
-                retVal = (dbType.equals(DBType.ORACLE) ? "VARCHAR2(" + column.getLength() + ")" : "VARCHAR(" + column.getLength() + ")");
+                retVal = (dbType.equals(DBType.ORACLE) ? "VARCHAR2(" + column.getLength() + ")" : "VARCHAR("
+            + column.getLength() + ")");
             }
         }
         else {
@@ -136,7 +137,8 @@ public class Schema {
                     }
                     else {
                         if (Blob.class.equals(column.getType())) {
-                            retVal = (dbType.equals(DBType.MySQL) ? "MEDIUMBLOB" : (dbType.equals(DBType.ORACLE) ? "BLOB" : "LONGVARBINARY"));
+                            retVal = (dbType.equals(DBType.MySQL) ? "MEDIUMBLOB" : (dbType.equals(DBType.ORACLE)
+                                    ? "BLOB" : "LONGVARBINARY"));
                         }
                         else {
                             throw new RuntimeException("Column Type[" + column.getType() + "] not mapped to any DB Data Type !!");
@@ -151,9 +153,9 @@ public class Schema {
     /**
      * Generates the SQL Statement for creating the table
      *
-     * @param table
-     * @param dbType
-     * @param tableColumns
+     * @param table the table name
+     * @param dbType the database type
+     * @param tableColumns the columns of the table
      * @return CREATE TABLE SQL Statement
      */
     public static String generateCreateTableScript(Table table, DBType dbType, List<Column> tableColumns) {
@@ -185,8 +187,8 @@ public class Schema {
     /**
      * Generates the SQL Statement for droping the table
      *
-     * @param table
-     * @param dbType
+     * @param table the table name
+     * @param dbType the database type
      * @return DROP TABLE SQL Statement
      */
     public static String generateDropTableScript(Table table, DBType dbType) {
@@ -201,8 +203,8 @@ public class Schema {
     /**
      * Generates the SQL statement for creating the Index
      *
-     * @param index
-     * @param dbType
+     * @param index the index
+     * @param dbType the database type
      * @return CREATE INDEX SQL Statement
      */
     public static String generateCreateIndexScript(Index index, DBType dbType) {
@@ -214,9 +216,9 @@ public class Schema {
     /**
      * Checks if the given connection's driver is HSQL Database Driver
      *
-     * @param conn
+     * @param conn the connection
      * @return true if the driver is HSQL
-     * @throws SQLException
+     * @throws SQLException if the connection type could not be determined
      */
     public static boolean isHsqlConnection(Connection conn) throws SQLException {
         if (conn.getMetaData().getDriverName().toLowerCase().contains(DBType.HSQL.name().toLowerCase())) {
@@ -228,9 +230,9 @@ public class Schema {
     /**
      * Checks if the given connection's driver is MySQL Database Driver
      *
-     * @param conn
+     * @param conn the connection
      * @return true if the driver is MySQL
-     * @throws SQLException
+     * @throws SQLException if the connection type could not be determined
      */
     public static boolean isMySqlConnection(Connection conn) throws SQLException {
         if (conn.getMetaData().getDriverName().toLowerCase().contains(DBType.MySQL.name().toLowerCase())) {

@@ -54,14 +54,14 @@ import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.DagXLogInfoService;
+import org.apache.oozie.service.Services;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.JobsFilterUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogAuditFilter;
-import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.XLogUserFilterParam;
+import org.apache.oozie.util.XLogStreamer;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -81,9 +81,6 @@ public class BundleEngine extends BaseEngine {
         this.user = ParamChecker.notEmpty(user, "user");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
-     */
     @Override
     public void change(String jobId, String changeValue) throws BundleEngineException {
         try {
@@ -95,9 +92,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
-     */
     @Override
     public String dryRunSubmit(Configuration conf) throws BundleEngineException {
         BundleSubmitXCommand submit = new BundleSubmitXCommand(true, conf);
@@ -110,9 +104,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String)
-     */
     @Override
     public CoordinatorJob getCoordJob(String jobId) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a coordinator job from BundleEngine"));
@@ -127,9 +118,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, int, int)
-     */
     @Override
     public CoordinatorJob getCoordJob(String jobId, String filter, int start, int length, boolean desc)
             throws BundleEngineException {
@@ -137,9 +125,6 @@ public class BundleEngine extends BaseEngine {
                 "cannot get a coordinator job from BundleEngine"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getDefinition(java.lang.String)
-     */
     @Override
     public String getDefinition(String jobId) throws BundleEngineException {
         BundleJobBean job;
@@ -152,33 +137,21 @@ public class BundleEngine extends BaseEngine {
         return job.getOrigJobXml();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String)
-     */
     @Override
     public WorkflowJob getJob(String jobId) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from BundleEngine"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String, int, int)
-     */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BundleEngineException {
         throw new BundleEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from BundleEngine"));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#getJobIdForExternalId(java.lang.String)
-     */
     @Override
     public String getJobIdForExternalId(String externalId) throws BundleEngineException {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#kill(java.lang.String)
-     */
     @Override
     public void kill(String jobId) throws BundleEngineException {
         try {
@@ -189,9 +162,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#reRun(java.lang.String, org.apache.hadoop.conf.Configuration)
-     */
     @Override
     @Deprecated
     public void reRun(String jobId, Configuration conf) throws BundleEngineException {
@@ -218,9 +188,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#resume(java.lang.String)
-     */
     @Override
     public void resume(String jobId) throws BundleEngineException {
         BundleJobResumeXCommand resume = new BundleJobResumeXCommand(jobId);
@@ -232,9 +199,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#start(java.lang.String)
-     */
     @Override
     public void start(String jobId) throws BundleEngineException {
         try {
@@ -245,44 +209,11 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
+    protected void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer) throws IOException,
             BundleEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
-    }
-
-    @Override
-    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BundleEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
-    }
-
-    @Override
-    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BundleEngineException {
-        try {
-            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.AUDIT_LOG);
-        }
-        catch (CommandException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, BundleEngineException {
-        try {
-            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
-        }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, BundleEngineException {
-        try {
+    try {
             BundleJobBean job;
-            filter.setParameter(DagXLogInfoService.JOB, jobId);
+            logStreamer.getXLogFilter().setParameter(DagXLogInfoService.JOB, jobId);
             job = new BundleJobXCommand(jobId).call();
             Date lastTime = null;
             if (job.isTerminalStatus()) {
@@ -291,16 +222,14 @@ public class BundleEngine extends BaseEngine {
             if (lastTime == null) {
                 lastTime = new Date();
             }
-            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
+            Services.get().get(XLogStreamingService.class)
+                    .streamLog(logStreamer, job.getCreatedTime(), lastTime, writer);
         }
-        catch (Exception ex) {
+        catch (CommandException ex) {
             throw new IOException(ex);
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#submitJob(org.apache.hadoop.conf.Configuration, boolean)
-     */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws BundleEngineException {
         try {
@@ -316,9 +245,6 @@ public class BundleEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#suspend(java.lang.String)
-     */
     @Override
     public void suspend(String jobId) throws BundleEngineException {
         BundleJobSuspendXCommand suspend = new BundleJobSuspendXCommand(jobId);
@@ -522,9 +448,9 @@ public class BundleEngine extends BaseEngine {
     /**
      * return a list of killed Bundle job
      *
-     * @param filter, the filter string for which the bundle jobs are killed
-     * @param start, the starting index for bundle jobs
-     * @param len, maximum number of jobs to be killed
+     * @param filter the filter string for which the bundle jobs are killed
+     * @param start the starting index for bundle jobs
+     * @param len maximum number of jobs to be killed
      * @return the list of jobs being killed
      * @throws BundleEngineException thrown if one or more of the jobs cannot be killed
      */
@@ -545,9 +471,9 @@ public class BundleEngine extends BaseEngine {
     /**
      * return a list of suspended Bundle job
      *
-     * @param filter, the filter string for which the bundle jobs are suspended
-     * @param start, the starting index for bundle jobs
-     * @param len, maximum number of jobs to be suspended
+     * @param filter the filter string for which the bundle jobs are suspended
+     * @param start the starting index for bundle jobs
+     * @param len maximum number of jobs to be suspended
      * @return the list of jobs being suspended
      * @throws BundleEngineException thrown if one or more of the jobs cannot be suspended
      */
@@ -568,9 +494,9 @@ public class BundleEngine extends BaseEngine {
     /**
      * return a list of resumed Bundle job
      *
-     * @param filter, the filter string for which the bundle jobs are resumed
-     * @param start, the starting index for bundle jobs
-     * @param len, maximum number of jobs to be resumed
+     * @param filter the filter string for which the bundle jobs are resumed
+     * @param start the starting index for bundle jobs
+     * @param len maximum number of jobs to be resumed
      * @return the list of jobs being resumed
      * @throws BundleEngineException thrown if one or more of the jobs cannot be resumed
      */

@@ -15,14 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-
 import java.text.ParseException;
 import java.util.Date;
 import java.util.TimeZone;
@@ -136,5 +134,16 @@ public class TestDateUtils {
     @Test(expected = IllegalArgumentException.class)
     public void testGetTimeZoneInvalidFormatNull() throws Exception {
         DateUtils.getTimeZone(null);
+    }
+
+    @Test
+    public void testIsThreeLetterTZName() {
+        Assert.assertTrue(DateUtils.isThreeLetterTZName("PST"));
+        Assert.assertTrue(DateUtils.isThreeLetterTZName("PDT"));
+        Assert.assertTrue(DateUtils.isThreeLetterTZName("BST"));
+        Assert.assertTrue(DateUtils.isThreeLetterTZName("CST"));
+        Assert.assertFalse(DateUtils.isThreeLetterTZName("UTC"));
+        Assert.assertFalse(DateUtils.isThreeLetterTZName("GMT"));
+        Assert.assertFalse(DateUtils.isThreeLetterTZName("America/Los_Angeles"));
     }
 }

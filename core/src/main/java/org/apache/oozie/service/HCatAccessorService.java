@@ -81,8 +81,8 @@ public class HCatAccessorService implements Service {
         try {
             loadHCatConf(services);
         } catch(IOException ioe) {
-            throw new ServiceException(ErrorCode.E0100, HCatAccessorService.class.getName(), "An exception occured while attempting"
-                    + "to load the HCat Configuration", ioe);
+            throw new ServiceException(ErrorCode.E0100, HCatAccessorService.class.getName(), "An exception occurred"
+                    + " while attempting to load the HCat Configuration", ioe);
         }
     }
 
@@ -94,7 +94,7 @@ public class HCatAccessorService implements Service {
                 HadoopAccessorService has = services.get(HadoopAccessorService.class);
                 try {
                     FileSystem fs = has.createFileSystem(
-                            System.getProperty("user.name"), p.toUri(), has.createJobConf(p.toUri().getAuthority()));
+                            System.getProperty("user.name"), p.toUri(), has.createConfiguration(p.toUri().getAuthority()));
                     if (fs.exists(p)) {
                         FSDataInputStream is = null;
                         try {

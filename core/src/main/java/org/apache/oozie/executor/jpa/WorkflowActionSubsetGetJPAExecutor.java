@@ -21,13 +21,13 @@ package org.apache.oozie.executor.jpa;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.openjpa.persistence.OpenJPAPersistence;
 
 /**
@@ -43,20 +43,17 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
      * This Constructor creates the WorkflowActionSubsetGetJPAExecutor object Which gets the List of wrokflow action
      * bean.
      *
-     * @param wfId
-     * @param start
-     * @param length
+     * @param wfId WF id
+     * @param start first result
+     * @param length length
      */
     public WorkflowActionSubsetGetJPAExecutor(String wfId, int start, int length) {
-        ParamChecker.notNull(wfId, "wfJobId");
+        Objects.requireNonNull(wfId, "wfJobId cannot be null");
         this.wfId = wfId;
         this.start = start;
         this.length = length;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<WorkflowActionBean> execute(EntityManager em) throws JPAExecutorException {
@@ -76,9 +73,6 @@ public class WorkflowActionSubsetGetJPAExecutor implements JPAExecutor<List<Work
         return actions;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowActionSubsetGetJPAExecutor";

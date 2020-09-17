@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.BundleActionBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the BundleAction bean.
@@ -36,21 +37,14 @@ public class BundleActionInsertJPAExecutor implements JPAExecutor<Void> {
      * @param bundleAction bundle action bean
      */
     public BundleActionInsertJPAExecutor(BundleActionBean bundleAction) {
-        ParamChecker.notNull(bundleAction, "bundleAction");
-        this.bundleAction = bundleAction;
+        this.bundleAction = Objects.requireNonNull(bundleAction, "bundleAction cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleActionInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public Void execute(EntityManager em) throws JPAExecutorException {
         em.persist(bundleAction);

@@ -25,14 +25,17 @@ import org.apache.oozie.service.Services;
 class ServicesProvider implements Provider<Services> {
     @Override
     public Services get() {
+        Services oozieServices = null;
         try {
-            final Services oozieServices = new Services();
-
+            oozieServices = new Services();
             oozieServices.init();
 
             return oozieServices;
         } catch (ServiceException e) {
-            throw new ExceptionInInitializerError(
+            if (oozieServices != null) {
+                oozieServices.destroy();
+            }
+            throw new IllegalStateException(
                     String.format("Could not instantiate Oozie services. [e.message=%s]", e.getMessage()));
         }
     }

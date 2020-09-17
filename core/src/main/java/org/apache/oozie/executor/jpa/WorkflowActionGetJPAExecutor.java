@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -33,24 +33,25 @@ import org.apache.oozie.util.XLog;
  */
 public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionBean> {
 
+    public XLog LOG = XLog.getLog(getClass());
+
     private String wfActionId = null;
+    private final boolean isNullAcceptable;
 
     public WorkflowActionGetJPAExecutor(String wfActionId) {
-        ParamChecker.notNull(wfActionId, "wfActionId");
-        this.wfActionId = wfActionId;
+        this(wfActionId, false);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
+    public WorkflowActionGetJPAExecutor(String wfActionId, boolean isNullAcceptable) {
+        this.wfActionId = Objects.requireNonNull(wfActionId, "wfActionId cannot be null");
+        this.isNullAcceptable = isNullAcceptable;
+    }
+
     @Override
     public String getName() {
         return "WorkflowActionGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public WorkflowActionBean execute(EntityManager em) throws JPAExecutorException {
@@ -69,7 +70,13 @@ public class WorkflowActionGetJPAExecutor implements JPAExecutor<WorkflowActionB
             return bean;
         }
         else {
-            throw new JPAExecutorException(ErrorCode.E0605, wfActionId);
+            if (isNullAcceptable) {
+                LOG.warn("Could not get workflow action {0}", wfActionId);
+                return null;
+            }
+            else {
+                throw new JPAExecutorException(ErrorCode.E0605, wfActionId);
+            }
         }
     }
 }

@@ -19,7 +19,7 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.io.Text;
-import org.apache.oozie.test.XTestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,8 +27,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class TestWritableUtils extends XTestCase {
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNull;
 
+public class TestWritableUtils  {
+
+    @Test
     public void testWritableUtils() throws Exception {
         Text t = new Text();
         t.set("hello");
@@ -37,6 +41,7 @@ public class TestWritableUtils extends XTestCase {
         assertEquals("hello", tt.toString());
     }
 
+    @Test
     public void testWriteReadStr() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);

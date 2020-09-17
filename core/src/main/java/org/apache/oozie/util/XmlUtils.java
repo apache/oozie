@@ -23,16 +23,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
-import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -41,7 +44,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.apache.hadoop.conf.Configuration;
@@ -56,8 +58,6 @@ import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -65,23 +65,12 @@ import org.xml.sax.SAXException;
  */
 public class XmlUtils {
 
-    private static class NoExternalEntityEntityResolver implements EntityResolver {
-
-        @Override
-        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-            return new InputSource(new ByteArrayInputStream(new byte[0]));
-        }
-
-    }
-
     private static SAXBuilder createSAXBuilder() {
         SAXBuilder saxBuilder = new SAXBuilder();
-
-        //THIS IS NOT WORKING
-        //saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false);
-
-        //INSTEAD WE ARE JUST SETTING AN EntityResolver that does not resolve entities
-        saxBuilder.setEntityResolver(new NoExternalEntityEntityResolver());
+        saxBuilder.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+        saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxBuilder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        saxBuilder.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         return saxBuilder;
     }
 
@@ -103,7 +92,7 @@ public class XmlUtils {
             return prettyPrint(document.getRootElement()).toString();
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
+            throw new RuntimeException("Xml parsing failed " + ex.getMessage(), ex);
         }
     }
 
@@ -133,14 +122,14 @@ public class XmlUtils {
      * @throws JDOMException thrown if an error happend while XML parsing.
      */
     public static Element parseXml(String xmlStr) throws JDOMException {
-        ParamChecker.notNull(xmlStr, "xmlStr");
+        Objects.requireNonNull(xmlStr, "xmlStr cannot be null");
         try {
             SAXBuilder saxBuilder = createSAXBuilder();
             Document document = saxBuilder.build(new StringReader(xmlStr));
             return document.getRootElement();
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen, " + ex.getMessage(), ex);
+            throw new RuntimeException("Xml parsing failed, " + ex.getMessage(), ex);
         }
     }
 
@@ -153,7 +142,7 @@ public class XmlUtils {
      * @throws IOException thrown if an IO error occurred.
      */
     public static Element parseXml(InputStream is) throws JDOMException, IOException {
-        ParamChecker.notNull(is, "is");
+        Objects.requireNonNull(is, "is cannot be null");
         SAXBuilder saxBuilder = createSAXBuilder();
         Document document = saxBuilder.build(is);
         return document.getRootElement();
@@ -168,17 +157,14 @@ public class XmlUtils {
      * @return value of the specified attribute.
      */
     public static String getRootAttribute(String filePath, String attributeName) {
-        ParamChecker.notNull(filePath, "filePath");
-        ParamChecker.notNull(attributeName, "attributeName");
+        Objects.requireNonNull(filePath, "filePath cannot be null");
+        Objects.requireNonNull(attributeName, "attributeName cannot be null");
         SAXBuilder saxBuilder = createSAXBuilder();
         try {
             Document doc = saxBuilder.build(Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath));
             return doc.getRootElement().getAttributeValue(attributeName);
         }
-        catch (JDOMException e) {
-            throw new RuntimeException();
-        }
-        catch (IOException e) {
+        catch (JDOMException | IOException e) {
             throw new RuntimeException();
         }
     }
@@ -196,7 +182,7 @@ public class XmlUtils {
         }
 
         private PrettyPrint(Element element) {
-            this.element = ParamChecker.notNull(element, "element");
+            this.element = Objects.requireNonNull(element, "element cannot be null");
         }
 
         /**
@@ -232,7 +218,6 @@ public class XmlUtils {
      */
     public static PrettyPrint prettyPrint(Element element) {
         return new PrettyPrint(element);
-
     }
 
     /**
@@ -277,28 +262,12 @@ public class XmlUtils {
      *
      * @param schema for validation
      * @param xml to be validated
+     * @throws SAXException in case of validation error
+     * @throws IOException in case of IO error
      */
     public static void validateXml(Schema schema, String xml) throws SAXException, IOException {
-
-        Validator validator = schema.newValidator();
-        validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes())));
-    }
-
-    /**
-     * Create schema object for the given xsd
-     *
-     * @param is inputstream to schema.
-     * @return the schema object.
-     */
-    public static Schema createSchema(InputStream is) {
-        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        StreamSource src = new StreamSource(is);
-        try {
-            return factory.newSchema(src);
-        }
-        catch (SAXException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        Validator validator = SchemaService.getValidator(schema);
+        validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
     }
 
     public static void validateData(String xmlData, SchemaName xsdFile) throws SAXException, IOException {
@@ -312,13 +281,13 @@ public class XmlUtils {
     /**
      * Convert Properties to string
      *
-     * @param props
+     * @param props the properties to convert
      * @return xml string
-     * @throws IOException
+     * @throws IOException if there is an error during conversion
      */
     public static String writePropToString(Properties props) throws IOException {
         try {
-            org.w3c.dom.Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            org.w3c.dom.Document doc = getDocumentBuilder().newDocument();
             org.w3c.dom.Element conf = doc.createElement("configuration");
             doc.appendChild(conf);
             conf.appendChild(doc.createTextNode("\n"));
@@ -362,6 +331,26 @@ public class XmlUtils {
     }
 
     /**
+     * Returns a DocumentBuilder
+     * @return DocumentBuilder
+     * @throws ParserConfigurationException
+     */
+    private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        docBuilderFactory.setNamespaceAware(true);
+        docBuilderFactory.setXIncludeAware(false);
+        docBuilderFactory.setExpandEntityReferences(false);
+        docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+        //Redundant with disallow-doctype, but just in case
+        docBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        docBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        docBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        // ignore all comments inside the xml file
+        docBuilderFactory.setIgnoringComments(true);
+        return docBuilderFactory.newDocumentBuilder();
+    }
+
+    /**
      * Escape characters for text appearing as XML data, between tags.
      * <p>
      * The following characters are replaced with corresponding character entities :
@@ -372,6 +361,9 @@ public class XmlUtils {
      * "'" to "&#039;"
      * <p>
      * Note that JSTL's {@code <c:out>} escapes the exact same set of characters as this method.
+     *
+     * @param aText the text to escape
+     * @return the escaped text
      */
     public static String escapeCharsForXML(String aText) {
         final StringBuilder result = new StringBuilder();
@@ -406,9 +398,8 @@ public class XmlUtils {
     public static Element getSLAElement(Element elem) {
         Element eSla_1 = elem.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAME_SPACE_URI));
         Element eSla_2 = elem.getChild("info", Namespace.getNamespace(SchemaService.SLA_NAMESPACE_URI_2));
-        Element eSla = (eSla_2 != null) ? eSla_2 : eSla_1;
 
-        return eSla;
+        return (eSla_2 != null) ? eSla_2 : eSla_1;
     }
 
 }

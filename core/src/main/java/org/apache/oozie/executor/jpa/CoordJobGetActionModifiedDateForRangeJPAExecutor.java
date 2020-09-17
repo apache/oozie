@@ -22,13 +22,13 @@ package org.apache.oozie.executor.jpa;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 public class CoordJobGetActionModifiedDateForRangeJPAExecutor implements JPAExecutor<Date> {
 
@@ -36,8 +36,7 @@ public class CoordJobGetActionModifiedDateForRangeJPAExecutor implements JPAExec
     private String startAction, endAction;
 
     public CoordJobGetActionModifiedDateForRangeJPAExecutor(String jobId, String startAction, String endAction) {
-        ParamChecker.notNull(jobId, "jobId");
-        this.jobId = jobId;
+        this.jobId = Objects.requireNonNull(jobId, "jobId cannot be null");
         this.startAction = startAction;
         this.endAction = endAction;
     }

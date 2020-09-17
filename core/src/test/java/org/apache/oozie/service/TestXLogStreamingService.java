@@ -23,17 +23,22 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XLogAuditFilter;
+import org.apache.oozie.util.XLogAuditStreamer;
+import org.apache.oozie.util.XLogErrorStreamer;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.XLogUserFilterParam;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Properties;
 
 public class TestXLogStreamingService extends XTestCase {
+
+    final int FIFTEEN_HOURS = 60 * 60 * 1000 * 15;
 
     @Override
     protected void setUp() throws Exception {
@@ -386,6 +391,55 @@ public class TestXLogStreamingService extends XTestCase {
         }
     }
 
+    public void testTuncateLog() throws Exception {
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+
+        new Services().init();
+        ConfigurationService.set(XLogFilter.MAX_SCAN_DURATION, "10");
+        Date startDate = new Date();
+        Date endDate = new Date(startDate.getTime() + FIFTEEN_HOURS);
+        String log = doStreamLog(new XLogFilter(), startDate, endDate);
+        assertTrue(log.contains("Truncated logs to max log scan duration"));
+        log = doStreamErrorLog(new XLogFilter(), startDate, endDate);
+        assertFalse(log.contains("Truncated logs to max log scan duration"));
+        log = doStreamAuditLog(new XLogFilter(), startDate, endDate);
+        assertFalse(log.contains("Truncated logs to max log scan duration"));
+    }
+
+    public void testEscapingHtmlCharacters() throws Exception{
+        setupXLog();
+        XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));
+        xf.setParameter("USER", "oozie");
+        xf.setLogLevel("DEBUG|INFO");
+        File log4jFile = new File(getTestCaseConfDir(), "test-log4j.properties");
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        InputStream is = cl.getResourceAsStream("test-no-dash-log4j.properties");
+        Properties log4jProps = new Properties();
+        log4jProps.load(is);
+        // prevent conflicts with other tests by changing the log file location
+        log4jProps.setProperty("log4j.appender.oozie.File", getTestCaseDir() + "/oozie.log");
+        log4jProps.store(new FileOutputStream(log4jFile), "");
+        setSystemProperty(XLogService.LOG4J_FILE, log4jFile.getName());
+        try {
+            new Services().init();
+            assertFalse(doStreamDisabledCheck());
+            LogFactory.getLog("a").info("2009-06-24 02:43:14,505 INFO _L1_:317 - SERVER[foo] USER[oozie] GROUP[oozie] TOKEN[-] "
+                    + "APP[-] JOB[-] ACTION[-] <script>function({Some malicious JS code});</script>");
+            String out = doStreamLog(xf);
+            assertFalse(out.contains("<script>"));
+        }
+        finally {
+            Services.get().destroy();
+        }
+    }
+
     private boolean doStreamDisabledCheckWithServices() throws Exception {
         boolean result = false;
         try {
@@ -405,21 +459,35 @@ public class TestXLogStreamingService extends XTestCase {
     }
 
     private String doStreamLog(XLogFilter xf) throws Exception {
-        StringWriter w = new StringWriter();
-        Services.get().get(XLogStreamingService.class).streamLog(xf, null, null, w, new HashMap<String, String[]>());
-        return w.toString();
+        return doStreamLog(new XLogStreamer(xf), null, null);
     }
+
     private String doStreamErrorLog(XLogFilter xf) throws Exception {
-        StringWriter w = new StringWriter();
-        Services.get().get(XLogStreamingService.class).streamErrorLog(xf, null, null, w, new HashMap<String, String[]>());
-        return w.toString();
+        return doStreamLog(new XLogErrorStreamer(xf, null), null, null);
     }
+
     private String doStreamAuditLog(XLogFilter xf) throws Exception {
+        return doStreamLog(new XLogAuditStreamer(xf, null), null, null);
+    }
+
+    private String doStreamLog(XLogStreamer logStreamer,  Date startDate, Date endDate) throws Exception {
         StringWriter w = new StringWriter();
-        Services.get().get(XLogStreamingService.class).streamAuditLog(xf, null, null, w, new HashMap<String, String[]>());
+        Services.get().get(XLogStreamingService.class)
+                .streamLog(logStreamer, startDate, endDate, w);
         return w.toString();
     }
 
+    private String doStreamLog(XLogFilter xf, Date startDate, Date endDate) throws Exception {
+        return doStreamLog(new XLogStreamer(xf, null), startDate, endDate);
+    }
+
+    private String doStreamErrorLog(XLogFilter xf, Date startDate, Date endDate) throws Exception {
+        return doStreamLog(new XLogErrorStreamer(xf, null), null, null);
+    }
+
+    private String doStreamAuditLog(XLogFilter xf, Date startDate, Date endDate) throws Exception {
+        return doStreamLog(new XLogAuditStreamer(xf, null), null, null);
+    }
 
     private boolean doErrorStreamDisabledCheck() throws Exception {
         XLogFilter xf = new XLogFilter(new XLogUserFilterParam(null));

@@ -39,7 +39,7 @@
             <includes>
                 <include>LICENSE.txt</include>
                 <include>NOTICE.txt</include>
-                <include>README.txt</include>
+                <include>README.md</include>
                 <include>release-log.txt</include>
             </includes>
         </fileSet>
@@ -76,29 +76,16 @@
                 <include>*</include>
             </includes>
         </fileSet>
-        <!--  Oozie Login Server Example war and jar -->
-         <fileSet>
-            <directory>${basedir}/../login/target</directory>
-            <outputDirectory>/</outputDirectory>
-            <includes>
-                <include>oozie-login.war</include>
-                <include>oozie-login.jar</include>
-            </includes>
-            <fileMode>0555</fileMode>
-        </fileSet>
         <!-- Oozie Server - embedded jetty -->
         <fileSet>
                 <directory>${basedir}/../server/target/</directory>
                 <outputDirectory>/embedded-oozie-server</outputDirectory>
                 <includes>
                     <include>oozie-server*.jar</include>
-                    <include>**/jetty*.jar</include>
-                    <include>**/*jsp*.jar</include>
+                    <include>**/jetty*-${jetty.version}.jar</include>
                     <include>**/mail*.jar</include>
                     <include>**/apache*.jar</include>
-                    <include>**/commons-el*.jar</include>
                     <include>**/javax.servlet-api-3.1.0.jar</include>
-                    <include>**/jasper*jar</include>
                     <include>**/taglibs-*jar</include>
                     <include>**/org.eclipse.jdt.core-*jar</include>
                 </includes>
@@ -149,7 +136,6 @@
         <file>
             <source>${basedir}/../sharelib/target/oozie-sharelib-${project.version}.tar.gz</source>
             <outputDirectory>/</outputDirectory>
-            <fileMode>0444</fileMode>
         </file>
     </files>
 </assembly>

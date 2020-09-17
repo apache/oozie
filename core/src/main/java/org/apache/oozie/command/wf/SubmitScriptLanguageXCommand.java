@@ -19,7 +19,7 @@
 package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.action.hadoop.MapReduceMain;
+import org.apache.oozie.action.hadoop.ActionUtils;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
 import org.jdom.Element;
@@ -50,7 +50,7 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
         String name = getWorkflowName();
         Element ele = new Element(name, ns);
         Element jt = new Element("job-tracker", ns);
-        jt.addContent(conf.get(XOozieClient.JT));
+        jt.addContent(conf.get(XOozieClient.RM));
         ele.addContent(jt);
         Element nn = new Element("name-node", ns);
         nn.addContent(conf.get(XOozieClient.NN));
@@ -58,7 +58,7 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
 
         List<String> Dargs = new ArrayList<String>();
         List<String> otherArgs = new ArrayList<String>();
-        String[] args = MapReduceMain.getStrings(conf, getOptions());
+        String[] args = ActionUtils.getStrings(conf, getOptions());
         for (String arg : args) {
             if (arg.startsWith("-D")) {
                 Dargs.add(arg);
@@ -67,7 +67,7 @@ public abstract class SubmitScriptLanguageXCommand extends SubmitHttpXCommand {
                 otherArgs.add(arg);
             }
         }
-        String [] params = MapReduceMain.getStrings(conf, getScriptParamters());
+        String [] params = ActionUtils.getStrings(conf, getScriptParamters());
 
         // configuration section
         if (Dargs.size() > 0) {

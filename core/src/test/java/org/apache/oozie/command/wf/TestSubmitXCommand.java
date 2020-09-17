@@ -20,13 +20,15 @@ package org.apache.oozie.command.wf;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
@@ -120,6 +122,50 @@ public class TestSubmitXCommand extends XDataTestCase {
         catch (CommandException ce) {
             fail("Should succeed");
         }
+    }
+
+    public void testSubmitLongXml() throws Exception {
+        Configuration conf = new XConfiguration();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
+            String actionXml = "<map-reduce>"
+                    + "<job-tracker>${jobTracker}</job-tracker>"
+                    + "<name-node>${nameNode}</name-node>"
+                    + "        <prepare>"
+                    + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
+                    + "        </prepare>"
+                    + "        <configuration>"
+                    + "          <property><name>bb</name><value>BB</value></property>"
+                    + "          <property><name>cc</name><value>from_action</value></property>"
+                    + "        </configuration>"
+                    + "      </map-reduce>";
+        String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.5' name='too-long-wf'> " +
+                "<global><configuration>"+generate64kData()+"</configuration></global><start to='mr-node' /> "
+                + "    <action name=\"mr-node\">"
+                + actionXml
+                + "    <ok to=\"end\"/>"
+                + "    <error to=\"end\"/>"
+                + "</action>"
+                + "<end name='end' /> " + "</workflow-app>";
+
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        addBunchOfProperties(conf);
+
+        SubmitXCommand sc = new SubmitXCommand(conf);
+        sc.call();
+    }
+
+    private void addBunchOfProperties(Configuration conf) {
+        int i=0;
+        while(conf.size() < 10000){
+            conf.set("ID"+i, i+"something");
+            i++;
+        }
+    }
+
+    private String generate64kData() {
+       return "<property><name>radnom</name><value>"+ RandomStringUtils.randomAlphanumeric(70000)+"</value></property>";
     }
 
     public void testAppPathIsFile1() throws Exception {
@@ -375,12 +421,119 @@ public class TestSubmitXCommand extends XDataTestCase {
         assertEquals(getNameNodeUri()+"/default-output-dir", actionConf.get("mixed"));
     }
 
+    public void testWFConfigPathVarResolve() throws Exception {
+        final OozieClient wfClient = LocalOozie.getClient();
+
+        OutputStream os1 = new FileOutputStream(getTestCaseDir() + "/config-default.xml");
+        XConfiguration defaultConf = new XConfiguration();
+        defaultConf.set("outputDir", "default-output-dir");
+        defaultConf.set("should_resolve", "${should.resolve}");
+        defaultConf.set("foo.bar", "default-foo-bar");
+        defaultConf.set("foobarRef", "${foo.bar}");
+        defaultConf.writeXml(os1);
+        os1.close();
+
+        OutputStream os2 = new FileOutputStream(getTestCaseDir() + "/extra-config-file1.xml");
+        XConfiguration confFile1 = new XConfiguration();
+        confFile1.set("outputDir", "default-output-dir_unused1");
+        confFile1.set("should_resolve_file1", "${should.resolve.file1}");
+        confFile1.set("key", "default_value_unused");
+        confFile1.set("foobarRef1", "${foo.bar}");
+        confFile1.writeXml(os2);
+        os2.close();
+
+
+        OutputStream os3 = new FileOutputStream(getTestCaseDir() + "/extra-config-file2.xml");
+        XConfiguration confFile2 = new XConfiguration();
+        confFile2.set("outputDir", "default-output-dir_unused2");
+        confFile2.set("should_resolve_file2", "${should.resolve.file2}");
+        confFile2.set("key", "default_value");
+        confFile2.set("foobarRef2", "${foobarRef1}");
+        confFile2.writeXml(os3);
+        os3.close();
+
+
+        String workflowUri = getTestCaseFileUri("workflow.xml");
+        String actionXml = "<map-reduce>"
+                + "<job-tracker>${jobTracker}</job-tracker>"
+                + "<name-node>${nameNode}</name-node>"
+                + "        <prepare>"
+                + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
+                + "        </prepare>"
+                + "        <configuration>"
+                + "          <property><name>bb</name><value>BB</value></property>"
+                + "          <property><name>cc</name><value>from_action</value></property>"
+                + "        </configuration>"
+                + "      </map-reduce>";
+        String wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"map-reduce-wf\">"
+                + "    <start to=\"mr-node\"/>"
+                + "    <action name=\"mr-node\">"
+                + actionXml
+                + "    <ok to=\"end\"/>"
+                + "    <error to=\"fail\"/>"
+                + "</action>"
+                + "<kill name=\"fail\">"
+                + "    <message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>"
+                + "</kill>"
+                + "<end name=\"end\"/>"
+                + "</workflow-app>";
+
+        writeToFile(wfXml, workflowUri);
+        Configuration conf = new XConfiguration();
+        conf.set("nameNode", getNameNodeUri());
+        conf.set("jobTracker", getJobTrackerUri());
+        conf.set("foobarRef", "foobarRef");
+        conf.set(OozieClient.APP_PATH, workflowUri);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        conf.set("should.resolve", "resolved");
+        conf.set("should.resolve.file1", "resolved");
+        conf.set("should.resolve.file2", "resolved");
+        conf.set("oozie.default.configuration.path", getTestCaseDir() + "/extra-config-file1.xml,"
+                + getTestCaseDir() + "/extra-config-file2.xml");
+        SubmitXCommand sc = new SubmitXCommand(conf);
+        final String jobId = sc.call();
+        new StartXCommand(jobId).call();
+        waitFor(15 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.KILLED;
+            }
+        });
+        String actionId = jobId + "@mr-node";
+        WorkflowActionBean action = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQueryExecutor.WorkflowActionQuery
+                .GET_ACTION, actionId);
+        Element eAction = XmlUtils.parseXml(action.getConf());
+        Element eConf = eAction.getChild("configuration", eAction.getNamespace());
+        Configuration actionConf = new XConfiguration(new StringReader(XmlUtils.prettyPrint(eConf).toString()));
+        assertEquals("Variable should_resolve!='resolved' from config-default.xml",
+                "resolved", actionConf.get("should_resolve"));
+        assertEquals("Variable 'should_resolve_file1' from extra-config-file1 did not resolve correctly",
+                "resolved", actionConf.get("should_resolve_file1"));
+        assertEquals("Variable 'should_resolve_file2' from extra-config-file2 did not resolve correctly",
+                "resolved", actionConf.get("should_resolve_file2"));
+        assertEquals("Variable 'outputDir' from config-default did not resolve correctly",
+                "default-output-dir", actionConf.get("outputDir"));
+        assertEquals("Variable 'bb' from workflow did not resolve correctly",
+                "BB", actionConf.get("bb"));
+        assertEquals("Variable 'cc' from workflow did not resolve correctly",
+                "from_action", actionConf.get("cc"));
+        assertEquals("Variable 'foo.bar' from config-default did not resolve correctly",
+                "default-foo-bar", actionConf.get("foo.bar"));
+        assertEquals("Variable 'foobarRef' from config-default did not resolve correctly",
+                "default-foo-bar", actionConf.get("foobarRef"));
+        assertEquals("Variable 'foobarRef1' from extra-config-file1 did not resolve correctly",
+                "default-foo-bar", actionConf.get("foobarRef1"));
+        assertEquals("Variable 'foobarRef2' from extra-config-file2 did not resolve correctly",
+                "default-foo-bar", actionConf.get("foobarRef2"));
+        assertEquals("Variable 'key' from extra-config-file2 did not resolve correctly",
+                "default_value", actionConf.get("key"));
+    }
+
+
     private void writeToFile(String appXml, String appPath) throws IOException {
-        // TODO Auto-generated method stub
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iex) {

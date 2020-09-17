@@ -21,6 +21,7 @@ package org.apache.oozie.executor.jpa;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -29,7 +30,6 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load coordinator actions in READY state for a coordinator job.
@@ -40,7 +40,7 @@ public class CoordJobGetReadyActionsJPAExecutor implements JPAExecutor<List<Coor
     private String executionOrder = null;
 
     public CoordJobGetReadyActionsJPAExecutor(String coordJobId, String executionOrder) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
+        Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
         this.coordJobId = coordJobId;
         this.executionOrder = executionOrder;
     }

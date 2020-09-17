@@ -44,6 +44,7 @@ import org.apache.oozie.client.rest.JsonUtils;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.PropertiesUtils;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.openjpa.persistence.jdbc.Index;
 import org.apache.openjpa.persistence.jdbc.Strategy;
@@ -58,23 +59,47 @@ import org.json.simple.JSONObject;
 @Entity
 @NamedQueries({
 
-    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl, a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name, a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type, a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken = :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml = :slaXml, a.startTimestamp = :startTime, a.statusStr = :status, a.wfId=:wfId where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION", query = "update WorkflowActionBean a set a.conf = :conf, a.consoleUrl = :consoleUrl,"
+            + " a.data = :data, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.errorCode = :errorCode,"
+            + " a.errorMessage = :errorMessage, a.externalId = :externalId, a.externalStatus = :externalStatus, a.name = :name,"
+            + " a.cred = :cred , a.retries = :retries, a.trackerUri = :trackerUri, a.transition = :transition, a.type = :type,"
+            + " a.endTimestamp = :endTime, a.executionPath = :executionPath, a.lastCheckTimestamp = :lastCheckTime, a.logToken "
+            + "= :logToken, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.slaXml "
+            + "= :slaXml, a.startTimestamp = :startTime, a.statusStr = :status, a.wfId=:wfId where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_FOR_LAST_CHECKED_TIME", query = "update WorkflowActionBean a set a.lastCheckTimestamp = :lastCheckTime where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_FOR_LAST_CHECKED_TIME", query = "update WorkflowActionBean a set a.lastCheckTimestamp "
+            + "= :lastCheckTime where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_START", query = "update WorkflowActionBean a set a.startTimestamp = :startTime, a.externalChildIDs = :externalChildIDs, a.conf = :conf, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.startTimestamp = :startTime, a.externalId = :externalId, a.trackerUri = :trackerUri, a.consoleUrl = :consoleUrl, a.lastCheckTimestamp = :lastCheckTime, a.statusStr = :status, a.externalStatus = :externalStatus, a.data = :data, a.retries = :retries, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.userRetryCount = :userRetryCount where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_START", query = "update WorkflowActionBean a set a.startTimestamp = :startTime,"
+            + " a.externalChildIDs = :externalChildIDs, a.conf = :conf, a.errorCode = :errorCode, a.errorMessage = :errorMessage,"
+            + " a.startTimestamp = :startTime, a.externalId = :externalId, a.trackerUri = :trackerUri, a.consoleUrl "
+            + "= :consoleUrl, a.lastCheckTimestamp = :lastCheckTime, a.statusStr = :status, a.externalStatus = :externalStatus,"
+            + " a.data = :data, a.retries = :retries, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.userRetryCount"
+            + " = :userRetryCount where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_CHECK", query = "update WorkflowActionBean a set a.userRetryCount = :userRetryCount, a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.externalStatus = :externalStatus, a.statusStr = :status, a.data = :data, a.pending = :pending, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.lastCheckTimestamp = :lastCheckTime, a.retries = :retries, a.pendingAgeTimestamp = :pendingAge, a.startTimestamp = :startTime where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_CHECK", query = "update WorkflowActionBean a set a.userRetryCount = :userRetryCount,"
+            + " a.stats = :stats, a.externalChildIDs = :externalChildIDs, a.externalStatus = :externalStatus, a.statusStr "
+            + "= :status, a.data = :data, a.pending = :pending, a.errorCode = :errorCode, a.errorMessage = :errorMessage,"
+            + " a.lastCheckTimestamp = :lastCheckTime, a.retries = :retries, a.pendingAgeTimestamp = :pendingAge,"
+            + " a.startTimestamp = :startTime where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_END", query = "update WorkflowActionBean a set a.stats = :stats, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.retries = :retries, a.endTimestamp = :endTime, a.statusStr = :status, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.userRetryCount = :userRetryCount, a.externalStatus = :externalStatus where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_END", query = "update WorkflowActionBean a set a.stats = :stats, a.errorCode = :errorCode,"
+            + " a.errorMessage = :errorMessage, a.retries = :retries, a.endTimestamp = :endTime, a.statusStr = :status, a.pending"
+            + " = :pending, a.pendingAgeTimestamp = :pendingAge, a.signalValue = :signalValue, a.userRetryCount "
+            + "= :userRetryCount, a.externalStatus = :externalStatus where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_PENDING", query = "update WorkflowActionBean a set a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.executionPath = :executionPath where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_PENDING", query = "update WorkflowActionBean a set a.pending = :pending,"
+            + " a.pendingAgeTimestamp = :pendingAge, a.executionPath = :executionPath where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_STATUS_PENDING", query = "update WorkflowActionBean a set a.statusStr = :status, a.pending = :pending, a.pendingAgeTimestamp = :pendingAge where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_STATUS_PENDING", query = "update WorkflowActionBean a set a.statusStr = :status, a.pending"
+            + " = :pending, a.pendingAgeTimestamp = :pendingAge where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS", query = "update WorkflowActionBean a set a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.transition = :transition where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS", query = "update WorkflowActionBean a set a.pending = :pending,"
+            + " a.pendingAgeTimestamp = :pendingAge, a.transition = :transition where a.id = :id"),
 
-    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS_ERROR", query = "update WorkflowActionBean a set a.pending = :pending, a.pendingAgeTimestamp = :pendingAge, a.transition = :transition, a.errorCode = :errorCode, a.errorMessage = :errorMessage, a.statusStr = :status where a.id = :id"),
+    @NamedQuery(name = "UPDATE_ACTION_PENDING_TRANS_ERROR", query = "update WorkflowActionBean a set a.pending = :pending,"
+            + " a.pendingAgeTimestamp = :pendingAge, a.transition = :transition, a.errorCode = :errorCode, a.errorMessage "
+            + "= :errorMessage, a.statusStr = :status where a.id = :id"),
 
     @NamedQuery(name = "DELETE_ACTION", query = "delete from WorkflowActionBean a where a.id IN (:id)"),
 
@@ -84,33 +109,53 @@ import org.json.simple.JSONObject;
 
     @NamedQuery(name = "GET_ACTION", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_ID_TYPE_LASTCHECK", query = "select a.id, a.type, a.lastCheckTimestamp from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_ID_TYPE_LASTCHECK", query = "select a.id, a.type, a.lastCheckTimestamp "
+            + "from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_FAIL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.type, a.logToken, a.transition, a.errorCode, a.errorMessage from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_FAIL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.type, a.logToken,"
+            + " a.transition, a.errorCode, a.errorMessage from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_SIGNAL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp, a.type, a.logToken, a.transition, a.errorCode, a.errorMessage, a.executionPath, a.signalValue, a.slaXml, a.externalId from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_SIGNAL", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp,"
+            + " a.type, a.logToken, a.transition, a.errorCode, a.errorMessage, a.executionPath, a.signalValue, a.slaXml,"
+            + " a.externalId from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_CHECK", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp, a.type, a.logToken, a.transition, a.retries, a.userRetryCount, a.userRetryMax, a.userRetryInterval, a.trackerUri, a.startTimestamp, a.endTimestamp, a.lastCheckTimestamp, a.errorCode, a.errorMessage, a.externalId, a.externalStatus, a.externalChildIDs, a.conf from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_CHECK", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp,"
+            + " a.type, a.logToken, a.transition, a.retries, a.userRetryCount, a.userRetryMax, a.userRetryInterval, a.trackerUri,"
+            + " a.startTimestamp, a.endTimestamp, a.lastCheckTimestamp, a.errorCode, a.errorMessage, a.externalId,"
+            + " a.externalStatus, a.externalChildIDs, a.conf from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_END", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp, a.type, a.logToken, a.transition, a.retries, a.trackerUri, a.userRetryCount, a.userRetryMax, a.userRetryInterval, a.startTimestamp, a.endTimestamp, a.errorCode, a.errorMessage, a.externalId, a.externalStatus, a.externalChildIDs, a.conf, a.data, a.stats from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_END", query = "select a.id, a.wfId, a.name, a.statusStr, a.pending, a.pendingAgeTimestamp,"
+            + " a.type, a.logToken, a.transition, a.retries, a.trackerUri, a.userRetryCount, a.userRetryMax, a.userRetryInterval,"
+            + " a.startTimestamp, a.endTimestamp, a.errorCode, a.errorMessage, a.externalId, a.externalStatus,"
+            + " a.externalChildIDs, a.conf, a.data, a.stats from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_COMPLETED", query = "select a.id, a.wfId, a.statusStr, a.type, a.logToken from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_COMPLETED", query = "select a.id, a.wfId, a.statusStr, a.type, a.logToken "
+            + "from WorkflowActionBean a where a.id = :id"),
 
     @NamedQuery(name = "GET_ACTION_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.statusStr, a.startTimestamp, a.endTimestamp from WorkflowActionBean a where a.id = :id"),
+    @NamedQuery(name = "GET_ACTION_FOR_SLA", query = "select a.id, a.statusStr, a.startTimestamp, a.endTimestamp "
+            + "from WorkflowActionBean a where a.id = :id"),
 
-    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId "
+            + "order by a.startTimestamp"),
 
-    @NamedQuery(name = "GET_ACTIONS_OF_WORKFLOW_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+    @NamedQuery(name = "GET_ACTIONS_OF_WORKFLOW_FOR_UPDATE", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId "
+            + "= :wfId order by a.startTimestamp"),
 
-    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select a.id, a.wfId, a.statusStr, a.type, a.pendingAgeTimestamp from WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.statusStr <> 'RUNNING' AND a.createdTimeTS >= :createdTime"),
+    @NamedQuery(name = "GET_PENDING_ACTIONS", query = "select a.id, a.wfId, a.statusStr, a.type, a.pendingAgeTimestamp from"
+            + " WorkflowActionBean a where a.pending = 1 AND a.pendingAgeTimestamp < :pendingAge AND a.statusStr <> 'RUNNING' "
+            + "AND a.createdTimeTS >= :createdTime"),
 
-    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select a.id from WorkflowActionBean a where a.pending = 1 AND a.statusStr = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
+    @NamedQuery(name = "GET_RUNNING_ACTIONS", query = "select a.id from WorkflowActionBean a where a.pending = 1 AND a.statusStr"
+            + " = 'RUNNING' AND a.lastCheckTimestamp < :lastCheckTime"),
 
-    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId AND (a.statusStr = 'START_RETRY' OR a.statusStr = 'START_MANUAL' OR a.statusStr = 'END_RETRY' OR a.statusStr = 'END_MANUAL')"),
+    @NamedQuery(name = "GET_RETRY_MANUAL_ACTIONS", query = "select OBJECT(a) from WorkflowActionBean a where a.wfId = :wfId "
+            + "AND (a.statusStr = 'START_RETRY' OR a.statusStr = 'START_MANUAL' OR a.statusStr = 'END_RETRY' OR a.statusStr "
+            + "= 'END_MANUAL')"),
 
-    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW_RERUN", query = "select a.id, a.name, a.statusStr, a.endTimestamp, a.type from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp") })
+    @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW_RERUN", query = "select a.id, a.name, a.statusStr, a.endTimestamp, a.type "
+            + "from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp") })
 @Table(name = "WF_ACTIONS")
 public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Id
@@ -328,7 +373,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
         setTrackerUri(WritableUtils.readStr(dataInput));
         setConsoleUrl(WritableUtils.readStr(dataInput));
         setErrorInfo(WritableUtils.readStr(dataInput), WritableUtils.readStr(dataInput));
-        wfId = WritableUtils.readStr(dataInput);
+        setJobId(WritableUtils.readStr(dataInput));
         executionPath = WritableUtils.readStr(dataInput);
         pending = dataInput.readInt();
         d = dataInput.readLong();
@@ -345,7 +390,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Return whether workflow action in terminal state or not
      *
-     * @return
+     * @return isTerminalState Return whether workflow action in terminal state or not
      */
     public boolean inTerminalState() {
         boolean isTerminalState = false;
@@ -435,6 +480,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
 
     /**
      * Set pending flag
+     * @param i the flag
      */
     public void setPending(int i) {
         pending = i;
@@ -572,7 +618,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external child ids
      *
-     * @param externalChildIDs
+     * @param externalChildIDs the external child ids
      */
     public void setExternalChildIDsBlob(StringBlob externalChildIDs) {
         this.externalChildIDs = externalChildIDs;
@@ -581,7 +627,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Get external ChildIds
      *
-     * @return
+     * @return externalChildIDs Get external ChildIds
      */
     public StringBlob getExternalChildIDsBlob() {
         return externalChildIDs;
@@ -599,7 +645,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     public void setEndData(Status status, String signalValue) {
         if (status == null || (status != Status.OK && status != Status.ERROR && status != Status.KILLED)) {
             throw new IllegalArgumentException("Action status must be OK, ERROR or KILLED. Received ["
-                    + status.toString() + "]");
+                    + (status == null ? "null" : status.toString()) + "]");
         }
         if (status == Status.OK) {
             setErrorInfo(null, null);
@@ -632,7 +678,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
      * @param id jobId;
      */
     public void setJobId(String id) {
-        this.wfId = id;
+        this.wfId = StringUtils.intern(id);
     }
 
     public void setSlaXml(String slaXmlStr) {
@@ -659,10 +705,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set status of job
      *
-     * @param val
+     * @param val the status
      */
     public void setStatus(Status val) {
-        this.statusStr = val.toString();
+        this.statusStr = StringUtils.intern(val.toString());
     }
 
     @Override
@@ -673,16 +719,16 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set status
      *
-     * @param statusStr
+     * @param statusStr the status
      */
     public void setStatusStr(String statusStr) {
-        this.statusStr = statusStr;
+        this.statusStr = StringUtils.intern(statusStr);
     }
 
     /**
      * Get status
      *
-     * @return
+     * @return statusStr Get status
      */
     public String getStatusStr() {
         return statusStr;
@@ -814,7 +860,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set start time
      *
-     * @param startTime
+     * @param startTime the start time
      */
     public void setStartTime(Date startTime) {
         this.startTimestamp = DateUtils.convertDateToTimestamp(startTime);
@@ -828,7 +874,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set end time
      *
-     * @param endTime
+     * @param endTime the end time
      */
     public void setEndTime(Date endTime) {
         this.endTimestamp = DateUtils.convertDateToTimestamp(endTime);
@@ -875,7 +921,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     public void setId(String id) {
-        this.id = id;
+        this.id = StringUtils.intern(id);
     }
 
     public Timestamp getCreatedTimestamp() {
@@ -896,7 +942,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.intern(name);
     }
 
     @Override
@@ -914,7 +960,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     }
 
     public void setType(String type) {
-        this.type = type;
+        this.type = StringUtils.intern(type);
     }
 
     @Override
@@ -969,7 +1015,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set user retry max
      *
-     * @param retryMax
+     * @param retryMax the maximum retry count
      */
     public void setUserRetryMax(int retryMax) {
         this.userRetryMax = retryMax;
@@ -992,7 +1038,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set transition
      *
-     * @param transition
+     * @param transition the transition
      */
     public void setTransition(String transition) {
         this.transition = transition;
@@ -1006,7 +1052,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set data
      *
-     * @param data
+     * @param data the data
      */
     public void setData(String data) {
         if (this.data == null) {
@@ -1033,7 +1079,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set stats
      *
-     * @param stats
+     * @param stats the action stats
      */
     public void setStats(String stats) {
         if (this.stats == null) {
@@ -1060,10 +1106,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external Id
      *
-     * @param externalId
+     * @param externalId the id
      */
     public void setExternalId(String externalId) {
-        this.externalId = externalId;
+        this.externalId = StringUtils.intern(externalId);
     }
 
     @Override
@@ -1074,10 +1120,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set external status
      *
-     * @param externalStatus
+     * @param externalStatus the external status
      */
     public void setExternalStatus(String externalStatus) {
-        this.externalStatus = externalStatus;
+        this.externalStatus = StringUtils.intern(externalStatus);
     }
 
     @Override
@@ -1088,10 +1134,10 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set tracker uri
      *
-     * @param trackerUri
+     * @param trackerUri the URI
      */
     public void setTrackerUri(String trackerUri) {
-        this.trackerUri = trackerUri;
+        this.trackerUri = StringUtils.intern(trackerUri);
     }
 
     @Override
@@ -1102,7 +1148,7 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set console URL
      *
-     * @param consoleUrl
+     * @param consoleUrl the URL
      */
     public void setConsoleUrl(String consoleUrl) {
         this.consoleUrl = consoleUrl;
@@ -1121,8 +1167,8 @@ public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     /**
      * Set the error Info
      *
-     * @param errorCode
-     * @param errorMessage
+     * @param errorCode the error code
+     * @param errorMessage the error message
      */
     public void setErrorInfo(String errorCode, String errorMessage) {
         this.errorCode = errorCode;

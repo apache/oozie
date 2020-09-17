@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,21 +26,23 @@ import java.util.List;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.lock.LockToken;
+import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Instrumentable;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.DateUtils;
 
 /**
  * The coordinator Materialization Lookup trigger service schedule lookup trigger command for every interval (default is
  * 5 minutes ). This interval could be configured through oozie configuration defined is either oozie-default.xml or
  * oozie-site.xml using the property name oozie.service.CoordMaterializeTriggerService.lookup.interval
  */
-public class CoordMaterializeTriggerService implements Service {
+public class CoordMaterializeTriggerService implements Service, Instrumentable {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "CoordMaterializeTriggerService.";
     /**
      * Time interval, in seconds, at which the Job materialization service will be scheduled to run.
@@ -62,6 +65,11 @@ public class CoordMaterializeTriggerService implements Service {
 
     private static final String INSTRUMENTATION_GROUP = "coord_job_mat";
     private static final String INSTR_MAT_JOBS_COUNTER = "jobs";
+    private static final String INSTR_MAT_QUEUE_SIZE = "mat_queue_size";
+    private static final String INSTR_MAT_DELAYED_SIZE = "mat_delayed_size";
+
+    private static int currentMaterializedJobsCount = 0;
+    private static int currentMaterializedDelayedJobsCount = 0;
 
     /**
      * This runnable class will run in every "interval" to queue CoordMaterializeTransitionXCommand.
@@ -163,6 +171,8 @@ public class CoordMaterializeTriggerService implements Service {
                         CoordJobQuery.GET_COORD_JOBS_OLDER_FOR_MATERIALIZATION, currDate, limit);
                 LOG.info("CoordMaterializeTriggerService - Curr Date= " + DateUtils.formatDateOozieTZ(currDate)
                         + ", Num jobs to materialize = " + materializeJobs.size());
+                final long now = System.currentTimeMillis();
+                int delayedCount = 0;
                 for (CoordinatorJobBean coordJob : materializeJobs) {
                     Services.get().get(InstrumentationService.class).get()
                             .incr(INSTRUMENTATION_GROUP, INSTR_MAT_JOBS_COUNTER, 1);
@@ -170,7 +180,13 @@ public class CoordMaterializeTriggerService implements Service {
                     coordJob.setLastModifiedTime(new Date());
                     updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_LAST_MODIFIED_TIME,
                             coordJob));
+                    Timestamp startTime = coordJob.getNextMaterializedTimestamp();
+                    if (startTime != null && startTime.getTime() < now) {
+                        delayedCount ++;
+                    }
                 }
+                currentMaterializedJobsCount = materializeJobs.size();
+                currentMaterializedDelayedJobsCount = delayedCount;
             }
             catch (JPAExecutorException jex) {
                 LOG.warn("JPAExecutorException while attempting to materialize coordinator jobs", jex);
@@ -225,6 +241,22 @@ public class CoordMaterializeTriggerService implements Service {
     @Override
     public Class<? extends Service> getInterface() {
         return CoordMaterializeTriggerService.class;
+    }
+
+    @Override
+    public void instrument(Instrumentation instr) {
+        instr.addVariable(INSTRUMENTATION_GROUP, INSTR_MAT_QUEUE_SIZE, new Instrumentation.Variable<Integer>() {
+            @Override
+            public Integer getValue() {
+                return currentMaterializedJobsCount;
+            }
+        });
+        instr.addVariable(INSTRUMENTATION_GROUP, INSTR_MAT_DELAYED_SIZE, new Instrumentation.Variable<Integer>() {
+            @Override
+            public Integer getValue() {
+                return currentMaterializedDelayedJobsCount;
+            }
+        });
     }
 
 }

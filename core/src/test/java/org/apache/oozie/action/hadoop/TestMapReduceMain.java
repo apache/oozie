@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 public class TestMapReduceMain extends MainTestCase {
 
@@ -35,7 +36,8 @@ public class TestMapReduceMain extends MainTestCase {
 
         Path inputDir = new Path(getFsTestCaseDir(), "input");
         fs.mkdirs(inputDir);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 
@@ -70,7 +72,7 @@ public class TestMapReduceMain extends MainTestCase {
         MapReduceMain.main(new String[0]);
 
         assertTrue(newId.exists());
-        assertNotNull(LauncherMapper.getLocalFileContentStr(newId, "", -1));
+        assertNotNull(LauncherAMUtils.getLocalFileContentStr(newId, "", -1));
         return null;
     }
 

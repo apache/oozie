@@ -25,10 +25,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.PasswordMasker;
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.Event.MessageType;
 import org.apache.oozie.client.event.JobEvent;
@@ -170,14 +172,16 @@ public class EventHandlerService implements Service {
     @Override
     public void destroy() {
         eventsEnabled = false;
-        for (MessageType type : listenerMap.keySet()) {
-            Iterator<?> iter = listenerMap.get(type).iterator();
-            while (iter.hasNext()) {
+
+        for (Entry<MessageType, List<?>> entry : listenerMap.entrySet()) {
+            List<?> listeners = entry.getValue();
+            MessageType type = entry.getKey();
+
+            for (Object listener : listeners) {
                 if (type == MessageType.JOB) {
-                    ((JobEventListener) iter.next()).destroy();
-                }
-                else if (type == MessageType.SLA) {
-                    ((SLAEventListener) iter.next()).destroy();
+                    ((JobEventListener) listener).destroy();
+                } else if (type == MessageType.SLA) {
+                    ((SLAEventListener) listener).destroy();
                 }
             }
         }
@@ -251,6 +255,9 @@ public class EventHandlerService implements Service {
                                 catch (Throwable error) {
                                     XLog.getLog(EventHandlerService.class).debug("Throwable in EventWorker thread run : ",
                                             error);
+                                    XLog.getLog(EventHandlerService.class).warn("Throwable in EventWorker thread run. " +
+                                                    "Error message: {0}",
+                                            new PasswordMasker().maskPasswordsIfNecessary(error.getMessage()));
                                 }
                             }
                         }
@@ -260,6 +267,9 @@ public class EventHandlerService implements Service {
             catch (Throwable error) {
                 XLog.getLog(EventHandlerService.class).debug("Throwable in EventWorker thread run : ",
                         error);
+                XLog.getLog(EventHandlerService.class).warn("Throwable in EventWorker thread run. " +
+                                "Error message: {0}",
+                        new PasswordMasker().maskPasswordsIfNecessary(error.getMessage()));
             }
         }
 

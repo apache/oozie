@@ -24,7 +24,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.servlet.V1JobServlet;
+import org.apache.oozie.util.graph.OutputFormat;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -34,7 +34,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -175,7 +177,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(contentType));
-                String output = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream()), 1000);
+                String output = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8), 1000);
                 assertEquals(response, output);
                 assertEquals(show, MockCoordinatorEngineService.did);
 
@@ -213,7 +216,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
 
@@ -227,7 +231,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 assertEquals(MockCoordinatorEngineService.offset, new Integer(2));
@@ -243,7 +248,8 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockCoordinatorEngineService.JOB_ID + 1, obj.get(JsonTags.COORDINATOR_JOB_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockCoordinatorEngineService.did);
                 assertEquals(MockCoordinatorEngineService.offset, new Integer(1));
@@ -370,6 +376,7 @@ public class TestV1JobServlet extends DagServletTestCase {
             @Override
             public Void call() throws Exception {
 
+                // Without format param -> OutputFormat.PNG
                 MockDagEngineService.reset();
                 Map<String, String> params = new HashMap<String, String>();
                 params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
@@ -378,9 +385,38 @@ public class TestV1JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.PNG_IMAGE_CONTENT_TYPE));
-                //Assert.assertNotNull(ImageIO.read(conn.getInputStream())); // Can't check this as the XML is just <workflow/>
 
-                // Negative test..  should fail
+                // format=png -> OutputFormat.PNG
+                params.clear();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
+                params.put(RestConstants.JOB_FORMAT_PARAM, OutputFormat.PNG.name().toLowerCase(Locale.getDefault()));
+                url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.PNG_IMAGE_CONTENT_TYPE));
+
+                // format=svg -> OutputFormat.SVG
+                params.clear();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
+                params.put(RestConstants.JOB_FORMAT_PARAM, OutputFormat.SVG.name().toLowerCase(Locale.getDefault()));
+                url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.SVG_IMAGE_CONTENT_TYPE));
+
+                // format=dot -> OutputFormat.DOT
+                params.clear();
+                params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);
+                params.put(RestConstants.JOB_FORMAT_PARAM, OutputFormat.DOT.name().toLowerCase(Locale.getDefault()));
+                url = createURL(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END, params);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.TEXT_CONTENT_TYPE));
+
+                // Negative test, should fail
                 MockCoordinatorEngineService.reset();
                 params.clear();
                 params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.JOB_SHOW_GRAPH);

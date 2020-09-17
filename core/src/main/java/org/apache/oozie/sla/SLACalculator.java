@@ -58,7 +58,7 @@ public interface SLACalculator {
      * Enable jobs sla alert.
      *
      * @param jobId the job ids
-     * @return true, if successful
+     * @return true if successful
      * @throws JPAExecutorException the JPA executor exception
      * @throws ServiceException the service exception
      */
@@ -67,9 +67,9 @@ public interface SLACalculator {
     /**
      * Enable sla alert for child jobs.
      * @param parentJobIds the parent job ids
-     * @return
-     * @throws JPAExecutorException
-     * @throws ServiceException
+     * @return true if successful
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
      */
     boolean enableChildJobAlert(List<String> parentJobIds) throws JPAExecutorException, ServiceException;
 
@@ -77,7 +77,7 @@ public interface SLACalculator {
      * Disable jobs Sla alert.
      *
      * @param jobId the job ids
-     * @return true, if successful
+     * @return true if successful
      * @throws JPAExecutorException the JPA executor exception
      * @throws ServiceException the service exception
      */
@@ -87,9 +87,9 @@ public interface SLACalculator {
     /**
      * Disable Sla alert for child jobs.
      * @param parentJobIds the parent job ids
-     * @return
-     * @throws JPAExecutorException
-     * @throws ServiceException
+     * @return true if successful
+     * @throws JPAExecutorException the JPA executor exception
+     * @throws ServiceException the service exception
      */
     boolean disableChildJobAlert(List<String> parentJobIds) throws JPAExecutorException, ServiceException;
 
@@ -99,7 +99,7 @@ public interface SLACalculator {
      * Support definition are sla-should-start, sla-should-end, sla-nominal-time and sla-max-duration.
      *
      * @param jobIdsSLAPair the job ids sla pair
-     * @return true, if successful
+     * @return true if successful
      * @throws JPAExecutorException the JPA executor exception
      * @throws ServiceException the service exception
      */

@@ -47,23 +47,6 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
         super.testPartitionDependency();
     }
 
-    @Override
-    @Test
-    public void testMemoryUsageAndSpeed() throws Exception {
-        // use all small case. Configured insrc/test/resources/ehcache.xml
-        setupServices("testnospilltodisk");
-        assertSpeedAndMemory(60000, 4500, 2000, 45000000, 40000000);
-    }
-
-    @Test
-    public void testMemoryUsageAndSpeedOverflowToDisk() throws Exception {
-        setupServices("testspilltodisk"); // maxElementsInMemory="20000". 2/3 on disk
-        // Insert and retrieve are between 15-30 seconds
-        // When run individually memIncreaseAfterInsert is < 45MB. But running with
-        // all tests it goes to 60MB.
-        assertSpeedAndMemory(60000, 30000, 11000, 60000000, 25000000);
-    }
-
     @Test
     public void testEvictionOnTimeToIdle() throws Exception {
         setupServices("testevictionontimetoidle");

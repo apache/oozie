@@ -17,16 +17,16 @@
   limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>5.3.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.apache.oozie</groupId>
+
     <artifactId>oozie-docs</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>5.3.0-SNAPSHOT</version>
     <description>Apache Oozie Docs</description>
     <name>Apache Oozie Docs</name>
     <packaging>war</packaging>
@@ -78,7 +78,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-project-info-reports-plugin</artifactId>
                         <!-- Using version because plugin management does not work for reporting plugins -->
-                        <version>2.2</version>
+                        <version>2.9</version>
                         <reportSets>
                             <reportSet>
                                 <reports>
@@ -89,7 +89,12 @@
                 </plugins>
             </reporting>
             <build>
-                <plugins>
+              <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-project-info-reports-plugin</artifactId>
+                        <version>2.9</version>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-site-plugin</artifactId>
@@ -99,16 +104,19 @@
                         </configuration>
                         <dependencies>
                             <dependency>
-                                <!-- Customized Doxia Maven Plugin for twiki documentation -->
-                                <groupId>org.apache.maven.doxia</groupId>
-                                <artifactId>doxia-module-twiki</artifactId>
-                                <version>1.0-alpha-9.2y</version>
+                                <groupId>org.apache.velocity</groupId>
+                                <artifactId>velocity</artifactId>
+                                <version>1.5</version>
                             </dependency>
                             <dependency>
-                                <!-- Customized Doxia Maven Plugin for twiki documentation -->
+                                <groupId>org.apache.maven.doxia</groupId>
+                                <artifactId>doxia-module-markdown</artifactId>
+                                <version>1.8</version>
+                            </dependency>
+                            <dependency>
                                 <groupId>org.apache.maven.doxia</groupId>
                                 <artifactId>doxia-core</artifactId>
-                                <version>1.0-alpha-9.2y</version>
+                                <version>1.7</version>
                             </dependency>
                         </dependencies>
                         <executions>

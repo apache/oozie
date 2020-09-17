@@ -18,7 +18,7 @@
 
 package org.apache.oozie.service;
 
-import com.google.common.base.Joiner;
+import java.util.Arrays;
 
 enum ActionConfFileType {
     XML(".xml"),
@@ -51,6 +51,10 @@ enum ActionConfFileType {
         }
         throw new UnsupportedOperationException(String.format(
             "Unsupported action conf file extension for file %s, supported extension are %s", fileName,
-                Joiner.on(", ").join(values())));
+                String.join(", ", names())));
+    }
+
+    public static String[] names() {
+        return Arrays.toString(values()).replaceAll("^.|.$", "").split(", ");
     }
 }

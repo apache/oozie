@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the CoordinatorAction bean.
@@ -31,21 +32,14 @@ public class CoordActionInsertJPAExecutor implements JPAExecutor<String> {
     private CoordinatorActionBean coordAction = null;
 
     public CoordActionInsertJPAExecutor(CoordinatorActionBean coordAction) {
-        ParamChecker.notNull(coordAction, "coordAction");
-        this.coordAction = coordAction;
+        this.coordAction = Objects.requireNonNull(coordAction, "coordAction cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(coordAction);

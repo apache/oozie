@@ -27,10 +27,12 @@ import java.util.Date;
 
 import org.apache.oozie.client.BundleJob.Timeunit;
 import org.apache.oozie.client.Job.Status;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.junit.Test;
 
-public class TestBundleJobBean extends XTestCase {
+import static org.junit.Assert.assertEquals;
+
+public class TestBundleJobBean {
 
     private static final Date ct = new Date(1L);
     private static final Date et = new Date(2L);
@@ -72,6 +74,7 @@ public class TestBundleJobBean extends XTestCase {
     /**
      * Test {@link BundleJobBean} get- and set- methods.
      */
+    @Test
     public void testSetGet() {
         final BundleJobBean bean = new BundleJobBean();
         set(bean);
@@ -119,6 +122,7 @@ public class TestBundleJobBean extends XTestCase {
     /**
      * Test {@link BundleJobBean} serialization and deserialization.
      */
+    @Test
     public void testSerialization() throws IOException {
         final BundleJobBean bean = new BundleJobBean();
 

@@ -21,20 +21,39 @@ package org.apache.oozie.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
 public class TestTimestampedMessageParser extends XTestCase {
+    private Services services;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        services = new Services();
+        services.init();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        services.destroy();
+        super.tearDown();
+    }
 
     static File prepareFile1(String dir) throws IOException {
         File file = new File(dir + "/test1.log");
-        FileWriter fw = new FileWriter(file);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         StringBuilder sb = new StringBuilder();
         sb.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
                 + "JOB[14-200904160239--example-forkjoinwf] ACTION[-] End workflow state change");
@@ -75,7 +94,7 @@ public class TestTimestampedMessageParser extends XTestCase {
 
     static File prepareFile2(String dir) throws IOException {
         File file = new File(dir + "/test2.log");
-        FileWriter fw = new FileWriter(file);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         StringBuilder sb = new StringBuilder();
         sb.append("2009-06-24 02:43:13,958 DEBUG _L1_:323 - USER[oozie] GROUP[-] TOKEN[-] APP[example-forkjoinwf] "
                 + "JOB[14-200904160239--example-C] ACTION[14-200904160239--example-C@1] End workflow state change");
@@ -102,7 +121,7 @@ public class TestTimestampedMessageParser extends XTestCase {
 
     static File prepareFile3(String dir) throws IOException {
         File file = new File(dir + "/test3.log");
-        FileWriter fw = new FileWriter(file);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
 
         for (int i = 0; i < 10000; i++) {
             String log = "2009-06-24 02:43:13," + i
@@ -131,7 +150,8 @@ public class TestTimestampedMessageParser extends XTestCase {
         try {
             File file = prepareFile3(getTestCaseDir());
             StringWriter sw = new StringWriter();
-            new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
+            new TimestampedMessageParser(new BufferedReader(new InputStreamReader(new FileInputStream(file),
+                    StandardCharsets.UTF_8)), xf).processRemaining(sw, new XLogStreamer(xf));
             assertTrue(sw.toString().isEmpty());
         }
         catch (Exception e) {
@@ -153,7 +173,8 @@ public class TestTimestampedMessageParser extends XTestCase {
         xf.setLogLevel("DEBUG|WARN");
         File file = prepareFile1(getTestCaseDir());
         StringWriter sw = new StringWriter();
-        new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
+        new TimestampedMessageParser(new BufferedReader(new InputStreamReader(new FileInputStream(file),
+                StandardCharsets.UTF_8)), xf).processRemaining(sw, new XLogStreamer(xf));
         String[] out = sw.toString().split("\n");
         assertEquals(14, out.length);
         assertTrue(out[0].contains("_L1_"));
@@ -186,7 +207,8 @@ public class TestTimestampedMessageParser extends XTestCase {
 
         File file = prepareFile2(getTestCaseDir());
         StringWriter sw = new StringWriter();
-        new TimestampedMessageParser(new BufferedReader(new FileReader(file)), xf).processRemaining(sw, 4096);
+        new TimestampedMessageParser(new BufferedReader(new InputStreamReader(new FileInputStream(file),
+                StandardCharsets.UTF_8)), xf).processRemaining(sw, new XLogStreamer(xf));
         String[] matches = sw.toString().split("\n");
         assertEquals(2, matches.length);
         assertTrue(matches[0].contains("_L1_"));

@@ -200,7 +200,8 @@ public class TestCoordJobGetActionsSubsetJPAExecutor extends XDataTestCase {
         String resourceXmlName = "coord-action-get.xml";
         Date dummyCreationTime = new Date();
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-        CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING, resourceXmlName, 0);
+        CoordinatorActionBean action = createCoordAction(
+                job.getId(), actionNum, CoordinatorAction.Status.WAITING, resourceXmlName, 0);
         // Add some attributes
         action.setConsoleUrl("consoleUrl");
         action.setExternalStatus("externalStatus");

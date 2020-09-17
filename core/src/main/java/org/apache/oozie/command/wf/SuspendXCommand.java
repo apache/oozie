@@ -107,6 +107,7 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
      * @param workflow workflow job
      * @param id workflow job id
      * @param actionId workflow action id
+     * @param updateList list of job to be updated
      * @throws WorkflowException thrown if failed to suspend workflow instance
      * @throws CommandException thrown if unable set pending false for actions
      */

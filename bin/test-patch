@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ TEMPDIR=${TESTPATCHDIR}/tmp
 REPORTDIR=${TESTPATCHDIR}/reports
 SUMMARYFILE=${REPORTDIR}/TEST-SUMMARY.jira
 SUMMARYFILETXT=${REPORTDIR}/TEST-SUMMARY.txt
+SUMMARYFILE_FULL=${REPORTDIR}/TEST-SUMMARY-FULL.jira
+SUMMARYFILE_FULL_TXT=${REPORTDIR}/TEST-SUMMARY-FULL.txt
 
 JIRAHOST="https://issues.apache.org"
 JIRAURL="${JIRAHOST}/jira"
@@ -84,9 +86,9 @@ prepareSCM() {
       echo "It should not happen DIRTYSCM=false & RESETSCM=false"
       exit 1
     fi
-    echo "Cleaning local ${SCM} workspace" >> ${SUMMARYFILE}
+    summary_both "Cleaning local ${SCM} workspace"
   else
-    echo "WARNING: Running test-patch on a dirty local ${SCM} workspace" >> ${SUMMARYFILE}
+    summary_both "WARNING: Running test-patch on a dirty local ${SCM} workspace"
   fi
 }
 ###############################################################################
@@ -106,22 +108,17 @@ prepareTestPatchDirs() {
 updateJira() {
   if [[ "${JIRAUPDATE}" != "" && "${JIRAISSUE}" != "" ]] ; then
     if [[ "$JIRAPASSWORD" != "" ]] ; then
-      JIRACLI=${TOOLSDIR}/jira-cli/jira.sh
-      if [ ! -e "${JIRACLI}" ] ; then
-        curl -L https://bobswift.atlassian.net/wiki/download/attachments/16285777/jira-cli-2.6.0-distribution.zip > ${TEMPDIR}/jira-cli.zip
-        if [ $? != 0 ] ; then
-         echo
-         echo "Could not download jira-cli tool, thus no JIRA updating"
-         echo
-         exit 1
-        fi
-        mkdir ${TEMPDIR}/jira-cli-tmp
-        (cd ${TEMPDIR}/jira-cli-tmp;jar xf ${TEMPDIR}/jira-cli.zip; mv jira-cli-2.6.0 ${TOOLSDIR}/jira-cli)
-        chmod u+x ${JIRACLI}
-      fi
       echo "Adding comment to JIRA"
-      comment=`cat ${SUMMARYFILE}`
-      $JIRACLI -s $JIRAURL -a addcomment -u $JIRAUSER -p "$JIRAPASSWORD" --comment "$comment" --issue $JIRAISSUE
+
+      # Replace newlines with \n so that summary can be sent via JSON to JIRA
+      comment=$(awk '{printf "%s\\n", $0}' ${SUMMARYFILE})
+
+      curl -u "${JIRAUSER}:${JIRAPASSWORD}"\
+           -H "Content-type: application/json"\
+           -H "Accept: application/json"\
+           -X POST\
+           --data "{\"body\": \"${comment}\"}"\
+           ${JIRAURL}/rest/api/2/issue/${JIRAISSUE}/comment || echo "Failed to add comment to JIRA"
       echo
     else
       echo "Skipping JIRA update"
@@ -292,16 +289,16 @@ applyPatch() {
       fi
     else
       echo "Patch failed to apply to head of branch"
-      echo "{color:red}-1{color} Patch failed to apply to head of branch" >> ${SUMMARYFILE}
-      echo "" >> ${SUMMARYFILE}
-      echo "----------------------------" >> ${SUMMARYFILE}
+      summary_both "{color:red}-1{color} Patch failed to apply to head of branch"
+      summary_both ""
+      summary_both "----------------------------"
       echo
       cleanupAndExit 1
     fi
   fi
   echo "" >> $STDOUT
   echo "Patch applied"
-  echo "{color:green}+1 PATCH_APPLIES{color}" >> $SUMMARYFILE
+  summary_both "{color:green}+1 PATCH_APPLIES{color}"
   echo
 }
 ###############################################################################
@@ -312,7 +309,7 @@ run() {
       echo "  Running test-patch task ${task}"
       outputFile="`basename $1`-$2.out"
       $1 --op=$2 --tempdir=${TEMPDIR} --reportdir=${REPORTDIR} \
-         --summaryfile=${SUMMARYFILE} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
+         --summaryfile=${SUMMARYFILE} --summaryfile-full=${SUMMARYFILE_FULL} --patchfile=${PATCHFILE} ${MVNPASSTHRU} \
          ${VERBOSEOPTION} | tee ${TEMPDIR}/${outputFile} >> $STDOUT
       if [[ $? != 0 ]] ; then
         echo "  Failure, check for details ${TEMPDIR}/${outputFile}"
@@ -351,6 +348,12 @@ createReports() {
   echo
 }
 ###############################################################################
+summary_both() {
+  LINE=$1
+  echo ${LINE} >> ${SUMMARYFILE}
+  echo ${LINE} >> ${SUMMARYFILE_FULL}
+}
+###############################################################################
 
 echo
 
@@ -358,13 +361,16 @@ parseArgs "$@"
 
 prepareTestPatchDirs
 
+echo -n "PreCommit-OOZIE-Build started" > ${SUMMARYFILE}
+updateJira
 echo "" > ${SUMMARYFILE}
+echo "" > ${SUMMARYFILE_FULL}
 
 if [ "${PATCHFILE}" == "" ] ; then
   echo "Testing JIRA ${JIRAISSUE}"
   echo
-  echo "Testing JIRA ${JIRAISSUE}" >> ${SUMMARYFILE}
-  echo "" >> ${SUMMARYFILE}
+  summary_both "Testing JIRA ${JIRAISSUE}"
+  summary_both ""
 else
   if [ ! -e ${PATCHFILE} ] ; then
     echo "Patch file does not exist"
@@ -372,54 +378,55 @@ else
   fi
   echo "Testing patch ${PATCHFILE}"
   echo
-  echo "Testing patch ${PATCHFILE}" >> ${SUMMARYFILE}
-  echo "" >> ${SUMMARYFILE}
+  summary_both "Testing patch ${PATCHFILE}"
+  summary_both ""
 fi
-
 prepareSCM
 
-echo "" >> ${SUMMARYFILE}
+summary_both ""
 
 if [ "${PATCHFILE}" == "" ] ; then
   downloadPatch ${JIRAISSUE}
 fi
 
-echo "----------------------------" >> ${SUMMARYFILE}
-echo "" >> ${SUMMARYFILE}
+summary_both "----------------------------"
+summary_both ""
 getAllTasks
 prePatchRun
 applyPatch
 postPatchRun
 createReports
-echo "" >> ${SUMMARYFILE}
-echo "----------------------------" >> ${SUMMARYFILE}
+summary_both ""
+summary_both "----------------------------"
 MINUSONES=`grep -c "\}\-1" ${SUMMARYFILE}`
 if [[ $MINUSONES == 0 ]]; then
-  echo "{color:green}*+1 Overall result, good!, no -1s*{color}" >> ${SUMMARYFILE}
+  summary_both "{color:green}*+1 Overall result, good!, no -1s*{color}"
 else
-  echo "{color:red}*-1 Overall result, please check the reported -1(s)*{color}" >> ${SUMMARYFILE}
+  summary_both "{color:red}*-1 Overall result, please check the reported -1(s)*{color}"
 fi
-echo "" >> ${SUMMARYFILE}
+summary_both ""
 WARNINGS=`grep -c "\}WARNING" ${SUMMARYFILE}`
 if [[ $WARNINGS != 0 ]]; then
-  echo "{color:red}.   There is at least one warning, please check{color}" >> ${SUMMARYFILE}
+  summary_both "{color:red}.   There is at least one warning, please check{color}"
 fi
-echo "" >> ${SUMMARYFILE}
+summary_both ""
 
 if [ ! -z "${JIRAISSUE}" ]; then
-  echo "The full output of the test-patch run is available at"  >> ${SUMMARYFILE}
-  echo ""  >> ${SUMMARYFILE}
-  echo ".   ${BUILD_URL}"  >> ${SUMMARYFILE}
-  echo ""  >> ${SUMMARYFILE}
+  summary_both "The full output of the test-patch run is available at"
+  summary_both ""
+  summary_both ".   ${BUILD_URL}"
+  summary_both ""
 else
   echo
   echo "Refer to ${REPORTDIR} for detailed test-patch reports"
   echo
 fi
 
-cat ${SUMMARYFILE} | sed -e 's/{color}//' -e 's/{color:green}//' -e 's/{color:red}//' -e 's/^\.//' -e 's/^\*//' -e 's/\*$//' > ${SUMMARYFILETXT}
-
+cat ${SUMMARYFILE} | sed -e 's/{color}//' -e 's/{color:green}//' -e 's/{color:red}//'  -e 's/{color:orange}//' -e 's/^\.//' -e 's/^\*//' -e 's/\*$//' > ${SUMMARYFILETXT}
 cat ${SUMMARYFILETXT}
 
+cat ${SUMMARYFILE_FULL} | sed -e 's/{color}//' -e 's/{color:green}//' -e 's/{color:red}//'  -e 's/{color:orange}//' -e 's/^\.//' -e 's/^\*//' -e 's/\*$//' > ${SUMMARYFILE_FULL_TXT}
+
 grep "^+1 Overall result" ${SUMMARYFILETXT} &> /dev/null
+grep "^+1 Overall result" ${SUMMARYFILE_FULL_TXT} &> /dev/null
 cleanupAndExit "$?"

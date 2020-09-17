@@ -25,7 +25,7 @@ public abstract class SuspendTransitionXCommand extends TransitionXCommand<Void>
     /**
      * Suspend all children of the job
      *
-     * @throws CommandException
+     * @throws CommandException if command cannot be completed
      */
     public abstract void suspendChildren() throws CommandException;
 
@@ -65,9 +65,6 @@ public abstract class SuspendTransitionXCommand extends TransitionXCommand<Void>
         job.setPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         transitToNext();

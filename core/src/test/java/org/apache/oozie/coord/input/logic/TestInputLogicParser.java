@@ -19,15 +19,19 @@
 package org.apache.oozie.coord.input.logic;
 
 
-import junit.framework.TestCase;
+
 
 import org.apache.oozie.coord.input.logic.InputLogicParser;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-public class TestInputLogicParser extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+public class TestInputLogicParser {
+
+    @Test
     public void testAndOr() throws JDOMException {
         //@formatter:off
         String xml =
@@ -52,6 +56,7 @@ public class TestInputLogicParser extends TestCase {
 
     }
 
+    @Test
     public void testAnd() throws JDOMException {
         //@formatter:off
         String xml =
@@ -69,6 +74,7 @@ public class TestInputLogicParser extends TestCase {
 
     }
 
+    @Test
     public void testOr() throws JDOMException {
         //@formatter:off
         String xml =
@@ -86,6 +92,7 @@ public class TestInputLogicParser extends TestCase {
 
     }
 
+    @Test
     public void testOrWithMin() throws JDOMException {
         //@formatter:off
         String xml = "<input-logic>" + "<or>" + "<data-in dataset=\"A\" min=\"3\"/> " + "<data-in dataset=\"B\"/>" + "</or>"
@@ -97,6 +104,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parse(root));
     }
 
+    @Test
     public void testOrWithMinAtOr() throws JDOMException {
         //@formatter:off
         String xml =
@@ -114,6 +122,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parse(root));
     }
 
+    @Test
     public void testWithName() throws JDOMException {
         //@formatter:off
         String xml =
@@ -131,6 +140,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parseWithName(root, "test"));
     }
 
+    @Test
     public void testCombine() throws JDOMException {
         //@formatter:off
         String xml =
@@ -148,6 +158,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parseWithName(root, "test"));
     }
 
+    @Test
     public void testWithNameNested() throws JDOMException {
         //@formatter:off
         String xml =
@@ -172,6 +183,7 @@ public class TestInputLogicParser extends TestCase {
 
     }
 
+    @Test
     public void testDepth2() throws JDOMException {
         //@formatter:off
      String xml =
@@ -204,6 +216,7 @@ public class TestInputLogicParser extends TestCase {
 
     }
 
+    @Test
     public void testDepth2WithCombine() throws JDOMException {
         //@formatter:off
         String xml =
@@ -233,6 +246,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parse(root));
     }
 
+    @Test
     public void testAndCombine() throws JDOMException {
         //@formatter:off
         String xml =
@@ -256,6 +270,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parse(root));
     }
 
+    @Test
     public void testComplex1() throws JDOMException {
         //@formatter:off
         String xml=
@@ -286,6 +301,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parse(root));
     }
 
+    @Test
     public void testAllAnd() throws JDOMException {
         //@formatter:off
         String xml=
@@ -308,6 +324,7 @@ public class TestInputLogicParser extends TestCase {
                 inputLogicParser.parse(root));
     }
 
+    @Test
     public void testDataIn() throws JDOMException {
         //@formatter:off
         String xml=
@@ -320,6 +337,7 @@ public class TestInputLogicParser extends TestCase {
         assertEquals("dependencyBuilder.input(\"A\").build()", inputLogicParser.parse(root));
     }
 
+    @Test
     public void testMinWait() throws JDOMException {
         //@formatter:off
         String xml =
@@ -340,6 +358,7 @@ public class TestInputLogicParser extends TestCase {
                 + "&& dependencyBuilder.input(\"B\").min(3).inputWait(10).build())", inputLogicParser.parse(root));
     }
 
+    @Test
     public void testOrAndDataIn() throws JDOMException {
         //@formatter:off
         String xml =

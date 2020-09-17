@@ -228,7 +228,8 @@ public class TestEventHandlerService extends XDataTestCase {
 
             log = appender.getLog();
             logEntry = log.get(2);
-            assertTrue(logEntry.getMessage().toString().contains("APP[myapp] JOB[jobid2] ACTION[jobid2@1] Queueing event : ID: jobid2@1"));
+            assertTrue(logEntry.getMessage().toString()
+                    .contains("APP[myapp] JOB[jobid2] ACTION[jobid2@1] Queueing event : ID: jobid2@1"));
 
             WorkflowJobEvent event3 = new WorkflowJobEvent("jobid-other", "parentid", WorkflowJob.Status.RUNNING, getTestUser(),
                     "myapp-other", null, null);

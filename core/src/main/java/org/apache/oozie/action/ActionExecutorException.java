@@ -21,6 +21,8 @@ package org.apache.oozie.action;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
+import java.util.Objects;
+
 /**
  * ActionExecutor exception. <p> The exception provides information regarding the transient/no-transient/fatal nature
  * of the exception.
@@ -66,7 +68,7 @@ public class ActionExecutorException extends Exception {
      */
     public ActionExecutorException(ErrorType errorType, String errorCode, String message) {
         super(message);
-        this.errorType = ParamChecker.notNull(errorType, "errorType");
+        this.errorType = Objects.requireNonNull(errorType, "errorType cannot be null");
         this.errorCode = ParamChecker.notEmpty(errorCode, "errorCode");
     }
 
@@ -83,7 +85,7 @@ public class ActionExecutorException extends Exception {
      */
     public ActionExecutorException(ErrorType errorType, String errorCode, String messageTemplate, Object... params) {
         super(errorCode + ": " + XLog.format(messageTemplate, params), XLog.getCause(params));
-        this.errorType = ParamChecker.notNull(errorType, "errorType");
+        this.errorType = Objects.requireNonNull(errorType, "errorType cannot be null");
         this.errorCode = ParamChecker.notEmpty(errorCode, "errorCode");
     }
 

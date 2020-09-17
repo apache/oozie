@@ -41,7 +41,8 @@ public class SLADbXOperations {
      * @param appType SLA app type
      * @param user user name
      * @param groupName group name
-     * @throws Exception
+     * @return the event
+     * @throws Exception if nominal-time is incorrect
      */
     public static SLAEventBean createSlaRegistrationEvent(Element eSla, String slaId,
                                                  SlaAppType appType, String user, String groupName)
@@ -118,10 +119,10 @@ public class SLADbXOperations {
      * @param id SLA Id
      * @param status SLA status
      * @param appType SLA app type
-     * @throws Exception
+     * @return the event
      */
     public static SLAEventBean createSlaStatusEvent(String id,
-                                           Status status, SlaAppType appType) throws Exception {
+                                           Status status, SlaAppType appType) {
         SLAEventBean sla = new SLAEventBean();
         sla.setSlaId(id);
         sla.setJobStatus(status);
@@ -138,7 +139,8 @@ public class SLADbXOperations {
      * @param id SLA Id
      * @param stat SLA status
      * @param appType SLA app type
-     * @throws CommandException
+     * @return the report
+     * @throws CommandException when adding SLA event is failed
      */
     public static SLAEventBean createStatusEvent(String slaXml, String id, Status stat,
                                        SlaAppType appType) throws CommandException {

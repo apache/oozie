@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
@@ -124,7 +125,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
      * @return true if all actions are eligible to rerun
      */
     private static boolean checkAllActionsRunnable(List<CoordinatorActionBean> coordActions) {
-        ParamChecker.notNull(coordActions, "Coord actions to be rerun");
+        Objects.requireNonNull(coordActions, "Coord actions to be rerun cannot be null");
         boolean ret = false;
         for (CoordinatorActionBean coordAction : coordActions) {
             ret = true;
@@ -268,25 +269,16 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -299,9 +291,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         LogUtils.setLogInfo(coordJob);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, coordJob.getStatus());
@@ -414,10 +403,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return coordJob;
@@ -448,9 +433,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         updateList.add(new UpdateEntry<CoordJobQuery>(CoordJobQuery.UPDATE_COORD_JOB_STATUS_PENDING, coordJob));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.RerunTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -464,9 +446,6 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.RerunTransitionXCommand#getLog()
-     */
     @Override
     public XLog getLog() {
         return LOG;

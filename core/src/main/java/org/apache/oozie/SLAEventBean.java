@@ -39,7 +39,8 @@ import org.jdom.Element;
 @Deprecated
 @Entity
 @NamedQueries({
-        @NamedQuery(name = "GET_SLA_EVENT_NEWER_SEQ_LIMITED", query = "select OBJECT(w) from SLAEventBean w where w.event_id > :id order by w.event_id"),
+        @NamedQuery(name = "GET_SLA_EVENT_NEWER_SEQ_LIMITED", query = "select OBJECT(w) from SLAEventBean w where w.event_id "
+                + "> :id order by w.event_id"),
         @NamedQuery(name = "GET_SLA_EVENTS", query = "select OBJECT(w) from SLAEventBean w") })
 
 public class SLAEventBean extends JsonSLAEvent implements Writable {

@@ -19,12 +19,15 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.*;
 import org.apache.oozie.client.WorkflowAction;
@@ -38,17 +41,22 @@ import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.util.GraphGenerator;
+import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.graph.GraphGenerator;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.graph.GraphRenderer;
+import org.apache.oozie.util.graph.GraphvizRenderer;
+import org.apache.oozie.util.graph.OutputFormat;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
 
 @SuppressWarnings("serial")
 public class V1JobServlet extends BaseJobServlet {
 
     private static final String INSTRUMENTATION_NAME = "v1job";
     public static final String COORD_ACTIONS_DEFAULT_LENGTH = "oozie.coord.actions.default.length";
+
+    final static String NOT_SUPPORTED_MESSAGE = "Not supported in v1";
 
     public V1JobServlet() {
         super(INSTRUMENTATION_NAME);
@@ -79,9 +87,9 @@ public class V1JobServlet extends BaseJobServlet {
             startBundleJob(request, response);
         }
         else {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM,
+                    RestConstants.JOB_ACTION_START);
         }
-
     }
 
     /*
@@ -165,8 +173,8 @@ public class V1JobServlet extends BaseJobServlet {
      * protected method to change a coordinator job
      * @param request request object
      * @param response response object
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if BundleEngineException or CoordinatorEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected void changeJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
@@ -181,7 +189,7 @@ public class V1JobServlet extends BaseJobServlet {
     }
     @Override
     protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     /*
@@ -217,10 +225,10 @@ public class V1JobServlet extends BaseJobServlet {
         ServletInputStream is = request.getInputStream();
         byte[] b = new byte[101];
         while (is.readLine(b, 0, 100) != -1) {
-            XLog.getLog(getClass()).warn("Printing :" + new String(b));
+            XLog.getLog(getClass()).warn("Printing :" + new String(b, StandardCharsets.UTF_8));
         }
 
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         String jobId = getResourceName(request);
         if (jobId.endsWith("-B")) {
             jobBean = getBundleJob(request, response);
@@ -296,19 +304,32 @@ public class V1JobServlet extends BaseJobServlet {
         String jobId = getResourceName(request);
         if (jobId.endsWith("-W")) {
             try {
-                // Applicable only to worflow, for now
-                response.setContentType(RestConstants.PNG_IMAGE_CONTENT_TYPE);
 
-                String showKill = request.getParameter(RestConstants.JOB_SHOW_KILL_PARAM);
-                boolean sK = showKill != null && (showKill.equalsIgnoreCase("yes") || showKill.equals("1") || showKill.equalsIgnoreCase("true"));
+                final String showKillParameter = request.getParameter(RestConstants.JOB_SHOW_KILL_PARAM);
+                final boolean showKill = isShowKillSet(showKillParameter);
+
+                final String formatParameter = request.getParameter(RestConstants.JOB_FORMAT_PARAM);
+                final OutputFormat outputFormat = getOutputFormat(formatParameter);
+
+                final String contentType = getContentType(outputFormat);
+
+                response.setContentType(contentType);
+
+                final Instrumentation.Cron cron = new Instrumentation.Cron();
+                cron.start();
+
+                final GraphRenderer graphRenderer = new GraphvizRenderer();
 
                 new GraphGenerator(
-                        getWorkflowJobDefinition(request, response),
-                        (WorkflowJobBean)getWorkflowJob(request, response),
-                        sK).write(response.getOutputStream());
+                            getWorkflowJobDefinition(request, response),
+                            (WorkflowJobBean)getWorkflowJob(request, response),
+                            showKill,
+                            graphRenderer).write(response.getOutputStream(), outputFormat);
 
+                cron.stop();
+                instrument(outputFormat, cron);
             }
-            catch (Exception e) {
+            catch (final Exception e) {
                 throw new XServletException(HttpServletResponse.SC_NOT_FOUND, ErrorCode.E0307, e.getMessage(), e);
             }
         }
@@ -317,12 +338,57 @@ public class V1JobServlet extends BaseJobServlet {
         }
     }
 
+    private boolean isShowKillSet(final String showKillParameter) {
+        return showKillParameter != null &&
+                (showKillParameter.equalsIgnoreCase("yes") ||
+                        showKillParameter.equals("1") ||
+                        showKillParameter.equalsIgnoreCase("true"));
+    }
+
+    private OutputFormat getOutputFormat(final String formatParameter) {
+        final OutputFormat outputFormat;
+        if (Strings.isNullOrEmpty(formatParameter)) {
+            outputFormat = OutputFormat.PNG;
+        }
+        else {
+            outputFormat = OutputFormat.valueOf(formatParameter.toUpperCase(Locale.getDefault()));
+        }
+        return outputFormat;
+    }
+
+    private String getContentType(final OutputFormat outputFormat) {
+        final String contentType;
+
+        switch (outputFormat) {
+            case PNG:
+                contentType = RestConstants.PNG_IMAGE_CONTENT_TYPE;
+                break;
+            case DOT:
+                contentType = RestConstants.TEXT_CONTENT_TYPE;
+                break;
+            case SVG:
+                contentType = RestConstants.SVG_IMAGE_CONTENT_TYPE;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown output format, cannot get content type: " + outputFormat);
+        }
+
+        return contentType;
+    }
+
+    private void instrument(final OutputFormat outputFormat, final Instrumentation.Cron cron) {
+        addCron(INSTRUMENTATION_NAME + "-graph", cron);
+        incrCounter(INSTRUMENTATION_NAME + "-graph", 1);
+        addCron(INSTRUMENTATION_NAME + "-graph-" + outputFormat.toString().toLowerCase(Locale.getDefault()), cron);
+        incrCounter(INSTRUMENTATION_NAME + "-graph-" + outputFormat.toString().toLowerCase(Locale.getDefault()), 1);
+    }
+
     /**
      * Start wf job
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void startWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -341,7 +407,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void startBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -359,7 +425,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void resumeWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -378,7 +444,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void resumeBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -396,8 +462,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
-     * @throws CoordinatorEngineException
+     * @throws XServletException in case if CoordinatorEngineException occurs
      */
     private void resumeCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -417,7 +482,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void suspendWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -436,7 +501,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void suspendBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -454,7 +519,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException occurs
      */
     private void suspendCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -473,7 +538,7 @@ public class V1JobServlet extends BaseJobServlet {
      * Kill a wf job
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void killWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
@@ -492,7 +557,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException or CommandException occurs
      */
     @SuppressWarnings("unchecked")
     private JSONObject killCoordinator(HttpServletRequest request, HttpServletResponse response) throws XServletException {
@@ -523,10 +588,7 @@ public class V1JobServlet extends BaseJobServlet {
                 coordEngine.kill(jobId);
             }
         }
-        catch (CoordinatorEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        catch (CommandException ex) {
+        catch (CoordinatorEngineException | CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
         return json;
@@ -537,7 +599,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void killBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -555,7 +617,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException occurs
      */
     private void changeCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -576,7 +638,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private void changeBundleJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -597,7 +659,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @param conf configuration object
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private void reRunWorkflowJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
@@ -618,11 +680,10 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @param conf configration object
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     private void rerunBundleJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException {
-        JSONObject json = new JSONObject();
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
 
@@ -649,7 +710,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @param conf configuration object
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException or CommandException occurs
      */
     @SuppressWarnings("unchecked")
     private JSONObject reRunCoordinatorActions(HttpServletRequest request, HttpServletResponse response,
@@ -685,17 +746,12 @@ public class V1JobServlet extends BaseJobServlet {
             }
             json.put(JsonTags.COORDINATOR_ACTIONS, CoordinatorActionBean.toJSONArray(coordActions, "GMT"));
         }
-        catch (BaseEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        catch (CommandException ex) {
+        catch (BaseEngineException | CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
 
         return json;
     }
-
-
 
     /**
      * Get workflow job
@@ -703,7 +759,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowJobBean
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     protected JsonBean getWorkflowJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         JsonBean jobBean = getWorkflowJobBean(request, response);
@@ -718,10 +774,10 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowJobBean
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     protected JsonBean getWorkflowJobBean(HttpServletRequest request, HttpServletResponse response) throws XServletException {
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         String jobId = getResourceName(request);
         String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
         String lenStr = request.getParameter(RestConstants.LEN_PARAM);
@@ -761,7 +817,7 @@ public class V1JobServlet extends BaseJobServlet {
     }
 
     private String getConsoleBase(String url) {
-        String consoleBase = null;
+        String consoleBase;
         if (url.indexOf("application") != -1) {
             consoleBase = url.split("application_[0-9]+_[0-9]+")[0];
         }
@@ -777,11 +833,10 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean WorkflowActionBean
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     protected JsonBean getWorkflowAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
-
         JsonBean actionBean = getWorkflowActionBean(request, response);
         // for backward compatibility (OOZIE-1231)
         swapMRActionID((WorkflowAction)actionBean);
@@ -809,12 +864,12 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean CoordinatorJobBean
-     * @throws XServletException
-     * @throws BaseEngineException
+     * @throws XServletException in case if CoordinatorEngineException occurs
+     * @throws BaseEngineException if CommandException occurs
      */
     protected JsonBean getCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
-        JsonBean jobBean = null;
+        JsonBean jobBean;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request));
         String jobId = getResourceName(request);
@@ -858,17 +913,15 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean bundle job bean
-     * @throws XServletException
-     * @throws BaseEngineException
+     * @throws XServletException in case if BundleEngineException occurs
      */
-    private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            BaseEngineException {
-        JsonBean jobBean = null;
+    private JsonBean getBundleJob(HttpServletRequest request, HttpServletResponse response) throws XServletException {
+        JsonBean jobBean;
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
         String jobId = getResourceName(request);
 
         try {
-            jobBean = (JsonBean) bundleEngine.getBundleJob(jobId);
+            jobBean = bundleEngine.getBundleJob(jobId);
 
             return jobBean;
         }
@@ -883,12 +936,12 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return JsonBean CoordinatorActionBean
-     * @throws XServletException
-     * @throws BaseEngineException
+     * @throws XServletException in case if CoordinatorEngineException occurs
+     * @throws BaseEngineException if CommandException occurs
      */
     private JsonBean getCoordinatorAction(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, BaseEngineException {
-        JsonBean actionBean = null;
+        JsonBean actionBean;
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
                 getUser(request));
         String actionId = getResourceName(request);
@@ -908,7 +961,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return String wf definition
-     * @throws XServletException
+     * @throws XServletException in case if DagEngineException occurs
      */
     private String getWorkflowJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -931,7 +984,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return String bundle definition
-     * @throws XServletException
+     * @throws XServletException in case if BundleEngineException occurs
      */
     private String getBundleJobDefinition(HttpServletRequest request, HttpServletResponse response) throws XServletException {
         BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(getUser(request));
@@ -952,7 +1005,7 @@ public class V1JobServlet extends BaseJobServlet {
      * @param request servlet request
      * @param response servlet response
      * @return String coord definition
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     private String getCoordinatorJobDefinition(HttpServletRequest request, HttpServletResponse response)
             throws XServletException {
@@ -977,8 +1030,8 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if BaseEngineException occurs
+     * @throws IOException in case of parsing error
      */
     private void streamWorkflowJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
@@ -987,7 +1040,7 @@ public class V1JobServlet extends BaseJobServlet {
         try {
             dagEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
-        catch (DagEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -997,7 +1050,7 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if BaseEngineException occurs
      */
     private void streamBundleJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
@@ -1006,7 +1059,7 @@ public class V1JobServlet extends BaseJobServlet {
         try {
             bundleEngine.streamLog(jobId, response.getWriter(), request.getParameterMap());
         }
-        catch (BundleEngineException ex) {
+        catch (BaseEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -1016,8 +1069,8 @@ public class V1JobServlet extends BaseJobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if BaseEngineException or CommandException occurs
+     * @throws IOException in case of parsing error
      */
     private void streamCoordinatorJobLog(HttpServletRequest request, HttpServletResponse response)
             throws XServletException, IOException {
@@ -1030,10 +1083,7 @@ public class V1JobServlet extends BaseJobServlet {
         try {
             coordEngine.streamLog(jobId, logRetrievalScope, logRetrievalType, response.getWriter(), request.getParameterMap());
         }
-        catch (BaseEngineException ex) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
-        }
-        catch (CommandException ex) {
+        catch (BaseEngineException | CommandException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
         }
     }
@@ -1041,7 +1091,7 @@ public class V1JobServlet extends BaseJobServlet {
     @Override
     protected String getJMSTopicName(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
@@ -1089,38 +1139,50 @@ public class V1JobServlet extends BaseJobServlet {
     @Override
     protected JSONObject updateJob(HttpServletRequest request, HttpServletResponse response, Configuration conf)
             throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected String getJobStatus(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     protected void streamJobErrorLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
     @Override
     protected void streamJobAuditLog(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
     @Override
     void slaEnableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaDisableAlert(HttpServletRequest request, HttpServletResponse response) throws XServletException,
             IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 
     @Override
     void slaChange(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
-        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v1");
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+    }
+
+    @Override
+    JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
+    }
+
+    @Override
+    JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response) throws XServletException,
+            IOException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, NOT_SUPPORTED_MESSAGE);
     }
 }

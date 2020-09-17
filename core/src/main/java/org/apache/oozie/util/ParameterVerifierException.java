@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration;
  * Exception thrown by {@link ParameterVerifier}.
  */
 public class ParameterVerifierException extends XException {
-    
+
     /**
      * Create a ParameterHandler exception from a XException.
      *
@@ -45,5 +45,5 @@ public class ParameterVerifierException extends XException {
     public ParameterVerifierException(ErrorCode errorCode, Object... params) {
         super(errorCode, params);
     }
-    
+
 }

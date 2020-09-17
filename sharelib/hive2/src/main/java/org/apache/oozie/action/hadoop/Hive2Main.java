@@ -20,10 +20,12 @@ package org.apache.oozie.action.hadoop;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,12 +39,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hive.beeline.BeeLine;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class Hive2Main extends LauncherMain {
-    private static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
+    @VisibleForTesting
+    static final Pattern[] HIVE2_JOB_IDS_PATTERNS = {
             Pattern.compile("Ended Job = (job_\\S*)"),
-            Pattern.compile("Submitted application (application[0-9_]*)")
+            Pattern.compile("Submitted application (application[0-9_]*)"),
+            Pattern.compile("Running with YARN Application = (application[0-9_]*)"),
+            Pattern.compile("Executing on YARN cluster with App id (application[0-9_]*)")
     };
-    private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<String>();
+    private static final Set<String> DISALLOWED_BEELINE_OPTIONS = new HashSet<>();
 
     static {
         DISALLOWED_BEELINE_OPTIONS.add("-u");
@@ -112,7 +119,7 @@ public class Hive2Main extends LauncherMain {
         }
         String logFile = new File("hive2-oozie-" + hadoopJobId + ".log").getAbsolutePath();
 
-        List<String> arguments = new ArrayList<String>();
+        List<String> arguments = new ArrayList<>();
         String jdbcUrl = actionConf.get(Hive2ActionExecutor.HIVE2_JDBC_URL);
         if (jdbcUrl == null) {
             throw new RuntimeException("Action Configuration does not have [" +  Hive2ActionExecutor.HIVE2_JDBC_URL
@@ -148,8 +155,11 @@ public class Hive2Main extends LauncherMain {
             File localDir = new File("dummy").getAbsoluteFile().getParentFile();
             System.out.println("Current (local) dir = " + localDir.getAbsolutePath());
             System.out.println("------------------------");
-            for (String file : localDir.list()) {
-                System.out.println("  " + file);
+            String[] files = localDir.list();
+            if (files != null) {
+                for (String file : files) {
+                    System.out.println("  " + file);
+                }
             }
             System.out.println("------------------------");
             System.out.println();
@@ -179,7 +189,7 @@ public class Hive2Main extends LauncherMain {
         }
 
         // Pass any parameters to Beeline via arguments
-        String[] params = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
+        String[] params = ActionUtils.getStrings(actionConf, Hive2ActionExecutor.HIVE2_PARAMS);
         if (params.length > 0) {
             System.out.println("Parameters:");
             System.out.println("------------------------");
@@ -204,7 +214,7 @@ public class Hive2Main extends LauncherMain {
         arguments.add("-a");
         arguments.add("delegationToken");
 
-        String[] beelineArgs = MapReduceMain.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
+        String[] beelineArgs = ActionUtils.getStrings(actionConf, Hive2ActionExecutor.HIVE2_ARGS);
         for (String beelineArg : beelineArgs) {
             if (DISALLOWED_BEELINE_OPTIONS.contains(beelineArg)) {
                 throw new RuntimeException("Error: Beeline argument " + beelineArg + " is not supported");
@@ -229,7 +239,7 @@ public class Hive2Main extends LauncherMain {
         }
         System.out.println();
 
-        LauncherMainHadoopUtils.killChildYarnJobs(actionConf);
+        LauncherMain.killChildYarnJobs(actionConf);
 
         System.out.println("=================================================================");
         System.out.println();
@@ -240,13 +250,6 @@ public class Hive2Main extends LauncherMain {
         try {
             runBeeline(arguments.toArray(new String[arguments.size()]), logFile);
         }
-        catch (SecurityException ex) {
-            if (LauncherSecurityManager.getExitInvoked()) {
-                if (LauncherSecurityManager.getExitCode() != 0) {
-                    throw ex;
-                }
-            }
-        }
         finally {
             System.out.println("\n<<< Invocation of Beeline command completed <<<\n");
             writeExternalChildIDs(logFile, HIVE2_JOB_IDS_PATTERNS, "Beeline");
@@ -256,15 +259,20 @@ public class Hive2Main extends LauncherMain {
     private String createScriptFile(String query) throws IOException {
         String filename = "oozie-hive2-query-" + System.currentTimeMillis() + ".hql";
         File f = new File(filename);
-        FileUtils.writeStringToFile(f, query, "UTF-8");
+        if (query != null && !query.endsWith(System.lineSeparator())) {
+            query += System.lineSeparator();
+        }
+        FileUtils.writeStringToFile(f, query, StandardCharsets.UTF_8);
         return filename;
     }
 
     private void runBeeline(String[] args, String logFile) throws Exception {
         // We do this instead of calling BeeLine.main so we can duplicate the error stream for harvesting Hadoop child job IDs
         BeeLine beeLine = new BeeLine();
-        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile))));
+        beeLine.setErrorStream(new PrintStream(new TeeOutputStream(System.err, new FileOutputStream(logFile)),
+                false, StandardCharsets.UTF_8.name()));
         int status = beeLine.begin(args, null);
+        beeLine.close();
         if (status != 0) {
             System.exit(status);
         }
@@ -274,7 +282,7 @@ public class Hive2Main extends LauncherMain {
         String line;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(filePath));
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String sep = System.getProperty("line.separator");
             while ((line = br.readLine()) != null) {

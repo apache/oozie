@@ -108,10 +108,10 @@ public class UUIDService implements Service {
     /**
      * Create a unique ID.
      *
-     * @param type: Type of Id. Generally 'C' for Coordinator, 'W' for Workflow and 'B' for Bundle.
+     * @param type Type of Id. Generally 'C' for Coordinator, 'W' for Workflow and 'B' for Bundle.
      * @return unique ID, id = "${sequence}-${systemId}-[C|W|B]" where,
      * sequence is ${padded_counter}-${startTime} whose length is exactly 7 + 1 + 15 = 23 characters.
-     * systemId is the value defined in the {@link #CONF_SYSTEM_ID} configuration property.
+     * systemId is the value defined in the {@link Services#CONF_SYSTEM_ID} configuration property.
      * Unique ID Example: 0007728-150515180312570-oozie-oozi-W
      */
     public String generateId(ApplicationType type) {

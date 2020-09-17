@@ -24,7 +24,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -47,6 +51,7 @@ import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
@@ -56,39 +61,51 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
+import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
+import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
+import org.apache.oozie.util.db.AlwaysFailingHSQLDriverMapper;
+import org.apache.oozie.util.db.FailingHSQLDBDriverWrapper;
+import org.apache.oozie.util.db.FailingDBHelperForTest;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestSLACalculatorMemory extends XDataTestCase {
+import javax.annotation.Nullable;
 
+public class TestSLACalculatorMemory extends XDataTestCase {
+    private Services services;
     private JPAService jpaService;
+    private Instrumentation instrumentation;
 
     @Override
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
+        services = new Services();
         Configuration conf = services.get(ConfigurationService.class).getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
-                + "org.apache.oozie.sla.service.SLAService");
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService," +
+                "org.apache.oozie.sla.service.SLAService," +
+                "org.apache.oozie.service.InstrumentationService");
         conf.setInt(SLAService.CONF_SLA_CHECK_INTERVAL, 600);
         services.init();
-        jpaService = Services.get().get(JPAService.class);
+        jpaService = services.get(JPAService.class);
+        instrumentation = services.get(InstrumentationService.class).get();
     }
 
     @Override
     @After
     protected void tearDown() throws Exception {
-        Services.get().destroy();
+        services.destroy();
         super.tearDown();
     }
 
@@ -144,6 +161,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         slaCalcMemory.addRegistration(jobId2, slaRegBean2);
         slaCalcMemory.addRegistration(jobId3, slaRegBean3);
 
+        slaCalcMemory.updateAllSlaStatus();
         SLACalcStatus calc1 = slaCalcMemory.get(jobId1);
         SLACalcStatus calc2 = slaCalcMemory.get(jobId2);
         SLACalcStatus calc3 = slaCalcMemory.get(jobId3);
@@ -190,7 +208,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
-
+        slaCalcMemory.updateAllSlaStatus();
 
         SLACalcStatus calc = new SLACalcStatus(SLASummaryQueryExecutor.getInstance().get(
                 SLASummaryQuery.GET_SLA_SUMMARY, jobId1), SLARegistrationQueryExecutor.getInstance().get(
@@ -250,7 +268,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
         SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
-        String jobId1 = slaRegBean1.getId();
+        final String jobId1 = slaRegBean1.getId();
         slaRegBean1.setExpectedEnd(sdf.parse("2013-03-07"));
         slaRegBean1.setExpectedStart(sdf.parse("2012-03-07"));
         slaCalcMemory.addRegistration(jobId1, slaRegBean1);
@@ -276,6 +294,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMemory.updateAllSlaStatus();
+
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("job-1-W", slaSummary.getId());
         assertEquals(8, slaSummary.getEventProcessed());
@@ -302,6 +322,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         slaCalcMemory = new SLACalculatorMemory();
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMemory.updateAllSlaStatus();
 
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         assertEquals("FAILED", slaSummary.getJobStatus());
@@ -323,8 +344,16 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         SLASummaryQueryExecutor.getInstance().executeUpdate(SLASummaryQuery.UPDATE_SLA_SUMMARY_ALL, slaSummaryBean);
 
-        slaCalcMemory = new SLACalculatorMemory();
-        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLAService slaService = Services.get().get(SLAService.class);
+        slaService.startSLAWorker();
+        slaService.addStatusEvent(jobId1, "RUNNING", null, null, null);
+        waitFor(60 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                return SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1)
+                        .getEventProcessed() == 7;
+            }
+        });
+
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, slaSummaryBean.getId());
         //since job is already running and it's a old job
         assertEquals(7, slaSummary.getEventProcessed());
@@ -484,6 +513,8 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         CoordActionQueryExecutor.getInstance().executeUpdate(CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction2);
 
         slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        slaCalcMemory.updateAllSlaStatus();
+
         slaSummary = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId1);
         slaSummary2 = SLASummaryQueryExecutor.getInstance().get(SLASummaryQuery.GET_SLA_SUMMARY, jobId2);
 
@@ -971,4 +1002,329 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         assertEquals(slaSummaryBean.getJobStatus(), WorkflowInstance.Status.SUCCEEDED.toString());
     }
 
+    public void testSingleAddUpdateRemoveInstrumentedCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+
+        WorkflowJobBean job1 = addRecordToWfJobTable(WorkflowJob.Status.PREP, WorkflowInstance.Status.PREP);
+        SLARegistrationBean slaRegBean = _createSLARegistration(job1.getId(), AppType.WORKFLOW_JOB);
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000);
+        slaRegBean.setExpectedStart(startTime); // 1 hour back
+        slaRegBean.setExpectedDuration(1000);
+        slaRegBean.setExpectedEnd(new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000));
+        String jobId = slaRegBean.getId();
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+
+        long slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+
+        assertEquals("SLA map size after add should be 1", 1, slaMapSize);
+
+        slaCalcMemory.updateJobSla(jobId);
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after update should be 1", 1, slaMapSize);
+
+        slaCalcMemory.removeRegistration(jobId);
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after remove should be 0", 0, slaMapSize);
+    }
+
+    public void testAddMultipleRestartRemoveMultipleInstrumentedCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLARegistrationBean slaRegBean1 = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
+        String jobId1 = slaRegBean1.getId();
+        SLARegistrationBean slaRegBean2 = _createSLARegistration("job-2-W", AppType.WORKFLOW_JOB);
+        String jobId2 = slaRegBean2.getId();
+        SLARegistrationBean slaRegBean3 = _createSLARegistration("job-3-W", AppType.WORKFLOW_JOB);
+        String jobId3 = slaRegBean3.getId();
+        List<String> idList = new ArrayList<String>();
+        idList.add(slaRegBean1.getId());
+        idList.add(slaRegBean2.getId());
+        idList.add(slaRegBean3.getId());
+        createWorkflow(idList);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+        slaRegBean1.setAppName("app-name");
+        slaRegBean1.setExpectedDuration(10000);
+        slaRegBean1.setExpectedEnd(sdf.parse("2012-02-07"));
+        slaRegBean1.setExpectedStart(sdf.parse("2011-02-07"));
+        slaRegBean1.setNominalTime(sdf.parse("2012-01-06"));
+        slaRegBean1.setUser("user");
+        slaRegBean1.setParentId("parentId");
+        slaRegBean1.setUpstreamApps("upstreamApps");
+        slaRegBean1.setNotificationMsg("notificationMsg");
+        slaRegBean1.setAlertContact("a@abc.com");
+        slaRegBean1.setAlertEvents("MISS");
+        slaRegBean1.setJobData("jobData");
+
+        Date startTime = new Date(System.currentTimeMillis() - 1 * 1 * 3600 * 1000); // 1 hour back
+        Date endTime = new Date(System.currentTimeMillis() + 2 * 1 * 3600 * 1000); // 1 hour back
+
+        slaRegBean3.setExpectedStart(startTime);
+        slaRegBean3.setExpectedEnd(endTime);
+
+        slaCalcMemory.addRegistration(jobId1, slaRegBean1);
+        slaCalcMemory.addRegistration(jobId2, slaRegBean2);
+        slaCalcMemory.addRegistration(jobId3, slaRegBean3);
+
+        long slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+
+        assertEquals("SLA map size after add all should be 3", 3, slaMapSize);
+
+        slaCalcMemory.updateAllSlaStatus();
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after update all should be 2. An instance of SLACalcStatus was removed", 2, slaMapSize);
+
+        slaCalcMemory.removeRegistration(jobId1);
+        slaCalcMemory.removeRegistration(jobId2);
+        slaCalcMemory.removeRegistration(jobId3);
+
+        slaMapSize = instrumentation.getCounters().get(SLACalculatorMemory.INSTRUMENTATION_GROUP).
+                get(SLACalculatorMemory.SLA_MAP).getValue();
+        assertEquals("SLA map size after remove all should be 0", 0, slaMapSize);
+    }
+
+
+    public void testWhenSLARegistrationIsAddedBeanIsStoredCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
+        slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+        Assert.assertNotNull(slaCalcMemory.get(slaRegBean.getId()));
+        Assert.assertEquals(slaRegBean, slaCalcMemory.get(slaRegBean.getId()).getSLARegistrationBean());
+    }
+
+    public void testWhenSLARegistrationIsAddedAndAllDBCallsAreDisruptedBeanIsNotStored() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        SLARegistrationBean slaRegBean = _createSLARegistration("job-1-W", AppType.WORKFLOW_JOB);
+
+        try {
+            FailingDBHelperForTest.setDbPredicate(new SLARegistrationInsertUpdatePredicate());
+            prepareFailingDB();
+            slaCalcMemory.addRegistration(slaRegBean.getId(), slaRegBean);
+            fail("Expected JPAExecutorException not thrown");
+        } catch (JPAExecutorException ex) {
+            Assert.assertNull(slaCalcMemory.get(slaRegBean.getId()));
+        } finally {
+            FailingDBHelperForTest.resetDbPredicate();
+            System.clearProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER);
+        }
+
+    }
+
+    public void testWhenSLARegistrationIsUpdatedBeanIsStoredCorrectly() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        final String jobId = "job-1-W";
+        SLARegistrationBean slaRegBean = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        SLARegistrationBean slaRegBean2 = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+
+        addAndUpdateRegistration(slaCalcMemory, jobId, slaRegBean, slaRegBean2);
+
+        Assert.assertNotNull(slaCalcMemory.get(jobId));
+        Assert.assertEquals("The updated SLA registration bean should be in the cache",
+                slaRegBean2, slaCalcMemory.get(jobId).getSLARegistrationBean());
+    }
+
+    public void testWhenSLARegistrationIsUpdatedAndAllDBCallsAreDisruptedBeanIsNotStored() throws Exception {
+        SLACalculatorMemory slaCalcMemory = new SLACalculatorMemory();
+        slaCalcMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        final String jobId = "job-1-W";
+        SLARegistrationBean slaRegBean = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        SLARegistrationBean slaRegBean2 = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        final int expectedDuration = 1000;
+        slaRegBean2.setExpectedDuration(expectedDuration);
+
+        try {
+            addAndUpdateRegistrationWithDBCrushSimulation(slaCalcMemory, jobId, slaRegBean, slaRegBean2);
+            fail("Expected JPAExecutorException not thrown");
+        } catch (JPAExecutorException ex) {
+            Assert.assertNotNull(slaCalcMemory.get(slaRegBean.getId()));
+            // the update failed
+            Assert.assertEquals(slaRegBean, slaCalcMemory.get(jobId).getSLARegistrationBean());
+        } finally {
+            FailingDBHelperForTest.resetDbPredicate();
+            System.clearProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER);
+        }
+    }
+
+    public void testWhenSLARegistrationExistsWithoutSLASummaryUpdateSLARetries() throws Exception {
+        final SLACalculatorMemory slaCalculatorMemory = new SLACalculatorMemory();
+        slaCalculatorMemory.init(Services.get().get(ConfigurationService.class).getConf());
+        final String jobId = "job-1-W";
+        final SLARegistrationBean slaRegistration = _createSLARegistration(jobId, AppType.WORKFLOW_JOB);
+        slaCalculatorMemory.addRegistration(jobId, slaRegistration);
+
+        updateJobSlaFailing(slaCalculatorMemory, jobId,
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Assert.assertNotNull("after first update, SLACalcStatus should still be present",
+                                    slaCalculatorMemory.get(slaRegistration.getId()));
+                            Assert.assertEquals("updating SLA_REGISTRATION should have been failed",
+                                    slaRegistration,
+                                    slaCalculatorMemory.get(jobId).getSLARegistrationBean());
+                            Assert.assertEquals("SLACalcStatus.retryCount should have been increased",
+                                    1, slaCalculatorMemory.get(jobId).getRetryCount());
+                        } catch (JPAExecutorException ignored) {
+                        }
+                    }
+                });
+
+        updateJobSlaFailing(slaCalculatorMemory, jobId,
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Assert.assertNotNull("after second update, SLACalcStatus should still be present",
+                                    slaCalculatorMemory.get(slaRegistration.getId()));
+                            Assert.assertEquals("updating SLA_REGISTRATION should have been failed",
+                                    slaRegistration,
+                                    slaCalculatorMemory.get(jobId).getSLARegistrationBean());
+                            Assert.assertEquals("SLACalcStatus.retryCount should have been increased",
+                                    2, slaCalculatorMemory.get(jobId).getRetryCount());
+                        } catch (JPAExecutorException ignored) {
+                        }
+                    }
+                }
+        );
+
+        updateJobSlaFailing(slaCalculatorMemory, jobId,
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Assert.assertNotNull("after third update, SLACalcStatus should still be present",
+                                    slaCalculatorMemory.get(slaRegistration.getId()));
+                            Assert.assertEquals("updating SLA_REGISTRATION should have been failed",
+                                    slaRegistration,
+                                    slaCalculatorMemory.get(jobId).getSLARegistrationBean());
+                            Assert.assertEquals("SLACalcStatus.retryCount should have been increased",
+                                    3, slaCalculatorMemory.get(jobId).getRetryCount());
+                        } catch (JPAExecutorException ignored) {
+                        }
+                    }
+                }
+        );
+
+        updateJobSlaFailing(slaCalculatorMemory, jobId,
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Assert.assertNull("after fourth update, SLACalcStatus should no more be present",
+                                    slaCalculatorMemory.get(slaRegistration.getId()));
+                        } catch (JPAExecutorException ignored) {
+                        }
+                    }
+                }
+        );
+    }
+
+    private void updateJobSlaFailing(final SLACalculatorMemory slaCalculatorMemory,
+                                     final String jobId,
+                                     final Runnable assertsWhenFailing)
+            throws Exception {
+        try {
+            FailingDBHelperForTest.setDbPredicate(new SLASummarySelectPredicate(1));
+            prepareFailingDB();
+
+            slaCalculatorMemory.updateJobSla(jobId);
+        }
+        catch (final JPAExecutorException e) {
+            assertsWhenFailing.run();
+        }
+        finally {
+            FailingDBHelperForTest.resetDbPredicate();
+            System.clearProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER);
+        }
+    }
+
+    private void addAndUpdateRegistration(final SLACalculatorMemory slaCalcMemory, final String jobId,
+                                          final SLARegistrationBean slaRegBean, final SLARegistrationBean slaRegBean2)
+            throws JPAExecutorException {
+        slaCalcMemory.addRegistration(jobId, slaRegBean);
+        slaCalcMemory.updateRegistration(jobId, slaRegBean2);
+    }
+
+    private void addAndUpdateRegistrationWithDBCrushSimulation(final SLACalculatorMemory slaCalcMemory, final String jobId,
+                                                               final SLARegistrationBean slaRegBean,
+                                                               final SLARegistrationBean slaRegBean2) throws Exception {
+        slaCalcMemory.addRegistration(jobId, slaRegBean);
+        FailingDBHelperForTest.setDbPredicate(new SLARegistrationInsertUpdatePredicate());
+        prepareFailingDB();
+        slaCalcMemory.updateRegistration(jobId, slaRegBean2);
+    }
+
+    private void prepareFailingDB() throws ServiceException {
+        System.setProperty(FailingHSQLDBDriverWrapper.USE_FAILING_DRIVER, Boolean.TRUE.toString());
+        Configuration conf = services.get(ConfigurationService.class).getConf();
+        conf.set(JPAService.CONF_DRIVER, AlwaysFailingHSQLDriverMapper.class.getCanonicalName());
+        conf.setInt(JPAService.MAX_RETRY_COUNT, 2);
+        jpaService.destroy();
+        jpaService.init(services);
+    }
+
+    static class SLARegistrationInsertUpdatePredicate extends DmlPredicate {
+        SLARegistrationInsertUpdatePredicate() {
+            super("SLA_REGISTRATION", Sets.newHashSet("INSERT INTO ", "UPDATE "));
+        }
+    }
+
+    static class SLASummarySelectPredicate extends DmlPredicate {
+        private int remainingSuccessfulAttempts;
+        SLASummarySelectPredicate(final int remainingSuccessfulAttempts) {
+            super("SLA_SUMMARY", Sets.newHashSet("SELECT "));
+            this.remainingSuccessfulAttempts = remainingSuccessfulAttempts;
+        }
+
+        @Override
+        public boolean test(@Nullable String input) {
+            if (super.test(input)) {
+                if (remainingSuccessfulAttempts <= 0) {
+                    return true;
+                }
+                else {
+                    remainingSuccessfulAttempts--;
+                    return false;
+                }
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
+    static class DmlPredicate implements java.util.function.Predicate<String> {
+        private final String tableName;
+        private final Set<String> operationPrefixes;
+
+        DmlPredicate(final String tableName, final Set<String> operationPrefixes) {
+            this.tableName = tableName;
+            this.operationPrefixes = operationPrefixes;
+        }
+
+        @Override
+        public boolean test(@Nullable String input) {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(input));
+            boolean operationMatch = false;
+            for (String s: operationPrefixes) {
+                if (input.startsWith(s)) {
+                    operationMatch = true;
+                    break;
+                }
+            }
+            return operationMatch && input.toUpperCase().contains(tableName);
+        }
+    }
 }

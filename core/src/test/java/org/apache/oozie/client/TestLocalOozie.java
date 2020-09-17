@@ -23,9 +23,9 @@ import org.apache.oozie.local.LocalOozie;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import java.io.File;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class TestLocalOozie extends XFsTestCase {
@@ -82,7 +82,7 @@ public class TestLocalOozie extends XFsTestCase {
         fs.mkdirs(new Path(appPath, "lib"));
 
         Path workflow = new Path(appPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflow));
+        Writer writer = new OutputStreamWriter(fs.create(workflow), StandardCharsets.UTF_8);
         writer.write(wfApp);
         writer.close();
 

@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -137,7 +138,8 @@ public class TestV0JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(contentType));
-                String output = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream()), 1000);
+                String output = IOUtils.getReaderAsString(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8), 1000);
                 assertEquals(response, output);
                 assertEquals(show, MockDagEngineService.did);
 
@@ -176,7 +178,8 @@ public class TestV0JobServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockDagEngineService.JOB_ID + 1 + MockDagEngineService.JOB_ID_END,
                              obj.get(JsonTags.WORKFLOW_ID));
                 assertEquals(RestConstants.JOB_SHOW_INFO, MockDagEngineService.did);

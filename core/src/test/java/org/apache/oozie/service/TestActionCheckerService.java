@@ -19,9 +19,11 @@
 package org.apache.oozie.service;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Date;
 
@@ -88,7 +90,8 @@ public class TestActionCheckerService extends XDataTestCase {
      */
     public void testActionCheckerService() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
@@ -151,7 +154,8 @@ public class TestActionCheckerService extends XDataTestCase {
      */
     public void testActionCheckerServiceDelay() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine("u");

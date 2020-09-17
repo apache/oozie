@@ -35,32 +35,51 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TestWorkflowNotificationXCommand extends XTestCase {
     private EmbeddedServletContainer container;
+    private CallbackServlet callbackServlet;
 
+    @SuppressWarnings("serial")
     public static class CallbackServlet extends HttpServlet {
-        public static volatile String JOB_ID = null;
-        public static String NODE_NAME = null;
-        public static String STATUS = null;
-        public static String PARENT_ID = null;
-
-        public static void reset() {
-            JOB_ID = null;
-            NODE_NAME = null;
-            STATUS = null;
-            PARENT_ID = null;
-        }
+        String jobID = null;
+        String nodeName = null;
+        String status = null;
+        String parentID = null;
+        final ReentrantLock lock = new ReentrantLock();
+        final Condition updated = lock.newCondition();
+        boolean requestProcessed = false;
 
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            JOB_ID = req.getParameter("jobId");
-            NODE_NAME = req.getParameter("nodeName");
-            STATUS = req.getParameter("status");
-            PARENT_ID = req.getParameter("parentId");
+            jobID = req.getParameter("jobId");
+            nodeName = req.getParameter("nodeName");
+            status = req.getParameter("status");
+            parentID = req.getParameter("parentId");
             resp.setStatus(HttpServletResponse.SC_OK);
+
+            lock.lock();
+            try {
+                requestProcessed = true;
+                updated.signalAll();
+            } finally {
+                lock.unlock();
+            }
         }
 
+        public void waitUntilRequestProcessed() throws InterruptedException {
+            lock.lock();
+            try {
+                while (!requestProcessed) {
+                    updated.await(10, TimeUnit.SECONDS);
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
     }
 
     @Override
@@ -71,8 +90,8 @@ public class TestWorkflowNotificationXCommand extends XTestCase {
         services.init();
         container = new EmbeddedServletContainer("blah");
         container.addServletEndpoint("/hang/*", HangServlet.class);
-        CallbackServlet.reset();
-        container.addServletEndpoint("/callback/*", CallbackServlet.class);
+        callbackServlet = new CallbackServlet();
+        container.addServletEndpoint("/callback/*", callbackServlet);
         container.start();
     }
 
@@ -110,7 +129,6 @@ public class TestWorkflowNotificationXCommand extends XTestCase {
     }
 
     public void testWFNotification() throws Exception {
-
         String notificationUrl = "/callback/wf?jobId=$jobId&parentId=$parentId";
         _testNotificationParentId(notificationUrl, "1", null, "");
 
@@ -139,8 +157,9 @@ public class TestWorkflowNotificationXCommand extends XTestCase {
         WorkflowNotificationXCommand command = new WorkflowNotificationXCommand(workflow);
         command.setRetry(3);
         command.call();
+        callbackServlet.waitUntilRequestProcessed();
 
-        Assert.assertEquals(jobId, CallbackServlet.JOB_ID);
-        Assert.assertEquals(expectedParentId, CallbackServlet.PARENT_ID);
+        Assert.assertEquals(jobId, callbackServlet.jobID);
+        Assert.assertEquals(expectedParentId, callbackServlet.parentID);
     }
 }

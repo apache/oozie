@@ -94,11 +94,13 @@ public interface HCatDependencyCache {
 
     /**
      * Purge stale actions
+     * @param coordActions the actions to purge
      */
     void removeNonWaitingCoordActions(Set<String> coordActions);
 
     /**
      * Remove coordAction when all dependencies met
+     * @param coordAction the actions to remove
      */
     void removeCoordActionWithDependenciesAvailable(String coordAction);
 

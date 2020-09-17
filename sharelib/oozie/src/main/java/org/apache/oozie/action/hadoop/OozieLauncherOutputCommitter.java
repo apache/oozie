@@ -29,13 +29,13 @@ import org.apache.hadoop.mapred.TaskAttemptContext;
 public class OozieLauncherOutputCommitter extends OutputCommitter {
 
     public OozieLauncherOutputCommitter() {
-        File propConf = new File(LauncherMapper.PROPAGATION_CONF_XML);
+        File propConf = new File(LauncherAMUtils.PROPAGATION_CONF_XML);
         if (!propConf.exists()) {
             try {
                 propConf.createNewFile();
             }
             catch (IOException e) {
-                System.out.println("Failed to create " + LauncherMapper.PROPAGATION_CONF_XML);
+                System.out.println("Failed to create " + LauncherAMUtils.PROPAGATION_CONF_XML);
                 e.printStackTrace(System.err);
             }
         }
@@ -51,7 +51,7 @@ public class OozieLauncherOutputCommitter extends OutputCommitter {
 
     /**
      * Did this task write any files in the work directory?
-     * @param context the task's context
+     * @param taskContext the task's context
      */
     @Override
     public boolean needsTaskCommit(TaskAttemptContext taskContext) throws IOException {

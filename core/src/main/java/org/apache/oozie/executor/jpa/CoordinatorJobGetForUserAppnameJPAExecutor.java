@@ -23,8 +23,9 @@ import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
+
+import java.util.Objects;
 
 /**
  * DB query executor to fetch columns 'user' and 'appName' from Coordinator Job table
@@ -34,26 +35,15 @@ public class CoordinatorJobGetForUserAppnameJPAExecutor implements JPAExecutor<C
     private String coordJobId = null;
 
     public CoordinatorJobGetForUserAppnameJPAExecutor(String coordJobId) {
-        ParamChecker.notNull(coordJobId, "coordJobId");
+        Objects.requireNonNull(coordJobId, "coordJobId cannot be null");
         this.coordJobId = coordJobId;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordinatorJobGetForUserAppnameJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public CoordinatorJobBean execute(EntityManager em) throws JPAExecutorException {
         try {

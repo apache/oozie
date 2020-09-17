@@ -22,21 +22,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.ActionExecutorTestCase.Context;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
-import org.apache.oozie.test.XTestCase.Predicate;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 
@@ -51,7 +44,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
     public void testDistCpFile() throws Exception {
         Path inputPath = new Path(getFsTestCaseDir(), "input.txt");
         final Path outputPath = new Path(getFsTestCaseDir(), "output.txt");
-        byte[] content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes();
+        byte[] content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes(StandardCharsets.UTF_8);
 
         OutputStream os = getFileSystem().create(inputPath);
         os.write(content);
@@ -64,13 +57,8 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
                 "<arg>" + outputPath + "</arg>" +
                 "</distcp>";
         Context context = createContext(actionXml);
-        final RunningJob runningJob = submitAction(context);
-        waitFor(60 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return runningJob.isComplete();
-            }
-        });
-        assertTrue(runningJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
         waitFor(60 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {
@@ -139,7 +127,7 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         return new Context(wf, action);
     }
 
-    protected RunningJob submitAction(Context context) throws Exception {
+    protected String submitAction(Context context) throws Exception {
         DistcpActionExecutor ae = new DistcpActionExecutor();
 
         WorkflowAction action = context.getAction();
@@ -154,14 +142,8 @@ public class TestDistCpActionExecutor extends ActionExecutorTestCase{
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        jobConf.set("mapred.job.tracker", jobTracker);
-
-        JobClient jobClient =
-            Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+        ae.submitLauncher(getFileSystem(), context, context.getAction());
+        return context.getAction().getExternalId();
     }
 
 }

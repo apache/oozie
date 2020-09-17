@@ -18,7 +18,6 @@
 
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.jsp.JettyJspServlet;
@@ -37,6 +36,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Helper class that is used to handle JSP requests in Oozie server.
@@ -72,11 +72,14 @@ public class JspHandler {
     /**
      * Setup the basic application "context" for this application at "/"
      * This is also known as the handler tree (in jetty speak)
+     * @param servletContextHandler the context handler
+     * @throws IOException in case of IO errors
+     * @throws URISyntaxException if the server URI is not well formatted
      */
     public void setupWebAppContext(WebAppContext servletContextHandler)
             throws IOException, URISyntaxException
     {
-        Preconditions.checkNotNull(servletContextHandler, "servletContextHandler is null");
+        Objects.requireNonNull(servletContextHandler, "servletContextHandler is null");
 
         File scratchDir = getScratchDir();
         servletContextHandler.setAttribute("javax.servlet.context.tempdir", scratchDir);

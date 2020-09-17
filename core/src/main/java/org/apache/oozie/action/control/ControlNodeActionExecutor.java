@@ -41,18 +41,22 @@ import java.util.List;
  */
 public abstract class ControlNodeActionExecutor extends ActionExecutor {
 
+    protected final XLog LOG = XLog.getLog(getClass());
+
     public ControlNodeActionExecutor(String type) {
         super(type);
     }
 
     @SuppressWarnings("unchecked")
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Starting action");
         context.setStartData("-", "-", "-");
         context.setExecutionData("OK", null);
     }
 
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
         context.setEndData(WorkflowAction.Status.OK, getActionSignal(WorkflowAction.Status.OK));
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
     }
 
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {

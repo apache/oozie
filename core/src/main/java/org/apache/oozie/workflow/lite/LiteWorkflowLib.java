@@ -31,8 +31,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import javax.xml.validation.Schema;
 import java.io.StringReader;
-import java.util.Date;
-import java.util.Map;
+import java.util.Objects;
 
 //TODO javadoc
 public abstract class LiteWorkflowLib implements WorkflowLib {
@@ -60,7 +59,7 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
 
     @Override
     public WorkflowInstance createInstance(WorkflowApp app, Configuration conf) throws WorkflowException {
-        ParamChecker.notNull(app, "app");
+        Objects.requireNonNull(app, "app cannot be null");
         String jobId = Services.get().get(UUIDService.class).generateId(ApplicationType.WORKFLOW);
         return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, jobId);
     }
@@ -68,8 +67,8 @@ public abstract class LiteWorkflowLib implements WorkflowLib {
     @Override
     public WorkflowInstance createInstance(WorkflowApp app, Configuration conf, String wfId)
             throws WorkflowException {
-        ParamChecker.notNull(app, "app");
-        ParamChecker.notNull(wfId, "wfId");
+        Objects.requireNonNull(app, "app cannot be null");
+        Objects.requireNonNull(wfId, "wfId cannot be null");
         return new LiteWorkflowInstance((LiteWorkflowApp) app, conf, wfId);
     }
 }

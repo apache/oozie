@@ -29,7 +29,7 @@ import org.apache.oozie.util.StatusUtils;
  * rerunChildren() : submit or queue commands to rerun children
  * notifyParent() : update the status to upstream if any
  *
- * @param <T>
+ * @param <T> template parameter
  */
 public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
     protected String jobId;
@@ -59,9 +59,6 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
         super(name, type, priority, dryrun);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
     @Override
     public void transitToNext() {
         if (job == null) {
@@ -86,9 +83,6 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
      */
     public abstract void rerunChildren() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#execute()
-     */
     @Override
     protected T execute() throws CommandException {
         getLog().info("STARTED " + getClass().getSimpleName() + " for jobId=" + jobId);
@@ -105,25 +99,16 @@ public abstract class RerunTransitionXCommand<T> extends TransitionXCommand<T> {
         return ret;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         eagerVerifyPrecondition();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerLoadState()
-     */
     @Override
     protected void eagerLoadState() throws CommandException {
         loadState();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#eagerVerifyPrecondition()
-     */
     @Override
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
         if (getJob().getStatus() == Job.Status.KILLED || getJob().getStatus() == Job.Status.FAILED

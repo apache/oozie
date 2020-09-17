@@ -19,7 +19,6 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.OozieJsonFactory;
 import org.apache.oozie.WorkflowsInfo;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
@@ -57,7 +56,8 @@ public class V0JobsServlet extends BaseJobsServlet {
         try {
             String action = request.getParameter(RestConstants.ACTION_PARAM);
             if (action != null && !action.equals(RestConstants.JOB_ACTION_START)) {
-                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM, action);
+                throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303, RestConstants.ACTION_PARAM,
+                        action);
             }
             boolean startJob = (action != null);
             String user = conf.get(OozieClient.USER_NAME);
@@ -76,7 +76,8 @@ public class V0JobsServlet extends BaseJobsServlet {
      * v0 service implementation to get a JSONObject representation of a job from its external ID
      */
     @Override
-    protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException, IOException {
+    protected JSONObject getJobIdForExternalId(HttpServletRequest request, String externalId) throws XServletException,
+    IOException {
         JSONObject json = new JSONObject();
         try {
             DagEngine dagEngine = Services.get().get(DagEngineService.class)
@@ -96,7 +97,7 @@ public class V0JobsServlet extends BaseJobsServlet {
      */
     @Override
     protected JSONObject getJobs(HttpServletRequest request) throws XServletException, IOException {
-        JSONObject json = new JSONObject();
+        JSONObject json;
         try {
             String filter = request.getParameter(RestConstants.JOBS_FILTER_PARAM);
             String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
@@ -108,12 +109,7 @@ public class V0JobsServlet extends BaseJobsServlet {
             DagEngine dagEngine = Services.get().get(DagEngineService.class)
             .getDagEngine(getUser(request));
             WorkflowsInfo jobs = dagEngine.getJobs(filter, start, len);
-            List<WorkflowJobBean> jsonWorkflows = jobs.getWorkflows();
-            json.put(JsonTags.WORKFLOWS_JOBS, WorkflowJobBean.toJSONArray(jsonWorkflows, "GMT"));
-            json.put(JsonTags.WORKFLOWS_TOTAL, jobs.getTotal());
-            json.put(JsonTags.WORKFLOWS_OFFSET, jobs.getStart());
-            json.put(JsonTags.WORKFLOWS_LEN, jobs.getLen());
-
+            json = OozieJsonFactory.getWFJSONObject(jobs, "GMT");
         }
         catch (DagEngineException ex) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
@@ -123,45 +119,41 @@ public class V0JobsServlet extends BaseJobsServlet {
     }
 
 
+    @Override
+    protected void checkAndWriteApplicationXMLToHDFS(String requestUser, Configuration conf) throws XServletException {
+        // NOP
+    }
+
     /**
      * service implementation to bulk kill jobs
-     * @param request
-     * @param response
-     * @return
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return nothing, throws UnsupportedOperationException
      */
     @Override
-    protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject killJobs(HttpServletRequest request, HttpServletResponse response) {
         throw new UnsupportedOperationException("method not implemented in V0 API");
     }
 
     /**
      * service implementation to bulk suspend jobs
-     * @param request
-     * @param response
-     * @return
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return nothing, throws UnsupportedOperationException
      */
     @Override
-    protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject suspendJobs(HttpServletRequest request, HttpServletResponse response) {
         throw new UnsupportedOperationException("method not implemented in V0 API");
     }
 
     /**
      * service implementation to bulk resume jobs
-     * @param request
-     * @param response
-     * @return
-     * @throws XServletException
-     * @throws IOException
+     * @param request the request
+     * @param response the response
+     * @return nothing, throws UnsupportedOperationException
      */
     @Override
-    protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) throws XServletException,
-            IOException {
+    protected JSONObject resumeJobs(HttpServletRequest request, HttpServletResponse response) {
         throw new UnsupportedOperationException("method not implemented in V0 API");
     }
 }

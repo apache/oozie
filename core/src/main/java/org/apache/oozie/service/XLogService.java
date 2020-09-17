@@ -56,7 +56,6 @@ import java.util.Map;
  * the automatic reloading interval is defined by the Java System property <code>oozie.log4j.reload</code>. The default
  * value is 10 seconds.
  * <p>
- * <p>
  * Unlike most of the other Services, XLogService isn't easily overridable because Services depends on XLogService being available
  */
 public class XLogService implements Service, Instrumentable {
@@ -144,6 +143,7 @@ public class XLogService implements Service, Instrumentable {
         String oozieHome = Services.getOozieHome();
         String oozieLogs = System.getProperty(OOZIE_LOG_DIR, oozieHome + "/logs");
         System.setProperty(OOZIE_LOG_DIR, oozieLogs);
+
         try {
             LogManager.resetConfiguration();
             log4jFileName = System.getProperty(LOG4J_FILE, DEFAULT_LOG4J_PROPERTIES);
@@ -199,8 +199,9 @@ public class XLogService implements Service, Instrumentable {
 
             // Getting configuration for oozie log via WS
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            InputStream is = (fromClasspath) ? cl.getResourceAsStream(log4jFileName) : new FileInputStream(log4jFile);
-            extractInfoForLogWebService(is);
+            try ( InputStream is = (fromClasspath) ? cl.getResourceAsStream(log4jFileName) : new FileInputStream(log4jFile); ) {
+                extractInfoForLogWebService(is);
+            }
         }
         catch (IOException ex) {
             throw new ServiceException(ErrorCode.E0010, ex.getMessage(), ex);
@@ -211,7 +212,8 @@ public class XLogService implements Service, Instrumentable {
         Properties props = new Properties();
         props.load(is);
 
-        Configuration conf = new XConfiguration();
+        XConfiguration conf = new XConfiguration();
+        conf.setRestrictSystemProperties(false);
         for (Map.Entry entry : props.entrySet()) {
             conf.set((String) entry.getKey(), (String) entry.getValue());
         }
@@ -295,23 +297,23 @@ public class XLogService implements Service, Instrumentable {
         });
     }
 
-    boolean getLogOverWS() {
+    public boolean getLogOverWS() {
         return logOverWS;
     }
 
-    boolean isErrorLogEnabled(){
+    public boolean isErrorLogEnabled(){
         return errorLogEnabled;
     }
 
-    int getOozieLogRotation() {
+    public int getOozieLogRotation() {
         return oozieLogRotation;
     }
 
-    int getOozieErrorLogRotation() {
+    public int getOozieErrorLogRotation() {
         return oozieErrorLogRotation;
     }
 
-    int getOozieAuditLogRotation() {
+    public int getOozieAuditLogRotation() {
         return oozieAuditLogRotation;
     }
 
@@ -323,7 +325,7 @@ public class XLogService implements Service, Instrumentable {
         return oozieAuditLogName;
     }
 
-    boolean isAuditLogEnabled() {
+    public boolean isAuditLogEnabled() {
         return auditLogEnabled;
     }
 

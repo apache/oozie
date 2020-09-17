@@ -29,7 +29,6 @@ import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.command.CommandException;
@@ -46,34 +45,27 @@ import org.apache.oozie.client.XOozieClient;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
 
 public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
 
-    protected static final Set<String> MANDATORY_OOZIE_CONFS = new HashSet<String>();
-    protected static final Set<String> OPTIONAL_OOZIE_CONFS = new HashSet<String>();
-
-    static {
-        MANDATORY_OOZIE_CONFS.add(XOozieClient.JT);
-        MANDATORY_OOZIE_CONFS.add(XOozieClient.NN);
-        MANDATORY_OOZIE_CONFS.add(OozieClient.LIBPATH);
-
-        OPTIONAL_OOZIE_CONFS.add(XOozieClient.FILES);
-        OPTIONAL_OOZIE_CONFS.add(XOozieClient.ARCHIVES);
-    }
+    static final Set<String> MANDATORY_OOZIE_CONFS = ImmutableSet.of(XOozieClient.RM, XOozieClient.NN, OozieClient.LIBPATH);
+    static final Set<String> OPTIONAL_OOZIE_CONFS = ImmutableSet.of(XOozieClient.FILES, XOozieClient.ARCHIVES);
 
     private Configuration conf;
 
     public SubmitHttpXCommand(String name, String type, Configuration conf) {
         super(name, type, 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
     private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
 
     static {
@@ -82,10 +74,6 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     abstract protected Element generateSection(Configuration conf, Namespace ns);
@@ -182,9 +170,6 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
         return configuration;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected String execute() throws CommandException {
         InstrumentUtils.incrJobCounter(getName(), 1, getInstrumentation());
@@ -199,6 +184,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
             WorkflowLib workflowLib = Services.get().get(WorkflowStoreService.class).getWorkflowLibWithNoDB();
 
             PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+            PropertiesUtils.checkDefaultDisallowedProperties(conf);
 
             // Resolving all variables in the job properties.
             // This ensures the Hadoop Configuration semantics is preserved.
@@ -279,7 +265,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
     /**
      * Add file section in X.
      *
-     * @param parent XML element to be appended
+     * @param X XML element to be appended
      * @param conf Configuration object
      * @param ns XML element namespace
      */
@@ -291,7 +277,7 @@ public abstract class SubmitHttpXCommand extends WorkflowXCommand<String> {
     /**
      * Add archive section in X.
      *
-     * @param parent XML element to be appended
+     * @param X XML element to be appended
      * @param conf Configuration object
      * @param ns XML element namespace
      */

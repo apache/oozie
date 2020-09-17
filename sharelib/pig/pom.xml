@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-main</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>5.3.0-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
-    <groupId>org.apache.oozie</groupId>
+
     <artifactId>oozie-sharelib-pig</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>5.3.0-SNAPSHOT</version>
     <description>Apache Oozie Share Lib Pig</description>
     <name>Apache Oozie Share Lib Pig</name>
     <packaging>jar</packaging>
@@ -38,6 +38,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>${joda.time.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.pig</groupId>
             <artifactId>pig</artifactId>
@@ -50,9 +56,10 @@
             <artifactId>jline</artifactId>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>org.python</groupId>
-            <artifactId>jython</artifactId>
+            <artifactId>jython-standalone</artifactId>
             <scope>compile</scope>
         </dependency>
 
@@ -82,9 +89,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-            <scope>provided</scope>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
 
         <dependency>
@@ -103,18 +109,13 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.oozie</groupId>
-            <artifactId>oozie-hadoop-utils</artifactId>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
            <groupId>dk.brics.automaton</groupId>
             <artifactId>automaton</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -138,9 +139,17 @@
                     <groupId>org.apache.curator</groupId>
                     <artifactId>curator-recipes</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>javax.mail</groupId>
+                    <artifactId>mail</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
-
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -164,18 +173,6 @@
                         <configuration>
                             <includeScope>compile</includeScope>
                             <outputFile>${project.build.directory}/classpath</outputFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>create-mrapp-generated-classpath</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>build-classpath</goal>
-                        </goals>
-                        <configuration>
-                            <!-- needed to run the unit test for DS to generate the required classpath
-                            that is required in the env of the launch container in the mini mr/yarn cluster -->
-                            <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath</outputFile>
                         </configuration>
                     </execution>
                 </executions>
@@ -231,6 +228,53 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>tez</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-api</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-runtime-library</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-runtime-internals</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-mapreduce</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-dag</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.tez</groupId>
+                    <artifactId>tez-yarn-timeline-history-with-acls</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hadoop-3</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
 </project>
 

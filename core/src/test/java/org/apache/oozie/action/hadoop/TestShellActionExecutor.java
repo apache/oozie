@@ -21,21 +21,16 @@ package org.apache.oozie.action.hadoop;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.ActionService;
-import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.PropertiesUtils;
@@ -69,9 +64,15 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
             ? "IF EXIST %HADOOP_CONF_DIR%\\log4j.properties echo L4J_EXISTS=yes\n"
             : "if [ -f $HADOOP_CONF_DIR/log4j.properties ]; then echo L4J_EXISTS=yes; fi\n";
     private static final String SHELL_SCRIPT_LOG4J_CONTENT_COUNTER = Shell.WINDOWS
-            ? "SET COMMAND=\"type %HADOOP_CONF_DIR%\\log4j.properties | FIND /c /v \"~DOESNOTMATCH~\"\"\n" +
-              "FOR /f %%i IN (' %COMMAND% ') DO SET L4J_LC=%%i\necho L4J_WC=%L4J_LC%\n"
-            : "echo L4J_LC=$(cat $HADOOP_CONF_DIR/log4j.properties | wc -l)\n";
+            ? "FOR /f %%i IN ('TYPE %HADOOP_CONF_DIR%\\log4j.properties " +
+              "^| FIND /c /v \"~DOESNOTMATCH~\"') DO " +
+              "SET L4J_LC=%%i\necho L4J_LC=%L4J_LC%\n" +
+              "FOR /f %%i IN ('FINDSTR \"CLA CLRA\" %HADOOP_CONF_DIR%\\log4j.properties " +
+              "^| FIND /c /v \"~DOESNOTMATCH~\"') DO " +
+              "SET L4J_APPENDER=%%i\necho L4J_APPENDER=%L4J_APPENDER%\n"
+            : "echo L4J_LC=$(cat $HADOOP_CONF_DIR/log4j.properties | wc -l)\n" +
+              "echo L4J_APPENDER=$(grep -e 'CLA' -e 'CLRA' -c " +
+              "$HADOOP_CONF_DIR/log4j.properties)\n";
 
     /**
      * Verify if the ShellActionExecutor indeed setups the basic stuffs
@@ -118,7 +119,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_CONTENT);
         w.close();
 
@@ -141,7 +142,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_HADOOP_CONF_DIR_CONTENT);
         w.write(SHELL_SCRIPT_YARN_CONF_DIR_CONTENT);
         w.write(SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER);
@@ -162,6 +163,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         String yarnConfDir = PropertiesUtils.stringToProperties(action.getData()).getProperty("YARN_CONF_DIR");
         String log4jExists = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_EXISTS");
         String log4jFileLineCount = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_LC");
+        String log4BadAppenderCount = PropertiesUtils.stringToProperties(action.getData()).getProperty("L4J_APPENDER");
         assertNotNull(oozieActionConfXml);
         assertNotNull(hadoopConfDir);
         String s = new File(oozieActionConfXml).getParent() + File.separator + "oozie-hadoop-conf-";
@@ -172,10 +174,13 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
                 "Expected YARN_CONF_DIR to start with " + s + " but was " + yarnConfDir,
                 yarnConfDir.startsWith(s));
         Assert.assertEquals(
-                "Expected log4j.properties file to exist", log4jExists, "yes");
+                "Expected log4j.properties file to exist", "yes", log4jExists);
         Assert.assertTrue(
                 "Expected log4j.properties to have non-zero line count, but has: " + log4jFileLineCount,
                 Integer.parseInt(log4jFileLineCount) > 0);
+        Assert.assertEquals(
+                "Expected log4j.properties to have no container appender references (CLA/CLRA)",
+                0, Integer.parseInt(log4BadAppenderCount));
     }
 
     /**
@@ -188,7 +193,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_LOG4J_EXISTENCE_CHECKER);
         w.close();
 
@@ -218,7 +223,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_CONTENT_ERROR);
         w.close();
 
@@ -245,7 +250,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         FileSystem fs = getFileSystem();
         // Create a sample perl script
         Path script = new Path(getAppPath(), "script.pl");
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(PERL_SCRIPT_CONTENT);
         w.close();
         // Create a Sample Shell action using the perl script
@@ -264,13 +269,13 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     public void testEnvVar() throws Exception {
         Services.get().destroy();
         Services services = new Services();
-        services.getConf().setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
+        services.getConf().setInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
         services.init();
 
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
         Path script = new Path(getAppPath(), SHELL_SCRIPTNAME);
-        Writer w = new OutputStreamWriter(fs.create(script));
+        Writer w = new OutputStreamWriter(fs.create(script), StandardCharsets.UTF_8);
         w.write(SHELL_SCRIPT_CONTENT_ENVVAR);
         w.close();
 
@@ -279,19 +284,14 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         String actionXml = "<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" + "<name-node>"
                 + getNameNodeUri() + "</name-node>" + "<exec>" + SHELL_EXEC + "</exec>" + "<argument>" + SHELL_PARAM + "</argument>"
                 + "<argument>" + SHELL_SCRIPTNAME + "</argument>" + "<argument>A</argument>" + "<argument>B</argument>"
-                + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>" + script.toString()
+                + "<env-var>var1=val1</env-var>" + "<env-var>var2=" + envValueHavingEqualSign + "</env-var>" + "<file>"
+                + script.toString()
                 + "#" + script.getName() + "</file>" + "<capture-output />" + "</shell>";
 
         Context context = createContext(actionXml);
         // Submit the action
-        final RunningJob launcherJob = submitAction(context);
-        waitFor(180 * 1000, new Predicate() { // Wait for the external job to
-                    // finish
-                    public boolean evaluate() throws Exception {
-                        return launcherJob.isComplete();
-                    }
-                });
-
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
         ShellActionExecutor ae = new ShellActionExecutor();
         WorkflowAction action = context.getAction();
         ae.check(context, action);
@@ -313,24 +313,14 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     private WorkflowAction _testSubmit(String actionXml, boolean checkForSuccess, String capture_output) throws Exception {
 
         Context context = createContext(actionXml);
-        final RunningJob launcherJob = submitAction(context);// Submit the
-        // action
-        String launcherId = context.getAction().getExternalId(); // Get LM id
-        waitFor(180 * 1000, new Predicate() { // Wait for the external job to
-                    // finish
-                    public boolean evaluate() throws Exception {
-                        return launcherJob.isComplete();
-                    }
-                });
-        // Thread.sleep(2000);
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);// Submit the action
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        sleep(2000);// Wait more to make sure no ID swap happens
         Configuration conf = new XConfiguration();
         conf.set("user.name", getTestUser());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertFalse(LauncherMapperHelper.hasIdSwap(actionData));
+        assertFalse(LauncherHelper.hasIdSwap(actionData));
 
         ShellActionExecutor ae = new ShellActionExecutor();
         ae.check(context, context.getAction());
@@ -389,14 +379,13 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      * @return The RunningJob of the Launcher Mapper
      * @throws Exception
      */
-    private RunningJob submitAction(Context context) throws Exception {
+    private String submitAction(Context context) throws Exception {
         ShellActionExecutor ae = new ShellActionExecutor();
 
         WorkflowAction action = context.getAction();
 
         ae.prepareActionDir(getFileSystem(), context);
-        ae.submitLauncher(getFileSystem(), context, action); // Submit the
-        // Launcher Mapper
+        ae.submitLauncher(getFileSystem(), context, action); // Submit the action
 
         String jobId = action.getExternalId();
         String jobTracker = action.getTrackerUri();
@@ -406,41 +395,6 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
 
-        Element e = XmlUtils.parseXml(action.getConf());
-        XConfiguration conf = new XConfiguration();
-        conf.set("mapred.job.tracker", e.getChildTextTrim("job-tracker"));
-        conf.set("fs.default.name", e.getChildTextTrim("name-node"));
-        conf.set("user.name", context.getProtoActionConf().get("user.name"));
-        conf.set("group.name", getTestGroup());
-
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        XConfiguration.copy(conf, jobConf);
-        String user = jobConf.get("user.name");
-        String group = jobConf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
-    }
-
-    public void testShellMainPathInUber() throws Exception {
-        Services.get().getConf().setBoolean("oozie.action.shell.launcher.mapreduce.job.ubertask.enable", true);
-
-        Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
-                + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>script.sh</exec>"
-                + "<argument>a=A</argument>" + "<argument>b=B</argument>" + "</shell>");
-        ShellActionExecutor ae = new ShellActionExecutor();
-        XConfiguration protoConf = new XConfiguration();
-        protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
-
-        WorkflowJobBean wf = createBaseWorkflow(protoConf, "action");
-        WorkflowActionBean action = (WorkflowActionBean) wf.getActions().get(0);
-        action.setType(ae.getType());
-
-        Context context = new Context(wf, action);
-        JobConf launcherConf = new JobConf();
-        launcherConf = ae.createLauncherConf(getFileSystem(), context, action, actionXml, launcherConf);
-        // env
-        assertEquals("PATH=.:$PATH", launcherConf.get(JavaActionExecutor.YARN_AM_ENV));
+        return jobId;
     }
 }

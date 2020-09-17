@@ -21,29 +21,37 @@ package org.apache.oozie.test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
-import javax.persistence.Query;
+import javax.persistence.PersistenceException;
+import javax.persistence.TypedQuery;
 
 import junit.framework.TestCase;
-import org.apache.commons.io.FilenameUtils;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
@@ -56,6 +64,12 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.Shell;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fair.FairScheduler;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.oozie.BundleActionBean;
@@ -65,10 +79,13 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.action.hadoop.LauncherMain;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.HCatURIHandler;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
+import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JPAService;
@@ -82,10 +99,14 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.MiniHCatServer.RUNMODE;
 import org.apache.oozie.test.hive.MiniHS2;
+import org.apache.oozie.util.ClasspathUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.ZKUtils;
+import org.apache.openjpa.persistence.ArgumentException;
+import org.apache.openjpa.persistence.RollbackException;
 
 /**
  * Base JUnit <code>TestCase</code> subclass used by all Oozie testcases.
@@ -104,6 +125,9 @@ import org.apache.oozie.util.XLog;
  * From within testcases, system properties must be changed using the {@link #setSystemProperty} method.
  */
 public abstract class XTestCase extends TestCase {
+    private static EnumSet<YarnApplicationState> YARN_TERMINAL_STATES = EnumSet.of(YarnApplicationState.FAILED,
+            YarnApplicationState.KILLED, YarnApplicationState.FINISHED);
+    private static final int DEFAULT_YARN_TIMEOUT = 60_000;
     private Map<String, String> sysProps;
     private String testCaseDir;
     private String testCaseConfDir;
@@ -115,7 +139,7 @@ public abstract class XTestCase extends TestCase {
     protected static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
     public static float WAITFOR_RATIO = Float.parseFloat(System.getProperty("oozie.test.waitfor.ratio", "1"));
-    protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false";
+    protected static final String localActiveMQBroker = "vm://localhost?broker.persistent=false&broker.useJmx=false";
     protected static final String ActiveMQConnFactory = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
 
     static {
@@ -146,7 +170,7 @@ public abstract class XTestCase extends TestCase {
                 System.out.println("Loading test system properties from: " + file.getAbsolutePath());
                 System.out.println();
                 Properties props = new Properties();
-                props.load(new FileReader(file));
+                props.load(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
                 for (Map.Entry entry : props.entrySet()) {
                     if (!System.getProperties().containsKey(entry.getKey())) {
                         System.setProperty((String) entry.getKey(), (String) entry.getValue());
@@ -237,6 +261,12 @@ public abstract class XTestCase extends TestCase {
     public static final String TEST_GROUP_PROP = "oozie.test.group";
 
     /**
+     * System property that specifies the test admin user used in the tests.
+     * The default value of this property is myAdmin
+     */
+    public static final String TEST_ADMIN_PROP = "oozie.test.admin.user";
+
+    /**
      * System property that specifies the test groiup used by the tests.
      * The default value of this property is <tt>testg</tt>.
      */
@@ -290,6 +320,8 @@ public abstract class XTestCase extends TestCase {
     protected  void setUp(boolean cleanUpDBTables) throws Exception {
         RUNNING_TESTCASES.incrementAndGet();
         super.setUp();
+        // if for some reason the tearDown didn`t run, check and delete the files
+        deleteCreatedFiles();
         String baseDir = System.getProperty(OOZIE_TEST_DIR, new File("target/test-data").getAbsolutePath());
         String msg = null;
         File f = new File(baseDir);
@@ -321,10 +353,11 @@ public abstract class XTestCase extends TestCase {
         testCaseConfDir = createTestCaseSubDir("conf");
 
         // load test Oozie site
-        String oozieTestDB = System.getProperty("oozie.test.db", "hsqldb");
-        String defaultOozieSize =
-            new File(OOZIE_SRC_DIR, "core/src/test/resources/" + oozieTestDB + "-oozie-site.xml").getAbsolutePath();
-        String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSize);
+        final String oozieTestDB = System.getProperty("oozie.test.db", "hsqldb");
+        final String oozieSiteFileName = oozieTestDB + "-oozie-site.xml";
+        final String defaultOozieSite =
+            new File(OOZIE_SRC_DIR, "core/src/test/resources/" + oozieSiteFileName).getAbsolutePath();
+        final String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSite);
         File source = new File(customOozieSite);
         if(!source.isAbsolute()) {
             source = new File(OOZIE_SRC_DIR, customOozieSite);
@@ -332,11 +365,28 @@ public abstract class XTestCase extends TestCase {
         source = source.getAbsoluteFile();
         InputStream oozieSiteSourceStream = null;
         if (source.exists()) {
+            log.info("Reading Oozie test resource from file. [source.name={0}]", source.getName());
             oozieSiteSourceStream = new FileInputStream(source);
         }
         else {
             // If we can't find it, try using the class loader (useful if we're using XTestCase from outside core)
-            URL sourceURL = getClass().getClassLoader().getResource(oozieTestDB + "-oozie-site.xml");
+            log.info("Oozie test resource file doesn't exist. [source.name={0}]", source.getName());
+            final String testResourceName;
+            if (customOozieSite.lastIndexOf(Path.SEPARATOR) > -1) {
+                final String customOozieSiteFileName = customOozieSite.substring(customOozieSite.lastIndexOf(Path.SEPARATOR) + 1);
+                if (customOozieSiteFileName.equals(oozieSiteFileName)) {
+                    testResourceName = oozieSiteFileName;
+                }
+                else {
+                    testResourceName = customOozieSiteFileName;
+                }
+            }
+            else {
+                testResourceName = oozieSiteFileName;
+            }
+            log.info("Reading Oozie test resource from classpath. [testResourceName={0};source.name={1}]",
+                    testResourceName, source.getName());
+            final URL sourceURL = getClass().getClassLoader().getResource(testResourceName);
             if (sourceURL != null) {
                 oozieSiteSourceStream = sourceURL.openStream();
             }
@@ -361,6 +411,8 @@ public abstract class XTestCase extends TestCase {
         oozieSiteConf.set(Services.CONF_SERVICE_CLASSES, classes.replaceAll("org.apache.oozie.service.ShareLibService,",""));
         // Make sure to create the Oozie DB during unit tests
         oozieSiteConf.set(JPAService.CONF_CREATE_DB_SCHEMA, "true");
+        // Make sure thread pools shut down in a timely manner
+        oozieSiteConf.set(CallableQueueService.CONF_QUEUE_AWAIT_TERMINATION_TIMEOUT_SECONDS, "1");
         File target = new File(testCaseConfDir, "oozie-site.xml");
         oozieSiteConf.writeXml(new FileOutputStream(target));
 
@@ -411,6 +463,10 @@ public abstract class XTestCase extends TestCase {
 
         setSystemProperty(HadoopAccessorService.SUPPORTED_FILESYSTEMS,"*");
 
+        if (System.getProperty(ZKUtils.OOZIE_INSTANCE_ID) == null) {
+            System.setProperty(ZKUtils.OOZIE_INSTANCE_ID, ZKXTestCase.ZK_ID);
+        }
+
         if (mrCluster != null) {
             OutputStream os = new FileOutputStream(new File(hadoopConfDir, "core-site.xml"));
             Configuration conf = createJobConfFromMRCluster();
@@ -442,10 +498,38 @@ public abstract class XTestCase extends TestCase {
         resetSystemProperties();
         sysProps = null;
         testCaseDir = null;
+        deleteCreatedFiles();
         super.tearDown();
         RUNNING_TESTCASES.decrementAndGet();
         LAST_TESTCASE_FINISHED.set(System.currentTimeMillis());
     }
+
+    /**
+     * Delete the created files
+     */
+    protected void deleteCreatedFiles() {
+        for (File f : getFilesToDelete()) {
+            if (f.exists()){
+                f.delete();
+            }
+        }
+    }
+
+    /**
+     * Provides a list of files needed to be deleted
+     * @return propagation-conf.xml, log4j.properties, .log files from the working directory
+     */
+    protected List<File> getFilesToDelete() {
+        File root = new File(".");
+        File [] filesToDelete = root.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".log") || name.endsWith("log4j.properties") || name.equals(LauncherMain.PROPAGATION_CONF_XML);
+            }
+        });
+        return new ArrayList<>(Arrays.asList(filesToDelete));
+    }
+
 
     /**
      * Return the test working directory. The directory name is the full class name of the test plus the test method
@@ -536,6 +620,14 @@ public abstract class XTestCase extends TestCase {
     }
 
     /**
+     * Return Admin user
+     * @return the admin user
+     */
+    protected static String getAdminUser(){
+        return System.getProperty(TEST_ADMIN_PROP,"myAdmin");
+    }
+
+    /**
      * Return the alternate test group.
      *
      * @return the test group.
@@ -547,22 +639,23 @@ public abstract class XTestCase extends TestCase {
     /**
      * Return the test working directory.
      * <p/>
-     * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME</code>.
+     * It returns <code>${oozie.test.dir}/oozietests/TESTCLASSNAME/TESTMETHODNAME/UNIQUE_ID</code>.
      *
      * @param testCase testcase instance to obtain the working directory.
      * @return the test working directory.
      */
     private String getTestCaseDirInternal(TestCase testCase) {
-        ParamChecker.notNull(testCase, "testCase");
+        Objects.requireNonNull(testCase, "testCase cannot be null");
         File dir = new File(System.getProperty(OOZIE_TEST_DIR, "target/test-data"));
         dir = new File(dir, "oozietests").getAbsoluteFile();
         dir = new File(dir, testCase.getClass().getName());
         dir = new File(dir, testCase.getName());
+        dir = new File(dir, UUID.randomUUID().toString());
         return dir.getAbsolutePath();
     }
 
     protected void delete(File file) throws IOException {
-        ParamChecker.notNull(file, "file");
+        Objects.requireNonNull(file, "file cannot be null");
         if (file.getAbsolutePath().length() < 5) {
             throw new RuntimeException(XLog.format("path [{0}] is too short, not deleting", file.getAbsolutePath()));
         }
@@ -615,14 +708,14 @@ public abstract class XTestCase extends TestCase {
      * @return the absolute path to the created directory.
      */
     protected String createTestCaseSubDir(String... subDirNames) {
-        ParamChecker.notNull(subDirNames, "subDirName");
+        Objects.requireNonNull(subDirNames, "subDirName cannot be null");
         if (subDirNames.length == 0) {
             throw new RuntimeException(XLog.format("Could not create testcase subdir ''; it already exists"));
         }
 
         File dir = new File(testCaseDir);
         for (int i = 0; i < subDirNames.length; i++) {
-            ParamChecker.notNull(subDirNames[i], "subDirName[" + i + "]");
+            Objects.requireNonNull(subDirNames[i], "subDirName[" + i + "] cannot be null");
             dir = new File(dir, subDirNames[i]);
         }
 
@@ -695,7 +788,7 @@ public abstract class XTestCase extends TestCase {
      * @return the waited time.
      */
     protected long waitFor(int timeout, Predicate predicate) {
-        ParamChecker.notNull(predicate, "predicate");
+        Objects.requireNonNull(predicate, "predicate cannot be null");
         XLog log = new XLog(LogFactory.getLog(getClass()));
         long started = System.currentTimeMillis();
         long mustEnd = System.currentTimeMillis() + (long)(WAITFOR_RATIO * timeout);
@@ -819,71 +912,29 @@ public abstract class XTestCase extends TestCase {
         entityManager.setFlushMode(FlushModeType.COMMIT);
         entityManager.getTransaction().begin();
 
-        Query q = entityManager.createNamedQuery("GET_WORKFLOWS");
-        List<WorkflowJobBean> wfjBeans = q.getResultList();
-        int wfjSize = wfjBeans.size();
-        for (WorkflowJobBean w : wfjBeans) {
-            entityManager.remove(w);
+        final int wfjSize = getCountAndRemoveAll(entityManager, "GET_WORKFLOWS", WorkflowJobBean.class);
+        final int wfaSize = getCountAndRemoveAll(entityManager, "GET_ACTIONS", WorkflowActionBean.class);
+        final int cojSize = getCountAndRemoveAll(entityManager, "GET_COORD_JOBS", CoordinatorJobBean.class);
+        final int coaSize = getCountAndRemoveAll(entityManager, "GET_COORD_ACTIONS", CoordinatorActionBean.class);
+        final int bjSize = getCountAndRemoveAll(entityManager, "GET_BUNDLE_JOBS", BundleJobBean.class);
+        final int baSize = getCountAndRemoveAll(entityManager, "GET_BUNDLE_ACTIONS", BundleActionBean.class);
+        final int slaSize = getCountAndRemoveAll(entityManager, "GET_SLA_EVENTS", SLAEventBean.class);
+        final int slaRegSize = getCountAndRemoveAll(entityManager, "GET_SLA_REGISTRATIONS", SLARegistrationBean.class);
+        final int ssSize = getCountAndRemoveAll(entityManager, "GET_SLA_SUMMARY_ALL", SLASummaryBean.class);
+
+        try {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().commit();
+            }
+
+            if (entityManager.isOpen()) {
+                entityManager.close();
+            }
+        }
+        catch (final RollbackException e) {
+            log.warn("Cannot commit current transaction. [e.message={0}]", e.getMessage());
         }
 
-        q = entityManager.createNamedQuery("GET_ACTIONS");
-        List<WorkflowActionBean> wfaBeans = q.getResultList();
-        int wfaSize = wfaBeans.size();
-        for (WorkflowActionBean w : wfaBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_COORD_JOBS");
-        List<CoordinatorJobBean> cojBeans = q.getResultList();
-        int cojSize = cojBeans.size();
-        for (CoordinatorJobBean w : cojBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_COORD_ACTIONS");
-        List<CoordinatorActionBean> coaBeans = q.getResultList();
-        int coaSize = coaBeans.size();
-        for (CoordinatorActionBean w : coaBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_BUNDLE_JOBS");
-        List<BundleJobBean> bjBeans = q.getResultList();
-        int bjSize = bjBeans.size();
-        for (BundleJobBean w : bjBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_BUNDLE_ACTIONS");
-        List<BundleActionBean> baBeans = q.getResultList();
-        int baSize = baBeans.size();
-        for (BundleActionBean w : baBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createNamedQuery("GET_SLA_EVENTS");
-        List<SLAEventBean> slaBeans = q.getResultList();
-        int slaSize = slaBeans.size();
-        for (SLAEventBean w : slaBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createQuery("select OBJECT(w) from SLARegistrationBean w");
-        List<SLARegistrationBean> slaRegBeans = q.getResultList();
-        int slaRegSize = slaRegBeans.size();
-        for (SLARegistrationBean w : slaRegBeans) {
-            entityManager.remove(w);
-        }
-
-        q = entityManager.createQuery("select OBJECT(w) from SLASummaryBean w");
-        List<SLASummaryBean> sdBeans = q.getResultList();
-        int ssSize = sdBeans.size();
-        for (SLASummaryBean w : sdBeans) {
-            entityManager.remove(w);
-        }
-
-        entityManager.getTransaction().commit();
-        entityManager.close();
         log.info(wfjSize + " entries in WF_JOBS removed from DB!");
         log.info(wfaSize + " entries in WF_ACTIONS removed from DB!");
         log.info(cojSize + " entries in COORD_JOBS removed from DB!");
@@ -893,11 +944,35 @@ public abstract class XTestCase extends TestCase {
         log.info(slaSize + " entries in SLA_EVENTS removed from DB!");
         log.info(slaRegSize + " entries in SLA_REGISTRATION removed from DB!");
         log.info(ssSize + " entries in SLA_SUMMARY removed from DB!");
+    }
 
+    private <E> int getCountAndRemoveAll(final EntityManager entityManager,
+                                                        final String queryName,
+                                                        final Class<E> entityClass) {
+        try {
+            final TypedQuery<E> getAllQuery = entityManager.createNamedQuery(queryName, entityClass);
+            final List<E> allEntities = getAllQuery.getResultList();
+            final int entitiesCount = allEntities.size();
+
+            for (final E w : allEntities) {
+                entityManager.remove(w);
+            }
+
+            return entitiesCount;
+        } catch (final RollbackException e) {
+            log.warn("Cannot get count or remove all entities. [queryName={0};entityClass.name={1}]",
+                    queryName, entityClass.getName());
+            return 0;
+        } catch (final PersistenceException | ArgumentException e) {
+            log.warn("Cannot get count or remove all entities. [queryName={0};entityClass.name={1}]",
+                    queryName, entityClass.getName());
+            return 0;
+        }
     }
 
     private static MiniDFSCluster dfsCluster = null;
     private static MiniDFSCluster dfsCluster2 = null;
+    // TODO: OYA: replace with MiniYarnCluster or MiniMRYarnCluster
     private static MiniMRCluster mrCluster = null;
     private static MiniHCatServer hcatServer = null;
     private static MiniHS2 hiveserver2 = null;
@@ -905,9 +980,11 @@ public abstract class XTestCase extends TestCase {
 
     private void setUpEmbeddedHadoop(String testCaseDir) throws Exception {
         if (dfsCluster == null && mrCluster == null) {
-			if (System.getProperty("hadoop.log.dir") == null) {
-				System.setProperty("hadoop.log.dir", testCaseDir);
-			}
+            if (System.getProperty("hadoop.log.dir") == null) {
+                System.setProperty("hadoop.log.dir", testCaseDir);
+            }
+            // Tell the ClasspathUtils that we're using a mini cluster
+            ClasspathUtils.setUsingMiniYarnCluster(true);
             int taskTrackers = 2;
             int dataNodes = 2;
             String oozieUser = getOozieUser();
@@ -987,6 +1064,7 @@ public abstract class XTestCase extends TestCase {
       conf.set("dfs.block.access.token.enable", "false");
       conf.set("dfs.permissions", "true");
       conf.set("hadoop.security.authentication", "simple");
+      conf.setBoolean("dfs.namenode.acls.enabled", true);
 
       //Doing this because Hadoop 1.x does not support '*' if the value is '*,127.0.0.1'
       StringBuilder sb = new StringBuilder();
@@ -995,21 +1073,46 @@ public abstract class XTestCase extends TestCase {
           sb.append(",").append(i.getCanonicalHostName());
       }
       conf.set("hadoop.proxyuser." + getOozieUser() + ".hosts", sb.toString());
-
       conf.set("hadoop.proxyuser." + getOozieUser() + ".groups", getTestGroup());
       conf.set("mapred.tasktracker.map.tasks.maximum", "4");
       conf.set("mapred.tasktracker.reduce.tasks.maximum", "4");
-
       conf.set("hadoop.tmp.dir", "target/test-data"+"/minicluster");
 
-      // Scheduler properties required for YARN CapacityScheduler to work
-      conf.set("yarn.scheduler.capacity.root.queues", "default");
-      conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
-      // Required to prevent deadlocks with YARN CapacityScheduler
-      conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
       // Default value is 90 - if you have low disk space, tests will fail.
       conf.set("yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage", "99");
+      configureYarnACL(conf);
+
       return conf;
+    }
+
+    /*
+     * Sets up YARN ACL - necessary for testing application ACLs
+     *
+     * If we don't configure queue ACLs, then it's always possible for any
+     * user to kill a running application. This is not desired, therefore we
+     * explicitly define what users have the permission to kill applications
+     * submitted to a given queue.
+     */
+    private void configureYarnACL(JobConf conf) {
+        conf.set("yarn.acl.enable", "true");
+        conf.set("yarn.admin.acl", getOozieUser());
+
+        String schedClass = conf.get("yarn.resourcemanager.scheduler.class");
+
+        if (schedClass.contains(FairScheduler.class.getName())) {
+            conf.set("yarn.scheduler.fair.allocation.file", "fair-scheduler-alloc.xml");
+        }
+        else {
+            conf.set("yarn.scheduler.capacity.root.acl_administer_queue", getOozieUser());
+            conf.set("yarn.scheduler.capacity.root.default.acl_administer_queue", getOozieUser());
+
+            // Scheduler properties required for YARN CapacityScheduler to work
+            conf.set("yarn.scheduler.capacity.root.queues", "default,default1");
+            conf.set("yarn.scheduler.capacity.root.default.capacity", "50");
+            conf.set("yarn.scheduler.capacity.root.default1.capacity", "50");
+            // Required to prevent deadlocks with YARN CapacityScheduler
+            conf.set("yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
+        }
     }
 
     protected void setupHCatalogServer() throws Exception {
@@ -1216,6 +1319,57 @@ public abstract class XTestCase extends TestCase {
         return services;
     }
 
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates,
+            int timeoutMs) throws HadoopAccessorException, IOException, YarnException {
+        final ApplicationId appId = ConverterUtils.toApplicationId(externalId);
+        final MutableObject<YarnApplicationState> finalState = new MutableObject<YarnApplicationState>();
+
+        Configuration conf = Services.get().get(HadoopAccessorService.class).createConfiguration(getJobTrackerUri());
+        final YarnClient yarnClient = Services.get().get(HadoopAccessorService.class).createYarnClient(getTestUser(), conf);
+
+        try {
+            waitFor(timeoutMs, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                     YarnApplicationState state = yarnClient.getApplicationReport(appId).getYarnApplicationState();
+                     finalState.setValue(state);
+
+                     return acceptedStates.contains(state);
+                }
+            });
+        } finally {
+            if (yarnClient != null) {
+                yarnClient.close();
+            }
+        }
+
+        log.info("Final state is: {0}", finalState.getValue());
+        return finalState.getValue();
+    }
+
+    protected YarnApplicationState waitUntilYarnAppState(String externalId, final EnumSet<YarnApplicationState> acceptedStates)
+            throws HadoopAccessorException, IOException, YarnException {
+        return waitUntilYarnAppState(externalId, acceptedStates, DEFAULT_YARN_TIMEOUT);
+    }
+
+    protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId)
+            throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
+        assertEquals("YARN App state for app " + externalId, YarnApplicationState.FINISHED, state);
+    }
+
+    protected void waitUntilYarnAppDoneAndAssertSuccess(String externalId, int timeout)
+            throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES, timeout);
+        assertEquals("YARN App state for app " + externalId, YarnApplicationState.FINISHED, state);
+    }
+
+    protected void waitUntilYarnAppKilledAndAssertSuccess(String externalId)
+            throws HadoopAccessorException, IOException, YarnException {
+        YarnApplicationState state = waitUntilYarnAppState(externalId, YARN_TERMINAL_STATES);
+        assertEquals("YARN App state for app " + externalId, YarnApplicationState.KILLED, state);
+    }
+
     protected class TestLogAppender extends AppenderSkeleton {
         private final List<LoggingEvent> log = new ArrayList<LoggingEvent>();
 
@@ -1243,4 +1397,3 @@ public abstract class XTestCase extends TestCase {
     }
 
 }
-

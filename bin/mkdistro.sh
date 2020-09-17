@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -19,58 +19,50 @@
 
 #Utility method
 function setRevUrl() {
-   #Checking svn first
-   if which svn >/dev/null; then
-      if [ -d ".svn" ]; then
-         export VC_REV=`svn info | grep "Revision" | awk '{print $2}'`
-         export VC_URL=`svn info | grep "URL" | awk '{print $2}'`
-      fi
-   fi
-
-   #Checking for git if SVN is not there
-   if [ "${VC_REV}" == "" ]; then
-      if which git  >/dev/null; then
-          if [ -d ".git" ]; then
-             export VC_REV=`git branch -v | awk '/^\*/ {printf("%s@%s\n", $2, $3); }'`
-	     export VC_URL=`git remote -v | grep origin | grep fetch | awk '{print $2}'`
-         fi
-      fi
-   fi
+  if command -v git  >/dev/null; then
+    if [ -d ".git" ]; then
+      VC_REV=$(git branch -v | awk '/^\*/ {printf("%s@%s\n", $2, $3); }')
+      VC_URL=$(git remote -v | grep origin | grep fetch | awk '{print $2}')
+    fi
+  fi
 
    #If nothing found
    if [ "${VC_REV}" == "" ]; then
-       export VC_REV="unavailable"
-       export VC_URL="unavailable"
+       VC_REV="unavailable"
+       VC_URL="unavailable"
    fi
+   export VC_REV
+   export VC_URL
 }
 
 # resolve links - $0 may be a softlink
 PRG="${0}"
 
 while [ -h "${PRG}" ]; do
-  ls=`ls -ld "${PRG}"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
+  ls=$(ls -ld "${PRG}")
+  link=$(expr "$ls" : '.*-> \(.*\)$')
   if expr "$link" : '/.*' > /dev/null; then
     PRG="$link"
   else
-    PRG=`dirname "${PRG}"`/"$link"
+    PRG=$(dirname "${PRG}")/"$link"
   fi
 done
 
-BASEDIR=`dirname ${PRG}`
-BASEDIR=`cd ${BASEDIR}/..;pwd`
+BASEDIR=$(dirname "${PRG}")
+BASEDIR=$(cd "${BASEDIR}"/.. && pwd) || { echo 'ERROR, directory change failed' ; exit -1; }
 
-cd ${BASEDIR}
+cd "${BASEDIR}" || { echo 'ERROR, directory change failed' ; exit -1; }
 
-export DATETIME=`date -u "+%Y.%m.%d-%H:%M:%SGMT"`
+DATETIME=$(date -u "+%Y.%m.%d-%H:%M:%SGMT")
+export DATETIME
 setRevUrl
 
 MVN_OPTS="-Dbuild.time=${DATETIME} -Dvc.revision=${VC_REV} -Dvc.url=${VC_URL} -DgenerateDocs"
 
-export DATETIME2=`date -u "+%Y%m%d-%H%M%SGMT"`
-mvn clean package assembly:single ${MVN_OPTS} "$@"
+DATETIME2=$(date -u "+%Y%m%d-%H%M%SGMT")
+export DATETIME2
 
-if [ "$?" -ne "0" ]; then
+if ! mvn clean package assembly:single "${MVN_OPTS}" "$@"; then
   echo
   echo "ERROR, Oozie distro creation failed"
   echo

@@ -62,7 +62,8 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
                             queues[i - 1].remove(e);
                         }
                         else {
-                            debug("poll(): the iterator element [{0}], from P[{1}] is not eligible to poll", e.getElement().toString(), i);
+                            debug("poll(): the iterator element [{0}], from P[{1}] is not eligible to poll",
+                                    e.getElement().toString(), i);
                             e = null;
                         }
                     }
@@ -88,6 +89,7 @@ public class PollablePriorityDelayQueue<E> extends PriorityDelayQueue<E> {
      * This method should be overriden for checking purposes.
      *
      * @param element the element to check
+     * @return if the element is eligible to be polled
      */
     protected boolean eligibleToPoll(QueueElement<?> element) {
         return true;

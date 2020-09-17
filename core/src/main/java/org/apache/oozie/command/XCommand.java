@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Base class for synchronous and asynchronous commands.
  * <p>
  * It enables by API the following pattern:
- * <p>
+ * </p>
  * <ul>
  * <li>single execution: a command instance can be executed only once</li>
  * <li>eager data loading: loads data for eager precondition check</li>
@@ -54,7 +54,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <li>locking: obtains exclusive lock on key before executing the command</li>
  * <li>execution: command logic</li>
  * </ul>
- * <p>
  * It has built in instrumentation and logging.
  */
 public abstract class XCommand<T> implements XCallable<T> {
@@ -79,7 +78,9 @@ public abstract class XCommand<T> implements XCallable<T> {
     protected boolean dryrun = false;
     protected Instrumentation instrumentation;
 
-    protected static EventHandlerService eventService;
+    protected static EventHandlerService getEventService() {
+        return Services.get().get(EventHandlerService.class);
+    }
 
     /**
      * Create a command.
@@ -95,7 +96,6 @@ public abstract class XCommand<T> implements XCallable<T> {
         this.key = name + "_" + UUID.randomUUID();
         createdTime = System.currentTimeMillis();
         instrumentation = Services.get().get(InstrumentationService.class).get();
-        eventService = Services.get().get(EventHandlerService.class);
     }
 
     /**
@@ -213,11 +213,11 @@ public abstract class XCommand<T> implements XCallable<T> {
             if (isReQueueRequired()) {
                 // if not acquire the lock, re-queue itself with default delay
                 queue(this, getRequeueDelay());
-                LOG.debug("Could not get lock [{0}], timed out [{1}]ms, and requeue itself [{2}]", this.toString(),
+                LOG.debug("Could not get lock for [{0}], timed out [{1}]ms, and requeue itself [{2}]", getEntityKey(),
                         getLockTimeOut(), getName());
             }
             else {
-                throw new CommandException(ErrorCode.E0606, this.toString(), getLockTimeOut());
+                throw new CommandException(ErrorCode.E0606, getEntityKey(), getLockTimeOut());
             }
         }
         else {
@@ -244,7 +244,10 @@ public abstract class XCommand<T> implements XCallable<T> {
     @Override
     public final T call() throws CommandException {
         setLogInfo();
-        if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType()) && used.get()) {
+        CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+        Set<String> interruptTypes = callableQueueService.getInterruptTypes();
+
+        if (interruptTypes.contains(this.getType()) && used.get()) {
             LOG.debug("Command [{0}] key [{1}]  already used for [{2}]", getName(), getEntityKey(), this.toString());
             return null;
         }
@@ -271,7 +274,7 @@ public abstract class XCommand<T> implements XCallable<T> {
                 }
 
                 if (!isLockRequired() || (lock != null) || this.inInterruptMode()) {
-                    if (CallableQueueService.INTERRUPT_TYPES.contains(this.getType())
+                    if (interruptTypes.contains(this.getType())
                             && !used.compareAndSet(false, true)) {
                         LOG.debug("Command [{0}] key [{1}]  already executed for [{2}]", getName(), getEntityKey(),
                                 this.toString());
@@ -289,7 +292,6 @@ public abstract class XCommand<T> implements XCallable<T> {
                     instrumentation.addCron(INSTRUMENTATION_GROUP, getName() + ".execute", executeCron);
                 }
                 if (commandQueue != null) {
-                    CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
                     for (Map.Entry<Long, List<XCommand<?>>> entry : commandQueue.entrySet()) {
                         LOG.debug("Queuing [{0}] commands with delay [{1}]ms", entry.getValue().size(), entry.getKey());
                         if (!callableQueueService.queueSerial(entry.getValue(), entry.getKey())) {
@@ -422,6 +424,8 @@ public abstract class XCommand<T> implements XCallable<T> {
      * Subclasses should override this method and load the state needed to do an eager precondition check.
      * <p>
      * A trivial implementation is calling {link #loadState}.
+     *
+     * @throws CommandException thrown if loading state fails
      */
     protected void eagerLoadState() throws CommandException {
     }
@@ -434,6 +438,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * A trivial implementation is calling {link #verifyPrecondition}.
      *
      * @throws CommandException thrown if the precondition is not met.
+     * @throws PreconditionException thrown if precondition does not met
      */
     protected void eagerVerifyPrecondition() throws CommandException, PreconditionException {
     }
@@ -443,6 +448,8 @@ public abstract class XCommand<T> implements XCallable<T> {
      * <p>
      * Subclasses must implement this method and load the state needed to do the precondition check and execute the
      * command.
+     *
+     * @throws CommandException thrown if loading state fails
      */
     protected abstract void loadState() throws CommandException;
 
@@ -451,6 +458,7 @@ public abstract class XCommand<T> implements XCallable<T> {
      * <p>
      *
      * @throws CommandException thrown if the precondition is not met.
+     * @throws PreconditionException thrown if precondition does not met
      */
     protected abstract void verifyPrecondition() throws CommandException, PreconditionException;
 

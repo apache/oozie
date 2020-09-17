@@ -32,7 +32,7 @@ import org.apache.oozie.util.XLog;
 public class StoreStatusFilter {
     public static final String coordSeletStr = "Select w.id, w.appName, w.statusStr, w.user, w.group, w.startTimestamp, " +
             "w.endTimestamp, w.appPath, w.concurrency, w.frequency, w.lastActionTimestamp, w.nextMaterializedTimestamp, " +
-            "w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut from CoordinatorJobBean w";
+            "w.createdTimestamp, w.timeUnitStr, w.timeZone, w.timeOut, w.bundleId from CoordinatorJobBean w";
 
     public static final String coordCountStr = "Select count(w) from CoordinatorJobBean w";
 
@@ -343,21 +343,21 @@ public class StoreStatusFilter {
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addDays(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), offset);
                     break;
                 case 'h':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addHours(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addHours(new Date(), offset);
                     break;
                 case 'm':
                     offset =  Integer.parseInt(time.substring(0, time.length() - 1));
                     if(offset > 0) {
                         throw new IllegalArgumentException("offset must be minus from currentTime.");
                     }
-                    createdTime = org.apache.commons.lang.time.DateUtils.addMinutes(new Date(), offset);
+                    createdTime = org.apache.commons.lang3.time.DateUtils.addMinutes(new Date(), offset);
                     break;
                 case 'Z':
                     createdTime = DateUtils.parseDateUTC(time);

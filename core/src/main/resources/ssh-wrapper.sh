@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -33,6 +33,9 @@ mpid=`echo $$`
 echo $mpid > $dir/$actionId.pid
 stdout="$dir/$mpid.$actionId.stdout"
 stderr="$dir/$mpid.$actionId.stderr"
+errorFile="$dir/$mpid.$actionId.error"
+successFile="$dir/$mpid.$actionId.success"
+exitCodeMsg="Exit code:"
 
 if [ "$preserveArgs" == "PRESERVE_ARGS" ]
 then
@@ -40,17 +43,21 @@ then
     shift
     if $cmnd "$@" >>${stdout} 2>>${stderr}; then
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
+        touch $successFile
     else
+        ec=$?
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
-        touch $dir/$mpid.$actionId.error
+        echo $exitCodeMsg$ec > $errorFile
     fi
 else
     cmnd="${*}"
     if eval "$cmnd" >>${stdout} 2>>${stderr}; then
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/OK/'`
+        touch $successFile
     else
+        ec=$?
         export callbackUrl=`echo ${callbackUrl} | sed -e 's/#status/ERROR/'`
-        touch $dir/$mpid.$actionId.error
+        echo $exitCodeMsg$ec > $errorFile
     fi
 fi
 sleep 1

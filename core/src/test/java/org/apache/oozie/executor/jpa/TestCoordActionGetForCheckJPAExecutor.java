@@ -46,14 +46,18 @@ public class TestCoordActionGetForCheckJPAExecutor extends XDataTestCase {
     public void testCoordActionGet() throws Exception {
         int actionNum = 1;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, false, false);
-        CoordinatorActionBean action = createCoordAction(job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
+        CoordinatorActionBean action = createCoordAction(
+                job.getId(), actionNum, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 0);
         action.setSlaXml(XDataTestCase.slaXml);
         // Insert the action
         insertRecordCoordAction(action);
-        _testGetActionForCheck(action.getId(), job.getId(), CoordinatorAction.Status.WAITING, 0, action.getId() + "_E", XDataTestCase.slaXml);
+        _testGetActionForCheck(action.getId(), job.getId(), CoordinatorAction.Status.WAITING, 0, action.getId()
+                + "_E", XDataTestCase.slaXml);
     }
 
-    private void _testGetActionForCheck(String actionId, String jobId, CoordinatorAction.Status status, int pending, String extId, String slaXml) throws Exception {
+    private void _testGetActionForCheck(
+            String actionId, String jobId, CoordinatorAction.Status status, int pending, String extId, String slaXml)
+                    throws Exception {
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);

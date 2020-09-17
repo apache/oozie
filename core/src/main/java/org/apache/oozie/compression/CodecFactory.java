@@ -23,6 +23,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,15 +43,15 @@ public class CodecFactory {
     private static CompressionCodec outputCompressionCodec;
     public static final String COMPRESSION_MAGIC_DATA = "OBJ";
     public static final String COMPRESSION_KEY_HEADER = "codec";
-    public static final String UTF_8_ENCODING = "UTF-8";
+    public static final Charset UTF_8_ENCODING = StandardCharsets.UTF_8;
     private static boolean isEnabled;
-    private static XLog LOG = XLog.getLog(CodecFactory.class);;
+    private static XLog LOG = XLog.getLog(CodecFactory.class);
     private static byte[] headerBytes;
 
     /**
      * Initialize the codec factory to maintain list of codecs
-     * @param conf
-     * @throws Exception
+     * @param conf the configuration
+     * @throws Exception if the codec couldn't be initialized
      */
     public static void initialize(Configuration conf) throws Exception {
         String outputCompressionStr = conf.get(COMPRESSION_OUTPUT_CODEC);
@@ -128,7 +130,7 @@ public class CodecFactory {
      * Get decompression codec after reading from stream
      * @param dais the input stream
      * @return the decompression codec
-     * @throws IOException
+     * @throws IOException in case of IO error
      */
     public static CompressionCodec getDeCompressionCodec(DataInputStream dais) throws IOException {
         byte[] buffer = new byte[COMPRESSION_MAGIC_DATA.length()];

@@ -402,7 +402,7 @@ public class TestJMSSLAEventListener extends XTestCase {
         assertEquals(actualDuration, durationMissMsg.getActualDuration());
         assertEquals("notification of duration met", durationMissMsg.getNotificationMessage());
     }
-    
+
     private SLACalcStatus _createSLACalcStatus(String actionId) {
         SLARegistrationBean reg = new SLARegistrationBean();
         reg.setId(actionId);

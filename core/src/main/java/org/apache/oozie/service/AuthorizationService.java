@@ -21,19 +21,23 @@ package org.apache.oozie.service;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.Set;
+import java.util.LinkedHashSet;
 
+import com.google.common.collect.Sets;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -78,6 +82,14 @@ public class AuthorizationService implements Service {
      */
     public static final String CONF_ADMIN_GROUPS = CONF_PREFIX + "admin.groups";
 
+    public static final String CONF_SYSTEM_INFO_AUTHORIZED_USERS = CONF_PREFIX + "system.info.authorized.users";
+
+    /**
+     * Configuration parameter to define admin users in oozie-site.xml.
+     * These admin users shall be added to the admin users found in adminusers.txt
+     */
+    public static final String CONF_ADMIN_USERS = CONF_PREFIX + "admin.users";
+
     /**
      * File that contains list of admin users for Oozie.
      */
@@ -88,9 +100,10 @@ public class AuthorizationService implements Service {
 
     private Set<String> adminGroups;
     private Set<String> adminUsers;
+    private Set<String> sysInfoAuthUsers;
     private boolean authorizationEnabled;
     private boolean useDefaultGroupAsAcl;
-
+    private boolean authorizedSystemInfo = false;
     private final XLog log = XLog.getLog(getClass());
     private Instrumentation instrumentation;
 
@@ -112,21 +125,30 @@ public class AuthorizationService implements Service {
         authorizationEnabled =
             ConfigUtils.getWithDeprecatedCheck(services.getConf(), CONF_AUTHORIZATION_ENABLED,
                                                CONF_SECURITY_ENABLED, false);
+        String systemInfoAuthUsers = ConfigurationService.get(CONF_SYSTEM_INFO_AUTHORIZED_USERS);
+        if (!StringUtils.isBlank(systemInfoAuthUsers)) {
+            authorizedSystemInfo = true;
+            sysInfoAuthUsers = new HashSet<>();
+            for (String user : getTrimmedStrings(systemInfoAuthUsers)) {
+                sysInfoAuthUsers.add(user);
+            }
+        }
         if (authorizationEnabled) {
             log.info("Oozie running with authorization enabled");
             useDefaultGroupAsAcl = ConfigurationService.getBoolean(CONF_DEFAULT_GROUP_AS_ACL);
             String[] str = getTrimmedStrings(Services.get().getConf().get(CONF_ADMIN_GROUPS));
             if (str.length > 0) {
                 log.info("Admin users will be checked against the defined admin groups");
-                adminGroups = new HashSet<String>();
+                adminGroups = new HashSet<>();
                 for (String s : str) {
                     adminGroups.add(s.trim());
                 }
             }
             else {
                 log.info("Admin users will be checked against the 'adminusers.txt' file contents");
-                adminUsers = new HashSet<String>();
-                loadAdminUsers();
+                adminUsers = new HashSet<>();
+                loadAdminUsersFromFile();
+                loadAdminUsersFromConfiguration();
             }
         }
         else {
@@ -163,13 +185,15 @@ public class AuthorizationService implements Service {
      *
      * @throws ServiceException if the admin user list could not be loaded.
      */
-    private void loadAdminUsers() throws ServiceException {
+    private void loadAdminUsersFromFile() throws ServiceException {
         String configDir = Services.get().get(ConfigurationService.class).getConfigDir();
         if (configDir != null) {
-            File file = new File(configDir, ADMIN_USERS_FILE);
+            File file = new File(FilenameUtils.getFullPath(configDir)+FilenameUtils.getBaseName(configDir),
+                    FilenameUtils.getName(ADMIN_USERS_FILE));
             if (file.exists()) {
                 try {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                    BufferedReader br = new BufferedReader(
+                            new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
                     try {
                         String line = br.readLine();
                         while (line != null) {
@@ -183,17 +207,29 @@ public class AuthorizationService implements Service {
                     catch (IOException ex) {
                         throw new ServiceException(ErrorCode.E0160, file.getAbsolutePath(), ex);
                     }
+                    finally {
+                        br.close();
+                    }
                 }
-                catch (FileNotFoundException ex) {
+                catch (IOException ex) {
                     throw new ServiceException(ErrorCode.E0160, file.getAbsolutePath(), ex);
                 }
             }
             else {
-                log.warn("Admin users file not available in config dir [{0}], running without admin users", configDir);
+                log.warn("Admin users file not available in config dir [{0}]", configDir);
             }
         }
         else {
             log.warn("Reading configuration from classpath, running without admin users");
+        }
+    }
+
+    private void loadAdminUsersFromConfiguration() {
+        LinkedHashSet<String> adminsFromOozieSite = Sets.newLinkedHashSet();
+        adminsFromOozieSite.addAll(Services.get().get(ConfigurationService.class).getConf().getStringCollection(CONF_ADMIN_USERS));
+        if (!adminsFromOozieSite.isEmpty()) {
+            log.info("{0} admin users found in oozie-site.xml", adminsFromOozieSite.size());
+            adminUsers.addAll(adminsFromOozieSite);
         }
     }
 
@@ -231,8 +267,8 @@ public class AuthorizationService implements Service {
     }
 
     /**
-     * Check if the user belongs to the group or not. <p> <p> Subclasses should override the {@link #isUserInGroup}
-     * method.
+     * Check if the user belongs to the group or not. <p> Subclasses should override the {@link #isUserInGroup}
+     * method. <p>
      *
      * @param user user name.
      * @param group group name.
@@ -291,6 +327,21 @@ public class AuthorizationService implements Service {
     }
 
     /**
+     * Check if the user is authorized to access system information.
+     *
+     * @param user user name.
+     * @param proxyUser proxy user name.
+     * @throws AuthorizationException thrown if user does not have admin priviledges.
+     */
+    public void authorizeForSystemInfo(String user, String proxyUser) throws AuthorizationException {
+        if (authorizationEnabled && authorizedSystemInfo && !(sysInfoAuthUsers.contains(user) || sysInfoAuthUsers
+                .contains(proxyUser) || isAdmin(user) || isAdmin(proxyUser))) {
+            incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+            throw new AuthorizationException(ErrorCode.E0503, user);
+        }
+    }
+
+    /**
      * Check if the user has admin privileges. <p> Subclasses should override the {@link #isUserInGroup} method.
      *
      * @param user user name.
@@ -311,6 +362,7 @@ public class AuthorizationService implements Service {
      * @param user user name.
      * @param group group name.
      * @param appPath application path.
+     * @param jobConf job configuration
      * @throws AuthorizationException thrown if the user is not authorized for the app.
      */
     public void authorizeForApp(String user, String group, String appPath, Configuration jobConf)
@@ -318,7 +370,7 @@ public class AuthorizationService implements Service {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = new Path(appPath).toUri();
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
             Path path = new Path(appPath);
@@ -338,9 +390,7 @@ public class AuthorizationService implements Service {
                 }
                 fs.open(wfXml).close();
             }
-            // TODO change this when stopping support of 0.18 to the new
-            // Exception
-            catch (org.apache.hadoop.fs.permission.AccessControlException ex) {
+            catch (AccessControlException ex) {
                 incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                 throw new AuthorizationException(ErrorCode.E0507, appPath, ex.getMessage(), ex);
             }
@@ -362,7 +412,7 @@ public class AuthorizationService implements Service {
      * @param group group name.
      * @param appPath application path.
      * @param fileName workflow or coordinator.xml
-     * @param conf
+     * @param conf configuration
      * @throws AuthorizationException thrown if the user is not authorized for the app.
      */
     public void authorizeForApp(String user, String group, String appPath, String fileName, Configuration conf)
@@ -370,7 +420,7 @@ public class AuthorizationService implements Service {
         try {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = new Path(appPath).toUri();
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
 
             Path path = new Path(appPath);
@@ -379,7 +429,8 @@ public class AuthorizationService implements Service {
                     incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                     throw new AuthorizationException(ErrorCode.E0504, appPath);
                 }
-                if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) == null) { // Only further check existence of job definition files for non proxy submission jobs;
+                if (conf.get(XOozieClient.IS_PROXY_SUBMISSION) == null) { // Only further check existence of job definition
+                    //files for non proxy submission jobs;
                     if (!fs.isFile(path)) {
                         Path appXml = new Path(path, fileName);
                         if (!fs.exists(appXml)) {
@@ -394,9 +445,7 @@ public class AuthorizationService implements Service {
                     }
                 }
             }
-            // TODO change this when stopping support of 0.18 to the new
-            // Exception
-            catch (org.apache.hadoop.fs.permission.AccessControlException ex) {
+            catch (AccessControlException ex) {
                 incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
                 throw new AuthorizationException(ErrorCode.E0507, appPath, ex.getMessage(), ex);
             }
@@ -437,7 +486,7 @@ public class AuthorizationService implements Service {
             try {
                 // handle workflow jobs
                 if (jobId.endsWith("-W")) {
-                    WorkflowJobBean jobBean = null;
+                    WorkflowJobBean jobBean;
                     JPAService jpaService = Services.get().get(JPAService.class);
                     if (jpaService != null) {
                         try {
@@ -481,7 +530,7 @@ public class AuthorizationService implements Service {
                 }
                 // handle coordinator jobs
                 else {
-                    CoordinatorJobBean jobBean = null;
+                    CoordinatorJobBean jobBean;
                     JPAService jpaService = Services.get().get(JPAService.class);
                     if (jpaService != null) {
                         try {
@@ -514,6 +563,7 @@ public class AuthorizationService implements Service {
      *
      * @param user user name.
      * @param filter filter used to select jobs
+     * @param jobType job type
      * @param start starting index of the jobs in DB
      * @param len maximum amount of jobs to select
      * @param write indicates if the check is for read or write job tasks.
@@ -524,76 +574,74 @@ public class AuthorizationService implements Service {
         if (authorizationEnabled && write && !isAdmin(user)) {
             try {
                 // handle workflow jobs
-                if (jobType.equals("wf")) {
-                    List<WorkflowJobBean> jobBeans = new ArrayList<WorkflowJobBean>();
-                    JPAService jpaService = Services.get().get(JPAService.class);
-                    if (jpaService != null) {
-                        try {
-                            jobBeans = jpaService.execute(new WorkflowsJobGetJPAExecutor(
-                                    filter, start, len)).getWorkflows();
+                switch (jobType) {
+                    case "wf": {
+                        List<WorkflowJobBean> jobBeans;
+                        JPAService jpaService = Services.get().get(JPAService.class);
+                        if (jpaService != null) {
+                            try {
+                                jobBeans = jpaService.execute(new WorkflowsJobGetJPAExecutor(
+                                        filter, start, len)).getWorkflows();
+                            } catch (JPAExecutorException je) {
+                                throw new AuthorizationException(je);
+                            }
+                        } else {
+                            throw new AuthorizationException(ErrorCode.E0610);
                         }
-                        catch (JPAExecutorException je) {
-                            throw new AuthorizationException(je);
-                        }
-                    }
-                    else {
-                        throw new AuthorizationException(ErrorCode.E0610);
-                    }
-                    for (WorkflowJobBean jobBean : jobBeans) {
-                        if (jobBean != null && !jobBean.getUser().equals(user)) {
-                            if (!isUserInAcl(user, jobBean.getGroup())) {
+                        for (WorkflowJobBean jobBean : jobBeans) {
+                            if (jobBean != null && !jobBean.getUser().equals(user)) {
+                                if (!isUserInAcl(user, jobBean.getGroup())) {
                                     incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                                throw new AuthorizationException(ErrorCode.E0508, user, jobBean.getId());
+                                    throw new AuthorizationException(ErrorCode.E0508, user, jobBean.getId());
+                                }
                             }
                         }
+                        break;
                     }
-                }
-                // handle bundle jobs
-                else if (jobType.equals("bundle")) {
-                    List<BundleJobBean> jobBeans = new ArrayList<BundleJobBean>();
-                    JPAService jpaService = Services.get().get(JPAService.class);
-                    if (jpaService != null) {
-                        try {
-                            jobBeans = jpaService.execute(new BundleJobInfoGetJPAExecutor(
-                                    filter, start, len)).getBundleJobs();
+                    // handle bundle jobs
+                    case "bundle": {
+                        List<BundleJobBean> jobBeans;
+                        JPAService jpaService = Services.get().get(JPAService.class);
+                        if (jpaService != null) {
+                            try {
+                                jobBeans = jpaService.execute(new BundleJobInfoGetJPAExecutor(
+                                        filter, start, len)).getBundleJobs();
+                            } catch (JPAExecutorException je) {
+                                throw new AuthorizationException(je);
+                            }
+                        } else {
+                            throw new AuthorizationException(ErrorCode.E0610);
                         }
-                        catch (JPAExecutorException je) {
-                            throw new AuthorizationException(je);
-                        }
-                    }
-                    else {
-                        throw new AuthorizationException(ErrorCode.E0610);
-                    }
-                    for (BundleJobBean jobBean : jobBeans){
-                        if (jobBean != null && !jobBean.getUser().equals(user)) {
-                            if (!isUserInAcl(user, jobBean.getGroup())) {
-                                incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                                throw new AuthorizationException(ErrorCode.E0509, user, jobBean.getId());
+                        for (BundleJobBean jobBean : jobBeans) {
+                            if (jobBean != null && !jobBean.getUser().equals(user)) {
+                                if (!isUserInAcl(user, jobBean.getGroup())) {
+                                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                                    throw new AuthorizationException(ErrorCode.E0509, user, jobBean.getId());
+                                }
                             }
                         }
+                        break;
                     }
-                }
-                // handle coordinator jobs
-                else {
-                    List<CoordinatorJobBean> jobBeans = new ArrayList<CoordinatorJobBean>();
-                    JPAService jpaService = Services.get().get(JPAService.class);
-                    if (jpaService != null) {
-                        try {
-                            jobBeans = jpaService.execute(new CoordJobInfoGetJPAExecutor(
-                                    filter, start, len)).getCoordJobs();
+                    // handle coordinator jobs
+                    default: {
+                        List<CoordinatorJobBean> jobBeans;
+                        JPAService jpaService = Services.get().get(JPAService.class);
+                        if (jpaService != null) {
+                            try {
+                                jobBeans = jpaService.execute(new CoordJobInfoGetJPAExecutor(
+                                        filter, start, len)).getCoordJobs();
+                            } catch (JPAExecutorException je) {
+                                throw new AuthorizationException(je);
+                            }
+                        } else {
+                            throw new AuthorizationException(ErrorCode.E0610);
                         }
-                        catch (JPAExecutorException je) {
-                            throw new AuthorizationException(je);
-                        }
-                    }
-                    else {
-                        throw new AuthorizationException(ErrorCode.E0610);
-                    }
-                    for (CoordinatorJobBean jobBean : jobBeans) {
-                        if (jobBean != null && !jobBean.getUser().equals(user)) {
-                            if (!isUserInAcl(user, jobBean.getGroup())) {
-                                incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
-                                throw new AuthorizationException(ErrorCode.E0509, user, jobBean.getId());
+                        for (CoordinatorJobBean jobBean : jobBeans) {
+                            if (jobBean != null && !jobBean.getUser().equals(user)) {
+                                if (!isUserInAcl(user, jobBean.getGroup())) {
+                                    incrCounter(INSTR_FAILED_AUTH_COUNTER, 1);
+                                    throw new AuthorizationException(ErrorCode.E0509, user, jobBean.getId());
+                                }
                             }
                         }
                     }
@@ -614,5 +662,9 @@ public class AuthorizationService implements Service {
         if (instrumentation != null) {
             instrumentation.incr(INSTRUMENTATION_GROUP, name, count);
         }
+    }
+
+    public boolean isAuthorizedSystemInfo() {
+        return authorizedSystemInfo;
     }
 }

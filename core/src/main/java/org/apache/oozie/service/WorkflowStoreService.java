@@ -70,6 +70,8 @@ public abstract class WorkflowStoreService implements Service {
      * Return a workflow store instance with an existing transaction. <p> The workflow store has to be committed and
      * then closed to commit changes, if only close it rolls back.
      *
+     * @param <S> child type of Store
+     * @param store store instance
      * @return a workflow store.
      * @throws StoreException thrown if the workflow store could not be created.
      */

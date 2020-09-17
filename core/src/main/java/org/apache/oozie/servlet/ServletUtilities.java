@@ -30,9 +30,9 @@ public class ServletUtilities {
      *
      * @param wfPath workflow app path
      * @param coordPath coordinator app path
-     * @throws XServletException
+     * @throws XServletException if either path is not valid
      */
-    protected static void ValidateAppPath(String wfPath, String coordPath) throws XServletException {
+    protected static void validateAppPath(String wfPath, String coordPath) throws XServletException {
         if (wfPath != null && coordPath != null) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302,
                     "multiple app paths specified, only one is allowed");
@@ -53,9 +53,9 @@ public class ServletUtilities {
      * @param wfPath workflow app path
      * @param coordPath coordinator app path
      * @param bundlePath bundle app path
-     * @throws XServletException
+     * @throws XServletException if either path is not valid
      */
-    protected static void ValidateAppPath(String wfPath, String coordPath, String bundlePath) throws XServletException {
+    protected static void validateAppPath(String wfPath, String coordPath, String bundlePath) throws XServletException {
         int n = 0;
 
         if (wfPath != null) {
@@ -71,11 +71,13 @@ public class ServletUtilities {
         }
 
         if (n == 0) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "a workflow, coordinator, or bundle app path is required");
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "a workflow, coordinator,"
+                    + " or bundle app path is required");
         }
 
         if (n != 1) {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Multiple app paths specified, only one is allowed");
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Multiple app paths specified,"
+                    + " only one is allowed");
         }
     }
 
@@ -83,7 +85,7 @@ public class ServletUtilities {
      * accessory static method to check the lib path parameter for the request
      *
      * @param libPath lib path
-     * @throws XServletException
+     * @throws XServletException if either path is not valid
      */
     protected static void ValidateLibPath(String libPath) throws XServletException {
         if (libPath == null) {

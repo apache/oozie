@@ -22,8 +22,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogStreamingService;
+import org.apache.oozie.util.LogLine.MATCHED_PATTERN;
 
   /**
  * Encapsulates the parsing and filtering of the log messages from a BufferedReader. It makes sure not to read in the entire log
@@ -33,19 +37,21 @@ import org.apache.oozie.service.XLogStreamingService;
  * Reader. It will return true if there are more messages and false if not. Calling
  * {@link TimestampedMessageParser#getLastMessage()} and {@link TimestampedMessageParser#getLastTimestamp()} will return the last
  * message and timestamp, respectively, that were parsed when {@link TimestampedMessageParser#increment()} was called. Calling
- * {@link TimestampedMessageParser#processRemaining(java.io.Writer)} will write the remaining log messages to the given Writer.
+ * {@link TimestampedMessageParser#processRemaining(java.io.Writer,org.apache.oozie.util.XLogStreamer)} will write the
+ * remaining log messages to the given Writer.
  */
 public class TimestampedMessageParser {
 
     static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
     protected BufferedReader reader;
-    private String nextLine = null;
+    private LogLine nextLine = null;
     private String lastTimestamp = null;
     private XLogFilter filter;
     private boolean empty = false;
     private String lastMessage = null;
     private boolean patternMatched = false;
     public int count = 0;
+    private Pattern splitPattern = null;
 
     /**
      * Creates a TimestampedMessageParser with the given BufferedReader and filter.
@@ -60,6 +66,8 @@ public class TimestampedMessageParser {
             filter = new XLogFilter();
         }
         filter.constructPattern();
+        String regEx = XLogFilter.PREFIX_REGEX + filter.getFilterPattern().pattern();
+        this.splitPattern = Pattern.compile(regEx);
     }
 
 
@@ -75,10 +83,10 @@ public class TimestampedMessageParser {
         }
 
         StringBuilder message = new StringBuilder();
-
         if (nextLine == null) {     // first time only
-            nextLine = parseNextLine();
-            if (nextLine == null) { // reader finished
+            nextLine = parseNextLogLine();
+            if (nextLine == null || nextLine.getLine() == null) {
+                // reader finished
                 empty = true;
                 return false;
             }
@@ -86,10 +94,11 @@ public class TimestampedMessageParser {
         lastTimestamp = parseTimestamp(nextLine);
         String nextTimestamp = null;
         while (nextTimestamp == null) {
-            message.append(nextLine).append(SYSTEM_LINE_SEPARATOR);
-            nextLine = parseNextLine();
-            if (nextLine != null) {
-                nextTimestamp = parseTimestamp(nextLine);   // exit loop if we have a timestamp, continue if not
+            message.append(nextLine.getLine()).append(SYSTEM_LINE_SEPARATOR);
+            nextLine = parseNextLogLine();
+            if (nextLine != null && nextLine.getLine() != null) {
+                // exit loop if we have a timestamp, continue if not
+                nextTimestamp = parseTimestamp(nextLine);
             }
             else {                                          // reader finished
                 empty = true;
@@ -122,105 +131,97 @@ public class TimestampedMessageParser {
     /**
      * Closes the Reader.
      *
-     * @throws IOException
+     * @throws IOException if the reader can't be closed
      */
     public void closeReader() throws IOException {
         reader.close();
     }
 
     /**
-     * Reads the next line from the Reader and checks if it matches the filter.  It can also handle multi-line messages (i.e.
-     * exception stack traces).  If it returns null, then there are no lines left in the Reader.
+     * Reads the next line from the Reader and checks if it matches the filter.
+     * It can also handle multi-line messages (i.e. exception stack traces). If
+     * it returns null, then there are no lines left in the Reader.
      *
-     * @return The next line, or null
-     * @throws IOException
+     * @return LogLine
+     * @throws IOException in case of an error in the Reader
      */
-    protected String parseNextLine() throws IOException {
+    protected LogLine parseNextLogLine() throws IOException {
         String line;
+        LogLine logLine = new LogLine();
         while ((line = reader.readLine()) != null) {
-            ArrayList<String> logParts = filter.splitLogMessage(line);
-            if (logParts != null) {
-                patternMatched = filter.matches(logParts);
-            }
+            logLine.setLine(line);
+            logLine.setLogParts(null);
+            filter.splitLogMessage(logLine, splitPattern);
+            // check the splits if logLine matches with the splitPattern
+            // Otherwise, go with previous patternMatched value. This is needed
+            // in parsing stack trace
+            patternMatched = logLine.getMatchedPattern() == MATCHED_PATTERN.NONE ? patternMatched
+                    : filter.splitsMatches(logLine);
             if (patternMatched) {
                 if (filter.getLogLimit() != -1) {
-                    if (logParts != null) {
+                    if (logLine.getLogParts() != null) {
                         if (count >= filter.getLogLimit()) {
                             return null;
                         }
                         count++;
                     }
                 }
-                if (logParts != null) {
+                if (logLine.getLogParts() != null) {
                     if (filter.getEndDate() != null) {
-                        //Ignore the milli second part
-                        if (logParts.get(0).substring(0, 19).compareTo(filter.getFormattedEndDate()) > 0)
+                        // Ignore the milli second part
+                        if (logLine.getLogParts().get(0).substring(0, 19).compareTo(filter.getFormattedEndDate()) > 0)
                             return null;
                     }
                 }
-                return line;
+                return logLine;
             }
         }
-        return line;
+        logLine.setLine(null);
+        return logLine;
     }
 
     /**
-     * Parses the timestamp out of the passed in line.  If there isn't one, it returns null.
+     * Parses the timestamp out of the passed in line. If there isn't one, it
+     * returns null.
      *
-     * @param line The line to check
+     * @param logLine The LogLine to check
      * @return the timestamp of the line, or null
      */
-    private String parseTimestamp(String line) {
+    private String parseTimestamp(LogLine logLine) {
         String timestamp = null;
-        ArrayList<String> logParts = filter.splitLogMessage(line);
-        if (logParts != null) {
-            timestamp = logParts.get(0);
+        if (logLine != null && logLine.getLogParts() != null && logLine.getLogParts().size() > 0) {
+            timestamp = logLine.getLogParts().get(0);
         }
         return timestamp;
-    }
-
-    /**
-     * Streams log messages to the passed in Writer. Flushes the log writing
-     * based on buffer len
-     *
-     * @param writer
-     * @param bufferLen maximum len of log buffer
-     * @param bytesWritten num bytes already written to writer
-     * @throws IOException
-     */
-    public void processRemaining(Writer writer, int bufferLen, int bytesWritten) throws IOException {
-        while (increment()) {
-            writer.write(lastMessage);
-            bytesWritten += lastMessage.length();
-            if (bytesWritten > bufferLen) {
-                writer.flush();
-                bytesWritten = 0;
-            }
-        }
-        writer.flush();
     }
 
     /**
      * Streams log messages to the passed in Writer, with zero bytes already
      * written
      *
-     * @param writer
-     * @param bufferLen maximum len of log buffer
-     * @throws IOException
+     * @param writer the target writer
+     * @param logStreamer the log streamer
+     * @throws IOException in case of IO error
      */
-    public void processRemaining(Writer writer, int bufferLen) throws IOException {
-        processRemaining(writer, bufferLen, 0);
+    public void processRemaining(Writer writer, XLogStreamer logStreamer) throws IOException {
+        while (increment()) {
+            writer.write(StringEscapeUtils.escapeHtml4(lastMessage));
+            if (logStreamer.shouldFlushOutput(lastMessage.length())) {
+                writer.flush();
+            }
+        }
+        writer.flush();
     }
 
     /**
-     * Streams log messages to the passed in Writer, with default buffer len 4K
-     * and zero bytes already written
+     * Splits the log message into parts
      *
-     * @param writer
-     * @throws IOException
+     * @param line the line to split
+     * @return List of log parts
      */
-    public void processRemaining(Writer writer) throws IOException {
-        processRemaining(writer, Services.get().get(XLogStreamingService.class).getBufferLen());
+    protected ArrayList<String> splitLogMessage(String line) {
+        return filter.splitLogMessage(line);
     }
+
 
 }

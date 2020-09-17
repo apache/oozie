@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.sla;
 
 import java.util.Date;
@@ -36,6 +35,7 @@ public class SLACalcStatus extends SLAEvent {
 
     public static String SLA_ENTITYKEY_PREFIX = "sla-";
     private SLARegistrationBean regBean;
+    private SLASummaryBean summary;
     private String jobStatus;
     private SLAStatus slaStatus;
     private EventStatus eventStatus;
@@ -44,6 +44,8 @@ public class SLACalcStatus extends SLAEvent {
     private long actualDuration = -1;
     private Date lastModifiedTime;
     private byte eventProcessed;
+    private String jobId;
+    private int retryCount = 0;
 
     private XLog LOG;
 
@@ -54,27 +56,13 @@ public class SLACalcStatus extends SLAEvent {
     }
 
     public SLACalcStatus(SLASummaryBean summary, SLARegistrationBean regBean) {
+        this(summary);
+        updateSLARegistrationBean(regBean);
+        LOG = LogUtils.setLogPrefix(LOG, this);
+    }
+
+    public SLACalcStatus(SLASummaryBean summary) {
         this();
-        SLARegistrationBean reg = new SLARegistrationBean();
-        reg.setNotificationMsg(regBean.getNotificationMsg());
-        reg.setUpstreamApps(regBean.getUpstreamApps());
-        reg.setAlertContact(regBean.getAlertContact());
-        reg.setAlertEvents(regBean.getAlertEvents());
-        reg.setJobData(regBean.getJobData());
-        if (regBean.getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT)) {
-            reg.addToSLAConfigMap(OozieClient.SLA_DISABLE_ALERT,
-                    regBean.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT));
-        }
-        reg.setId(summary.getId());
-        reg.setAppType(summary.getAppType());
-        reg.setUser(summary.getUser());
-        reg.setAppName(summary.getAppName());
-        reg.setParentId(summary.getParentId());
-        reg.setNominalTime(summary.getNominalTime());
-        reg.setExpectedStart(summary.getExpectedStart());
-        reg.setExpectedEnd(summary.getExpectedEnd());
-        reg.setExpectedDuration(summary.getExpectedDuration());
-        setSLARegistrationBean(reg);
         setActualStart(summary.getActualStart());
         setActualEnd(summary.getActualEnd());
         setActualDuration(summary.getActualDuration());
@@ -83,11 +71,14 @@ public class SLACalcStatus extends SLAEvent {
         setEventStatus(summary.getEventStatus());
         setLastModifiedTime(summary.getLastModifiedTime());
         setEventProcessed(summary.getEventProcessed());
-        LOG = LogUtils.setLogPrefix(LOG, this);
+        setId(summary.getId());
+        this.summary = summary;
     }
 
     /**
      * copy constructor
+     *
+     * @param a use this to create a copy from
      */
     public SLACalcStatus(SLACalcStatus a) {
         this();
@@ -112,17 +103,24 @@ public class SLACalcStatus extends SLAEvent {
         return regBean;
     }
 
+    public SLASummaryBean getSLASummaryBean() {
+        return summary;
+    }
+
     public void setSLARegistrationBean(SLARegistrationBean slaBean) {
+        if (slaBean != null) {
+            this.jobId = slaBean.getId();
+        }
         this.regBean = slaBean;
     }
 
     @Override
     public String getId() {
-        return regBean.getId();
+        return jobId;
     }
 
     public void setId(String id) {
-        regBean.setId(id);
+        this.jobId = id;
     }
 
     @Override
@@ -288,4 +286,38 @@ public class SLACalcStatus extends SLAEvent {
         return SLA_ENTITYKEY_PREFIX + this.getId();
     }
 
+    public void updateSLARegistrationBean(SLARegistrationBean slaBean) {
+        SLARegistrationBean reg = new SLARegistrationBean();
+        reg.setNotificationMsg(slaBean.getNotificationMsg());
+        reg.setUpstreamApps(slaBean.getUpstreamApps());
+        reg.setAlertContact(slaBean.getAlertContact());
+        reg.setAlertEvents(slaBean.getAlertEvents());
+        reg.setJobData(slaBean.getJobData());
+        if (slaBean.getSLAConfigMap().containsKey(OozieClient.SLA_DISABLE_ALERT)) {
+            reg.addToSLAConfigMap(OozieClient.SLA_DISABLE_ALERT,
+                    slaBean.getSLAConfigMap().get(OozieClient.SLA_DISABLE_ALERT));
+        }
+        reg.setId(summary.getId());
+        reg.setAppType(summary.getAppType());
+        reg.setUser(summary.getUser());
+        reg.setAppName(summary.getAppName());
+        reg.setParentId(summary.getParentId());
+        reg.setNominalTime(summary.getNominalTime());
+        reg.setExpectedStart(summary.getExpectedStart());
+        reg.setExpectedEnd(summary.getExpectedEnd());
+        reg.setExpectedDuration(summary.getExpectedDuration());
+        setSLARegistrationBean(reg);
+    }
+
+    int getRetryCount() {
+        return retryCount;
+    }
+
+    void incrementRetryCount() {
+        this.retryCount++;
+    }
+
+    void resetRetryCount() {
+        this.retryCount = 0;
+    }
 }

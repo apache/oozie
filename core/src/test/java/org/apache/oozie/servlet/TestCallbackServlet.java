@@ -19,11 +19,11 @@
 package org.apache.oozie.servlet;
 
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.servlet.CallbackServlet;
 
 import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +83,7 @@ public class TestCallbackServlet extends DagServletTestCase {
                 conn.setRequestProperty("content-type", RestConstants.TEXT_CONTENT_TYPE);
                 Properties props = new Properties();
                 props.setProperty("a", "A");
-                props.store(conn.getOutputStream(), "UTF-8");
+                props.store(conn.getOutputStream(), StandardCharsets.UTF_8.name());
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
 
                 MockDagEngineService.reset();
@@ -97,7 +97,7 @@ public class TestCallbackServlet extends DagServletTestCase {
                 conn.setRequestProperty("content-type", RestConstants.TEXT_CONTENT_TYPE);
                 props = new Properties();
                 props.setProperty("a", "A");
-                props.store(conn.getOutputStream(), "UTF-8");
+                props.store(conn.getOutputStream(), StandardCharsets.UTF_8.name());
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertEquals(props, MockDagEngineService.properties);
                 return null;

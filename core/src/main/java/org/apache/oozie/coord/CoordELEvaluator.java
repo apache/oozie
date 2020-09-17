@@ -49,6 +49,7 @@ public class CoordELEvaluator {
      * 1)
      *
      * @param conf : Configuration containing property variables
+     * @param group  Name of the group of required EL Evaluator.
      * @return configured ELEvaluator
      */
     public static ELEvaluator createELEvaluatorForGroup(Configuration conf, String group) {
@@ -81,7 +82,7 @@ public class CoordELEvaluator {
     }
 
     public static ELEvaluator createELEvaluatorForDataEcho(Configuration conf, String group,
-                                                           HashMap<String, String> dataNameList) throws Exception {
+                                                           HashMap<String, String> dataNameList) {
         ELEvaluator eval = createELEvaluatorForGroup(conf, group);
         for (Iterator<String> it = dataNameList.keySet().iterator(); it.hasNext();) {
             String key = it.next();
@@ -117,14 +118,13 @@ public class CoordELEvaluator {
 
     /**
      * Create a SLA evaluator to be used during Materialization
-     * @param eAction
-     * @param coordAction
-     * @param conf
-     * @return
-     * @throws Exception
+     * @param eAction the action
+     * @param coordAction the coordinator action
+     * @param conf the configuration
+     * @return eval returns SLA evaluator to be used during Materialization
      */
-    public static ELEvaluator createSLAEvaluator(Element eAction, CoordinatorActionBean coordAction, Configuration conf)
-            throws Exception {
+    public static ELEvaluator createSLAEvaluator(Element eAction, CoordinatorActionBean coordAction,
+                                                 Configuration conf) {
         ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("coord-sla-create");
         setConfigToEval(eval, conf);
         SyncCoordAction appInst = new SyncCoordAction();// TODO:
@@ -153,14 +153,13 @@ public class CoordELEvaluator {
 
     /**
      * Create an Evaluator using conf and input/output-data (used for sla)
-     * @param conf
-     * @param group
-     * @param dataNameList
-     * @return
-     * @throws Exception
+     * @param conf the configuration
+     * @param group the group for the EL expression
+     * @param dataNameList the name list for the data
+     * @return eval returns an Evaluator using conf and input/output-data (used for sla)
      */
     public static ELEvaluator createELEvaluatorForDataAndConf(Configuration conf, String group,
-            HashMap<String, String> dataNameList) throws Exception {
+            HashMap<String, String> dataNameList) {
         ELEvaluator eval = createELEvaluatorForDataEcho(conf, group, dataNameList);
         setConfigToEval(eval, conf);
         return eval;
@@ -171,6 +170,7 @@ public class CoordELEvaluator {
      *
      * @param eJob : XML element for the application instance
      * @param conf :Configuration to substitute any variables
+     * @param actionId the action Id
      * @return configured ELEvaluator
      * @throws Exception : If there is any date-time string in wrong format, the exception is thrown
      */
@@ -268,9 +268,9 @@ public class CoordELEvaluator {
     /**
      * Create Dataset object using the Dataset XML information
      *
-     * @param eData
-     * @return
-     * @throws Exception
+     * @param eData the xml
+     * @return ds returns Dataset object using the Dataset XML information
+     * @throws Exception if the Dataset object can't be created
      */
     private static SyncCoordDataset getDSObject(Element eData) throws Exception {
         SyncCoordDataset ds = new SyncCoordDataset();

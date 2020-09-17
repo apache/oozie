@@ -18,13 +18,17 @@
 
 package org.apache.oozie.service;
 
+import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentable;
 import org.apache.oozie.util.Instrumentation;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.ErrorCode;
+import org.apache.oozie.util.XLog;
+import org.apache.oozie.util.ZKUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,15 +37,13 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
 
-import org.apache.oozie.util.ZKUtils;
-
-import com.google.common.annotations.VisibleForTesting;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Built in service that initializes the services configuration.
@@ -74,6 +76,8 @@ public class ConfigurationService implements Service, Instrumentable {
 
     public static final String CONF_VERIFY_AVAILABLE_PROPS = CONF_PREFIX + "verify.available.properties";
 
+    public static final String CONF_JAVAX_XML_PARSERS_DOCUMENTBUILDERFACTORY = "oozie.javax.xml.parsers.DocumentBuilderFactory";
+
     /**
      * System property that indicates the configuration directory.
      */
@@ -95,9 +99,9 @@ public class ConfigurationService implements Service, Instrumentable {
 
     private static final String IGNORE_TEST_SYS_PROPS = "oozie.test.";
     private static final Set<String> MASK_PROPS = new HashSet<String>();
+    public static final String HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH = "hadoop.security.credential.provider.path";
+    public static final String JCEKS_FILE_PREFIX = "jceks://file/";
     private static Map<String,String> defaultConfigs = new HashMap<String,String>();
-
-    private static Method getPasswordMethod;
 
     static {
 
@@ -121,11 +125,10 @@ public class ConfigurationService implements Service, Instrumentable {
         MASK_PROPS.add("oozie.authentication.signature.secret");
 
         try {
-            // Only supported in Hadoop 2.6.0+
-            getPasswordMethod = Configuration.class.getMethod("getPassword", String.class);
-        } catch (NoSuchMethodException e) {
-            // Not supported
-            getPasswordMethod = null;
+            Method method = Configuration.class.getDeclaredMethod("setRestrictSystemPropertiesDefault", boolean
+                    .class);
+            method.invoke(null, true);
+        } catch( NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
         }
     }
 
@@ -163,6 +166,15 @@ public class ConfigurationService implements Service, Instrumentable {
         configuration = loadConf();
         if (configuration.getBoolean(CONF_VERIFY_AVAILABLE_PROPS, false)) {
             verifyConfigurationName();
+        }
+
+        // Set the javax.xml.parsers.DocumentBuilderFactory property, which should make finding these classes faster, as the JVM
+        // doesn't have to do expensive searching.  This happens quite frequently in Oozie.
+        String docFac = configuration.get(CONF_JAVAX_XML_PARSERS_DOCUMENTBUILDERFACTORY);
+        if (docFac != null && !docFac.trim().isEmpty()) {
+            System.setProperty("javax.xml.parsers.DocumentBuilderFactory", docFac.trim());
+            Class<?> dbfClass = DocumentBuilderFactory.newInstance().getClass();
+            log.debug("Using javax.xml.parsers.DocumentBuilderFactory: {0}", dbfClass.getName());
         }
     }
 
@@ -238,6 +250,7 @@ public class ConfigurationService implements Service, Instrumentable {
             else {
                 inputStream = new FileInputStream(configFile);
                 XConfiguration siteConfiguration = loadConfig(inputStream, false);
+                fixJceksUrl(siteConfiguration);
                 XConfiguration.injectDefaults(configuration, siteConfiguration);
                 configuration = siteConfiguration;
             }
@@ -247,18 +260,12 @@ public class ConfigurationService implements Service, Instrumentable {
         }
 
         if (log.isTraceEnabled()) {
-            try {
-                StringWriter writer = new StringWriter();
-                for (Map.Entry<String, String> entry : configuration) {
-                    String value = getValue(configuration, entry.getKey());
-                    writer.write(" " + entry.getKey() + " = " + value + "\n");
-                }
-                writer.close();
-                log.trace("Configuration:\n{0}---", writer.toString());
+            StringWriter writer = new StringWriter();
+            for (Map.Entry<String, String> entry : configuration) {
+                String value = getValue(configuration, entry.getKey());
+                writer.write(" " + entry.getKey() + " = " + value + "\n");
             }
-            catch (IOException ex) {
-                throw new ServiceException(ErrorCode.E0025, ex.getMessage(), ex);
-            }
+            log.trace("Configuration:\n{0}---", writer.toString());
         }
 
         String[] ignoreSysProps = configuration.getStrings(CONF_IGNORE_SYS_PROPS);
@@ -299,6 +306,7 @@ public class ConfigurationService implements Service, Instrumentable {
     private XConfiguration loadConfig(InputStream inputStream, boolean defaultConfig) throws IOException, ServiceException {
         XConfiguration configuration;
         configuration = new XConfiguration(inputStream);
+        configuration.setRestrictSystemProperties(false);
         for(Map.Entry<String,String> entry: configuration) {
             if (defaultConfig) {
                 defaultConfigs.put(entry.getKey(), entry.getValue());
@@ -317,6 +325,10 @@ public class ConfigurationService implements Service, Instrumentable {
                 if (get(entry.getKey()) == null) {
                     setValue(entry.getKey(), entry.getValue());
                 }
+            }
+            if(conf instanceof XConfiguration) {
+                this.setRestrictParser(((XConfiguration)conf).getRestrictParser());
+                this.setRestrictSystemProperties(((XConfiguration)conf).getRestrictSystemProperties());
             }
         }
 
@@ -526,8 +538,30 @@ public class ConfigurationService implements Service, Instrumentable {
         return getBoolean(conf, name);
     }
 
+    public static boolean getBoolean(String name, boolean defaultValue) {
+        return Services.get().getConf().getBoolean(name, defaultValue);
+    }
+
     public static boolean getBoolean(Configuration conf, String name) {
         return conf.getBoolean(name, ConfigUtils.BOOLEAN_DEFAULT);
+    }
+
+    /**
+     * Get the {@code boolean} value for {@code name} from {@code conf}, or the default {@link Configuration} coming from
+     * {@code oozie-site.xml}, or {@code defaultValue}, if no previous occurrences present.
+     *
+     * @param conf the {@link Configuration} for primary lookup
+     * @param name name of the parameter to look up
+     * @param defaultValue default value to return when every other possibility is exhausted
+     * @return a {@code boolean} given above lookup order
+     */
+    public static boolean getBooleanOrDefault(final Configuration conf, final String name, final boolean defaultValue) {
+        if (Strings.isNullOrEmpty(conf.get(name))) {
+            final Configuration defaultConf = Services.get().getConf();
+            return defaultConf.getBoolean(name, defaultValue);
+        }
+
+        return conf.getBoolean(name, defaultValue);
     }
 
     public static int getInt(String name) {
@@ -561,6 +595,7 @@ public class ConfigurationService implements Service, Instrumentable {
     public static long getLong(Configuration conf, String name) {
         return getLong(conf, name, ConfigUtils.LONG_DEFAULT);
     }
+
     public static long getLong(Configuration conf, String name, long defultValue) {
         return conf.getLong(name, defultValue);
     }
@@ -583,19 +618,12 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static String getPassword(Configuration conf, String name, String defaultValue) {
-        if (getPasswordMethod != null) {
-            try {
-                char[] pass = (char[]) getPasswordMethod.invoke(conf, name);
-                return pass == null ? defaultValue : new String(pass);
-            } catch (IllegalAccessException e) {
-                log.error(e);
-                throw new IllegalArgumentException("Could not load password for [" + name + "]", e);
-            } catch (InvocationTargetException e) {
-                log.error(e);
-                throw new IllegalArgumentException("Could not load password for [" + name + "]", e);
-            }
-        } else {
-            return conf.get(name);
+        try {
+            char[] pass = conf.getPassword(name);
+            return pass == null ? defaultValue : new String(pass);
+        } catch (IOException e) {
+            log.error(e);
+            throw new IllegalArgumentException("Could not load password for [" + name + "]", e);
         }
     }
 
@@ -604,4 +632,22 @@ public class ConfigurationService implements Service, Instrumentable {
         return getPassword(conf, name, defaultValue);
     }
 
+    public static Map<String, String> getValByRegex(final String regex) {
+        final Configuration conf = Services.get().getConf();
+        return conf.getValByRegex(regex);
+    }
+
+    private void fixJceksUrl(Configuration siteConfiguration) {
+        String jceksUrl = siteConfiguration.get(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH);
+        if (Strings.isNullOrEmpty(jceksUrl)) {
+            return;
+        }
+        if (jceksUrl.startsWith(JCEKS_FILE_PREFIX)) {
+            siteConfiguration.set(
+                    HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH,
+                    jceksUrl.replaceFirst("jceks", "localjceks"));
+            log.info(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH + " is changed to " +
+                    siteConfiguration.get(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH));
+        }
+    }
 }

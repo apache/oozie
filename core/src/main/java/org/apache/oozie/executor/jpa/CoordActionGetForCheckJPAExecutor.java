@@ -20,8 +20,10 @@ package org.apache.oozie.executor.jpa;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.apache.oozie.CoordinatorActionBean;
@@ -29,7 +31,6 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * JPAExecutor to get attributes of CoordinatorActionBean required by CoordActionCheckCommand
@@ -39,21 +40,14 @@ public class CoordActionGetForCheckJPAExecutor implements JPAExecutor<Coordinato
     private String coordActionId = null;
 
     public CoordActionGetForCheckJPAExecutor(String coordActionId) {
-        ParamChecker.notNull(coordActionId, "coordActionId");
-        this.coordActionId = coordActionId;
+        this.coordActionId = Objects.requireNonNull(coordActionId, "coordActionId cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordActionGetForCheckJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public CoordinatorActionBean execute(EntityManager em) throws JPAExecutorException {
         try {
@@ -62,6 +56,9 @@ public class CoordActionGetForCheckJPAExecutor implements JPAExecutor<Coordinato
             Object[] obj = (Object[]) q.getSingleResult();
             CoordinatorActionBean caBean = getBeanForRunningCoordAction(obj);
             return caBean;
+        }
+        catch (NoResultException e) {
+            return null;
         }
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);

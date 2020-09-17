@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -29,7 +30,6 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.coord.TimeUnit;
 import org.apache.oozie.service.ConfigurationService;
@@ -38,9 +38,9 @@ import org.apache.oozie.service.ConfigurationService;
  * Date utility classes to parse and format datetimes in Oozie expected datetime formats.
  */
 public class DateUtils {
-
+    private static final XLog LOG = XLog.getLog(DateUtils.class);
     private static final Pattern GMT_OFFSET_COLON_PATTERN = Pattern.compile("^GMT(\\-|\\+)(\\d{2})(\\d{2})$");
-
+    private static final Pattern THREE_LETTER_ID_PATTERN = Pattern.compile("[A-Z]{3}");
     public static final TimeZone UTC = getTimeZone("UTC");
 
     public static final String ISO8601_UTC_MASK = "yyyy-MM-dd'T'HH:mm'Z'";
@@ -141,11 +141,30 @@ public class DateUtils {
         }
         tzId = handleGMTOffsetTZNames(tzId);    // account for GMT-####
         TimeZone tz = TimeZone.getTimeZone(tzId);
+
+        // Check whether tzID can handle DST shifts
+        if (isThreeLetterTZName(tzId)) {
+            LOG.warn("GMT, UTC or Region/City Timezone formats are preferred instead of [" + tzId + "]");
+        }
+
         // If these are not equal, it means that the tzId is not valid (invalid tzId's return GMT)
         if (!tz.getID().equals(tzId)) {
             throw new IllegalArgumentException("Invalid TimeZone: " + tzId);
         }
         return tz;
+    }
+
+    /**
+     * Check whether 3-letter timezone ID is in preferred format,
+     * UTC, GMT or Region/City, the other three-letter codes may not handle
+     * DST shifts properly.
+     * @param tzId
+     * @return true if format is not appropriate for DST shift
+     */
+    @VisibleForTesting
+    static boolean isThreeLetterTZName(String tzId) {
+        Matcher m = THREE_LETTER_ID_PATTERN.matcher(tzId);
+        return m.matches() && !tzId.equalsIgnoreCase("UTC") && !tzId.equalsIgnoreCase("GMT");
     }
 
     /**
@@ -197,6 +216,7 @@ public class DateUtils {
      * The format mask must be a {@link SimpleDateFormat} valid format mask.
      *
      * @param d {@link Date} to format.
+     * @param format the {@link SimpleDateFormat} format mask to use
      * @return the string for the given date using the specified format mask,
      * <code>NULL</code> if the {@link Date} instance was <code>NULL</code>
      */
@@ -206,7 +226,7 @@ public class DateUtils {
 
     /**
      * Formats a {@link Date} as a string containing the seconds (or millis) since the Unix epoch (Jan 1, 1970).
-     * <p/>
+     * <p>
      * The format mask must be a {@link SimpleDateFormat} valid format mask
      *
      * @param d {@link Date} to format.
@@ -249,7 +269,7 @@ public class DateUtils {
      * This function returns number of hour in a day when given a Calendar with appropriate TZ. It consider DST to find
      * the number of hours. Generally it is 24. At some tZ, in one day of a year it is 23 and another day it is 25
      *
-     * @param cal: The date for which the number of hours is requested
+     * @param cal The date for which the number of hours is requested
      * @return number of hour in that day.
      */
     public static int hoursInDay(Calendar cal) {
@@ -270,7 +290,7 @@ public class DateUtils {
     /**
      * Determine whether a specific date is on DST change day
      *
-     * @param cal: Date to know if it is DST change day. Appropriate TZ is specified
+     * @param cal Date to know if it is DST change day. Appropriate TZ is specified
      * @return true , if it DST change date otherwise false
      */
     public static boolean isDSTChangeDay(Calendar cal) {
@@ -295,23 +315,28 @@ public class DateUtils {
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
         }
-        else {
-            if (endOfFlag == TimeUnit.END_OF_MONTH) {
-                cal.add(Calendar.MONTH, 1);
-                cal.set(Calendar.DAY_OF_MONTH, 1);
-                cal.set(Calendar.HOUR_OF_DAY, 0);
-                cal.set(Calendar.MINUTE, 0);
-                cal.set(Calendar.SECOND, 0);
-            }
+        else if (endOfFlag == TimeUnit.END_OF_MONTH) {
+            cal.add(Calendar.MONTH, 1);
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+        }
+        else if (endOfFlag == TimeUnit.END_OF_WEEK) {
+            cal.add(Calendar.WEEK_OF_YEAR, 1);
+            cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
         }
     }
 
     /**
      * Create a Calendar instance using the specified date and Time zone
-     * @param dateString
+     * @param dateString the date
      * @param tz : TimeZone
      * @return appropriate Calendar object
-     * @throws Exception
+     * @throws Exception if the date can't be parsed
      */
     public static Calendar getCalendar(String dateString, TimeZone tz) throws Exception {
         Date date = DateUtils.parseDateOozieTZ(dateString);
@@ -323,9 +348,9 @@ public class DateUtils {
 
     /**
      * Create a Calendar instance for UTC time zone using the specified date.
-     * @param dateString
+     * @param dateString the date
      * @return appropriate Calendar object
-     * @throws Exception
+     * @throws Exception if the date can't be parsed
      */
     public static Calendar getCalendar(String dateString) throws Exception {
         return getCalendar(dateString, ACTIVE_TIMEZONE);

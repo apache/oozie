@@ -73,10 +73,10 @@ public class CoordInputLogicEvaluatorPhaseOne implements CoordInputLogicEvaluato
     /**
      * Evaluate input function with min and wait
      *
-     * @param coordInputDependency
-     * @param dataSet
-     * @param min
-     * @param wait
+     * @param coordInputDependency the dependency
+     * @param dataSet the dataset
+     * @param min the minimum number of available dataset
+     * @param wait time to wait in minutes
      * @return the coord input logic evaluator result
      */
     public CoordInputLogicEvaluatorResult input(AbstractCoordInputDependency coordInputDependency, String dataSet,
@@ -86,7 +86,7 @@ public class CoordInputLogicEvaluatorPhaseOne implements CoordInputLogicEvaluato
         if (coordInputDependency.getDependencyMap().get(dataSet) == null) {
             CoordInputLogicEvaluatorResult retData = new CoordInputLogicEvaluatorResult();
             if (((CoordPullInputDependency) coordAction.getPullInputDependencies()).getUnResolvedDependency(dataSet) != null) {
-                log.debug("Data set [{0}] is unresolved set, will get resolved in phasetwo", dataSet);
+                log.debug("Data set [{0}] is unresolved set, will get resolved in phase two", dataSet);
                 retData.setStatus(CoordInputLogicEvaluatorResult.STATUS.PHASE_TWO_EVALUATION);
             }
             else {

@@ -20,12 +20,13 @@ package org.apache.oozie.action.email;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import javax.mail.BodyPart;
@@ -38,6 +39,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutorException;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_AUTH;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_PASS;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_PORT;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_SOCKET_TIMEOUT_MS;
+import static org.apache.oozie.action.email.EmailActionExecutor.EMAIL_SMTP_USER;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
@@ -68,7 +74,7 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
 
     private Context createNormalContext(String actionXml) throws Exception {
         EmailActionExecutor ae = new EmailActionExecutor();
-        Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
+        Services.get().get(ConfigurationService.class).getConf().setInt(EMAIL_SMTP_PORT, server.getSmtp().getPort());
         // Use default host 'localhost'. Hence, do not set the smtp host.
         // Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.host", "localhost");
         // Use default from address, 'oozie@localhost'.
@@ -76,9 +82,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         // Services.get().get(ConfigurationService.class).getConf().set("oozie.email.from.address", "oozie@localhost");
 
         // Disable auth tests by default.
-        Services.get().get(ConfigurationService.class).getConf().setBoolean("oozie.email.smtp.auth", false);
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.username", "");
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.password", "");
+        Services.get().get(ConfigurationService.class).getConf().setBoolean(EMAIL_SMTP_AUTH, false);
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_USER, "");
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_PASS, "");
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -96,9 +102,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         Context ctx = createNormalContext(actionXml);
 
         // Override and enable auth.
-        Services.get().get(ConfigurationService.class).getConf().setBoolean("oozie.email.smtp.auth", true);
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.username", "oozie@localhost");
-        Services.get().get(ConfigurationService.class).getConf().set("oozie.email.smtp.password", "oozie");
+        Services.get().get(ConfigurationService.class).getConf().setBoolean(EMAIL_SMTP_AUTH, true);
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_USER, "oozie@localhost");
+        Services.get().get(ConfigurationService.class).getConf().set(EMAIL_SMTP_PASS, "oozie");
         return ctx;
     }
 
@@ -196,9 +202,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
             serverThread.start();
             EmailActionExecutor email = new EmailActionExecutor();
             Context ctx = createNormalContext("email-action");
-            Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.port", srvPort);
+            Services.get().get(ConfigurationService.class).getConf().setInt(EMAIL_SMTP_PORT, srvPort);
             // Apply a 0.1s timeout to induce a very quick "Read timed out" error
-            Services.get().get(ConfigurationService.class).getConf().setInt("oozie.email.smtp.socket.timeout.ms", 100);
+            Services.get().get(ConfigurationService.class).getConf().setInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS, 100);
             try {
               email.validateAndMail(ctx, prepareEmailElement(false, false));
               fail("Should have failed with a socket timeout error!");
@@ -279,10 +285,31 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         elem.append("<content_type>text/html</content_type>");
         elem.append("<body>&lt;body&gt; This is a test mail &lt;/body&gt;</body>");
         elem.append("</email>");
-        EmailActionExecutor emailContnetType = new EmailActionExecutor();
-        emailContnetType.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
+        EmailActionExecutor emailContentType = new EmailActionExecutor();
+        emailContentType.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));
         assertEquals("<body> This is a test mail </body>", GreenMailUtil.getBody(server.getReceivedMessages()[0]));
         assertTrue(server.getReceivedMessages()[0].getContentType().contains("text/html"));
+    }
+
+    public void testContentTypeWithAttachment() throws Exception {
+        String file1 = "file1";
+        Path path1 = new Path(getFsTestCaseDir(), file1);
+        String content1 = "this is attachment content in file1";
+        FileSystem fs = getFileSystem();
+        Writer writer = new OutputStreamWriter(fs.create(path1, true), StandardCharsets.UTF_8);
+        writer.write(content1);
+        writer.close();
+        sendAndReceiveEmail(path1.toString(), "text/html");
+
+        Multipart retParts = (Multipart) (server.getReceivedMessages()[0].getContent());
+        BodyPart bp = retParts.getBodyPart(0);
+        assertTrue(bp.getContentType().contains("text/html"));
+        assertEquals("This is a test mail", IOUtils.toString(bp.getInputStream()));
+
+        sendAndReceiveEmail(path1.toString());
+        retParts = (Multipart) (server.getReceivedMessages()[1].getContent());
+        bp = retParts.getBodyPart(0);
+        assertTrue(bp.getContentType().contains("text/plain"));
     }
 
     public void testLocalFileAttachmentError() throws Exception {
@@ -290,10 +317,12 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         String content1 = "this is attachment content in file1";
         File attachFile2 = new File(getTestCaseDir() + File.separator + "attachment2.txt");
         String content2 = "this is attachment content in file2";
-        BufferedWriter output = new BufferedWriter(new FileWriter(attachFile1));
+        BufferedWriter output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attachFile1),
+                StandardCharsets.UTF_8));
         output.write(content1);
         output.close();
-        output = new BufferedWriter(new FileWriter(attachFile2));
+        output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attachFile2),
+                StandardCharsets.UTF_8));
         output.write(content2);
         output.close();
         StringBuilder tag = new StringBuilder();
@@ -316,10 +345,10 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         Path path2 = new Path(getFsTestCaseDir(), file2);
         String content2 = "this is attachment content in file2";
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(path1, true));
+        Writer writer = new OutputStreamWriter(fs.create(path1, true), StandardCharsets.UTF_8);
         writer.write(content1);
         writer.close();
-        writer = new OutputStreamWriter(fs.create(path2, true));
+        writer = new OutputStreamWriter(fs.create(path2, true), StandardCharsets.UTF_8);
         writer.write(content2);
         writer.close();
         StringBuilder tag = new StringBuilder();
@@ -357,13 +386,20 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         assertEquals(attachCount, numAttach);
     }
 
-    private void sendAndReceiveEmail(String attachtag) throws Exception {
+    private void sendAndReceiveEmail(String attachTag) throws Exception {
+        sendAndReceiveEmail(attachTag, null);
+    }
+
+    private void sendAndReceiveEmail(String attachTag, String contentType) throws Exception{
         StringBuilder elem = new StringBuilder();
         elem.append("<email xmlns=\"uri:oozie:email-action:0.2\">");
         elem.append("<to>oozie@yahoo-inc.com</to>");
         elem.append("<subject>sub</subject>");
         elem.append("<body>This is a test mail</body>");
-        elem.append("<attachment>").append(attachtag).append("</attachment>");
+        if(contentType != null){
+            elem.append("<content_type>").append(contentType).append("</content_type>");
+        }
+        elem.append("<attachment>").append(attachTag).append("</attachment>");
         elem.append("</email>");
         EmailActionExecutor emailExecutor = new EmailActionExecutor();
         emailExecutor.validateAndMail(createAuthContext("email-action"), XmlUtils.parseXml(elem.toString()));

@@ -51,9 +51,6 @@ public abstract class MaterializeTransitionXCommand extends TransitionXCommand<V
         super(name, type, priority, dryrun);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
     @Override
     public void transitToNext() throws CommandException {
     }
@@ -64,9 +61,6 @@ public abstract class MaterializeTransitionXCommand extends TransitionXCommand<V
      */
     protected abstract void materialize() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         try {

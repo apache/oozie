@@ -89,6 +89,8 @@ public abstract class SLAJobHistoryXCommand extends XCommand<Boolean> {
     /**
      * Update SLASummary
      *
+     * @throws CommandException if command cannot be executed
+     * @throws XException in other cases
      */
     protected abstract void updateSLASummary() throws CommandException, XException;
 

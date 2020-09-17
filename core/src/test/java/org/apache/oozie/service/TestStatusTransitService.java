@@ -19,6 +19,7 @@ package org.apache.oozie.service;
 
 import java.util.Date;
 
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BundleActionBean;
@@ -58,6 +59,8 @@ import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.LockerCoordinator;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.EndNodeDef;
@@ -558,7 +561,8 @@ public class TestStatusTransitService extends XDataTestCase {
     }
 
     /**
-     * Test : Keep the backward support for states on. 2 coord actions are running, 1 killed, check if job pending is reset and state changed to
+     * Test : Keep the backward support for states on. 2 coord actions are running, 1 killed, check if job pending is reset
+     *  and state changed to
      * RUNNING. Make sure the status is not RUNNINGWITHERROR
      *
      * @throws Exception
@@ -1422,7 +1426,8 @@ public class TestStatusTransitService extends XDataTestCase {
 
     /**
      * Tests functionality of the StatusTransitService Runnable command. </p> Insert a coordinator job with RUNNING and
-     * pending true and coordinator actions for that job with pending false. Insert a coordinator action with a stale coord job id. Then, runs the StatusTransitService runnable and ensures
+     * pending true and coordinator actions for that job with pending false. Insert a coordinator action with a stale coord
+     *  job id. Then, runs the StatusTransitService runnable and ensures
      * the job status of the good job changes to SUCCEEDED.
      *
      * @throws Exception
@@ -1574,22 +1579,22 @@ public class TestStatusTransitService extends XDataTestCase {
         addRecordToBundleActionTable(bundleId, "action2-C", 0, Job.Status.RUNNING);
         addRecordToBundleActionTable(bundleId, "action3-C", 0, Job.Status.DONEWITHERROR);
 
-        JobLock lockThread = new JobLock(jobId);
+        LockerCoordinator coordinator = new LockerCoordinator();
+        JobLock lockThread = new JobLock(jobId, coordinator);
         new Thread(lockThread).start();
+        coordinator.awaitLockAcquire();
 
-        sleep(1000);
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.RUNNING, bundleJob.getStatus());
-        synchronized (lockThread) {
-            lockThread.notifyAll();
-        }
-        sleep(1000);
+
+        coordinator.signalLockerContinue();
+        coordinator.awaitTermination();
+
         runnable.run();
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.RUNNINGWITHERROR, bundleJob.getStatus());
-
     }
 
     public void testCoordStatusTransitWithLock() throws Exception {
@@ -1608,27 +1613,26 @@ public class TestStatusTransitService extends XDataTestCase {
                 "KILLED", 0);
 
         final CoordJobGetJPAExecutor coordJobGetCmd = new CoordJobGetJPAExecutor(coordJob.getId());
-        JobLock lockThread = new JobLock(coordJob.getId());
+        LockerCoordinator coordinator = new LockerCoordinator();
+        JobLock lockThread = new JobLock(coordJob.getId(), coordinator);
         new Thread(lockThread).start();
+        coordinator.awaitLockAcquire();
+
         Runnable runnable = new StatusTransitRunnable();
         runnable.run();
-        sleep(1000);
         coordJob = jpaService.execute(coordJobGetCmd);
         assertEquals(CoordinatorJob.Status.RUNNING, coordJob.getStatus());
 
-        synchronized (lockThread) {
-            lockThread.notifyAll();
-        }
+        coordinator.signalLockerContinue();
+        coordinator.awaitTermination();
+
         runnable.run();
         coordJob = jpaService.execute(coordJobGetCmd);
         assertEquals(CoordinatorJob.Status.RUNNINGWITHERROR, coordJob.getStatus());
-
     }
 
     public void testBundleStatusCoordSubmitFails() throws Exception {
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        services = new Services();
-        services.init();
         BundleJobBean bundleJob = this.addRecordToBundleJobTable(Job.Status.RUNNING, false);
 
         final String bundleId = bundleJob.getId();
@@ -1638,14 +1642,13 @@ public class TestStatusTransitService extends XDataTestCase {
         // First try will kill the job.
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.FAILED, bundleJob.getStatus());
-        sleep(1000);
+
         bundleJob.setStatus(Job.Status.RUNNING);
         BundleJobQueryExecutor.getInstance().executeUpdate(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob);
         runnable.run();
         // second try will change the status.
         bundleJob = BundleJobQueryExecutor.getInstance().get(BundleJobQuery.GET_BUNDLE_JOB_STATUS, bundleId);
         assertEquals(Job.Status.FAILED, bundleJob.getStatus());
-
     }
 
     public void testBundleRunningAfterCoordResume() throws Exception {
@@ -1680,32 +1683,28 @@ public class TestStatusTransitService extends XDataTestCase {
     }
 
   static class JobLock implements Runnable {
-        String jobId;
+        private static XLog log = new XLog(LogFactory.getLog(JobLock.class));
+        private final String jobId;
+        private final LockerCoordinator coordinator;
 
-        public JobLock(String jobId) {
+        public JobLock(String jobId, LockerCoordinator coordinator) {
             this.jobId = jobId;
-        }
-
-        LockToken lock = null;
-
-        public void acquireLock() throws InterruptedException {
-            lock = Services.get().get(MemoryLocksService.class).getWriteLock(jobId, 0);
-        }
-
-        public void release() {
-            lock.release();
+            this.coordinator = coordinator;
         }
 
         @Override
         public void run() {
             try {
-                acquireLock();
-                synchronized (this) {
-                    this.wait();
-                }
-                release();
+                LockToken lock = Services.get().get(MemoryLocksService.class).getWriteLock(jobId, 0);
+                coordinator.lockAcquireDone();
+                coordinator.awaitContinueSignal();
+                lock.release();
             }
             catch (InterruptedException e) {
+                log.error("InterruptedException caught", e);
+            }
+            finally {
+                coordinator.terminated();
             }
         }
     }

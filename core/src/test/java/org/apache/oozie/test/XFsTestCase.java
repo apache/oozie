@@ -25,12 +25,19 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.oozie.action.hadoop.LauncherException;
+import org.apache.oozie.action.hadoop.LauncherURIHandlerFactory;
+import org.apache.oozie.action.hadoop.PrepareActionsHandler;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.service.Services;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.URI;
 
@@ -42,7 +49,8 @@ import java.net.URI;
  *
  * The test working directory is created in the specified FS URI, under the current user name home directory, under the
  * subdirectory name specified wit the system property {@link XTestCase#OOZIE_TEST_DIR}. The default value is '/tmp'.
- * <p/> The path of the test working directory is: '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/$TEST_CASE_METHOD/'
+ * <p/> The path of the test working directory is: '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/
+ * $TEST_CASE_METHOD/'
  * <p/> For example: 'hdfs://localhost:9000/user/tucu/tmp/oozietest/org.apache.oozie.service.TestELService/testEL/'
  */
 public abstract class XFsTestCase extends XTestCase {
@@ -51,6 +59,7 @@ public abstract class XFsTestCase extends XTestCase {
     private FileSystem fileSystem2;
     private Path fsTestDir;
     private Path fsTestDir2;
+    private PrepareActionsHandler prepareHandler;
 
     /**
      * Set up the testcase.
@@ -70,9 +79,10 @@ public abstract class XFsTestCase extends XTestCase {
         conf.set("oozie.service.HadoopAccessorService.hadoop.configurations", "*=hadoop-conf");
         conf.set("oozie.service.HadoopAccessorService.action.configurations", "*=action-conf");
 
+        new Services().init();
         has = new HadoopAccessorService();
         has.init(conf);
-        JobConf jobConf = has.createJobConf(getNameNodeUri());
+        Configuration jobConf = has.createConfiguration(getNameNodeUri());
         XConfiguration.copy(conf, jobConf);
         fileSystem = has.createFileSystem(getTestUser(), new URI(getNameNodeUri()), jobConf);
         fsTestDir = initFileSystem(fileSystem);
@@ -80,6 +90,7 @@ public abstract class XFsTestCase extends XTestCase {
             fileSystem2 = has.createFileSystem(getTestUser(), new URI(getNameNode2Uri()), jobConf);
             fsTestDir2 = initFileSystem(fileSystem2);
         }
+        prepareHandler = new PrepareActionsHandler(new LauncherURIHandlerFactory(null));
     }
 
     private Path initFileSystem(FileSystem fs) throws Exception {
@@ -118,6 +129,9 @@ public abstract class XFsTestCase extends XTestCase {
      * Tear down the testcase.
      */
     protected void tearDown() throws Exception {
+        if (Services.get() != null) {
+            Services.get().destroy();
+        }
         fileSystem = null;
         fsTestDir = null;
         super.tearDown();
@@ -168,11 +182,48 @@ public abstract class XFsTestCase extends XTestCase {
      * @throws HadoopAccessorException thrown if the JobClient could not be obtained.
      */
     protected JobClient createJobClient() throws HadoopAccessorException {
-        JobConf conf = has.createJobConf(getJobTrackerUri());
+        Configuration conf = has.createConfiguration(getJobTrackerUri());
         conf.set("mapred.job.tracker", getJobTrackerUri());
         conf.set("fs.default.name", getNameNodeUri());
 
         return has.createJobClient(getTestUser(), conf);
     }
 
+    /**
+     * Returns a Path object to a filesystem resource which belongs to a specific workflow on HDFS
+     * Example: /user/test/oozie-abcd/0000003-160913132555310-oozie-abcd-W/hadoop--map-reduce/launcher.xml
+     *
+     * @param userName current username
+     * @param job workflow Action object
+     * @param services Oozie Services class
+     * @param context Executor context
+     * @param fileName the filename
+     * @return the Path object which represents a file on HDFS
+     * @throws Exception
+     */
+    protected Path getPathToWorkflowResource(String userName, WorkflowJob job, Services services,
+            ActionExecutorContext context, String fileName) throws Exception {
+        return new Path(
+                "/user" +
+                "/" + userName +
+                "/" + services.getSystemId() +
+                "/" + job.getId() +
+                "/" + context.getActionDir().getName(),
+                fileName
+                );
+    }
+
+    /**
+     * Method to parse the prepare XML and execute the corresponding prepare actions
+     *
+     * @param prepareXML Prepare XML block in string format
+     * @throws IOException if there is an IO error during prepare action
+     * @throws SAXException in case of xml parsing error
+     * @throws ParserConfigurationException if the parser is not well configured
+     * @throws LauncherException when accessing resource on uri fails
+     */
+    public void doPrepareOperations(String prepareXML, Configuration conf)
+            throws IOException, SAXException, ParserConfigurationException, LauncherException {
+        prepareHandler.prepareAction(prepareXML, conf);
+    }
 }

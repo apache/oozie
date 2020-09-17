@@ -19,21 +19,32 @@
 package org.apache.oozie.workflow.lite;
 
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.hadoop.JavaActionExecutor;
+import org.apache.oozie.action.hadoop.LauncherAM;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.IOUtils;
+import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
+import org.jdom.Element;
+import org.jdom.Namespace;
+import org.junit.Assert;
 
 public class TestLiteWorkflowAppParser extends XTestCase {
     public static String dummyConf = "<java></java>";
@@ -54,217 +65,114 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     private String cleanupXml(String xml) {
         xml = xml.replaceAll(" xmlns=?(\"|\')(\"|\')", "");
         xml = xml.replaceAll("\\s*<source>.*</source>", "");    // remove the <source> added by Hadoop 2
-        xml = xml.replaceAll("\\s*<!--Loaded from Unknown-->", "");   // remove the <!--LoadedfromUnknown--> added by Hadoop 1.2.1
+        xml = xml.replaceAll("\\s*<final>.*</final>", "");      // remove the <final> added by Hadoop 3
         return xml;
     }
 
     public void testParserGlobal() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-            LiteWorkflowStoreService.LiteControlNodeHandler.class,
-            LiteWorkflowStoreService.LiteDecisionHandler.class,
-            LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1),
-                new Configuration());
-
-        String d = app.getNode("d").getConf();
-        String expectedD =
-             "<map-reduce xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp\" />\r\n" +
-             "    <mkdir path=\"/tmp\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <streaming>\r\n" +
-             "    <mapper>/mycat.sh</mapper>\r\n" +
-             "    <reducer>/mywc.sh</reducer>\r\n" +
-             "  </streaming>\r\n" +
-             "  <file>/tmp</file>\r\n" +
-             "  <archive>/tmp</archive>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
-             "  <job-tracker>${foo}</job-tracker>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "</map-reduce>";
-        d = cleanupXml(d);
-        assertEquals(expectedD.replaceAll(" ", ""), d.replaceAll(" ", ""));
+        String workflowXml = "wf-schema-valid-global.xml";
+        String nodeName = "d";
+        String d = getNodeConfig(workflowXml, nodeName);
+        String configuration = extractConfigurationFromXML(d);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a","A");
+        expectedConfigs.put("b","B");
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "${foo}";
+        checkGlobalParametersInAction(d, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
 
     }
 
-    public void testParserGlobalJobXML() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-            LiteWorkflowStoreService.LiteControlNodeHandler.class,
-            LiteWorkflowStoreService.LiteDecisionHandler.class,
-            LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-jobXml.xml", -1),
+    private String getNodeConfig(String workflowXml, String nodeName) throws WorkflowException, IOException {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader(workflowXml, -1),
                 new Configuration());
+        return app.getNode(nodeName).getConf();
+    }
 
-        String d = app.getNode("d").getConf();
-        String expectedD =
-             "<map-reduce xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp\" />\r\n" +
-             "    <mkdir path=\"/tmp\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <streaming>\r\n" +
-             "    <mapper>/mycat.sh</mapper>\r\n" +
-             "    <reducer>/mywc.sh</reducer>\r\n" +
-             "  </streaming>\r\n" +
-             "  <job-xml>/tmp</job-xml>\r\n" +
-             "  <file>/tmp</file>\r\n" +
-             "  <archive>/tmp</archive>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
-             "  <job-xml>/spam1</job-xml>\r\n" +
-             "  <job-xml>/spam2</job-xml>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "</map-reduce>";
-        d = cleanupXml(d);
-        assertEquals(expectedD.replaceAll(" ", ""), d.replaceAll(" ", ""));
+    private String extractConfigurationFromXML(String actionConfig) {
+        return StringUtils.substringBetween(cleanupXml(actionConfig), "<configuration>", "</configuration>");
+    }
+
+    private void checkGlobalParametersInAction(String actionConfig, String configuration, String expectedNameNode,
+                                               String expectedJobTracker, Map<String,String> expectedConfigs) {
+        String nameNode = "<name-node>" + expectedNameNode + "</name-node>";
+        String jobTracker =  "<job-tracker>" + expectedJobTracker + "</job-tracker>";
+
+        assertTrue("Missing nameNode configuration", actionConfig.contains(nameNode));
+        assertTrue("Missing job-tracker configuration", actionConfig.contains(jobTracker));
+
+        for(Map.Entry<String, String> entry:expectedConfigs.entrySet()) {
+            String expectedConfig = "<property>\r\n" +
+                    "      <name>" + entry.getKey() + "</name>\r\n" +
+                    "      <value>" + entry.getValue() + "</value>\r\n";
+            assertTrue("Missing configuration", configuration.contains(expectedConfig));
+        }
+    }
+
+    public void testParserGlobalJobXML() throws Exception {
+        String workFlowXml = "wf-schema-valid-global-jobXml.xml";
+        String nodeName = "d";
+        String d = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(d);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A");
+        expectedConfigs.put("b", "B");
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "foo";
+        checkGlobalParametersInAction(d, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
+        assertTrue("Missing spam1 job-xml parameter", d.contains("<job-xml>/spam1</job-xml>\r\n"));
+        assertTrue("Missing spam2 job-xml parameter", d.contains("<job-xml>/spam2</job-xml>\r\n"));
+        assertTrue("Missing /tmp job-xml parameter", d.contains( "<job-xml>/tmp</job-xml>\r\n"));
 
     }
 
     public void testParserGlobalLocalAlreadyExists() throws Exception{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        String workFlowXml = "wf-schema-valid-global.xml";
+        String nodeName = "e";
+        String e = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(e);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A2");
+        expectedConfigs.put("b", "B");
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global.xml", -1),
-                new Configuration());
-
-        String e = app.getNode("e").getConf();
-        String expectedE =
-                "<pig xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
-                "  <prepare>\r\n" +
-                "    <delete path=\"/tmp\" />\r\n" +
-                "    <mkdir path=\"/tmp\" />\r\n" +
-                "  </prepare>\r\n" +
-                "  <configuration>\r\n" +
-                "    <property>\r\n" +
-                "      <name>b</name>\r\n" +
-                "      <value>B</value>\r\n" +
-                "    </property>\r\n" +
-                "    <property>\r\n" +
-                "      <name>a</name>\r\n" +
-                "      <value>A2</value>\r\n" +
-                "    </property>\r\n" +
-                "  </configuration>\r\n" +
-                "  <script>/tmp</script>\r\n" +
-                "  <param>x</param>\r\n" +
-                "  <file>/tmp</file>\r\n" +
-                "  <file>/tmp</file>\r\n" +
-                "  <name-node>bar</name-node>\r\n" +
-                "  <job-tracker>${foo}</job-tracker>\r\n" +
-                "</pig>";
-        e = cleanupXml(e);
-        assertEquals(expectedE.replaceAll(" ", ""), e.replaceAll(" ", ""));
-
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "${foo}";
+        checkGlobalParametersInAction(e, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
     }
 
     public void testParserGlobalExtensionActions() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-            LiteWorkflowStoreService.LiteControlNodeHandler.class,
-            LiteWorkflowStoreService.LiteDecisionHandler.class,
-            LiteWorkflowStoreService.LiteActionHandler.class);
+        String workFlowXml = "wf-schema-valid-global-ext.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(a);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A");
+        expectedConfigs.put("b", "B");
+        expectedConfigs.put("c", "C");
+        String expectedNameNode = "bar";
+        String expectedJobTracker = "foo";
+        checkGlobalParametersInAction(a, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
 
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
-                new Configuration());
-
-        String a = app.getNode("a").getConf();
-        String expectedA =
-             "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp\" />\r\n" +
-             "    <mkdir path=\"/tmp\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>c</name>\r\n" +
-             "      <value>C</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "  <script>script.q</script>\r\n" +
-             "  <param>INPUT=/tmp/table</param>\r\n" +
-             "  <param>OUTPUT=/tmp/hive</param>\r\n" +
-             "  <name-node>bar</name-node>\r\n" +
-             "  <job-tracker>foo</job-tracker>\r\n" +
-             "</hive>";
-        a = cleanupXml(a);
-        assertEquals(expectedA.replaceAll(" ",""), a.replaceAll(" ", ""));
     }
 
     public void testParserGlobalExtensionActionsLocalAlreadyExists() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-            LiteWorkflowStoreService.LiteControlNodeHandler.class,
-            LiteWorkflowStoreService.LiteDecisionHandler.class,
-            LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
-                new Configuration());
-
-        String b = app.getNode("b").getConf();
-        String expectedB =
-             "<distcp xmlns=\"uri:oozie:distcp-action:0.1\">\r\n" +
-             "  <job-tracker>blah</job-tracker>\r\n" +
-             "  <name-node>meh</name-node>\r\n" +
-             "  <prepare>\r\n" +
-             "    <delete path=\"/tmp2\" />\r\n" +
-             "    <mkdir path=\"/tmp2\" />\r\n" +
-             "  </prepare>\r\n" +
-             "  <configuration>\r\n" +
-             "    <property>\r\n" +
-             "      <name>b</name>\r\n" +
-             "      <value>B</value>\r\n" +
-             "    </property>\r\n" +
-             "    <property>\r\n" +
-             "      <name>a</name>\r\n" +
-             "      <value>A2</value>\r\n" +
-             "    </property>\r\n" +
-             "  </configuration>\r\n" +
-             "  <arg>/tmp/data.txt</arg>\r\n" +
-             "  <arg>/tmp2/data.txt</arg>\r\n" +
-             "</distcp>";
-        b = cleanupXml(b);
-        assertEquals(expectedB.replaceAll(" ", ""), b.replaceAll(" ", ""));
+        String workFlowXml = "wf-schema-valid-global-ext.xml";
+        String nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
+        String configuration = extractConfigurationFromXML(b);
+        Map<String, String> expectedConfigs = new HashMap<>();
+        expectedConfigs.put("a", "A2");
+        expectedConfigs.put("b", "B");
+        String expectedNameNode = "meh";
+        String expectedJobTracker = "blah";
+        checkGlobalParametersInAction(b, configuration, expectedNameNode, expectedJobTracker, expectedConfigs);
     }
 
     public void testParserGlobalExtensionActionsNotApplicable() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        // Not all actions want a JT, NN, conf, or jobxml (e.g. email action)
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid-global-ext.xml", -1),
-                new Configuration());
-
-        String c1 = app.getNode("c1").getConf();
+        String workFlowXml = "wf-schema-valid-global-ext.xml";
+        String nodeName = "c1";
+        String c1 = getNodeConfig(workFlowXml, nodeName);
         String expectedC1 =
                 "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
                 "  <to>foo@bar.com</to>\r\n" +
@@ -276,10 +184,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserGlobalExtensionActionsNoGlobal() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-            LiteWorkflowStoreService.LiteControlNodeHandler.class,
-            LiteWorkflowStoreService.LiteDecisionHandler.class,
-            LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         // If no global section is defined, some extension actions (e.g. hive) must still have name-node and job-tracker elements
         // or the handleGlobal() method will throw an exception
@@ -301,14 +206,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultNameNode() throws Exception {
         ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-namenode.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -332,15 +232,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserDefaultNameNodeWithGlobal() throws Exception {
-        ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode-global.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-namenode-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -365,15 +259,10 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultNameNodeNotApplicable() throws Exception {
         ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
         // Not all actions want a NN (e.g. email action)
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-namenode.xml", -1),
-                new Configuration());
-        String b1 = app.getNode("b1").getConf();
+        String workFlowXml = "wf-schema-no-namenode.xml";
+        String nodeName = "b1";
+        String b1 = getNodeConfig(workFlowXml, nodeName);
         String expectedB1 =
                 "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
                         "  <to>foo@bar.com</to>\r\n" +
@@ -385,10 +274,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserDefaultNameNodeFail() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         // No default NN is set
         try {
@@ -403,14 +289,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultJobTracker() throws Exception {
         ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-jobtracker.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -435,14 +316,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultJobTrackerWithGlobal() throws Exception {
         ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker-global.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-no-jobtracker-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<hive xmlns=\"uri:oozie:hive-action:0.2\">\r\n" +
                         "  <prepare>\r\n" +
@@ -467,15 +343,11 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserDefaultJobTrackerNotApplicable() throws Exception {
         ConfigurationService.set("oozie.actions.default.job-tracker", "default-jt");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
 
         // Not all actions want a NN (e.g. email action)
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-no-jobtracker.xml", -1),
-                new Configuration());
-        String b1 = app.getNode("b1").getConf();
+        String workFlowXml = "wf-schema-no-jobtracker.xml";
+        String nodeName = "b1";
+        String b1 = getNodeConfig(workFlowXml, nodeName);
         String expectedB1 =
                 "<email xmlns=\"uri:oozie:email-action:0.2\">\r\n" +
                         "  <to>foo@bar.com</to>\r\n" +
@@ -487,10 +359,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserDefaultJobTrackerFail() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         // No default NN is set
         try {
@@ -499,21 +368,14 @@ public class TestLiteWorkflowAppParser extends XTestCase {
             fail();
         } catch (WorkflowException e) {
             assertEquals(ErrorCode.E0701, e.getErrorCode());
-            assertTrue(e.getMessage().contains("No job-tracker defined"));
+            assertTrue(e.getMessage().contains("E0701: XML schema error, No job-tracker or resource-manager defined"));
         }
     }
 
     public void testParserSubWorkflowPropagateNoGlobal() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(
-                IOUtils.getResourceAsReader("wf-schema-subworkflow-propagate-no-global.xml", -1),
-                new Configuration());
-
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-subworkflow-propagate-no-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<sub-workflowxmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "<app-path>/tmp/foo/</app-path>\r\n" +
@@ -525,14 +387,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserFsGlobalNN() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode-global.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-fs-no-namenode-global.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <name-node>action-nn</name-node>\r\n" +
@@ -541,7 +398,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                         "</fs>";
         a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
-        String b = app.getNode("b").getConf();
+        nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
         String expectedB =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <mkdir path=\"/foo\" />\r\n" +
@@ -554,14 +412,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     public void testParserFsDefaultNN() throws Exception {
         ConfigurationService.set("oozie.actions.default.name-node", "default-nn");
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-fs-no-namenode.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <name-node>action-nn</name-node>\r\n" +
@@ -570,7 +423,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
                         "</fs>";
         a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
-        String b = app.getNode("b").getConf();
+
+        nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
         String expectedB =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <mkdir path=\"/foo\" />\r\n" +
@@ -582,14 +437,9 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParserFsNoNN() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
-
-        LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-fs-no-namenode.xml", -1),
-                new Configuration());
-        String a = app.getNode("a").getConf();
+        String workFlowXml = "wf-schema-fs-no-namenode.xml";
+        String nodeName = "a";
+        String a = getNodeConfig(workFlowXml, nodeName);
         String expectedA =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <name-node>action-nn</name-node>\r\n" +
@@ -599,7 +449,8 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         a = cleanupXml(a);
         assertEquals(expectedA.replaceAll(" ", ""), a.replaceAll(" ", ""));
         // The FS Action shouldn't care if there's no NN in the end
-        String b = app.getNode("b").getConf();
+        nodeName = "b";
+        String b = getNodeConfig(workFlowXml, nodeName);
         String expectedB =
                 "<fs xmlns=\"uri:oozie:workflow:0.4\">\r\n" +
                         "  <mkdir path=\"/foo\" />\r\n" +
@@ -610,10 +461,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testParser() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                                                                 LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                                                                 LiteWorkflowStoreService.LiteDecisionHandler.class,
-                                                                 LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         parser.validateAndParse(IOUtils.getResourceAsReader("wf-schema-valid.xml", -1), new Configuration());
 
@@ -652,17 +500,48 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         }
     }
 
+    public void testParserGlobalLauncherAM() throws Exception {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        LiteWorkflowApp workflowApp = parser.validateAndParse(
+                IOUtils.getResourceAsReader("wf-schema-global-launcherconf.xml", -1), new Configuration());
+
+        XConfiguration xconf = extractConfig(workflowApp, "action1");
+
+        assertEquals("Vcores", 2, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Memory", 1024, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Env", "dummyEnv", xconf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY));
+        assertEquals("Queue", "dummyQueue", xconf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY));
+        assertEquals("Java opts", "dummyJavaOpts", xconf.get(LauncherAM.OOZIE_LAUNCHER_JAVAOPTS_PROPERTY));
+        assertEquals("Sharelib", "a,b,c", xconf.get(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY));
+        assertEquals("View ACL", "oozieview", xconf.get(JavaActionExecutor.LAUNCER_VIEW_ACL));
+        assertEquals("Modify ACL", "ooziemodify", xconf.get(JavaActionExecutor.LAUNCER_MODIFY_ACL));
+    }
+
+    public void testParserGlobalLauncherAMOverridden() throws Exception {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        LiteWorkflowApp workflowApp = parser.validateAndParse(
+                IOUtils.getResourceAsReader("wf-schema-global-launcherconf-override.xml", -1), new Configuration());
+
+        XConfiguration xconf = extractConfig(workflowApp, "a");
+
+        assertEquals("Vcores", 1, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_VCORES_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Memory", 2048, xconf.getInt(LauncherAM.OOZIE_LAUNCHER_MEMORY_MB_PROPERTY, Integer.MIN_VALUE));
+        assertEquals("Java opts", "dummyJavaOpts", xconf.get(LauncherAM.OOZIE_LAUNCHER_JAVAOPTS_PROPERTY));
+        assertNull("Queue", xconf.get(LauncherAM.OOZIE_LAUNCHER_QUEUE_PROPERTY));
+        assertNull("Env", xconf.get(LauncherAM.OOZIE_LAUNCHER_ENV_PROPERTY));
+        assertNull("Sharelib", xconf.get(LauncherAM.OOZIE_LAUNCHER_SHARELIB_PROPERTY));
+    }
+
     /*
      * 1->ok->2
      * 2->ok->end
      */
    public void testWfNoForkJoin() throws WorkflowException  {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+       LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
-        LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
+       LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
             .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "two", "three"))
             .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "end", "end"))
@@ -682,10 +561,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     (2,3)->j
     */
     public void testSimpleForkJoin() throws WorkflowException {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -717,10 +593,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      7->j
     */
     public void testNestedForkJoin() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -754,10 +627,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
       3->end
     */
     public void testForkJoinFailure() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -793,10 +663,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      j2-end
     */
     public void testNestedForkJoinFailure() throws WorkflowException {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         LiteWorkflowApp def = new LiteWorkflowApp("testWf", "<worklfow-app/>",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -833,10 +700,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      j->k
     */
     public void testTransitionFailure1() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -868,10 +732,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     j->end
    */
    public void testTransition2() throws WorkflowException{
-       LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-               LiteWorkflowStoreService.LiteControlNodeHandler.class,
-               LiteWorkflowStoreService.LiteDecisionHandler.class,
-               LiteWorkflowStoreService.LiteActionHandler.class);
+       LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
        LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
        new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -904,10 +765,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
    j->end
   */
    public void testTransition3() throws WorkflowException{
-       LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-               LiteWorkflowStoreService.LiteControlNodeHandler.class,
-               LiteWorkflowStoreService.LiteDecisionHandler.class,
-               LiteWorkflowStoreService.LiteActionHandler.class);
+       LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
        LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
        new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -942,10 +800,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     * 6->k
     */
    public void testErrorTransitionForkJoin() throws WorkflowException {
-       LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-               LiteWorkflowStoreService.LiteControlNodeHandler.class,
-               LiteWorkflowStoreService.LiteDecisionHandler.class,
-               LiteWorkflowStoreService.LiteActionHandler.class);
+       LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
        new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
@@ -980,10 +835,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     3->j
     */
     public void testDecisionForkJoin() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1014,10 +866,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     5->j
     */
     public void testDecisionsToJoinForkJoin() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1049,10 +898,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     5->j
     */
     public void testDecisionsToKillForkJoin() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1086,10 +932,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      *j->end
      */
     public void testDecisionForkJoinFailure() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1123,10 +966,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      *j->end
      */
     public void testDecisionToEndForkJoinFailure() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1161,10 +1001,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      *j->end
      */
     public void testDecisionTwoPathsForkJoin() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1197,10 +1034,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      *j->end
      */
     public void testMultipleDecisionThreePathsForkJoin() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1235,10 +1069,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      *j->end
      */
     public void testMultipleDecisionThreePathsForkJoinFailure() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1276,10 +1107,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      *j->end
      */
     public void testMultipleDecisionThreePathsForkJoinFailure2() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "f","end"))
@@ -1317,10 +1145,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      * j2->end
      */
     public void testDecisionMultipleForks() throws WorkflowException{
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
         new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
         .addNode(new DecisionNodeDef("one", dummyConf, TestDecisionNodeHandler.class,
@@ -1357,10 +1182,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      * f2->k,k
      */
     public void testForkJoinMismatch() throws WorkflowException {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "f"))
         .addNode(new ForkNodeDef("f", LiteWorkflowStoreService.LiteControlNodeHandler.class,
@@ -1392,10 +1214,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
      * j->end
      */
     public void testForkJoinDuplicateTransitionsFromFork() throws WorkflowException {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
         LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
             new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "f"))
         .addNode(new ForkNodeDef("f", LiteWorkflowStoreService.LiteControlNodeHandler.class,
@@ -1417,10 +1236,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     @SuppressWarnings("deprecation")
     public void testForkJoinValidationTime() throws Exception {
-        final LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class,
-                LiteWorkflowStoreService.LiteActionHandler.class);
+        final LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         final LiteWorkflowApp app = parser.validateAndParse(IOUtils.getResourceAsReader("wf-long.xml", -1),
                 new Configuration());
@@ -1442,6 +1258,98 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         };
 
         Thread t = new Thread(r);
+        t.start();
+        t.join((long) (2000 * XTestCase.WAITFOR_RATIO));
+
+        if (!finished.get()) {
+            t.stop();  // don't let the validation keep running in the background which causes high CPU load
+            fail("Workflow validation did not finish in time");
+        }
+
+        assertFalse("Workflow validation failed", failure.get());
+    }
+
+    public void testMultipleErrorTransitions() throws WorkflowException, IOException {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+        try {
+            parser.validateAndParse(IOUtils.getResourceAsReader(
+                    "wf-multiple-error-parent.xml", -1), new Configuration());
+        } catch (final WorkflowException e) {
+            e.printStackTrace();
+            Assert.fail("This workflow has to be correct.");
+        }
+    }
+
+    public void testOkToTransitionToKillTransitions() throws WorkflowException, IOException {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+        try {
+
+            parser.validateAndParse(IOUtils.getResourceAsReader(
+                    "wf-kill-with-ok.xml", -1), new Configuration());
+        } catch (final WorkflowException e) {
+            e.printStackTrace();
+            Assert.fail("This workflow has to be correct.");
+        }
+    }
+
+    public void testMultiplePathsToEnd() throws Exception {
+        // Makes sure that despite using memoization, the validator
+        // still finds incorrect state transition to "end" nodes
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        LiteWorkflowApp def = new LiteWorkflowApp("name", "def",
+                new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "one"))
+                .addNode(new ActionNodeDef("one", dummyConf, TestActionNodeHandler.class, "end", "f"))
+                .addNode(new ForkNodeDef("f", LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                        Arrays.asList(new String[]{"two", "three"})))
+                .addNode(new ActionNodeDef("two", dummyConf, TestActionNodeHandler.class, "end", "k")) // invalid
+                .addNode(new ActionNodeDef("three", dummyConf, TestActionNodeHandler.class, "j", "k"))
+                .addNode(new JoinNodeDef("j", LiteWorkflowStoreService.LiteControlNodeHandler.class, "end"))
+                .addNode(new KillNodeDef("k", "kill", LiteWorkflowStoreService.LiteControlNodeHandler.class))
+                .addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+
+        try {
+            invokeForkJoin(parser, def);
+            fail("Expected to catch an exception but did not encounter any");
+        } catch (WorkflowException we) {
+            assertEquals(ErrorCode.E0737, we.getErrorCode());
+            assertTrue(we.getMessage().contains("[two]"));
+        }
+    }
+
+    public void testRuntimeWith20Actions() throws Exception {
+        testRuntimeWithActions("wf-actions-20.xml");
+    }
+
+    public void testRuntimeWith40Actions() throws Exception {
+        testRuntimeWithActions("wf-actions-40.xml");
+    }
+
+    public void testRuntimeWith80Actions() throws Exception {
+        testRuntimeWithActions("wf-actions-80.xml");
+    }
+
+    @SuppressWarnings("deprecation")
+    private void testRuntimeWithActions(String workflowXml) throws Exception {
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        final AtomicBoolean failure = new AtomicBoolean(false);
+        final AtomicBoolean finished = new AtomicBoolean(false);
+
+        Runnable r = () -> {
+            try {
+                parser.validateAndParse(IOUtils.getResourceAsReader(
+                        workflowXml, -1), new Configuration());
+            } catch (final Exception e) {
+                e.printStackTrace();
+                failure.set(true);
+            }
+
+            finished.set(true);
+        };
+
+        Thread t = new Thread(r);
+        t.setName("Workflow validator thread for " + workflowXml);
         t.start();
         t.join((long) (2000 * XTestCase.WAITFOR_RATIO));
 
@@ -1515,10 +1423,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
     }
 
     public void testDisableWFValidateForkJoin() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-            LiteWorkflowStoreService.LiteControlNodeHandler.class,
-            LiteWorkflowStoreService.LiteDecisionHandler.class,
-            LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         // oozie level default, wf level default
         try {
@@ -1587,9 +1492,7 @@ public class TestLiteWorkflowAppParser extends XTestCase {
 
     // Test parameterization of retry-max and retry-interval
     public void testParameterizationRetry() throws Exception {
-        LiteWorkflowAppParser parser = new LiteWorkflowAppParser(null,
-                LiteWorkflowStoreService.LiteControlNodeHandler.class,
-                LiteWorkflowStoreService.LiteDecisionHandler.class, LiteWorkflowStoreService.LiteActionHandler.class);
+        LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
 
         String wf = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"test\" > "
                 + "<global> <job-tracker>localhost</job-tracker><name-node>localhost</name-node></global>"
@@ -1602,6 +1505,96 @@ public class TestLiteWorkflowAppParser extends XTestCase {
         LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
         assertEquals(app.getNode("retry").getUserRetryMax(), "3");
         assertEquals(app.getNode("retry").getUserRetryInterval(), "10");
+    }
+
+    public void testWorkflowWithGlobalLevelResourceManager() throws Exception {
+        final LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        final String wf = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"test\" > " +
+                "<global>" +
+                "   <resource-manager>localhost</resource-manager>" +
+                "  <name-node>localhost</name-node>" +
+                "</global>" +
+                "<start to=\"test\"/>" +
+                "<action name=\"test\">" +
+                "  <java>" +
+                "    <main-class>com.retry</main-class>" +
+                "  </java>" +
+                "  <ok to=\"end\"/>" +
+                "  <error to=\"end\"/>" +
+                "</action>" +
+                "<end name=\"end\"/>" +
+                "</workflow-app>";
+
+        final Configuration conf = new Configuration();
+        final LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
+        assertTrue(app.getNode("test").getConf().contains("resource-manager"));
+    }
+
+    public void testWorkflowWithActionLevelResourceManager() throws Exception {
+        final LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        final String wf = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"test\" > " +
+                "<start to=\"test\"/>" +
+                "<action name=\"test\">" +
+                "  <java>" +
+                "    <resource-manager>resourceManager</resource-manager>" +
+                "    <name-node>localhost</name-node>" +
+                "    <main-class>com.retry</main-class>" +
+                "  </java>" +
+                "  <ok to=\"end\"/>" +
+                "  <error to=\"end\"/>" +
+                "</action>" +
+                "<end name=\"end\"/>" +
+                "</workflow-app>";
+
+        final Configuration conf = new Configuration();
+        final LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
+        assertTrue(app.getNode("test").getConf().contains("resource-manager"));
+    }
+
+    public void testWorkflowWithGlobalLevelResourceManagerAndActionLevelJobTracker() throws Exception {
+        final LiteWorkflowAppParser parser = newLiteWorkflowAppParser();
+
+        final String wf = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"test\" > " +
+                "<global>" +
+                "   <resource-manager>jobtracker</resource-manager>" +
+                "  <name-node>localhost</name-node>" +
+                "</global>" +
+                "<start to=\"test\"/>" +
+                "<action name=\"test\">" +
+                "  <java>" +
+                "    <job-tracker>localhost</job-tracker>" +
+                "    <name-node>localhost</name-node>" +
+                "    <main-class>com.retry</main-class>" +
+                "  </java>" +
+                "  <ok to=\"end\"/>" +
+                "  <error to=\"end\"/>" +
+                "</action>" +
+                "<end name=\"end\"/>" +
+                "</workflow-app>";
+
+        final Configuration conf = new Configuration();
+        final LiteWorkflowApp app = parser.validateAndParse(new StringReader(wf), conf);
+        final XConfiguration actualActionConfig = extractConfig(app, "test");
+
+        assertTrue(app.getNode("test").getConf().contains("job-tracker"));
+    }
+
+    private LiteWorkflowAppParser newLiteWorkflowAppParser() throws WorkflowException {
+        return new LiteWorkflowAppParser(null,
+                    LiteWorkflowStoreService.LiteControlNodeHandler.class,
+                    LiteWorkflowStoreService.LiteDecisionHandler.class, LiteWorkflowStoreService.LiteActionHandler.class);
+    }
+
+    private XConfiguration extractConfig(LiteWorkflowApp app, String actionNode) throws Exception {
+        String confXML = app.getNode(actionNode).getConf();
+        Element confElement = XmlUtils.parseXml(confXML);
+        Namespace ns = confElement.getNamespace();
+        String configSection = XmlUtils.prettyPrint(confElement.getChild("configuration", ns)).toString();
+        XConfiguration xconf = new XConfiguration(new StringReader(configSection));
+
+        return xconf;
     }
 
 }

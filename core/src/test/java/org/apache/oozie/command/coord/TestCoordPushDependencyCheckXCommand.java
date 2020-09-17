@@ -19,6 +19,7 @@
 package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.log4j.Appender;
@@ -33,6 +34,7 @@ import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.HCatAccessorService;
@@ -418,12 +420,49 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
         String newHCatDependency = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=brazil";
         String actionId1 = addInitRecords(newHCatDependency);
         new CoordPushDependencyCheckXCommand(actionId1).call();
-        assertTrue(out.toString().contains("ACTION[" + actionId1 + "]"));
+        assertTrue(out.toString(StandardCharsets.UTF_8.name()).contains("ACTION[" + actionId1 + "]"));
         out.reset();
         String actionId2 = addInitRecords(newHCatDependency);
         new CoordPushDependencyCheckXCommand(actionId2).call();
-        assertFalse(out.toString().contains("ACTION[" + actionId1 + "]"));
-        assertTrue(out.toString().contains("ACTION[" + actionId2 + "]"));
+        assertFalse(out.toString(StandardCharsets.UTF_8.name()).contains("ACTION[" + actionId1 + "]"));
+        assertTrue(out.toString(StandardCharsets.UTF_8.name()).contains("ACTION[" + actionId2 + "]"));
+    }
+
+    @Test
+    public void testExceptionOnInvalidElFunction() throws Exception {
+        String db = "default";
+        String table = "tablename";
+        String newHCatDependency1 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120412;country=brazil";
+        String newHCatDependency2 = "hcat://" + server + "/" + db + "/" + table + "/dt=20120430;country=usa";
+        String newHCatDependency = newHCatDependency1 + CoordELFunctions.INSTANCE_SEPARATOR + newHCatDependency2;
+        populateTable(db, table);
+
+        CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-hcatinput-invalid-elfunction.xml",
+                CoordinatorJob.Status.RUNNING, false, true);
+
+        CoordinatorActionBean action = addRecordToCoordActionTableForWaiting(job.getId(), 1,
+                CoordinatorAction.Status.WAITING, "coord-hcatinput-invalid-elfunction.xml", null, newHCatDependency,
+                "Z");
+
+        final String actionId = action.getId();
+        checkCoordAction(actionId, newHCatDependency, CoordinatorAction.Status.WAITING);
+
+        try {
+            new CoordPushDependencyCheckXCommand(actionId).call();
+            waitFor(6000, new Predicate() {
+                @Override
+                public boolean evaluate() throws Exception {
+                    CoordinatorActionBean action = CoordActionQueryExecutor.getInstance()
+                            .get(CoordActionQueryExecutor.CoordActionQuery.GET_COORD_ACTION, actionId);
+                    return action.getStatus() == CoordinatorAction.Status.FAILED;
+                }
+            });
+            fail("Should throw an exception");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("Coord Action Input Check Error"));
+        }
+
     }
 
     private void populateTable(String db, String table) throws Exception {

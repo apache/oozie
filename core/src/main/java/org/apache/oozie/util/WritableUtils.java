@@ -64,6 +64,7 @@ public class WritableUtils {
     /**
      * Read a writable from a byte array.
      *
+     * @param <T> the object type
      * @param array byte array with the serialized writable.
      * @param clazz writable class.
      * @return writable deserialized from the byte array.
@@ -151,6 +152,13 @@ public class WritableUtils {
         }
     }
 
+    /**
+     * Write string list.
+     *
+     * @param dataOutput the data output
+     * @param list the list
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
     public static void writeStringList(DataOutput dataOutput, List<String> list) throws IOException {
         dataOutput.writeInt(list.size());
         for (String str : list) {

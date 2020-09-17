@@ -15,18 +15,38 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project name="Oozie">
+<project xmlns="http://maven.apache.org/DECORATION/1.3.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/DECORATION/1.3.0 http://maven.apache.org/xsd/decoration-1.3.0.xsd"
+  name="Oozie">
 
     <bannerLeft>
         <name>Oozie</name>
+        <src>https://oozie.apache.org/images/oozie_200x.png</src>
+        <href>https://oozie.apache.org/</href>
     </bannerLeft>
+
+    <!--bannerRight>
+        <src>https://oozie.apache.org/images/asf_logo_wide.png</src>
+        <href>http://www.apache.org/</href>
+        <width>300px</width>
+    </bannerRight-->
+
+    <publishDate position="right"/>
+    <version position="right"/>
 
     <skin>
         <groupId>org.apache.maven.skins</groupId>
-        <artifactId>maven-stylus-skin</artifactId>
-        <version>1.1</version>
+        <artifactId>maven-fluido-skin</artifactId>
+        <version>1.4</version>
     </skin>
 
-    <body/>
+    <body>
+        <breadcrumbs>
+            <item name="Apache" href="http://www.apache.org/" />
+            <item name="Oozie" href="../../" />
+            <item name="docs" href="../" />
+            <item name="${project.version}" href="./" />
+        </breadcrumbs>
+    </body>
 
 </project>

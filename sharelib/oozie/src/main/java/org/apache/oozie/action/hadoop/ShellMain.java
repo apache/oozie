@@ -23,11 +23,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,10 @@ public class ShellMain extends LauncherMain {
             "oozie.action.shell.setup.hadoop.conf.dir.write.log4j.properties";
     public static final String CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT =
             "oozie.action.shell.setup.hadoop.conf.dir.log4j.content";
+
+    public static final String CONF_OOZIE_SHELL_MAX_SCRIPT_SIZE_TO_PRINT_KB = "oozie.action.shell.max-print-size-kb";
+    private static final int DEFAULT_MAX_SRIPT_SIZE_TO_PRINT_KB = 128;
+
     public static final String OOZIE_ACTION_CONF_XML = "OOZIE_ACTION_CONF_XML";
     private static final String HADOOP_CONF_DIR = "HADOOP_CONF_DIR";
     private static final String YARN_CONF_DIR = "YARN_CONF_DIR";
@@ -52,8 +57,8 @@ public class ShellMain extends LauncherMain {
     private static String LOG4J_PROPERTIES = "log4j.properties";
 
     /**
-     * @param args Invoked from LauncherMapper:map()
-     * @throws Exception
+     * @param args Invoked from LauncherAMUtils:map()
+     * @throws Exception in case of error when running the application
      */
     public static void main(String[] args) throws Exception {
         run(ShellMain.class, args);
@@ -66,7 +71,6 @@ public class ShellMain extends LauncherMain {
         setYarnTag(actionConf);
         setApplicationTags(actionConf, TEZ_APPLICATION_TAGS);
         setApplicationTags(actionConf, SPARK_YARN_TAGS);
-
         int exitCode = execute(actionConf);
         if (exitCode != 0) {
             // Shell command failed. therefore make the action failed
@@ -78,9 +82,9 @@ public class ShellMain extends LauncherMain {
     /**
      * Execute the shell command
      *
-     * @param actionConf
+     * @param actionConf the action configuration
      * @return command exit value
-     * @throws IOException
+     * @throws Exception in case of error during action execution
      */
     private int execute(Configuration actionConf) throws Exception {
         String exec = getExec(actionConf);
@@ -97,7 +101,7 @@ public class ShellMain extends LauncherMain {
         // Setup Hadoop *-site files in case the user runs a Hadoop-type program (e.g. hive)
         prepareHadoopConfigs(actionConf, envp, currDir);
 
-        printCommand(cmdArray, envp); // For debugging purpose
+        printCommand(actionConf, cmdArray, envp); // For debugging purpose
 
         System.out.println("=================================================================");
         System.out.println();
@@ -135,7 +139,7 @@ public class ShellMain extends LauncherMain {
      * @param actionConf The action configuration
      * @param envp The environment for the Shell process
      * @param currDir The current working dir
-     * @throws IOException
+     * @throws IOException in case of error writing config or property file
      */
     private void prepareHadoopConfigs(Configuration actionConf, Map<String, String> envp, File currDir) throws IOException {
         if (actionConf.getBoolean(CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR, false)) {
@@ -163,13 +167,14 @@ public class ShellMain extends LauncherMain {
      * Otherwise, logging from commands may go into stdout and make it to the Shell's captured output.
      * @param actionConf the action's configuration, to source log4j contents from
      * @param confDir the directory to write a {@link #LOG4J_PROPERTIES} file under
+     * @throws IOException in case of write error
      */
     private static void writeLoggerProperties(Configuration actionConf, File confDir) throws IOException {
         String log4jContents = actionConf.get(
                 CONF_OOZIE_SHELL_SETUP_HADOOP_CONF_DIR_LOG4J_CONTENT);
         File log4jPropertiesFile = new File(confDir, LOG4J_PROPERTIES);
         FileOutputStream log4jFileOutputStream = new FileOutputStream(log4jPropertiesFile, false);
-        PrintWriter log4jWriter = new PrintWriter(log4jFileOutputStream);
+        PrintWriter log4jWriter = new PrintWriter(new OutputStreamWriter(log4jFileOutputStream, StandardCharsets.UTF_8));
         BufferedReader lineReader = new BufferedReader(new StringReader(log4jContents));
         String line = lineReader.readLine();
         while (line != null) {
@@ -183,10 +188,13 @@ public class ShellMain extends LauncherMain {
     /**
      * Return the environment variable to pass to in shell command execution.
      *
+     * @param envp the environment map to fill
+     * @param actionConf the config to work from
+     * @return the filled up map
      */
     private Map<String, String> getEnvMap(Map<String, String> envp, Configuration actionConf) {
         // Adding user-specified environments
-        String[] envs = MapReduceMain.getStrings(actionConf, CONF_OOZIE_SHELL_ENVS);
+        String[] envs = ActionUtils.getStrings(actionConf, CONF_OOZIE_SHELL_ENVS);
         for (String env : envs) {
             String[] varValue = env.split("=",2); // Error case is handled in
                                                 // ShellActionExecutor
@@ -200,8 +208,8 @@ public class ShellMain extends LauncherMain {
     /**
      * Get the shell commands with the arguments
      *
-     * @param exec
-     * @param args
+     * @param exec command to execute
+     * @param args ars of the command
      * @return command and list of args
      */
     private ArrayList<String> getCmdList(String exec, String[] args) {
@@ -225,8 +233,10 @@ public class ShellMain extends LauncherMain {
      */
     protected Thread[] handleShellOutput(Process p, boolean captureOutput)
             throws IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream(),
+                StandardCharsets.UTF_8));
+        BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream(),
+                StandardCharsets.UTF_8));
 
         OutputWriteThread thrStdout = new OutputWriteThread(input, true, captureOutput);
         thrStdout.setDaemon(true);
@@ -262,7 +272,8 @@ public class ShellMain extends LauncherMain {
             try {
                 if (needCaptured) {
                     File file = new File(System.getProperty(OUTPUT_PROPERTIES));
-                    os = new BufferedWriter(new FileWriter(file));
+                    os = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file),
+                            StandardCharsets.UTF_8));
                 }
                 while ((line = reader.readLine()) != null) {
                     if (isStdout) { // For stdout
@@ -311,13 +322,24 @@ public class ShellMain extends LauncherMain {
      *
      * @param cmdArray :Command Array
      * @param envp :Environment array
+     * @param config :Hadoop configuration
      */
-    protected void printCommand(ArrayList<String> cmdArray, Map<String, String> envp) {
+    protected void printCommand(Configuration config, ArrayList<String> cmdArray, Map<String, String> envp) {
         int i = 0;
         System.out.println("Full Command .. ");
         System.out.println("-------------------------");
         for (String arg : cmdArray) {
             System.out.println(i++ + ":" + arg + ":");
+        }
+
+        if (!cmdArray.isEmpty()) {
+            ShellContentWriter writer = new ShellContentWriter(
+                    config.getInt(CONF_OOZIE_SHELL_MAX_SCRIPT_SIZE_TO_PRINT_KB, DEFAULT_MAX_SRIPT_SIZE_TO_PRINT_KB),
+                    System.out,
+                    System.err,
+                    cmdArray.get(0)
+            );
+            writer.print();
         }
 
         if (envp != null) {
@@ -327,19 +349,18 @@ public class ShellMain extends LauncherMain {
                 System.out.println(entry.getKey() + "=" + entry.getValue() + ":");
             }
         }
-
     }
 
     /**
      * Retrieve the list of arguments that were originally specified to
      * Workflow.xml.
      *
-     * @param actionConf
+     * @param actionConf the configuration
      * @return argument list
      */
     protected List<String> getShellArguments(Configuration actionConf) {
         List<String> arguments = new ArrayList<String>();
-        String[] scrArgs = MapReduceMain.getStrings(actionConf, CONF_OOZIE_SHELL_ARGS);
+        String[] scrArgs = ActionUtils.getStrings(actionConf, CONF_OOZIE_SHELL_ARGS);
         for (String scrArg : scrArgs) {
             arguments.add(scrArg);
         }
@@ -350,7 +371,7 @@ public class ShellMain extends LauncherMain {
      * Retrieve the executable name that was originally specified to
      * Workflow.xml.
      *
-     * @param actionConf
+     * @param actionConf the configuration
      * @return executable
      */
     protected String getExec(Configuration actionConf) {

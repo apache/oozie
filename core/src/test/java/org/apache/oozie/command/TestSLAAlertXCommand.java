@@ -221,19 +221,19 @@ public class TestSLAAlertXCommand extends XDataTestCase {
         Date nominalTime1 = DateUtils.parseDateUTC(data);
         addRecordToCoordActionTable(coord1.getId(), 1, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 1,
                 nominalTime1);
-        Date nominalTime2 = org.apache.commons.lang.time.DateUtils.addDays(nominalTime1, 1);
+        Date nominalTime2 = org.apache.commons.lang3.time.DateUtils.addDays(nominalTime1, 1);
 
         addRecordToCoordActionTable(coord1.getId(), 2, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 1,
                 nominalTime2);
 
-        Date nominalTime3 = org.apache.commons.lang.time.DateUtils.addDays(nominalTime1, 2);
+        Date nominalTime3 = org.apache.commons.lang3.time.DateUtils.addDays(nominalTime1, 2);
         addRecordToCoordActionTable(coord1.getId(), 3, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 1,
                 nominalTime3);
 
-        Date nominalTime4 = org.apache.commons.lang.time.DateUtils.addDays(nominalTime1, 3);
+        Date nominalTime4 = org.apache.commons.lang3.time.DateUtils.addDays(nominalTime1, 3);
         addRecordToCoordActionTable(coord1.getId(), 4, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 1,
                 nominalTime4);
-        Date nominalTime5 = org.apache.commons.lang.time.DateUtils.addDays(nominalTime1, 4);
+        Date nominalTime5 = org.apache.commons.lang3.time.DateUtils.addDays(nominalTime1, 4);
         addRecordToCoordActionTable(coord1.getId(), 5, CoordinatorAction.Status.WAITING, "coord-action-get.xml", 1,
                 nominalTime5);
 

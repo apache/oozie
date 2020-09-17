@@ -367,7 +367,9 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 break;
             case GET_COORD_JOBS_OLDER_FOR_MATERIALIZATION:
                 bean = new CoordinatorJobBean();
-                bean.setId((String) ret);
+                arr = (Object[]) ret;
+                bean.setId((String) arr[0]);
+                bean.setNextMaterializedTime(DateUtils.toDate((Timestamp) arr[1]));
                 break;
             case GET_COORD_JOBS_FOR_BUNDLE_BY_APPNAME_ID:
                 bean = new CoordinatorJobBean();

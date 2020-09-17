@@ -18,12 +18,15 @@
 
 package org.apache.oozie.client.rest;
 
-import junit.framework.TestCase;
+
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction;
 
-public class TestJsonCoordinatorAction extends TestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+public class TestJsonCoordinatorAction {
 
     static String CREATE_TIME = "Sat, 05 Sep 2009 00:00:00 GMT";
     static String LAST_MODIFIED_TIME = "Sat, 05 Sep 2009 00:00:00 GMT";
@@ -47,6 +50,7 @@ public class TestJsonCoordinatorAction extends TestCase {
         return app;
     }
 
+    @Test
     public void testProperties() {
         CoordinatorActionBean app = createAppAction();
         assertEquals("a", app.getJobId());

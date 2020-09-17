@@ -21,11 +21,12 @@ package org.apache.oozie.servlet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BaseEngineException;
@@ -34,6 +35,8 @@ import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.CoordinatorWfActionBean;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
@@ -42,10 +45,16 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.coord.CoordCommandUtils;
+import org.apache.oozie.command.wf.ActionXCommand;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.util.Pair;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 @SuppressWarnings("serial")
@@ -133,8 +142,8 @@ public class V2JobServlet extends V1JobServlet {
      * Ignore a coordinator job
      * @param request request object
      * @param response response object
-     * @throws XServletException
-     * @throws IOException
+     * @throws XServletException in case if CoordinatorEngineException occurs
+     * @throws IOException in case of parsing error
      */
     @Override
     protected JSONObject ignoreJob(HttpServletRequest request, HttpServletResponse response) throws XServletException, IOException {
@@ -201,7 +210,7 @@ public class V2JobServlet extends V1JobServlet {
      *
      * @param request servlet request
      * @param response servlet response
-     * @throws XServletException
+     * @throws XServletException in case if CoordinatorEngineException or CommandException occurs
      */
     @SuppressWarnings("unchecked")
     private JSONObject ignoreCoordinatorJob(HttpServletRequest request, HttpServletResponse response)
@@ -295,9 +304,63 @@ public class V2JobServlet extends V1JobServlet {
         catch (BaseEngineException e) {
             throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
         }
-
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    JSONArray getActionRetries(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        JSONArray jsonArray = new JSONArray();
+        String jobId = getResourceName(request);
+        try {
+            jsonArray.addAll(Services.get().get(DagEngineService.class).getDagEngine(getUser(request))
+                    .getWorkflowActionRetries(jobId));
+            return jsonArray;
+        }
+        catch (BaseEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected JSONObject getCoordActionMissingDependencies(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        String jobId = getResourceName(request);
+        String actions = request.getParameter(RestConstants.JOB_COORD_SCOPE_ACTION_LIST);
+        String dates = request.getParameter(RestConstants.JOB_COORD_SCOPE_DATE);
+
+        try {
+            List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> dependenciesList = Services.get()
+                    .get(CoordinatorEngineService.class).getCoordinatorEngine(getUser(request))
+                    .getCoordActionMissingDependencies(jobId, actions, dates);
+            JSONArray dependenciesArray = new JSONArray();
+            for (Pair<CoordinatorActionBean, Map<String, ActionDependency>> dependencies : dependenciesList) {
+                JSONObject json = new JSONObject();
+                JSONArray parentJsonArray = new JSONArray();
+
+                for (String key : dependencies.getSecond().keySet()) {
+                    JSONObject dependencyList = new JSONObject();
+                    JSONArray jsonArray = new JSONArray();
+                    jsonArray.addAll(dependencies.getSecond().get(key).getMissingDependencies());
+                    dependencyList.put(JsonTags.COORDINATOR_ACTION_MISSING_DEPS, jsonArray);
+                    dependencyList.put(JsonTags.COORDINATOR_ACTION_DATASET, key);
+                    parentJsonArray.add(dependencyList);
+                }
+                json.put(JsonTags.COORD_ACTION_FIRST_MISSING_DEPENDENCIES,
+                        CoordCommandUtils.getFirstMissingDependency(dependencies.getFirst()));
+                json.put(JsonTags.COORDINATOR_ACTION_ID, dependencies.getFirst().getActionNumber());
+                json.put(JsonTags.COORDINATOR_ACTION_DATASETS, parentJsonArray);
+                dependenciesArray.add(json);
+            }
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put(JsonTags.COORD_ACTION_MISSING_DEPENDENCIES, dependenciesArray);
+            return jsonObject;
+        }
+        catch (CommandException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
+    }
 
     /**
      * Gets the base engine based on jobId.
@@ -321,4 +384,46 @@ public class V2JobServlet extends V1JobServlet {
         }
     }
 
+    @Override
+    protected JSONObject getWfActionByJobIdAndName(HttpServletRequest request, HttpServletResponse response)
+            throws XServletException, IOException {
+        CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(
+                getUser(request));
+        String jobId = getResourceName(request);
+        String action = request.getParameter(RestConstants.ACTION_NAME_PARAM);
+        String startStr = request.getParameter(RestConstants.OFFSET_PARAM);
+        String lenStr = request.getParameter(RestConstants.LEN_PARAM);
+        String timeZoneId = request.getParameter(RestConstants.TIME_ZONE_PARAM);
+        timeZoneId = (timeZoneId == null) ? "GMT" : timeZoneId;
+
+        if (action == null) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST,
+                    ErrorCode.E0305, RestConstants.ACTION_NAME_PARAM);
+        }
+
+        int offset = (startStr != null) ? Integer.parseInt(startStr) : 1;
+        offset = (offset < 1) ? 1 : offset;
+        /**
+         * set default number of wf actions to be retrieved to
+         * default number of coordinator actions to be retrieved
+         **/
+        int defaultLen = ConfigurationService.getInt(COORD_ACTIONS_DEFAULT_LENGTH);
+        int len = (lenStr != null) ? Integer.parseInt(lenStr) : 0;
+        len = getCoordinatorJobLength(defaultLen, len);
+
+        try {
+            JSONObject json = new JSONObject();
+            List<CoordinatorWfActionBean> coordWfActions = coordEngine.getWfActionByJobIdAndName(jobId, action, offset, len);
+            JSONArray array = new JSONArray();
+            for (CoordinatorWfActionBean coordWfAction : coordWfActions) {
+                array.add(coordWfAction.toJSONObject(timeZoneId));
+            }
+            json.put(JsonTags.COORDINATOR_JOB_ID, jobId);
+            json.put(JsonTags.COORDINATOR_WF_ACTIONS, array);
+            return json;
+        }
+        catch (CoordinatorEngineException ex) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ex);
+        }
+    }
 }

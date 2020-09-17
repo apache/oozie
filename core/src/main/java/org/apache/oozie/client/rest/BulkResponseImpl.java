@@ -18,7 +18,6 @@
 
 package org.apache.oozie.client.rest;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -28,6 +27,8 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.BulkResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Server-side implementation class of the client interface BulkResponse
@@ -48,20 +49,14 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
     public static final String BULK_FILTER_END_NOMINAL_EPOCH = "endscheduledtime";
     public static final String BULK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:SS'Z'";
 
-    public static final Set<String> BULK_FILTER_NAMES = new HashSet<String>();
-
-    static {
-
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_BUNDLE);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_COORD);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_LEVEL);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_STATUS);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_START_CREATED_EPOCH);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_END_CREATED_EPOCH);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_START_NOMINAL_EPOCH);
-        BULK_FILTER_NAMES.add(BulkResponseImpl.BULK_FILTER_END_NOMINAL_EPOCH);
-
-    }
+    public static final Set<String> BULK_FILTER_NAMES = ImmutableSet.of(BulkResponseImpl.BULK_FILTER_BUNDLE,
+            BulkResponseImpl.BULK_FILTER_COORD,
+            BulkResponseImpl.BULK_FILTER_LEVEL,
+            BulkResponseImpl.BULK_FILTER_STATUS,
+            BulkResponseImpl.BULK_FILTER_START_CREATED_EPOCH,
+            BulkResponseImpl.BULK_FILTER_END_CREATED_EPOCH,
+            BulkResponseImpl.BULK_FILTER_START_NOMINAL_EPOCH,
+            BulkResponseImpl.BULK_FILTER_END_NOMINAL_EPOCH);
 
     /**
      * Construct JSON object using the bulk request object and the associated tags
@@ -84,25 +79,16 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
         return json;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.BulkResponse#getBundle()
-     */
     @Override
     public BundleJobBean getBundle() {
         return bundle;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.BulkResponse#getCoordinator()
-     */
     @Override
     public CoordinatorJobBean getCoordinator() {
         return coordinator;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.client.BulkResponse#getAction()
-     */
     @Override
     public CoordinatorActionBean getAction() {
         return action;
@@ -110,7 +96,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the bundle comprising this bulk response object
-     * @param bj
+     * @param bj the bundle
      */
     public void setBundle(BundleJobBean bj) {
         this.bundle = bj;
@@ -118,7 +104,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the coordinator comprising this bulk response object
-     * @param cj
+     * @param cj the coord
      */
     public void setCoordinator(CoordinatorJobBean cj) {
         this.coordinator = cj;
@@ -126,7 +112,7 @@ public class BulkResponseImpl implements BulkResponse, JsonBean {
 
     /**
      * Sets the coord action comprising this bulk response object
-     * @param ca
+     * @param ca the action
      */
     public void setAction(CoordinatorActionBean ca) {
         this.action = ca;

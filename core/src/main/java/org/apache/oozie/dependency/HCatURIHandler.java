@@ -176,7 +176,11 @@ public class HCatURIHandler implements URIHandler {
         HCatClient client = ((HCatContext) context).getHCatClient();
         try {
             HCatURI hcatUri  = new HCatURI(uri);
-            client.dropPartitions(hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap(), true);
+            if (!hcatUri.getPartitionMap().isEmpty()) {
+                client.dropPartitions(hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap(), true);
+            } else {
+                client.dropTable(hcatUri.getDb(), hcatUri.getTable(), true);
+            }
         }
         catch (URISyntaxException e) {
             throw new HCatAccessorException(ErrorCode.E1501, e);
@@ -189,10 +193,16 @@ public class HCatURIHandler implements URIHandler {
     @Override
     public void delete(URI uri, Configuration conf, String user) throws URIHandlerException {
         HCatClientWithToken client = null;
+        HCatClient hCatClient = null;
         try {
             HCatURI hcatUri = new HCatURI(uri);
             client = getHCatClient(uri, conf, user);
-            client.getHCatClient().dropPartitions(hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap(), true);
+            hCatClient = client.getHCatClient();
+            if (!hcatUri.getPartitionMap().isEmpty()) {
+                hCatClient.dropPartitions(hcatUri.getDb(), hcatUri.getTable(), hcatUri.getPartitionMap(), true);
+            } else {
+                hCatClient.dropTable(hcatUri.getDb(), hcatUri.getTable(), true);
+            }
         }
         catch (URISyntaxException e){
             throw new HCatAccessorException(ErrorCode.E1501, e);
@@ -201,7 +211,7 @@ public class HCatURIHandler implements URIHandler {
             throw new HCatAccessorException(ErrorCode.E1501, e);
         }
         finally {
-            closeQuietly(client.getHCatClient(), client.getDelegationToken(),true);
+            closeQuietly(hCatClient, client != null ? client.getDelegationToken() : null, true);
         }
     }
 
@@ -231,7 +241,7 @@ public class HCatURIHandler implements URIHandler {
 
     }
 
-    private HiveConf getHiveConf(URI uri, Configuration conf){
+    private HiveConf getHiveConf(URI uri, Configuration conf) throws HCatAccessorException {
         HCatAccessorService hcatService = Services.get().get(HCatAccessorService.class);
         if (hcatService.getHCatConf() != null) {
             conf = hcatService.getHCatConf();
@@ -309,7 +319,7 @@ public class HCatURIHandler implements URIHandler {
         }
     }
 
-    private String getMetastoreConnectURI(URI uri) {
+    private String getMetastoreConnectURI(URI uri) throws HCatAccessorException {
         String metastoreURI;
         // For unit tests
         if (uri.getAuthority().equals("unittest-local")) {
@@ -318,17 +328,30 @@ public class HCatURIHandler implements URIHandler {
         else {
             // Hardcoding hcat to thrift mapping till support for webhcat(templeton)
             // is added
-            metastoreURI = "thrift://" + uri.getAuthority();
+            HCatURI hCatURI;
+            try {
+                hCatURI = new HCatURI(uri.toString());
+                metastoreURI = hCatURI.getServerEndPointWithScheme("thrift");
+            } catch (URISyntaxException e) {
+                throw new HCatAccessorException(ErrorCode.E0902, e);
+            }
         }
         return metastoreURI;
     }
 
     private boolean exists(URI uri, HCatClient client, boolean closeClient) throws HCatAccessorException {
         try {
+            boolean flag;
             HCatURI hcatURI = new HCatURI(uri.toString());
-            List<HCatPartition> partitions = client.getPartitions(hcatURI.getDb(), hcatURI.getTable(),
-                    hcatURI.getPartitionMap());
-            return (partitions != null && !partitions.isEmpty());
+            if (!hcatURI.getPartitionMap().isEmpty()) {
+                List<HCatPartition> partitions = client.getPartitions(hcatURI.getDb(), hcatURI.getTable(),
+                        hcatURI.getPartitionMap());
+                flag = partitions != null && !partitions.isEmpty();
+            } else {
+                List<String> tables = client.listTableNamesByPattern(hcatURI.getDb(), hcatURI.getTable());
+                flag = tables != null && !tables.isEmpty();
+            }
+            return (flag);
         }
         catch (ConnectionFailureException e) {
             throw new HCatAccessorException(ErrorCode.E1501, e);

@@ -18,10 +18,12 @@
 
 package org.apache.oozie.command.wf;
 
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Properties;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -66,7 +68,8 @@ public class TestReRunXCommand extends XDataTestCase {
 
     public void testRerun() throws IOException, OozieClientException {
         Reader reader = IOUtils.getResourceAsReader("rerun-wf.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(
+                new FileOutputStream(new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         Path path = getFsTestCaseDir();
@@ -138,7 +141,8 @@ public class TestReRunXCommand extends XDataTestCase {
         Services.get().setService(SchemaService.class);
 
         Reader reader = IOUtils.getResourceAsReader("rerun-wf-fork.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final OozieClient wfClient = LocalOozie.getClient();
@@ -195,7 +199,8 @@ public class TestReRunXCommand extends XDataTestCase {
      */
     public void testRerunVariableSub() throws IOException, OozieClientException {
         Reader reader = IOUtils.getResourceAsReader("rerun-varsub-wf.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         Path path = getFsTestCaseDir();
@@ -208,7 +213,8 @@ public class TestReRunXCommand extends XDataTestCase {
 
         conf.setProperty("nnbase", path.toString());
         conf.setProperty("base", conf.getProperty("nnbase"));
-        // setting the variables "srcDir" and "dstDir", used as a file paths in the workflow, to parameterized expressions to test resolution.
+        // setting the variables "srcDir" and "dstDir", used as a file paths in the workflow,
+        // to parameterized expressions to test resolution.
         conf.setProperty("srcDir", "${base}/p1");
         conf.setProperty("dstDir", "${base}/p2");
 
@@ -236,7 +242,8 @@ public class TestReRunXCommand extends XDataTestCase {
 
     public void testRerunFromFailNodes() throws IOException, OozieClientException {
         Reader reader = IOUtils.getResourceAsReader("rerun-wf.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         Path path = getFsTestCaseDir();
@@ -276,7 +283,8 @@ public class TestReRunXCommand extends XDataTestCase {
 
     public void testRedeploy() throws IOException, OozieClientException, InterruptedException {
         Reader reader = IOUtils.getResourceAsReader("rerun-elerr-wf.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final OozieClient wfClient = LocalOozie.getClient();
@@ -298,7 +306,8 @@ public class TestReRunXCommand extends XDataTestCase {
         assertEquals(WorkflowJob.Status.FAILED, wfClient.getJobInfo(jobId1).getStatus());
 
         reader = IOUtils.getResourceAsReader("rerun-el-wf.xml", -1);
-        writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         sleep(5000);
@@ -319,7 +328,8 @@ public class TestReRunXCommand extends XDataTestCase {
     //rerun should use existing wf conf
     public void testRerunWithExistingConf() throws IOException, OozieClientException {
         Reader reader = IOUtils.getResourceAsReader("rerun-wf.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(
+                new File(getTestCaseDir(), "workflow.xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         Path path = getFsTestCaseDir();
         getFileSystem().create(new Path(path, "p2"));
@@ -340,12 +350,6 @@ public class TestReRunXCommand extends XDataTestCase {
             }
         });
         assertEquals(WorkflowJob.Status.KILLED, wfClient.getJobInfo(jobId).getStatus());
-        try {
-            wfClient.reRun(jobId, newConf);
-        }
-        catch (OozieClientException e) {
-            assertTrue(e.getCause().getMessage().contains(ErrorCode.E0401.toString()));
-        }
         newConf = wfClient.createConfiguration();
         // Skip a non-executed node
         getFileSystem().delete(new Path(path, "p2"), true);

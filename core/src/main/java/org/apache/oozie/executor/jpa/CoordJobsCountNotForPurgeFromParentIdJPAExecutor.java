@@ -39,17 +39,11 @@ public class CoordJobsCountNotForPurgeFromParentIdJPAExecutor implements JPAExec
         this.parentId = parentId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "CoordJobsCountNotForPurgeFromParentIdJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public Long execute(EntityManager em) throws JPAExecutorException {

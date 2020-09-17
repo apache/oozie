@@ -28,7 +28,8 @@ import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.ErrorCode;
 
 /**
- * Get a list of Bundle Jobs that are are RUNNING or RUNNINGWITHERROR status or the pending flag is 1. The result is ordered by lastModifiedTimestamp.
+ * Get a list of Bundle Jobs that are are RUNNING or RUNNINGWITHERROR status or the pending flag is 1.
+ * The result is ordered by lastModifiedTimestamp.
  */
 public class BundleJobsGetRunningOrPendingJPAExecutor implements JPAExecutor<List<BundleJobBean>> {
     private int limit;
@@ -37,17 +38,11 @@ public class BundleJobsGetRunningOrPendingJPAExecutor implements JPAExecutor<Lis
         this.limit = limit;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "BundleJobsGetRunningOrPendingJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public List<BundleJobBean> execute(EntityManager em) throws JPAExecutorException {

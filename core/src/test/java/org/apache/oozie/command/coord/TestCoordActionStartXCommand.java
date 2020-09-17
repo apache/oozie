@@ -20,7 +20,7 @@ package org.apache.oozie.command.coord;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,8 +28,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -87,7 +90,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
     public void testActionStartCommand() throws IOException, JPAExecutorException, CommandException {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
         addRecordToActionTable(actionId, 1, null);
-        new CoordActionStartXCommand(actionId, "me", "myapp", "myjob").call();
+        new CoordActionStartXCommand(actionId, "test", "myapp", "myjob").call();
         checkCoordAction(actionId);
     }
 
@@ -104,7 +107,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
         String wfApp = "<start to='${someParam}' />";
         addRecordToActionTable(actionId, 1, wfApp);
-        new CoordActionStartXCommand(actionId, "me", "myapp", "myjob").call();
+        new CoordActionStartXCommand(actionId, "test", "myapp", "myjob").call();
         final JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetForStartJPAExecutor(actionId));
         if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
@@ -114,6 +117,29 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         assertTrue(action.getErrorMessage().contains(
                 "XML schema error, cvc-pattern-valid: Value '${someParam}' "
                         + "is not facet-valid with respect to pattern"));
+    }
+
+    /**
+     * Coord action XML contains disallowed property change and
+     * test that CoordActionStartXCommand stores error code and error message in
+     * action's table during error handling
+     *
+     * @throws IOException
+     * @throws JPAExecutorException
+     * @throws CommandException
+     */
+    public void testActionStartWithError1003Reported() throws IOException, JPAExecutorException, CommandException {
+        String actionId = new Date().getTime() + "-COORD-ActionStartCommand-C@1";
+        String wfApp = "<start to='${someParam}' />";
+        Map<String, String> additionalProperties = new HashMap<>();
+        additionalProperties.put("user.name", "admin");
+        addRecordToActionTable(actionId, 1, wfApp, additionalProperties);
+        new CoordActionStartXCommand(actionId, "test", "myapp", "myjob").call();
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        CoordinatorActionBean action = jpaService.execute(new CoordActionGetForStartJPAExecutor(actionId));
+        assertEquals("Expected status was FAILED due to E1003 error code", CoordinatorAction.Status.FAILED, action.getStatus());
+        assertEquals(action.getErrorCode(), ErrorCode.E1003.toString());
+        assertTrue(action.getErrorMessage().contains("Invalid coordinator application attributes"));
     }
 
     /**
@@ -176,7 +202,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         IOUtils.copyStream(is, os);
         Path input = new Path(wfAppPath, "input");
         fs.mkdirs(input);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(input, "test.txt")),
+                StandardCharsets.UTF_8);
         writer.write("hello");
         writer.close();
 
@@ -186,12 +213,14 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
                 "</workflow-app>";
         String subWorkflowAppPath = new Path(wfAppPath, "subwf").toString();
         fs.mkdirs(new Path(wfAppPath, "subwf"));
-        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer2 = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         writer2.write(APP1);
         writer2.close();
 
         Reader reader = IOUtils.getResourceAsReader("wf-url-template.xml", -1);
-        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")));
+        Writer writer1 = new OutputStreamWriter(fs.create(new Path(wfAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer1);
 
         Properties jobConf = new Properties();
@@ -211,6 +240,11 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
 
     private void addRecordToActionTable(String actionId, int actionNum, String wfParam)
             throws IOException, JPAExecutorException {
+        addRecordToActionTable(actionId, actionNum, wfParam, null);
+    }
+
+    private void addRecordToActionTable(String actionId, int actionNum, String wfParam, Map<String, String> additionalProperties)
+            throws IOException, JPAExecutorException {
         final JPAService jpaService = Services.get().get(JPAService.class);
         CoordinatorActionBean action = new CoordinatorActionBean();
         action.setJobId(actionId);
@@ -229,7 +263,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "</controls>";
         actionXml += "<input-events>";
         actionXml += "<data-in name='A' dataset='a'>";
-        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY'"
+                + " end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:latest(0)}</instance>";
@@ -237,7 +272,8 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "</input-events>";
         actionXml += "<output-events>";
         actionXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit="
+                + "'DAY' end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("coord/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:current(-1)}</instance>";
@@ -255,6 +291,14 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         actionXml += "<name>inputB</name>";
         actionXml += "<value>" + getTestCaseFileUri("coord/US//2009/02/01") + "</value>";
         actionXml += "</property>";
+        if (additionalProperties != null) {
+            for (Map.Entry<String, String> entry : additionalProperties.entrySet()) {
+                actionXml += "<property>";
+                actionXml += "<name>" + entry.getKey() + "</name>";
+                actionXml += "<value>" + entry.getValue() + "</value>";
+                actionXml += "</property>";
+            }
+        }
         actionXml += "</configuration>";
         actionXml += "</workflow>";
         String slaXml = " <sla:info xmlns:sla='uri:oozie:sla:0.1'>" + " <sla:app-name>test-app</sla:app-name>"
@@ -329,7 +373,7 @@ public class TestCoordActionStartXCommand extends XDataTestCase {
         File wf = new File(appPath, "workflow.xml");
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(content);
         }
         catch (IOException iex) {

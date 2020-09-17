@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -452,7 +453,8 @@ public class TestCoordRerunXCommand extends XDataTestCase {
             @Override
             public boolean evaluate() throws Exception {
                 CoordinatorAction bean = coordClient.getCoordActionInfo(actionId);
-                return (bean.getStatus() == CoordinatorAction.Status.READY || bean.getStatus() == CoordinatorAction.Status.SUBMITTED);
+                return (bean.getStatus() == CoordinatorAction.Status.READY || bean.getStatus() == CoordinatorAction.Status
+                        .SUBMITTED);
             }
         });
 
@@ -563,7 +565,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
         // after cleanup
         assertFalse(fs.exists(success));
     }
-    
+
     /**
      * Test : rerun with refresh option when input dependency is hcat partition
      *
@@ -981,10 +983,11 @@ public class TestCoordRerunXCommand extends XDataTestCase {
 
         FileSystem fs = getFileSystem();
 
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")));
-        byte[] bytes = appXml.getBytes("UTF-8");
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath + "/coordinator.xml")),
+                StandardCharsets.UTF_8);
+        byte[] bytes = appXml.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        Reader reader2 = new InputStreamReader(bais);
+        Reader reader2 = new InputStreamReader(bais,StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader2, writer);
 
         CoordinatorJobBean coordJob = new CoordinatorJobBean();

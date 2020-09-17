@@ -19,10 +19,10 @@
 package org.apache.oozie.command.wf;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -100,7 +100,8 @@ public class TestSignalXCommand extends XDataTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "app");
         fs.mkdirs(appPath);
         Reader reader = IOUtils.getResourceAsReader("wf-fork.xml", -1);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         writer.close();
         reader.close();
@@ -118,7 +119,7 @@ public class TestSignalXCommand extends XDataTestCase {
         engine.start(jobId);
 
         Thread.sleep(2000);
-        assertFalse(out.toString().contains("EntityExistsException"));
+        assertFalse(out.toString(StandardCharsets.UTF_8.name()).contains("EntityExistsException"));
     }
 
     public void _testSuspendPoints() throws Exception {
@@ -128,7 +129,8 @@ public class TestSignalXCommand extends XDataTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "app");
         fs.mkdirs(appPath);
         Reader reader = IOUtils.getResourceAsReader("wf-suspendpoints.xml", -1);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         writer.close();
         reader.close();
@@ -202,7 +204,8 @@ public class TestSignalXCommand extends XDataTestCase {
         Path appPath = new Path(getFsTestCaseDir(), "app");
         fs.mkdirs(appPath);
         Reader reader = IOUtils.getResourceAsReader("wf-suspendpoints.xml", -1);
-        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(appPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
         writer.close();
         reader.close();

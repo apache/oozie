@@ -20,48 +20,57 @@ package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
-import org.apache.oozie.test.XTestCase;
 
-public class TestParameterVerifier extends XTestCase {
 
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class TestParameterVerifier {
+
+    @Test
     public void testVerifyParametersNull() throws Exception {
         try {
             ParameterVerifier.verifyParameters(null, XmlUtils.parseXml("<root xmlns=\"uri:oozie:workflow:0.4\"></root>"));
             fail();
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | NullPointerException ex) {
             assertEquals("conf cannot be null", ex.getMessage());
         }
-        
+
         Configuration conf = new Configuration(false);
         conf.set("A", "a");
         ParameterVerifier.verifyParameters(conf, null);
         assertEquals(1, conf.size());
         assertEquals("a", conf.get("A"));
-        
+
         try {
             ParameterVerifier.verifyParameters(null, null);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException  | NullPointerException ex) {
             assertEquals("conf cannot be null", ex.getMessage());
         }
     }
-    
+
+    @Test
     public void testVerifyParametersEmpty() throws Exception {
         Configuration conf = new Configuration(false);
         conf.set("A", "a");
-        
+
         ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml("<root xmlns=\"uri:oozie:workflow:0.4\"></root>"));
         assertEquals(1, conf.size());
         assertEquals("a", conf.get("A"));
-        
+
         ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml("<root xmlns=\"uri:oozie:workflow:0.4\">"
                 + "<parameters></parameters></root>"));
         assertEquals(1, conf.size());
         assertEquals("a", conf.get("A"));
     }
-    
+
+    @Test
     public void testVerifyParametersMissing() throws Exception {
         Configuration conf = new Configuration(false);
-        
+
         String str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name>hello</name></property>"
                 + "</parameters></root>";
@@ -74,18 +83,18 @@ public class TestParameterVerifier extends XTestCase {
             assertTrue(ex.getMessage().contains("1"));
             assertEquals(0, conf.size());
         }
-        
+
         conf = new Configuration(false);
-        
+
         str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name>hello</name><value>world</value></property>"
                 + "</parameters></root>";
         ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(str));
         assertEquals(1, conf.size());
         assertEquals("world", conf.get("hello"));
-        
+
         conf = new Configuration(false);
-        
+
         str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name>hello</name></property>"
                 + "<property><name>foo</name><value>bar</value></property>"
@@ -103,18 +112,19 @@ public class TestParameterVerifier extends XTestCase {
             assertEquals("bar", conf.get("foo"));
         }
     }
-    
+
+    @Test
     public void testVerifyParametersDefined() throws Exception {
         Configuration conf = new Configuration(false);
         conf.set("hello", "planet");
-        
+
         String str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name>hello</name></property>"
                 + "</parameters></root>";
         ParameterVerifier.verifyParameters(conf, XmlUtils.parseXml(str));
         assertEquals(1, conf.size());
         assertEquals("planet", conf.get("hello"));
-        
+
         str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name>hello</name><value>world</value></property>"
                 + "</parameters></root>";
@@ -122,10 +132,11 @@ public class TestParameterVerifier extends XTestCase {
         assertEquals(1, conf.size());
         assertEquals("planet", conf.get("hello"));
     }
-    
+
+    @Test
     public void testVerifyParametersEmptyName() throws Exception {
         Configuration conf = new Configuration(false);
-        
+
         String str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name></name></property>"
                 + "</parameters></root>";
@@ -135,7 +146,7 @@ public class TestParameterVerifier extends XTestCase {
         } catch(ParameterVerifierException ex) {
             assertEquals(ErrorCode.E0739, ex.getErrorCode());
         }
-        
+
         str = "<root xmlns=\"uri:oozie:workflow:0.4\"><parameters>"
                 + "<property><name>hello</name></property>"
                 + "<property><name></name></property>"
@@ -147,20 +158,21 @@ public class TestParameterVerifier extends XTestCase {
             assertEquals(ErrorCode.E0739, ex.getErrorCode());
         }
     }
-    
+
+    @Test
     public void testSupportsParameters() throws Exception {
         assertFalse(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.3"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.4"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:workflow:0.5"));
-        
+
         assertFalse(ParameterVerifier.supportsParameters("uri:oozie:coordinator:0.3"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:coordinator:0.4"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:coordinator:0.5"));
-        
+
         assertFalse(ParameterVerifier.supportsParameters("uri:oozie:bundle:0.1"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:bundle:0.2"));
         assertTrue(ParameterVerifier.supportsParameters("uri:oozie:bundle:0.3"));
-        
+
         assertFalse(ParameterVerifier.supportsParameters("uri:oozie:foo:0.4"));
         assertFalse(ParameterVerifier.supportsParameters("foo"));
     }

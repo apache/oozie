@@ -18,7 +18,7 @@
 
 package org.apache.oozie.util;
 
-import org.apache.oozie.test.XTestCase;
+
 import org.jdom.Element;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,13 +30,19 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
-public class TestELConstantsFunctions extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+public class TestELConstantsFunctions {
+
+    @Test
     public void testTrim() {
         assertEquals("", ELConstantsFunctions.trim(null));
         assertEquals("a", ELConstantsFunctions.trim(" a "));
     }
 
+    @Test
     public void testConcat() {
         assertEquals("a", ELConstantsFunctions.concat("a", null));
         assertEquals("b", ELConstantsFunctions.concat(null, "b"));
@@ -44,6 +50,7 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals("", ELConstantsFunctions.concat(null, null));
     }
 
+    @Test
     public void testReplaceAll() {
         assertEquals("aefefd", ELConstantsFunctions.replaceAll("abcbcd", "bc", "ef"));
         assertEquals("d1 d2 d3", ELConstantsFunctions.replaceAll("d1,d2,d3", ",", " "));
@@ -54,6 +61,7 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals("acd", ELConstantsFunctions.replaceAll("abcbcd", "bcb", null));
     }
 
+    @Test
     public void testAppendAll() {
         assertEquals("/a/b/ADD,/c/b/ADD,/c/d/ADD", ELConstantsFunctions.appendAll("/a/b/,/c/b/,/c/d/", "ADD", ","));
         assertEquals("/a/b/ADD", ELConstantsFunctions.appendAll("/a/b/", "ADD", ","));
@@ -67,6 +75,7 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals("/a/b/ADD,/c/b/ADD,/c/d/ADD", ELConstantsFunctions.appendAll("/a/b/,/c/b/,/c/d/", "ADD", ","));
     }
 
+    @Test
     public void testTimestamp() throws Exception {
         String s = ELConstantsFunctions.timestamp();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
@@ -74,11 +83,13 @@ public class TestELConstantsFunctions extends XTestCase {
         assertNotNull(sdf.parse(s));
     }
 
+    @Test
     public void testUrlEncode() {
         assertEquals("+", ELConstantsFunctions.urlEncode(" "));
         assertEquals("%25", ELConstantsFunctions.urlEncode("%"));
     }
 
+    @Test
     public void testToJsonStr() throws Exception {
         Map<String, String> map = new HashMap<String, String>();
         map.put("a", "A");
@@ -90,6 +101,7 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals(map, map2);
     }
 
+    @Test
     public void testToPropertiesStr() throws Exception {
         Map<String, String> map = new HashMap<String, String>();
         map.put("a", "A");
@@ -100,6 +112,7 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals(map, map2);
     }
 
+    @Test
     public void testToConfigurationStr() throws Exception {
         Map<String, String> map = new HashMap<String, String>();
         map.put("a", "A");

@@ -29,8 +29,10 @@ import javax.persistence.Query;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.StringBlob;
+import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.DateUtils;
 
 /**
  * Query Executor that provides API to run query for Coordinator Action
@@ -60,7 +62,8 @@ public class CoordActionQueryExecutor extends
         GET_ACTIVE_ACTIONS_FOR_DATES,
         GET_COORD_ACTIONS_WAITING_READY_SUBMITTED_OLDER_THAN,
         GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN,
-        GET_COORD_ACTION_FOR_SLA
+        GET_COORD_ACTION_FOR_SLA,
+        GET_COORD_ACTION_FOR_INPUTCHECK
     };
 
     private static CoordActionQueryExecutor instance = new CoordActionQueryExecutor();
@@ -179,6 +182,7 @@ public class CoordActionQueryExecutor extends
             case GET_COORD_ACTION:
             case GET_COORD_ACTION_STATUS:
             case GET_COORD_ACTION_FOR_SLA:
+            case GET_COORD_ACTION_FOR_INPUTCHECK:
                 query.setParameter("id", parameters[0]);
                 break;
             case GET_COORD_ACTIONS_BY_LAST_MODIFIED_TIME:
@@ -340,6 +344,22 @@ public class CoordActionQueryExecutor extends
                 bean.setStatusStr((String) arr[2]);
                 bean.setExternalId((String) arr[3]);
                 bean.setLastModifiedTime((Timestamp) arr[4]);
+                break;
+            case GET_COORD_ACTION_FOR_INPUTCHECK:
+                arr = (Object[]) ret;
+                bean = new CoordinatorActionBean();
+                bean.setId((String) arr[0]);
+                bean.setActionNumber((Integer) arr[1]);
+                bean.setJobId((String) arr[2]);
+                bean.setStatus(CoordinatorAction.Status.valueOf((String) arr[3]));
+                bean.setRunConfBlob((StringBlob) arr[4]);
+                bean.setNominalTime(DateUtils.toDate((Timestamp) arr[5]));
+                bean.setCreatedTime(DateUtils.toDate((Timestamp) arr[6]));
+                bean.setActionXmlBlob((StringBlob) arr[7]);
+                bean.setMissingDependenciesBlob((StringBlob) arr[8]);
+                bean.setPushMissingDependenciesBlob((StringBlob) arr[9]);
+                bean.setTimeOut((Integer) arr[10]);
+                bean.setExternalId((String) arr[11]);
                 break;
 
             default:

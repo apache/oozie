@@ -19,9 +19,13 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.servlet.ServicesLoader;
+
+import java.util.Objects;
 
 /**
  *
@@ -119,5 +123,63 @@ public class ConfigUtils {
 
     public static boolean isBackwardSupportForCoordStatus() {
         return ConfigurationService.getBoolean(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS);
+    }
+
+    /**
+     * Check {@link Configuration} whether it contains disallowed properties. Given configuration property values of
+     * {@code oozie-site.xml#oozie.configuration.check-and-set.DISALLOWED.PROPERTY_KEY}, {@code newValue} and {@code performWrite}
+     * values, one of the following will happen:
+     * <ul>
+     *     <li>{@code base} doesn't contain any disallowed property: NOP</li>
+     *     <li>{@code base} contains a disallowed property but its value is the same as {@code newValue}: NOP</li>
+     *     <li>{@code base} contains a conflicting disallowed property and configuration tells we should also set, but
+     *     {@code performWrite=false}: NOP</li>
+     *     <li>{@code base} contains a conflicting disallowed property and configuration tells we should also set, and
+     *     {@code performWrite=true}: {@code base} will be overwritten by {@code key=newValue}</li>
+     *     <li>{@code base} contains a conflicting disallowed property and configuration tells we should not set:
+     *     {@code Exception toThrow} is thrown</li>
+     * </ul>
+     * @param base the {@link Configuration} to check
+     * @param newValue the new value to assign if {@code performWrite=true} and if configuration value
+     * {@code oozie.configuration.check-and-set.*} is set
+     * @param toThrow the {@link Exception} to throw when {@code oozie.configuration.check-and-set.*} is unset
+     * @param performWrite set to true if setting new value needed
+     * @param <E> {@link Exception} type
+     * @throws E the {@link Exception} to throw when {@code oozie.configuration.check-and-set.*} is unset
+     */
+    public static <E extends Exception> void checkAndSetDisallowedProperties(final Configuration base,
+                                                                             final String newValue,
+                                                                             final E toThrow,
+                                                                             final boolean performWrite) throws E {
+        Objects.requireNonNull(base, "base cannot be null");
+        Objects.requireNonNull(newValue, "newValue cannot be null");
+        Objects.requireNonNull(toThrow, "toThrow cannot be null");
+
+        for (final String defaultDisallowedProperty : PropertiesUtils.DEFAULT_DISALLOWED_PROPERTIES) {
+            checkAndSetConfigValue(base, defaultDisallowedProperty, newValue, toThrow, performWrite);
+        }
+    }
+
+    private static <E extends Exception> void checkAndSetConfigValue(final Configuration base,
+                                                                     final String key,
+                                                                     final String newValue,
+                                                                     final E toThrow,
+                                                                     final boolean performWrite) throws E {
+        final boolean shouldCheckAndSet = ConfigurationService.getBoolean("oozie.configuration.check-and-set." + key, false);
+        final boolean isPresent = base.get(key) != null;
+        if (isPresent && !base.get(key).equals(newValue)) {
+            LOG.trace("Base configuration contains config property [{0}={1}] that is different from new value [{2}]",
+                    key,
+                    base.get(key),
+                    newValue);
+            if (shouldCheckAndSet && performWrite) {
+                LOG.trace("Setting [{0}] to [{1}]", key, newValue);
+                base.set(key, newValue);
+            }
+            else if (!shouldCheckAndSet) {
+                LOG.error("Cannot set [{0}] to [{1}]. {2}", key, newValue, toThrow.getMessage());
+                throw toThrow;
+            }
+        }
     }
 }

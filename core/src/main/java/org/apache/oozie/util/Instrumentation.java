@@ -20,6 +20,7 @@ package org.apache.oozie.util;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.action.hadoop.PasswordMasker;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 
@@ -42,7 +43,9 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Instrumentation framework that supports Timers, Counters, Variables and Sampler instrumentation elements. <p> All
  * instrumentation elements have a group and a name.
+ * @deprecated since 5.0.0
  */
+@Deprecated
 public class Instrumentation {
     private ScheduledExecutorService scheduler;
     private Lock counterLock;
@@ -206,7 +209,7 @@ public class Instrumentation {
     /**
      * Counter Instrumentation element.
      */
-    private static class Counter extends AtomicLong implements Element<Long> {
+    public static class Counter extends AtomicLong implements Element<Long> {
 
         /**
          * Return the counter snapshot.
@@ -520,6 +523,18 @@ public class Instrumentation {
     }
 
     /**
+     * Decrement an instrumentation counter. The counter is created if it does not exists. <p> This method is thread
+     * safe.
+     *
+     * @param group counter group.
+     * @param name counter name.
+     * @param count decrement to add to the counter.
+     */
+    public void decr(final String group, final String name, final long count) {
+        incr(group, name, -count);
+    }
+
+    /**
      * Interface for instrumentation variables. <p> For example a the database service could expose the number of
      * currently active connections.
      */
@@ -694,16 +709,19 @@ public class Instrumentation {
     public String toString() {
         String E = System.getProperty("line.separator");
         StringBuilder sb = new StringBuilder(4096);
-        for (String element : all.keySet()) {
-            sb.append(element).append(':').append(E);
-            List<String> groups = new ArrayList<String>(all.get(element).keySet());
+
+        for (Map.Entry<String, Map<String, Map<String, Object>>> entry : all.entrySet()) {
+            String allKey = entry.getKey();
+            Map<String, Map<String, Object>> allValue = entry.getValue();
+            sb.append(allKey).append(':').append(E);
+            List<String> groups = new ArrayList<>(allValue.keySet());
             Collections.sort(groups);
             for (String group : groups) {
                 sb.append("  ").append(group).append(':').append(E);
-                List<String> names = new ArrayList<String>(all.get(element).get(group).keySet());
+                List<String> names = new ArrayList<>(allValue.get(group).keySet());
                 Collections.sort(names);
                 for (String name : names) {
-                    sb.append("    ").append(name).append(": ").append(((Element) all.get(element).
+                    sb.append("    ").append(name).append(": ").append(((Element)allValue.
                             get(group).get(name)).getValue()).append(E);
                 }
             }

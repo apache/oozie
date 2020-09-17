@@ -25,10 +25,12 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.transform.stream.StreamSource;
@@ -80,8 +82,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     public static final String BUNDLE_XML_FILE = "bundle.xml";
     private final BundleJobBean bundleBean = new BundleJobBean();
     private String jobId;
-    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<>();
+    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<>();
 
     static {
         String[] badUserProps = { PropertiesUtils.YEAR, PropertiesUtils.MONTH, PropertiesUtils.DAY,
@@ -90,10 +92,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 PropertiesUtils.TB, PropertiesUtils.PB, PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN,
                 PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN, PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS };
         PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
-
-        String[] badDefaultProps = { PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
     }
 
     /**
@@ -103,7 +101,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      */
     public BundleSubmitXCommand(Configuration conf) {
         super("bundle_submit", "bundle_submit", 1);
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
     }
 
     /**
@@ -117,9 +115,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         this.dryrun = dryrun;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.SubmitTransitionXCommand#submit()
-     */
     @Override
     protected String submit() throws CommandException {
         LOG.info("STARTED Bundle Submit");
@@ -145,14 +140,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             LogUtils.setLogInfo(bundleBean);
 
             if (dryrun) {
-                Date startTime = bundleBean.getStartTime();
-                long startTimeMilli = startTime.getTime();
-                long endTimeMilli = startTimeMilli + (3600 * 1000);
-                Date jobEndTime = bundleBean.getEndTime();
-                Date endTime = new Date(endTimeMilli);
-                if (endTime.compareTo(jobEndTime) > 0) {
-                    endTime = jobEndTime;
-                }
                 jobId = bundleBean.getId();
                 LOG.info("[" + jobId + "]: Update status to PREP");
                 bundleBean.setStatus(Job.Status.PREP);
@@ -162,8 +149,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 catch (IOException e1) {
                     LOG.warn("Configuration parse error. read from DB :" + bundleBean.getConf(), e1);
                 }
-                String output = bundleBean.getJobXml() + System.getProperty("line.separator");
-                return output;
+
+                return bundleBean.getJobXml() + System.getProperty("line.separator");
             }
             else {
                 if (bundleBean.getKickoffTime() == null) {
@@ -181,24 +168,15 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return false;
@@ -250,7 +228,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             Path bundleAppPath = new Path(bundleAppPathStr);
             String user = ParamChecker.notEmpty(conf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(bundleAppPath.toUri().getAuthority());
+            Configuration fsConf = has.createConfiguration(bundleAppPath.toUri().getAuthority());
             FileSystem fs = has.createFileSystem(user, bundleAppPath.toUri(), fsConf);
 
             // app path could be a directory
@@ -262,7 +240,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
 
             if (fs.exists(configDefault)) {
                 Configuration defaultConf = new XConfiguration(fs.open(configDefault));
-                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_DEFAULT_PROPERTIES);
+                PropertiesUtils.checkDisallowedProperties(defaultConf, DISALLOWED_USER_PROPERTIES);
+                PropertiesUtils.checkDefaultDisallowedProperties(defaultConf);
                 XConfiguration.injectDefaults(defaultConf, conf);
             }
             else {
@@ -307,9 +286,9 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
             URI uri = new URI(appPath);
             LOG.debug("user =" + user);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             FileSystem fs = has.createFileSystem(user, uri, fsConf);
-            Path appDefPath = null;
+            Path appDefPath;
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -319,7 +298,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
                 appDefPath = path;
             }
 
-            Reader reader = new InputStreamReader(fs.open(appDefPath));
+            Reader reader = new InputStreamReader(fs.open(appDefPath), StandardCharsets.UTF_8);
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
@@ -348,9 +327,8 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
      * @throws BundleJobException thrown if failed to validate xml
      */
     private void validateXml(String xmlContent) throws BundleJobException {
-        javax.xml.validation.Schema schema = Services.get().get(SchemaService.class).getSchema(SchemaName.BUNDLE);
-        Validator validator = schema.newValidator();
         try {
+            Validator validator = Services.get().get(SchemaService.class).getValidator(SchemaName.BUNDLE);
             validator.validate(new StreamSource(new StringReader(xmlContent)));
         }
         catch (SAXException ex) {
@@ -366,7 +344,7 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Write a Bundle Job into database
      *
-     * @param Bundle job bean
+     * @param bundleJob job bean
      * @return job id
      * @throws CommandException thrown if failed to store bundle job bean to db
      */
@@ -407,9 +385,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleBean;
@@ -472,19 +447,19 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
     /**
      * Verify the uniqueness of coordinator names
      *
-     * @param resolved job xml
+     * @param resolvedJobXml job xml
      * @throws CommandException thrown if failed to verify the uniqueness of coordinator names
      */
     @SuppressWarnings("unchecked")
     private Void verifyCoordNameUnique(String resolvedJobXml) throws CommandException {
-        Set<String> set = new HashSet<String>();
+        Set<String> set = new HashSet<>();
         try {
             Element bAppXml = XmlUtils.parseXml(resolvedJobXml);
             List<Element> coordElems = bAppXml.getChildren("coordinator", bAppXml.getNamespace());
             for (Element elem : coordElems) {
                 Attribute name = elem.getAttribute("name");
                 if (name != null) {
-                    String coordName = name.getValue();
+                    String coordName;
                     try {
                         coordName = ELUtils.resolveAppName(name.getValue(), conf);
                     }
@@ -508,9 +483,6 @@ public class BundleSubmitXCommand extends SubmitTransitionXCommand {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() throws CommandException {
     }

@@ -25,10 +25,10 @@ import org.apache.oozie.service.ForTestAuthorizationService;
 import org.apache.oozie.service.ForTestWorkflowStoreService;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.test.XFsTestCase;
 
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -49,8 +49,8 @@ public abstract class DagServletTestCase extends XDataTestCase {
         if (parameters.size() > 0) {
             String separator = "?";
             for (Map.Entry<String, String> param : parameters.entrySet()) {
-                sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=")
-                        .append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                sb.append(separator).append(URLEncoder.encode(param.getKey(), StandardCharsets.UTF_8.name())).append("=")
+                        .append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.name()));
                 separator = "&";
             }
         }
@@ -87,8 +87,9 @@ public abstract class DagServletTestCase extends XDataTestCase {
             for (int i = 0; i < servletPath.length; i++) {
                 container.addServletEndpoint(servletPath[i], servletClass[i]);
             }
-            container.addFilter("*", HostnameFilter.class);
-            container.addFilter("*", AuthFilter.class);
+            container.addFilter("/*", HostnameFilter.class);
+            container.addFilter("/*", AuthFilter.class);
+            container.addFilter("/*", HttpResponseHeaderFilter.class);
             setSystemProperty("user.name", getTestUser());
             container.start();
             assertions.call();

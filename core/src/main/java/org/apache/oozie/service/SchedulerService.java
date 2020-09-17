@@ -95,7 +95,7 @@ public class SchedulerService implements Service {
 
     /**
      * Return the number of threads configured with the Scheduler Service
-     * @param conf
+     * @param conf configuration
      * @return int num threads
      */
     public int getSchedulableThreads(Configuration conf) {

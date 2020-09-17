@@ -54,6 +54,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.LogUtils;
+import org.apache.oozie.util.StringUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.db.SLADbXOperations;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -74,7 +75,7 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
 
     public ActionEndXCommand(String actionId, String type) {
         super("action.end", type, 0);
-        this.actionId = actionId;
+        this.actionId = StringUtils.intern(actionId);
         this.jobId = Services.get().get(UUIDService.class).getId(actionId);
     }
 
@@ -129,7 +130,8 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
         }
         if (wfAction.isPending()
                 && (wfAction.getStatus() == WorkflowActionBean.Status.DONE
-                        || wfAction.getStatus() == WorkflowActionBean.Status.END_RETRY || wfAction.getStatus() == WorkflowActionBean.Status.END_MANUAL)) {
+                        || wfAction.getStatus() == WorkflowActionBean.Status.END_RETRY || wfAction.getStatus()
+                        == WorkflowActionBean.Status.END_MANUAL)) {
 
             if (wfJob.getStatus() != WorkflowJob.Status.RUNNING) {
                 throw new PreconditionException(ErrorCode.E0811,  WorkflowJob.Status.RUNNING.toString());
@@ -216,8 +218,9 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
                         shouldHandleUserRetry = true;
                         break;
                 }
-                if (!shouldHandleUserRetry || !handleUserRetry(wfAction, wfJob)) {
-                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus, SlaAppType.WORKFLOW_ACTION);
+                if (!shouldHandleUserRetry || !handleUserRetry(context, wfAction)) {
+                    SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), slaStatus,
+                            SlaAppType.WORKFLOW_ACTION);
                     if(slaEvent != null) {
                         insertList.add(slaEvent);
                     }

@@ -47,11 +47,11 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
      * Unfortunately, TimeBasedRollingPolicy is declared final, so we can't subclass it; instead, we have to wrap it
      */
     private TimeBasedRollingPolicy tbrp;
-    
+
     private Semaphore deleteSem;
-    
+
     private Thread deleteThread;
-    
+
     private int maxHistory = 720;       // (720 hours / 24 hours per day = 30 days) as default
 
     String oozieLogDir;
@@ -64,7 +64,7 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
     public void setMaxHistory(int maxHistory) {
         this.maxHistory = maxHistory;
     }
-    
+
     public OozieRollingPolicy() {
         deleteSem = new Semaphore(1);
         deleteThread = new Thread();
@@ -98,22 +98,23 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
         tbrp.setFileNamePattern(getFileNamePattern());
         tbrp.activateOptions();
     }
-    
+
     @Override
     public RolloverDescription initialize(String file, boolean append) throws SecurityException {
         return tbrp.initialize(file, append);
     }
-    
+
     @Override
     public RolloverDescription rollover(final String activeFile) throws SecurityException {
         return tbrp.rollover(activeFile);
     }
-    
+
     @Override
-    public boolean isTriggeringEvent(final Appender appender, final LoggingEvent event, final String filename, 
+    public boolean isTriggeringEvent(final Appender appender, final LoggingEvent event, final String filename,
     final long fileLength) {
         if (maxHistory >= 0) {  // -1 = disable
-            // Only delete old logs if we're not already deleting logs and another thread hasn't already started setting up to delete
+            // Only delete old logs if we're not already deleting logs and another thread hasn't already started setting
+            // up to delete
             // the old logs
             if (deleteSem.tryAcquire()) {
                 if (!deleteThread.isAlive()) {
@@ -131,7 +132,7 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
         }
         return tbrp.isTriggeringEvent(appender, event, filename, fileLength);
     }
-    
+
     private void deleteOldFiles() {
         ArrayList<FileInfo> fileList = new ArrayList<FileInfo>();
         if (oozieLogDir != null && logFileName != null) {
@@ -163,7 +164,7 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
             }
         }
     }
-    
+
     private long getGZFileCreationTime(String fileName) {
         SimpleDateFormat formatter;
         String date = fileName.substring(logFileName.length(), fileName.length() - 3); //3 for .gz
@@ -212,5 +213,5 @@ public class OozieRollingPolicy extends RollingPolicyBase implements TriggeringP
             }
         }
     }
-    
+
 }

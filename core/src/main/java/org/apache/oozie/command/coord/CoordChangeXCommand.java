@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -281,7 +281,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                     if (SLAService.isEnabled()) {
                         Services.get().get(SLAService.class).removeRegistration(actionId);
                     }
-                    SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL, actionId);
+                    SLARegistrationBean slaReg = SLARegistrationQueryExecutor.getInstance().get(SLARegQuery.GET_SLA_REG_ALL,
+                            actionId);
                     if (slaReg != null) {
                         LOG.debug("Deleting registration bean corresponding to action " + slaReg.getId());
                         deleteList.add(slaReg);
@@ -340,9 +341,6 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         LOG.info("STARTED CoordChangeXCommand for jobId=" + jobId);
@@ -436,8 +434,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 LOG.info("Coord status is changed to " + jobStatus + " from " + prevStatus);
                 if (jobStatus.equals(CoordinatorJob.Status.RUNNING)) {
                     coordJob.setPending();
-                    if (coordJob.getNextMaterializedTime() != null
-                            && coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
+                    if (coordJob.getNextMaterializedTime() == null
+                            || coordJob.getEndTime().after(coordJob.getNextMaterializedTime())) {
                         coordJob.resetDoneMaterialization();
                     }
                 } else if (jobStatus.equals(CoordinatorJob.Status.IGNORED)) {
@@ -446,7 +444,8 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
                 }
             }
 
-            if (coordJob.getNextMaterializedTime() != null && coordJob.getEndTime().compareTo(coordJob.getNextMaterializedTime()) <= 0) {
+            if (coordJob.getNextMaterializedTime() != null && coordJob.getEndTime()
+                    .compareTo(coordJob.getNextMaterializedTime()) <= 0) {
                 LOG.info("[" + coordJob.getId() + "]: all actions have been materialized, job status = " + coordJob.getStatus()
                         + ", set pending to true");
                 // set doneMaterialization to true when materialization is done
@@ -477,17 +476,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return this.jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException{
         jpaService = Services.get().get(JPAService.class);
@@ -508,17 +501,11 @@ public class CoordChangeXCommand extends CoordinatorXCommand<Void> {
         LogUtils.setLogInfo(this.coordJob);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#verifyPrecondition()
-     */
     @Override
     protected void verifyPrecondition() throws CommandException,PreconditionException {
         check(this.coordJob, newEndTime, newConcurrency, newPauseTime, jobStatus);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;

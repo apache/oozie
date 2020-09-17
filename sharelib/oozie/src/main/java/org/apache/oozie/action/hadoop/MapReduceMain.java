@@ -23,8 +23,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
-import java.util.HashSet;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.File;
@@ -50,14 +52,21 @@ public class MapReduceMain extends LauncherMain {
 
         JobConf jobConf = new JobConf();
         addActionConf(jobConf, actionConf);
-        LauncherMainHadoopUtils.killChildYarnJobs(jobConf);
+        LauncherMain.killChildYarnJobs(jobConf);
 
         // Run a config class if given to update the job conf
         runConfigClass(jobConf);
 
-        logMasking("Map-Reduce job configuration:", new HashSet<String>(), jobConf);
+        PasswordMasker passwordMasker = new PasswordMasker();
+        // Temporary JobConf object, we mask out possible passwords before we print key-value pairs
+        JobConf maskedJobConf = new JobConf(false);
+        for (Entry<String, String> entry : jobConf) {
+            maskedJobConf.set(entry.getKey(), passwordMasker.maskPasswordsIfNecessary(entry.getValue()));
+        }
 
-        File idFile = new File(System.getProperty(LauncherMapper.ACTION_PREFIX + LauncherMapper.ACTION_DATA_NEW_ID));
+        logMasking("Map-Reduce job configuration:", maskedJobConf);
+
+        File idFile = new File(System.getProperty(LauncherAMUtils.ACTION_PREFIX + LauncherAMUtils.ACTION_DATA_NEW_ID));
         System.out.println("Submitting Oozie action Map-Reduce job");
         System.out.println();
         // submitting job
@@ -73,7 +82,7 @@ public class MapReduceMain extends LauncherMain {
     protected void writeJobIdFile(File idFile, String jobId) throws IOException {
         // propagating job id back to Oozie
         OutputStream os = new FileOutputStream(idFile);
-        os.write(jobId.getBytes());
+        os.write(jobId.getBytes(StandardCharsets.UTF_8));
         os.close();
     }
 
@@ -123,31 +132,27 @@ public class MapReduceMain extends LauncherMain {
         return runJob;
     }
 
-    @SuppressWarnings("unchecked")
     protected JobClient createJobClient(JobConf jobConf) throws IOException {
         return new JobClient(jobConf);
     }
 
-    // allows any character in the value, the conf.setStrings() does not allow
-    // commas
-    public static void setStrings(Configuration conf, String key, String[] values) {
-        if (values != null) {
-            conf.setInt(key + ".size", values.length);
-            for (int i = 0; i < values.length; i++) {
-                conf.set(key + "." + i, values[i]);
+    /**
+     * Will run the user specified OozieActionConfigurator subclass (if one is provided) to update the action configuration.
+     *
+     * @param actionConf The action configuration to update
+     * @throws OozieActionConfiguratorException
+     */
+    private static void runConfigClass(JobConf actionConf) throws OozieActionConfiguratorException {
+        String configClass = actionConf.get(LauncherAMUtils.OOZIE_ACTION_CONFIG_CLASS);
+        if (configClass != null) {
+            try {
+                Class<?> klass = Class.forName(configClass);
+                Class<? extends OozieActionConfigurator> actionConfiguratorKlass = klass.asSubclass(OozieActionConfigurator.class);
+                OozieActionConfigurator actionConfigurator = actionConfiguratorKlass.newInstance();
+                actionConfigurator.configure(actionConf);
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                throw new OozieActionConfiguratorException("An Exception occurred while instantiating the action config class", e);
             }
         }
     }
-
-    public static String[] getStrings(Configuration conf, String key) {
-        String[] values = new String[conf.getInt(key + ".size", 0)];
-        for (int i = 0; i < values.length; i++) {
-            values[i] = conf.get(key + "." + i);
-            if (values[i] == null) {
-                values[i] = "";
-            }
-        }
-        return values;
-    }
-
 }

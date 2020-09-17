@@ -20,6 +20,7 @@ package org.apache.oozie.workflow.lite;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.util.StringSerializationUtil;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.workflow.WorkflowException;
 
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This node definition is serialized object and should provide readFields() and write() for read and write of fields in
@@ -51,7 +53,7 @@ public class NodeDef implements Writable {
     NodeDef(String name, String conf, Class<? extends NodeHandler> handlerClass, List<String> transitions) {
         this.name = ParamChecker.notEmpty(name, "name");
         this.conf = conf;
-        this.handlerClass = ParamChecker.notNull(handlerClass, "handlerClass");
+        this.handlerClass = Objects.requireNonNull(handlerClass, "handlerClass cannot be null");
         this.transitions = Collections.unmodifiableList(ParamChecker.notEmptyElements(transitions, "transitions"));
     }
 
@@ -151,7 +153,7 @@ public class NodeDef implements Writable {
                 throw new IOException(ex);
             }
         }
-        conf = dataInput.readUTF();
+        conf = readString(dataInput);
         if (conf.equals("null")) {
             conf = null;
         }
@@ -195,7 +197,7 @@ public class NodeDef implements Writable {
                 throw new IOException(ex);
             }
         }
-        conf = dataInput.readUTF();
+        conf = readString(dataInput);
         if (conf.equals("null")) {
             conf = null;
         }
@@ -208,9 +210,6 @@ public class NodeDef implements Writable {
         userRetryInterval = dataInput.readUTF();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
-     */
     @Override
     public void readFields(DataInput dataInput) throws IOException {
         String firstField = dataInput.readUTF();
@@ -237,7 +236,7 @@ public class NodeDef implements Writable {
         }
         dataOutput.writeUTF(handlerClass.getName());
         if (conf != null) {
-            dataOutput.writeUTF(conf);
+            writeString(dataOutput, conf);
         }
         else {
             dataOutput.writeUTF("null");
@@ -246,6 +245,14 @@ public class NodeDef implements Writable {
         for (String transition : transitions) {
             dataOutput.writeUTF(transition);
         }
+    }
+
+    private void writeString(DataOutput dataOutput, String value) throws IOException {
+        StringSerializationUtil.writeString(dataOutput, value);
+    }
+
+    private String readString(DataInput dataInput) throws IOException {
+        return StringSerializationUtil.readString(dataInput);
     }
 
     /**
@@ -281,14 +288,14 @@ public class NodeDef implements Writable {
         dataOutput.writeUTF(nodeDefVersion);
         dataOutput.writeUTF(name);
         if (cred != null) {
-            dataOutput.writeUTF(cred);
+            writeString(dataOutput, cred);
         }
         else {
             dataOutput.writeUTF("null");
         }
-        dataOutput.writeUTF(handlerClass.getName());
+        writeString(dataOutput, handlerClass.getName());
         if (conf != null) {
-            dataOutput.writeUTF(conf);
+            writeString(dataOutput, conf);
         }
         else {
             dataOutput.writeUTF("null");
@@ -311,9 +318,6 @@ public class NodeDef implements Writable {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
-     */
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         if (getNodeDefVersion().equals(LiteWorkflowStoreService.NODE_DEF_VERSION_1)) {

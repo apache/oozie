@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
-
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
@@ -55,20 +55,21 @@ import org.apache.oozie.command.wf.SubmitSqoopXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.command.wf.WorkflowActionInfoXCommand;
+import org.apache.oozie.command.wf.WorkflowActionRetryInfoXCommand;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.service.XLogStreamingService;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogAuditFilter;
-import org.apache.oozie.util.XLogFilter;
-import org.apache.oozie.util.XLogUserFilterParam;
+import org.apache.oozie.util.XLogStreamer;
 
 /**
  * The DagEngine provides all the DAG engine functionality for WS calls.
@@ -126,8 +127,8 @@ public class DagEngine extends BaseEngine {
      * Submit a workflow through a coordinator. It validates configuration properties.
      * @param conf job conf
      * @param parentId parent of workflow
-     * @return
-     * @throws DagEngineException
+     * @return jobId returns jobId of the launched workflow
+     * @throws DagEngineException if the job can't be submitted
      */
     public String submitJobFromCoordinator(Configuration conf, String parentId) throws DagEngineException {
         validateSubmitConfiguration(conf);
@@ -264,9 +265,6 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
-     */
     @Override
     public void change(String jobId, String changeValue) throws DagEngineException {
         // This code should not be reached.
@@ -300,15 +298,15 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    private void validateReRunConfiguration(Configuration conf) throws DagEngineException {
+    @VisibleForTesting
+    protected void validateReRunConfiguration(Configuration conf) throws DagEngineException {
         if (conf.get(OozieClient.APP_PATH) == null) {
             throw new DagEngineException(ErrorCode.E0401, OozieClient.APP_PATH);
         }
-        if (conf.get(OozieClient.RERUN_SKIP_NODES) == null && conf.get(OozieClient.RERUN_FAIL_NODES) == null) {
-            throw new DagEngineException(ErrorCode.E0401, OozieClient.RERUN_SKIP_NODES + " OR "
-                    + OozieClient.RERUN_FAIL_NODES);
-        }
-        if (conf.get(OozieClient.RERUN_SKIP_NODES) != null && conf.get(OozieClient.RERUN_FAIL_NODES) != null) {
+        boolean rerunFailNodes = ConfigurationService.getBoolean(conf, OozieClient.RERUN_FAIL_NODES);
+        String skipNodes = conf.get(OozieClient.RERUN_SKIP_NODES);
+
+        if (rerunFailNodes && skipNodes != null) {
             throw new DagEngineException(ErrorCode.E0404, OozieClient.RERUN_SKIP_NODES + " OR "
                     + OozieClient.RERUN_FAIL_NODES);
         }
@@ -388,80 +386,16 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    /**
-     * Stream the log of a job.
-     *
-     * @param jobId job Id.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
-     */
     @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            DagEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
-    }
-
-    /**
-     * Stream the error log of a job.
-     *
-     * @param jobId job Id.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
-     */
-    @Override
-    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            DagEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
-    }
-
-    /**
-     * Stream the audit log of a job.
-     *
-     * @param jobId job Id.
-     * @param writer writer to stream the log to.
-     * @param params additional parameters from the request
-     * @throws IOException thrown if the log cannot be streamed.
-     * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
-     */
-    @Override
-    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            DagEngineException {
-        try {
-            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)),jobId, writer, params, LOG_TYPE.AUDIT_LOG);
-        }
-        catch (CommandException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+    protected void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer)
             throws IOException, DagEngineException {
-        try {
-            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        logStreamer.getXLogFilter().setParameter(DagXLogInfoService.JOB, jobId);
+        WorkflowJob job = getJob(jobId);
+        Date lastTime = job.getEndTime();
+        if (lastTime == null) {
+            lastTime = job.getLastModifiedTime();
         }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, DagEngineException {
-        try {
-            filter.setParameter(DagXLogInfoService.JOB, jobId);
-            WorkflowJob job = getJob(jobId);
-            Date lastTime = job.getEndTime();
-            if (lastTime == null) {
-                lastTime = job.getLastModifiedTime();
-            }
-            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
-        }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
+        Services.get().get(XLogStreamingService.class).streamLog(logStreamer, job.getCreatedTime(), lastTime, writer);
     }
 
     private static final Set<String> FILTER_NAMES = new HashSet<String>();
@@ -583,9 +517,22 @@ public class DagEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
+    /**
+     * Gets the workflow action retries.
+     *
+     * @param actionId the action id
+     * @return the workflow action retries
+     * @throws BaseEngineException the base engine exception
      */
+    public List<Map<String, String>> getWorkflowActionRetries(String actionId) throws BaseEngineException {
+        try {
+            return new WorkflowActionRetryInfoXCommand(actionId).call();
+        }
+        catch (CommandException ex) {
+            throw new BaseEngineException(ex);
+        }
+    }
+
     @Override
     public String dryRunSubmit(Configuration conf) throws BaseEngineException {
         try {
@@ -634,8 +581,8 @@ public class DagEngine extends BaseEngine {
      * @param filter Jobs that satisfy the filter will be killed
      * @param start start index in the database of jobs
      * @param len maximum number of jobs that will be killed
-     * @return
-     * @throws DagEngineException
+     * @return workflowsInfo return the jobs that've been killed
+     * @throws DagEngineException if the jobs could not be killed
      */
     public WorkflowsInfo killJobs(String filter, int start, int len) throws DagEngineException {
         try {
@@ -656,8 +603,8 @@ public class DagEngine extends BaseEngine {
      * @param filter Filter for jobs that will be suspended, can be name, user, group, status, id or combination of any
      * @param start Offset for the jobs that will be suspended
      * @param len maximum number of jobs that will be suspended
-     * @return
-     * @throws DagEngineException
+     * @return workflowsInfo return the jobs that've been suspended
+     * @throws DagEngineException if the jobs cloud not be suspended
      */
     public WorkflowsInfo suspendJobs(String filter, int start, int len) throws DagEngineException {
         try {
@@ -678,8 +625,8 @@ public class DagEngine extends BaseEngine {
      * @param filter Filter for jobs that will be resumed, can be name, user, group, status, id or combination of any
      * @param start Offset for the jobs that will be resumed
      * @param len maximum number of jobs that will be resumed
-     * @return
-     * @throws DagEngineException
+     * @return workflowsInfo returns the jobs that've been resumed
+     * @throws DagEngineException if the jobs cloud not be resumed
      */
     public WorkflowsInfo resumeJobs(String filter, int start, int len) throws DagEngineException {
         try {

@@ -18,14 +18,19 @@
 
 package org.apache.oozie.util;
 
-import org.apache.oozie.test.XTestCase;
 
-import javax.servlet.jsp.el.ELException;
+
+import javax.el.ELException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestELEvaluator extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+public class TestELEvaluator {
 
     public static String functionA() {
         assertEquals("A", ELEvaluator.getCurrent().getVariable("a"));
@@ -68,6 +73,7 @@ public class TestELEvaluator extends XTestCase {
         }
     }
 
+    @Test
     public void testContextVars() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         assertNull(support.getVariable("a"));
@@ -89,6 +95,7 @@ public class TestELEvaluator extends XTestCase {
     }
 
 
+    @Test
     public void testContextFunctions() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.addFunction("a", "a", functionA);
@@ -112,6 +119,7 @@ public class TestELEvaluator extends XTestCase {
         assertEquals(functionA, support.resolveFunction("a", "a"));
     }
 
+    @Test
     public void testVars() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.setVariable("a", "A");
@@ -134,6 +142,7 @@ public class TestELEvaluator extends XTestCase {
         }
     }
 
+    @Test
     public void testFunctions() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.addFunction("a", "a", functionA);
@@ -141,6 +150,7 @@ public class TestELEvaluator extends XTestCase {
         assertEquals(functionA, evaluator.getContext().resolveFunction("a", "a"));
     }
 
+    @Test
     public void testEval() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.setVariable("a", "A");
@@ -149,6 +159,7 @@ public class TestELEvaluator extends XTestCase {
         assertEquals("Aa", evaluator.evaluate("${a}${a:a()}", String.class));
     }
 
+    @Test
     public void testCurrent() throws Exception {
         ELEvaluator.Context support = new ELEvaluator.Context();
         support.setVariable("a", "A");
@@ -159,6 +170,7 @@ public class TestELEvaluator extends XTestCase {
         assertNull(ELEvaluator.getCurrent());
     }
 
+    @Test
     public void testFunctionELEvaluationError() throws Exception {
         try {
             ELEvaluator.Context support = new ELEvaluator.Context();
@@ -170,33 +182,5 @@ public class TestELEvaluator extends XTestCase {
         catch (ELEvaluationException ex) {
             //nop
         }
-        catch (ELException ex) {
-            fail();
-        }
     }
-
-    public void testCheckForExistence() throws Exception {
-        ELEvaluator.Context support = new ELEvaluator.Context();
-        support.setVariable("a", "A");
-        support.addFunction("a", "a", functionA);
-        support.addFunction("a", "d", functionD);
-        ELEvaluator evaluator = new ELEvaluator(support);
-        assertNull(ELEvaluator.getCurrent());
-        assertEquals("a", evaluator.evaluate("${a:a()}", String.class));
-        assertEquals("a,a", evaluator.evaluate("${a:a()},${a:a()}", String.class));
-        try {
-            evaluator.evaluate("${a:a(), a:a()}", String.class);
-            fail("Evaluated bad expression");
-        } catch (ELException ignore) { }
-        assertTrue(evaluator.checkForExistence("${a:a()}${a:a()}!", "!"));
-        assertTrue(evaluator.checkForExistence("${a:a()},${a:a()}", ","));
-        assertFalse(evaluator.checkForExistence("${a:d('foo', 'bar')}", ","));
-        try {
-            evaluator.checkForExistence("${a:a(), a:a()}", ",");
-            fail("Parsed bad expression");
-        } catch (ELException ignore) { }
-
-        assertNull(ELEvaluator.getCurrent());
-    }
-
 }

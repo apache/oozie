@@ -25,7 +25,7 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
     /**
      * Resume all children of the job
      *
-     * @throws CommandException
+     * @throws CommandException if command cannot be completed
      */
     public abstract void resumeChildren() throws CommandException;
 
@@ -59,9 +59,6 @@ public abstract class ResumeTransitionXCommand extends TransitionXCommand<Void> 
         job.setPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         transitToNext();

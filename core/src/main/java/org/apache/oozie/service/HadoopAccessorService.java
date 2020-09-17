@@ -18,18 +18,41 @@
 
 package org.apache.oozie.service;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Master;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.mapreduce.counters.Limits;
+import org.apache.hadoop.mapreduce.v2.api.HSClientProtocol;
+import org.apache.hadoop.mapreduce.v2.api.MRClientProtocol;
+import org.apache.hadoop.mapreduce.v2.api.protocolrecords.GetDelegationTokenRequest;
+import org.apache.hadoop.mapreduce.v2.jobhistory.JHAdminConfig;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
+import org.apache.hadoop.yarn.ipc.YarnRPC;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.hadoop.yarn.util.Records;
 import org.apache.oozie.ErrorCode;
+import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.ParamChecker;
@@ -43,11 +66,12 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -77,21 +101,11 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
-    public static final Text MR_TOKEN_ALIAS = new Text("oozie mr token");
+    protected static final String FS_PROP_PATTERN = CONF_PREFIX + "fs.%s";
 
-    protected static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
-    /** The Kerberos principal for the job tracker.*/
-    protected static final String JT_PRINCIPAL = "mapreduce.jobtracker.kerberos.principal";
-    /** The Kerberos principal for the resource manager.*/
-    protected static final String RM_PRINCIPAL = "yarn.resourcemanager.principal";
-    protected static final String HADOOP_JOB_TRACKER = "mapred.job.tracker";
-    protected static final String HADOOP_JOB_TRACKER_2 = "mapreduce.jobtracker.address";
-    protected static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
-    private static final Map<String, Text> mrTokenRenewers = new HashMap<String, Text>();
-
-    private static Configuration cachedConf;
-
+    private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
     private static final String DEFAULT_ACTIONNAME = "default";
+    private static Configuration cachedConf;
 
     private Set<String> jobTrackerWhitelist = new HashSet<String>();
     private Set<String> nameNodeWhitelist = new HashSet<String>();
@@ -172,6 +186,17 @@ public class HadoopAccessorService implements Service {
         }
 
         setConfigForHadoopSecurityUtil(conf);
+        initializeMRLimits(conf);
+    }
+
+    /**
+     * This method initializes the MapReduce's Limits class so the user can define more than 120 counters
+     * in their map reduce action. For more details please see OOZIE-3578.
+     *
+     * @param conf the loaded hadoop configurations including mapred-site.xml
+     */
+    private void initializeMRLimits(Configuration conf) {
+        Limits.init(conf);
     }
 
     private void setConfigForHadoopSecurityUtil(Configuration conf) {
@@ -254,7 +279,7 @@ public class HadoopAccessorService implements Service {
             File f = new File(dir, file);
             if (f.exists()) {
                 InputStream is = new FileInputStream(f);
-                Configuration conf = new XConfiguration(is);
+                Configuration conf = new XConfiguration(is, false);
                 is.close();
                 XConfiguration.copy(conf, hadoopConf);
             }
@@ -331,25 +356,25 @@ public class HadoopAccessorService implements Service {
         return HadoopAccessorService.class;
     }
 
-    private UserGroupInformation getUGI(String user) throws IOException {
+    UserGroupInformation getUGI(String user) throws IOException {
         return ugiService.getProxyUser(user);
     }
 
     /**
-     * Creates a JobConf using the site configuration for the specified hostname:port.
+     * Creates a Configuration using the site configuration for the specified hostname:port.
      * <p>
      * If the specified hostname:port is not defined it falls back to the '*' site
      * configuration if available. If the '*' site configuration is not available,
      * the JobConf has all Hadoop defaults.
      *
      * @param hostPort hostname:port to lookup Hadoop site configuration.
-     * @return a JobConf with the corresponding site configuration for hostPort.
+     * @return a Configuration with the corresponding site configuration for hostPort.
      */
-    public JobConf createJobConf(String hostPort) {
-        JobConf jobConf = new JobConf(getCachedConf());
-        XConfiguration.copy(getConfiguration(hostPort), jobConf);
-        jobConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
-        return jobConf;
+    public Configuration createConfiguration(String hostPort) {
+        Configuration appConf = new Configuration(getCachedConf());
+        XConfiguration.copy(getConfiguration(hostPort), appConf);
+        appConf.setBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, true);
+        return appConf;
     }
 
     public Configuration getCachedConf() {
@@ -406,18 +431,20 @@ public class HadoopAccessorService implements Service {
             public boolean accept(File dir, String name) {
                 return ActionConfFileType.isSupportedFileType(name);
             }});
-        Arrays.sort(actionConfFiles, new Comparator<File>() {
-            @Override
-            public int compare(File o1, File o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        for (File f : actionConfFiles) {
-            if (f.isFile() && f.canRead()) {
-                updateActionConfigWithFile(actionConf, f);
+
+        if (actionConfFiles != null) {
+            Arrays.sort(actionConfFiles, new Comparator<File>() {
+                @Override
+                public int compare(File o1, File o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+            for (File f : actionConfFiles) {
+                if (f.isFile() && f.canRead()) {
+                    updateActionConfigWithFile(actionConf, f);
+                }
             }
         }
-
     }
 
     private Configuration readActionConfFile(File file) throws IOException {
@@ -495,6 +522,7 @@ public class HadoopAccessorService implements Service {
      * Return a JobClient created with the provided user/group.
      *
      *
+     * @param user user
      * @param conf JobConf with all necessary information to create the
      *        JobClient.
      * @return JobClient created with the provided user/group.
@@ -505,7 +533,7 @@ public class HadoopAccessorService implements Service {
         if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
-        String jobTracker = conf.get(JavaActionExecutor.HADOOP_JOB_TRACKER);
+        String jobTracker = conf.get(JavaActionExecutor.HADOOP_YARN_RM);
         validateJobTracker(jobTracker);
         try {
             UserGroupInformation ugi = getUGI(user);
@@ -514,14 +542,55 @@ public class HadoopAccessorService implements Service {
                     return new JobClient(conf);
                 }
             });
-            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(getMRDelegationTokenRenewer(conf));
-            conf.getCredentials().addToken(MR_TOKEN_ALIAS, mrdt);
             return jobClient;
         }
-        catch (InterruptedException ex) {
+        catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
-        catch (IOException ex) {
+    }
+
+    /**
+     * Return a JobClient created with the provided user/group.
+     *
+     *
+     * @param user user
+     * @param conf Configuration with all necessary information to create the
+     *        JobClient.
+     * @return JobClient created with the provided user/group.
+     * @throws HadoopAccessorException if the client could not be created.
+     */
+    public JobClient createJobClient(String user, Configuration conf) throws HadoopAccessorException {
+        return createJobClient(user, new JobConf(conf));
+    }
+
+    /**
+     * Return a YarnClient created with the provided user and configuration. The caller is responsible for closing it when done.
+     *
+     * @param user The username to impersonate
+     * @param conf The conf
+     * @return a YarnClient with the provided user and configuration
+     * @throws HadoopAccessorException if the client could not be created.
+     */
+    public YarnClient createYarnClient(String user, final Configuration conf) throws HadoopAccessorException {
+        ParamChecker.notEmpty(user, "user");
+        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+            throw new HadoopAccessorException(ErrorCode.E0903);
+        }
+        String rm = conf.get(JavaActionExecutor.HADOOP_YARN_RM);
+        validateJobTracker(rm);
+        try {
+            UserGroupInformation ugi = getUGI(user);
+            YarnClient yarnClient = ugi.doAs(new PrivilegedExceptionAction<YarnClient>() {
+                @Override
+                public YarnClient run() throws Exception {
+                    YarnClient yarnClient = YarnClient.createYarnClient();
+                    yarnClient.init(conf);
+                    yarnClient.start();
+                    return yarnClient;
+                }
+            });
+            return yarnClient;
+        } catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
@@ -529,7 +598,7 @@ public class HadoopAccessorService implements Service {
     /**
      * Return a FileSystem created with the provided user for the specified URI.
      *
-     *
+     * @param user The username to impersonate
      * @param uri file system URI.
      * @param conf Configuration with all necessary information to create the FileSystem.
      * @return FileSystem created with the provided user/group.
@@ -537,8 +606,14 @@ public class HadoopAccessorService implements Service {
      */
     public FileSystem createFileSystem(String user, final URI uri, final Configuration conf)
             throws HadoopAccessorException {
+       return createFileSystem(user, uri, conf, true);
+    }
+
+    private FileSystem createFileSystem(String user, final URI uri, final Configuration conf, boolean checkAccessorProperty)
+            throws HadoopAccessorException {
         ParamChecker.notEmpty(user, "user");
-        if (!conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
+
+        if (checkAccessorProperty && !conf.getBoolean(OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED, false)) {
             throw new HadoopAccessorException(ErrorCode.E0903);
         }
 
@@ -557,27 +632,45 @@ public class HadoopAccessorService implements Service {
             }
         }
         validateNameNode(nameNode);
-
+        final Configuration fileSystemConf = extendWithFileSystemSpecificPropertiesIfAny(uri, conf);
         try {
             UserGroupInformation ugi = getUGI(user);
             return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
                 public FileSystem run() throws Exception {
-                    return FileSystem.get(uri, conf);
+                    return FileSystem.get(uri, fileSystemConf);
                 }
             });
         }
-        catch (InterruptedException ex) {
-            throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
-        }
-        catch (IOException ex) {
+        catch (IOException | InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex.getMessage(), ex);
         }
     }
 
+    Configuration extendWithFileSystemSpecificPropertiesIfAny(final URI uri, final Configuration conf) {
+        final String fsProps = String.format(FS_PROP_PATTERN, uri.getScheme());
+        final String fsCustomProps = ConfigurationService.get(fsProps);
+        if (fsCustomProps == null || fsCustomProps.length() == 0) {
+            return conf;
+        }
+
+        final Configuration result = new Configuration();
+        XConfiguration.copy(conf, result);
+        for (final String entry : fsCustomProps.split(",")) {
+            final String[] nameAndValue = entry.trim().split("=", 2);
+            if (nameAndValue.length < 2) {
+                LOG.warn(String.format("Configuration for %s cannot be read: %s. Skipping...",
+                        fsProps, Arrays.toString(nameAndValue)));
+                continue;
+            }
+            result.set(nameAndValue[0], nameAndValue[1]);
+        }
+        return result;
+    }
+
     /**
      * Validate Job tracker
-     * @param jobTrackerUri
-     * @throws HadoopAccessorException
+     * @param jobTrackerUri job tracker uri
+     * @throws HadoopAccessorException if job tracker cannot be reached
      */
     protected void validateJobTracker(String jobTrackerUri) throws HadoopAccessorException {
         validate(jobTrackerUri, jobTrackerWhitelist, ErrorCode.E0900);
@@ -585,8 +678,8 @@ public class HadoopAccessorService implements Service {
 
     /**
      * Validate Namenode list
-     * @param nameNodeUri
-     * @throws HadoopAccessorException
+     * @param nameNodeUri name node uri
+     * @throws HadoopAccessorException if NN cannot be reached
      */
     protected void validateNameNode(String nameNodeUri) throws HadoopAccessorException {
         validate(nameNodeUri, nameNodeWhitelist, ErrorCode.E0901);
@@ -599,48 +692,6 @@ public class HadoopAccessorService implements Service {
                 throw new HadoopAccessorException(error, uri, whitelist);
             }
         }
-    }
-
-    public Text getMRDelegationTokenRenewer(JobConf jobConf) throws IOException {
-        if (UserGroupInformation.isSecurityEnabled()) { // secure cluster
-            return getMRTokenRenewerInternal(jobConf);
-        }
-        else {
-            return MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
-        }
-    }
-
-    // Package private for unit test purposes
-    Text getMRTokenRenewerInternal(JobConf jobConf) throws IOException {
-        // Getting renewer correctly for JT principal also though JT in hadoop 1.x does not have
-        // support for renewing/cancelling tokens
-        String servicePrincipal = jobConf.get(RM_PRINCIPAL, jobConf.get(JT_PRINCIPAL));
-        Text renewer;
-        if (servicePrincipal != null) { // secure cluster
-            renewer = mrTokenRenewers.get(servicePrincipal);
-            if (renewer == null) {
-                // Mimic org.apache.hadoop.mapred.Master.getMasterPrincipal()
-                String target = jobConf.get(HADOOP_YARN_RM, jobConf.get(HADOOP_JOB_TRACKER_2));
-                if (target == null) {
-                    target = jobConf.get(HADOOP_JOB_TRACKER);
-                }
-                try {
-                    String addr = NetUtils.createSocketAddr(target).getHostName();
-                    renewer = new Text(SecurityUtil.getServerPrincipal(servicePrincipal, addr));
-                    LOG.info("Delegation Token Renewer details: Principal=" + servicePrincipal + ",Target=" + target
-                            + ",Renewer=" + renewer);
-                }
-                catch (IllegalArgumentException iae) {
-                    renewer = new Text(servicePrincipal.split("[/@]")[0]);
-                    LOG.info("Delegation Token Renewer for " + servicePrincipal + " is " + renewer);
-                }
-                mrTokenRenewers.put(servicePrincipal, renewer);
-            }
-        }
-        else {
-            renewer = MR_TOKEN_ALIAS; //Doesn't matter what we pass as renewer
-        }
-        return renewer;
     }
 
     public void addFileToClassPath(String user, final Path file, final Configuration conf)
@@ -666,6 +717,9 @@ public class HadoopAccessorService implements Service {
     /**
      * checks configuration parameter if filesystem scheme is among the list of supported ones
      * this makes system robust to filesystems other than HDFS also
+     *
+     * @param uri uri
+     * @throws HadoopAccessorException if scheme is not supported
      */
 
     public void checkSupportedFilesystem(URI uri) throws HadoopAccessorException {
@@ -684,6 +738,50 @@ public class HadoopAccessorService implements Service {
 
     public Set<String> getSupportedSchemes() {
         return supportedSchemes;
+    }
+
+    /**
+     * Creates a {@link LocalResource} for the Configuration to localize it for a Yarn Container.  This involves also writing it
+     * to HDFS.
+     * Example usage:
+     * * <pre>
+     * {@code
+     * LocalResource res1 = createLocalResourceForConfigurationFile(filename1, user, conf, uri, dir);
+     * LocalResource res2 = createLocalResourceForConfigurationFile(filename2, user, conf, uri, dir);
+     * ...
+     * Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
+     * localResources.put(filename1, res1);
+     * localResources.put(filename2, res2);
+     * ...
+     * containerLaunchContext.setLocalResources(localResources);
+     * }
+     * </pre>
+     *
+     * @param filename The filename to use on the remote filesystem and once it has been localized.
+     * @param user The user
+     * @param conf The configuration to process
+     * @param uri The URI of the remote filesystem (e.g. HDFS)
+     * @param dir The directory on the remote filesystem to write the file to
+     * @return localResource
+     * @throws IOException A problem occurred writing the file
+     * @throws HadoopAccessorException A problem occured with Hadoop
+     * @throws URISyntaxException A problem occurred parsing the URI
+     */
+    public LocalResource createLocalResourceForConfigurationFile(String filename, String user, Configuration conf, URI uri,
+                                                                 Path dir)
+            throws IOException, HadoopAccessorException, URISyntaxException {
+        Path dst = new Path(dir, filename);
+        FileSystem fs = createFileSystem(user, uri, conf, false);
+        try (OutputStream os = fs.create(dst)){
+            conf.writeXml(os);
+        }
+        LocalResource localResource = Records.newRecord(LocalResource.class);
+        localResource.setType(LocalResourceType.FILE); localResource.setVisibility(LocalResourceVisibility.APPLICATION);
+        localResource.setResource(ConverterUtils.getYarnUrlFromPath(dst));
+        FileStatus destStatus = fs.getFileStatus(dst);
+        localResource.setTimestamp(destStatus.getModificationTime());
+        localResource.setSize(destStatus.getLen());
+        return localResource;
     }
 
 }

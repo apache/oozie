@@ -34,7 +34,7 @@ public class WorkflowJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
 
     /**
      * Initialize the JPAExecutor using the delete list of WorkflowJobBeans
-     * @param deleteList
+     * @param deleteList list of workflows to be deleted
      */
     public WorkflowJobsDeleteJPAExecutor(Collection<String> deleteList) {
         this.deleteList = deleteList;
@@ -46,28 +46,17 @@ public class WorkflowJobsDeleteJPAExecutor implements JPAExecutor<Integer> {
     /**
      * Sets the delete list for WorkflowJobBeans
      *
-     * @param deleteList
+     * @param deleteList list of workflows to be deleted
      */
     public void setDeleteList(Collection<String> deleteList) {
         this.deleteList = deleteList;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobsDeleteJPAExecutor";
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.
-     * EntityManager)
-     */
     @Override
     public Integer execute(EntityManager em) throws JPAExecutorException {
         int actionsDeleted = 0;

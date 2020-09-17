@@ -22,12 +22,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.IOUtils;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 public class TestLocalOozieExample extends XFsTestCase {
     private String oozieLocalLog;
@@ -41,7 +41,7 @@ public class TestLocalOozieExample extends XFsTestCase {
 
     @Override
     protected void delete(File file) throws IOException {
-        ParamChecker.notNull(file, "file");
+        Objects.requireNonNull(file, "file cannot be null");
         if (file.getAbsolutePath().length() < 5) {
             throw new RuntimeException(XLog.format("path [{0}] is too short, not deleting", file.getAbsolutePath()));
         }

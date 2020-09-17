@@ -24,15 +24,9 @@ import java.util.ArrayList;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.HadoopAccessorService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -106,13 +100,8 @@ public class TestPyspark extends ActionExecutorTestCase {
             WorkflowAction.Status wfStatus)
             throws Exception {
         Context context = createContext(getActionXml(sparkOpts), wf);
-        final RunningJob launcherJob = submitAction(context);
-        waitFor(200 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
+        final String launcherId = submitAction(context);
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
         SparkActionExecutor ae = new SparkActionExecutor();
         ae.check(context, context.getAction());
         assertEquals(externalStatus, context.getAction().getExternalStatus());
@@ -120,7 +109,7 @@ public class TestPyspark extends ActionExecutorTestCase {
         assertEquals(wfStatus, context.getAction().getStatus());
     }
 
-    protected RunningJob submitAction(Context context) throws Exception {
+    protected String submitAction(Context context) throws Exception {
         SparkActionExecutor ae = new SparkActionExecutor();
         WorkflowAction action = context.getAction();
         ae.prepareActionDir(getFileSystem(), context);
@@ -131,12 +120,8 @@ public class TestPyspark extends ActionExecutorTestCase {
         assertNotNull(jobId);
         assertNotNull(jobTracker);
         assertNotNull(consoleUrl);
-        JobConf jobConf = Services.get().get(HadoopAccessorService.class).createJobConf(jobTracker);
-        jobConf.set("mapred.job.tracker", jobTracker);
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(getTestUser(), jobConf);
-        final RunningJob runningJob = jobClient.getJob(JobID.forName(jobId));
-        assertNotNull(runningJob);
-        return runningJob;
+
+        return jobId;
     }
 
     protected Context createContext(String actionXml, WorkflowJobBean wf) throws Exception {

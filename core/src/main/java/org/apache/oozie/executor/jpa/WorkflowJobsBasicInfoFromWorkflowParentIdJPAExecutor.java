@@ -20,29 +20,20 @@ package org.apache.oozie.executor.jpa;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.util.DateUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 
-public class WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor implements JPAExecutor<List<WorkflowJobBean>> {
-
-    private String parentId;
-    private int limit;
-    private int offset;
-
+public class WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor  extends WorkflowJobsBasicInfoFromParentId
+        implements JPAExecutor<List<WorkflowJobBean>>
+{
     public WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor(String parentId, int limit) {
         this(parentId, 0, limit);
     }
 
     public WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor(String parentId, int offset, int limit) {
-        this.parentId = parentId;
-        this.offset = offset;
-        this.limit = limit;
+        super(parentId, offset, limit);
     }
 
     @Override
@@ -63,25 +54,5 @@ public class WorkflowJobsBasicInfoFromWorkflowParentIdJPAExecutor implements JPA
         catch (Exception e) {
             throw new JPAExecutorException(ErrorCode.E0603, e.getMessage(), e);
         }
-    }
-
-    private List<WorkflowJobBean> getBeanFromArray(List resultList) {
-        List<WorkflowJobBean> wfActionBeanList = new ArrayList<WorkflowJobBean>();
-        for (Object element : resultList) {
-            WorkflowJobBean wfBean = new WorkflowJobBean();
-            Object[] arr = (Object[])element;
-            if(arr[0] != null) {
-                wfBean.setId((String) arr[0]);
-            }
-            if(arr[1] != null) {
-                wfBean.setStatus(WorkflowJob.Status.valueOf((String) arr[1]));
-            }
-            if(arr[2] != null) {
-                wfBean.setEndTime(DateUtils.toDate((Timestamp) arr[2]));
-            }
-            wfActionBeanList.add(wfBean);
-        }
-
-        return wfActionBeanList;
     }
 }

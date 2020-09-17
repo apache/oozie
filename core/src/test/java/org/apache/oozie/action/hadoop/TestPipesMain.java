@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.net.URI;
 
@@ -49,7 +50,8 @@ public class TestPipesMain extends MainTestCase {
 
             Path inputDir = new Path(getFsTestCaseDir(), "input");
             fs.mkdirs(inputDir);
-            Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+            Writer writer = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")),
+                    StandardCharsets.UTF_8);
             writer.write("hello");
             writer.close();
 

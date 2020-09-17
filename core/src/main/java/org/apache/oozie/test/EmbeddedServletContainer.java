@@ -18,25 +18,36 @@
 
 package org.apache.oozie.test;
 
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.FilterHolder;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.Context;
+import org.apache.oozie.servlet.ErrorServlet;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServletResponse;
 import java.net.InetAddress;
-import java.net.ServerSocket;
+import java.util.EnumSet;
 import java.util.Map;
 
 /**
  * An embedded servlet container for testing purposes. <p> It provides reduced functionality, it supports only
- * Servlets. <p> The servlet container is started in a free port.
+ * Servlets. <p> The servlet container is started in a free port or a specific port which depends on the testing
+ * purposes.
  */
 public class EmbeddedServletContainer {
     private Server server;
     private String host = null;
     private int port = -1;
     private String contextPath;
-    Context context;
+    private ServletContextHandler context;
 
     /**
      * Create a servlet container.
@@ -47,9 +58,16 @@ public class EmbeddedServletContainer {
     public EmbeddedServletContainer(String contextPath) {
         this.contextPath = contextPath;
         server = new Server(0);
-        context = new Context();
+        context = new ServletContextHandler();
         context.setContextPath("/" + contextPath);
+        context.setErrorHandler(getErrorHandler());
+        this.addServletEndpoint("/error/*", ErrorServlet.class);
         server.setHandler(context);
+    }
+
+    public EmbeddedServletContainer(String contextPath, int port) {
+        this(contextPath);
+        this.port = port;
     }
 
     /**
@@ -60,12 +78,12 @@ public class EmbeddedServletContainer {
      * @param servletClass servlet class
      * @param initParams a mapping of init parameters for the servlet, or null
      */
-    public void addServletEndpoint(String servletPath, Class servletClass, Map<String, String> initParams) {
-        ServletHolder s = new ServletHolder(servletClass);
-        context.addServlet(s, servletPath);
+    public void addServletEndpoint(String servletPath, Class<? extends Servlet> servletClass, Map<String, String> initParams) {
+        ServletHolder holder = new ServletHolder(servletClass);
         if (initParams != null) {
-            s.setInitParameters(initParams);
+            holder.setInitParameters(initParams);
         }
+        context.addServlet(holder, servletPath);
     }
 
     /**
@@ -75,8 +93,20 @@ public class EmbeddedServletContainer {
      * the end.
      * @param servletClass servlet class
      */
-    public void addServletEndpoint(String servletPath, Class servletClass) {
+    public void addServletEndpoint(String servletPath, Class<? extends Servlet> servletClass) {
         addServletEndpoint(servletPath, servletClass, null);
+    }
+
+    /**
+     * Add a servlet instance to the container.
+     *
+     * @param servletPath servlet path for the servlet, it should be prefixed with '/", it may contain a wild card at
+     * the end.
+     * @param servlet servlet instance
+     */
+    public void addServletEndpoint(String servletPath, Servlet servlet) {
+        ServletHolder holder = new ServletHolder(servlet);
+        context.addServlet(holder, servletPath);
     }
 
     /**
@@ -86,24 +116,38 @@ public class EmbeddedServletContainer {
      * the end.
      * @param filterClass servlet class
      */
-    public void addFilter(String filterPath, Class filterClass) {
-        context.addFilter(new FilterHolder(filterClass), filterPath, 0);
+    public void addFilter(String filterPath, Class<? extends Filter> filterClass) {
+        context.addFilter(new FilterHolder(filterClass), filterPath, EnumSet.of(DispatcherType.REQUEST));
     }
 
     /**
-     * Start the servlet container. <p> The container starts on a free port.
+     * Start the servlet container. <p> The container starts on a free port or a specific port.
      *
      * @throws Exception thrown if the container could not start.
      */
     public void start() throws Exception {
         host = InetAddress.getLocalHost().getHostName();
-        ServerSocket ss = new ServerSocket(0);
-        port = ss.getLocalPort();
-        ss.close();
-        server.getConnectors()[0].setHost(host);
-        server.getConnectors()[0].setPort(port);
-        server.start();
+        port = startServerWithPort(port);
         System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
+    }
+
+    /**
+     * if port is the default value (-1), this will start on the free port, and this function will return this port
+     * if port is not -1, this will start on the specific port
+     * @param port
+     * @return
+     * @throws Exception
+     */
+    private int startServerWithPort(int port) throws Exception {
+        host = InetAddress.getLocalHost().getHostName();
+        ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+        connector.setHost(host);
+        if (port != -1) {
+            connector.setPort(port);
+        }
+        server.setConnectors(new Connector[] { connector });
+        server.start();
+        return connector.getLocalPort();
     }
 
     /**
@@ -169,4 +213,22 @@ public class EmbeddedServletContainer {
         port = -1;
     }
 
+    /**
+     * Returns an error page handler
+     * @return
+     */
+    private ErrorPageErrorHandler getErrorHandler() {
+        ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
+        errorHandler.addErrorPage(HttpServletResponse.SC_BAD_REQUEST, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_UNAUTHORIZED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_FORBIDDEN, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_CONFLICT, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_IMPLEMENTED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "/error");
+        errorHandler.addErrorPage("java.lang.Throwable", "/error");
+        return errorHandler;
+    }
 }

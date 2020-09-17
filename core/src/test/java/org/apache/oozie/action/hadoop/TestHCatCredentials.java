@@ -22,18 +22,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.security.Credentials;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
@@ -47,11 +51,13 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ HCatCredentialHelper.class, HCatCredentials.class })
+@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.dom.*"})
 public class TestHCatCredentials {
     private Services services;
     private static File OOZIE_HOME_DIR = null;
@@ -81,7 +87,8 @@ public class TestHCatCredentials {
         File actionConfDir = new File(oozieConfDir, "action-conf");
         actionConfDir.mkdir();
         hiveSiteXml = new File(OOZIE_HOME_DIR, "hive-site.xml");
-        FileWriter fw = new FileWriter(hiveSiteXml);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(hiveSiteXml),
+                StandardCharsets.UTF_8);
         fw.write(getHiveConfig(TEST_HIVE_METASTORE_PRINCIPAL, TEST_HIVE_METASTORE_URI));
         fw.flush();
         fw.close();
@@ -116,7 +123,8 @@ public class TestHCatCredentials {
     @Test
     public void testAddToJobConfFromHCat() throws Exception {
         File hcatConfig = new File(OOZIE_HOME_DIR, "hcatConf.xml");
-        FileWriter fw = new FileWriter(hcatConfig);
+        Writer fw = new OutputStreamWriter(new FileOutputStream(hcatConfig),
+                StandardCharsets.UTF_8);
         fw.write(getHiveConfig(TEST_HIVE_METASTORE_PRINCIPAL2, TEST_HIVE_METASTORE_URI2));
         fw.flush();
         fw.close();
@@ -130,17 +138,18 @@ public class TestHCatCredentials {
         credProps.setProperties(new HashMap<String, String>());
         HCatCredentials hcatCred = new HCatCredentials();
         final JobConf jobConf = new JobConf(false);
+        Credentials credentials = new Credentials();
         PowerMockito.doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                JobConf jConf = (JobConf) args[0];
-                jConf.set(HCAT_METASTORE_PRINCIPAL, (String) args[1]);
-                jConf.set(HCAT_METASTORE_URI, (String) args[2]);
+                Configuration jConf = (Configuration) args[1];
+                jConf.set(HCAT_METASTORE_PRINCIPAL, (String) args[2]);
+                jConf.set(HCAT_METASTORE_URI, (String) args[3]);
                 return null;
             }
-        }).when(hcatCredHelper).set(jobConf, TEST_HIVE_METASTORE_PRINCIPAL2, TEST_HIVE_METASTORE_URI2);
-        hcatCred.addtoJobConf(jobConf, credProps, null);
+        }).when(hcatCredHelper).set(credentials, jobConf, TEST_HIVE_METASTORE_PRINCIPAL2, TEST_HIVE_METASTORE_URI2);
+        hcatCred.updateCredentials(credentials, jobConf, credProps, null);
         assertEquals(TEST_HIVE_METASTORE_PRINCIPAL2, jobConf.get(HCAT_METASTORE_PRINCIPAL));
         assertEquals(TEST_HIVE_METASTORE_URI2, jobConf.get(HCAT_METASTORE_URI));
         assertNull(jobConf.get(HIVE_METASTORE_PRINCIPAL));
@@ -155,19 +164,20 @@ public class TestHCatCredentials {
         credProps.setProperties(new HashMap<String, String>());
         HCatCredentials hcatCred = new HCatCredentials();
         final JobConf jobConf = new JobConf(false);
+        Credentials credentials = new Credentials();
         HCatCredentialHelper hcatCredHelper = Mockito.mock(HCatCredentialHelper.class);
         PowerMockito.whenNew(HCatCredentialHelper.class).withNoArguments().thenReturn(hcatCredHelper);
         PowerMockito.doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                JobConf jConf = (JobConf) args[0];
-                jConf.set(HIVE_METASTORE_PRINCIPAL, (String) args[1]);
-                jConf.set(HIVE_METASTORE_URI, (String) args[2]);
+                Configuration jConf = (Configuration) args[1];
+                jConf.set(HIVE_METASTORE_PRINCIPAL, (String) args[2]);
+                jConf.set(HIVE_METASTORE_URI, (String) args[3]);
                 return null;
             }
-        }).when(hcatCredHelper).set(jobConf, TEST_HIVE_METASTORE_PRINCIPAL, TEST_HIVE_METASTORE_URI);
-        hcatCred.addtoJobConf(jobConf, credProps, null);
+        }).when(hcatCredHelper).set(credentials, jobConf, TEST_HIVE_METASTORE_PRINCIPAL, TEST_HIVE_METASTORE_URI);
+        hcatCred.updateCredentials(credentials, jobConf, credProps, null);
         assertEquals(TEST_HIVE_METASTORE_PRINCIPAL, jobConf.get(HIVE_METASTORE_PRINCIPAL));
         assertEquals(TEST_HIVE_METASTORE_URI, jobConf.get(HIVE_METASTORE_URI));
         assertNull(jobConf.get(HCAT_METASTORE_PRINCIPAL));
@@ -186,17 +196,18 @@ public class TestHCatCredentials {
         credProps.setProperties(prop);
         HCatCredentials hcatCred = new HCatCredentials();
         final JobConf jobConf = new JobConf(false);
+        Credentials credentials = new Credentials();
         PowerMockito.doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                JobConf jConf = (JobConf) args[0];
-                jConf.set(HCAT_METASTORE_PRINCIPAL, (String) args[1]);
-                jConf.set(HCAT_METASTORE_URI, (String) args[2]);
+                JobConf jConf = (JobConf) args[1];
+                jConf.set(HCAT_METASTORE_PRINCIPAL, (String) args[2]);
+                jConf.set(HCAT_METASTORE_URI, (String) args[3]);
                 return null;
             }
-        }).when(hcatCredHelper).set(jobConf, TEST_HIVE_METASTORE_PRINCIPAL2, TEST_HIVE_METASTORE_URI2);
-        hcatCred.addtoJobConf(jobConf, credProps, null);
+        }).when(hcatCredHelper).set(credentials, jobConf, TEST_HIVE_METASTORE_PRINCIPAL2, TEST_HIVE_METASTORE_URI2);
+        hcatCred.updateCredentials(credentials, jobConf, credProps, null);
         assertEquals(TEST_HIVE_METASTORE_PRINCIPAL2, jobConf.get(HCAT_METASTORE_PRINCIPAL));
         assertEquals(TEST_HIVE_METASTORE_URI2, jobConf.get(HCAT_METASTORE_URI));
         assertNull(jobConf.get(HIVE_METASTORE_PRINCIPAL));

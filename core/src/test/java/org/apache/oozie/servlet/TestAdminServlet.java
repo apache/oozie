@@ -18,19 +18,21 @@
 
 package org.apache.oozie.servlet;
 
+import io.prometheus.client.exporter.common.TextFormat;
+import org.apache.commons.io.IOUtils;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.BuildInfo;
-import org.apache.oozie.servlet.V0AdminServlet;
-import org.apache.oozie.servlet.V0JobServlet;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +59,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(false, json.get(JsonTags.OOZIE_SAFE_MODE));
                 return null;
             }
@@ -72,8 +75,12 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertTrue(json.containsKey(Shell.WINDOWS ? "USERNAME" : "USER"));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
+                assertTrue("USERNAME, USER or HOME property not found in json",
+                        json.containsKey(Shell.WINDOWS ? "USERNAME" : "USER") ||
+                                json.containsKey("HOME")
+                );
                 return null;
             }
         });
@@ -87,7 +94,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey("java.version"));
                 return null;
             }
@@ -102,23 +110,40 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(Services.CONF_SERVICE_CLASSES));
                 return null;
             }
         });
     }
 
-    public void testInstrumentation() throws Exception {
-        runTest("/v0/admin/*", V0AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+    public void testMetrics() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {
-                URL url = createURL(RestConstants.ADMIN_INSTRUMENTATION_RESOURCE, Collections.EMPTY_MAP);
+                URL url = createURL(RestConstants.ADMIN_METRICS_RESOURCE, Collections.EMPTY_MAP);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertTrue(json.containsKey(JsonTags.INSTR_VARIABLES));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
+                assertTrue(json.containsKey(JsonTags.INSTR_COUNTERS));
+                return null;
+            }
+        });
+    }
+
+    public void testPrometheus() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_PROMETHEUS_RESOURCE, Collections.EMPTY_MAP);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
+                assertEquals(conn.getHeaderField("content-type"), TextFormat.CONTENT_TYPE_004);
+                String string = IOUtils.toString(conn.getInputStream(), StandardCharsets.UTF_8);
+                assertTrue("Prometheus metrics does not show up", string.contains("jobstatus_SUCCEEDED"));
                 return null;
             }
         });
@@ -143,7 +168,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.OOZIE_SAFE_MODE));
                 assertFalse((Boolean) json.get(JsonTags.OOZIE_SAFE_MODE));
 
@@ -162,7 +188,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.OOZIE_SAFE_MODE));
                 assertTrue((Boolean) json.get(JsonTags.OOZIE_SAFE_MODE));
 
@@ -188,7 +215,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertTrue(json.containsKey(JsonTags.OOZIE_SAFE_MODE));
                 assertFalse((Boolean) json.get(JsonTags.OOZIE_SAFE_MODE));
 
@@ -213,9 +241,14 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION),
-                             json.get(JsonTags.BUILD_VERSION));
+                final String response = IOUtils.toString(conn.getInputStream());
+                JSONObject json = (JSONObject) JSONValue.parse(new StringReader(response));
+                assertEquals(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION), json.get(JsonTags.BUILD_VERSION));
+                JSONObject buildInfo = (JSONObject) json.get(JsonTags.BUILD_INFO);
+                for (String buildInfoKey : BuildInfo.getBuildInfo().stringPropertyNames()) {
+                    assertEquals("Build value difference in key " + buildInfoKey,
+                            BuildInfo.getBuildInfo().getProperty(buildInfoKey), buildInfo.get(buildInfoKey));
+                }
                 return null;
             }
         });
@@ -229,7 +262,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(1, json.entrySet().size());
                 return null;
             }
@@ -244,7 +278,8 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(null, json.get(JsonTags.SHARELIB_LIB));
                 return null;
             }
@@ -261,8 +296,39 @@ public class TestAdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(null, json.get(JsonTags.SHARELIB_LIB));
+                return null;
+            }
+        });
+    }
+
+    public void testPurgeServiceV2() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                URL url = createURL(RestConstants.ADMIN_PURGE, Collections.EMPTY_MAP);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                assertEquals(HttpServletResponse.SC_OK, connection.getResponseCode());
+                return null;
+            }
+        });
+    }
+
+    public void testPurgeServiceV2Negative() throws Exception {
+        runTest("/v2/admin/*", V2AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                Map<String, String> params = new HashMap<>();
+                params.put(RestConstants.PURGE_WF_AGE, "30");
+                params.put(RestConstants.PURGE_COORD_AGE, "7");
+                params.put(RestConstants.PURGE_BUNDLE_AGE, "-7");
+                URL url = createURL(RestConstants.ADMIN_PURGE, params);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, connection.getResponseCode());
                 return null;
             }
         });

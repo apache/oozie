@@ -28,6 +28,7 @@ import org.jdom.Element;
 import org.jdom.Namespace;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public abstract class ScriptLanguageActionExecutor extends JavaActionExecutor {
@@ -36,9 +37,8 @@ public abstract class ScriptLanguageActionExecutor extends JavaActionExecutor {
         super(type);
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public List<Class> getLauncherClasses() {
+    public List<Class<?>> getLauncherClasses() {
         return null;
     }
 
@@ -73,7 +73,7 @@ public abstract class ScriptLanguageActionExecutor extends JavaActionExecutor {
                 scriptFile = new Path(actionPath, script);
                 FileSystem fs = context.getAppFileSystem();
                 dos = fs.create(scriptFile);
-                dos.writeBytes(scriptContent);
+                dos.write(scriptContent.getBytes(StandardCharsets.UTF_8));
 
                 addToCache(conf, actionPath, script + "#" + name, false);
             }

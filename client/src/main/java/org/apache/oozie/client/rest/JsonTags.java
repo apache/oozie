@@ -25,6 +25,7 @@ public interface JsonTags {
 
     String OOZIE_SAFE_MODE = "safeMode"; //Applicable for V0 only
     String OOZIE_SYSTEM_MODE = "systemMode";
+    String BUILD_INFO = "buildInfo";
     String BUILD_VERSION = "buildVersion";
     String QUEUE_DUMP = "queueDump";
     String CALLABLE_DUMP = "callableDump";
@@ -105,6 +106,7 @@ public interface JsonTags {
     String COORDINATOR_JOB_CONF = "conf";
     String COORDINATOR_JOB_STATUS = "status";
     String COORDINATOR_JOB_EXECUTIONPOLICY = "executionPolicy";
+    String COORDINATOR_JOB_CREATED_TIME = "createdTime";
     String COORDINATOR_JOB_START_TIME = "startTime";
     String COORDINATOR_JOB_END_TIME = "endTime";
     String COORDINATOR_JOB_PAUSE_TIME = "pauseTime";
@@ -140,6 +142,13 @@ public interface JsonTags {
     String COORDINATOR_ACTIONS = "actions";
     String COORDINATOR_ACTION_DATA = "data";
     String COORDINATOR_JOB_DATA = "data";
+    String COORDINATOR_ACTION_DATASETS = "dataSets";
+    String COORDINATOR_ACTION_DATASET = "dataSet";
+
+    String COORDINATOR_WF_ACTION_NUMBER = "actionNumber";
+    String COORDINATOR_WF_ACTION = "action";
+    String COORDINATOR_WF_ACTION_NULL_REASON = "nullReason";
+    String COORDINATOR_WF_ACTIONS = "actions";
 
     String BUNDLE_JOB_ID = "bundleJobId";
     String BUNDLE_JOB_NAME = "bundleJobName";
@@ -190,6 +199,8 @@ public interface JsonTags {
     String ERROR = "error";
     String ERROR_CODE = "code";
     String ERROR_MESSAGE = "message";
+
+    String HTTP_STATUS_CODE = "httpStatusCode";
 
     String INSTR_TIMERS = "timers";
     String INSTR_VARIABLES = "variables";
@@ -244,7 +255,11 @@ public interface JsonTags {
     String COORD_UPDATE_DIFF = "diff";
 
     String STATUS = "status";
-
+    String ACTION_ATTEMPT = "attempt";
     String VALIDATE = "validate";
+    String COORD_ACTION_MISSING_DEPENDENCIES = "missingDependencies";
+    String COORD_ACTION_FIRST_MISSING_DEPENDENCIES = "blockedOn";
 
+
+    String PURGE = "purge";
 }

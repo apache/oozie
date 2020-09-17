@@ -35,11 +35,18 @@ public class SimpleTimestampedMessageParser extends TimestampedMessageParser {
     /**
      * This implementation simply returns the next line from the Reader.
      *
-     * @return The next line from the Reader
-     * @throws IOException
+     * @return LogLine containing the next line from the Reader
+     * @throws IOException if the next line can't be read
      */
     @Override
-    protected String parseNextLine() throws IOException {
-        return reader.readLine();
+    protected LogLine parseNextLogLine() throws IOException {
+        String line = null;
+        if ((line = reader.readLine()) != null) {
+            LogLine logLine = new LogLine();
+            logLine.setLine(line);
+            logLine.setLogParts(splitLogMessage(line));
+            return logLine;
+        }
+        return null;
     }
 }

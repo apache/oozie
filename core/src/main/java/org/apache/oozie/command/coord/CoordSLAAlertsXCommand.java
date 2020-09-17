@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -144,7 +144,7 @@ public abstract class CoordSLAAlertsXCommand extends SLAAlertsXCommand {
      * @return the action date list as string
      */
     protected String getActionDateListAsString() {
-        StringBuffer bf = new StringBuffer();
+        StringBuilder bf = new StringBuilder();
         if (!StringUtils.isEmpty(dates)) {
             bf.append(dates);
         }
@@ -170,23 +170,10 @@ public abstract class CoordSLAAlertsXCommand extends SLAAlertsXCommand {
      * @throws CommandException the command exception
      */
     private List<String> getActionListForScopeAndDate(String id, String scope, String dates) throws CommandException {
-        List<String> actionIds = new ArrayList<String>();
-
         if (scope == null && dates == null) {
             return null;
         }
-        List<String> parsed = new ArrayList<String>();
-        if (dates != null) {
-            List<CoordinatorActionBean> actionSet = CoordUtils.getCoordActionsFromDates(id, dates, true);
-            for (CoordinatorActionBean action : actionSet) {
-                actionIds.add(action.getId());
-            }
-            parsed.addAll(actionIds);
-        }
-        if (scope != null) {
-            parsed.addAll(CoordUtils.getActionsIds(id, scope));
-        }
-        return parsed;
+        return CoordUtils.getActionListForScopeAndDate(id, scope, dates);
     }
 
     /**

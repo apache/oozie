@@ -43,6 +43,7 @@ import org.apache.oozie.executor.jpa.BundleJobQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobQueryExecutor.BundleJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.ELUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
@@ -81,9 +82,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         this.jobId = ParamChecker.notEmpty(jobId, "jobId");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return jobId;
@@ -94,9 +92,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         return getName() + "_" + jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
@@ -123,9 +118,6 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.StartTransitionXCommand#StartChildren()
-     */
     @Override
     public void StartChildren() throws CommandException {
         LOG.debug("Started coord jobs for the bundle=[{0}]", jobId);
@@ -134,16 +126,10 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         LOG.debug("Ended coord jobs for the bundle=[{0}]", jobId);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() {
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.StartTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -327,6 +313,13 @@ public class BundleStartXCommand extends StartTransitionXCommand {
 
             // copy configuration properties in the coordElem to the runConf
             XConfiguration.copy(localConf, runConf);
+
+            ConfigUtils.checkAndSetDisallowedProperties(runConf,
+                    bundleJob.getUser(),
+                    new CommandException(ErrorCode.E1303,
+                            String.format("%s=%s", OozieClient.USER_NAME, runConf.get(OozieClient.USER_NAME)),
+                            bundleJob.getUser()),
+                    true);
         }
 
         // Step 3: Extract value of 'app-path' in coordElem, save it as a
@@ -343,17 +336,11 @@ public class BundleStartXCommand extends StartTransitionXCommand {
         return runConf;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() throws CommandException {
         updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob));

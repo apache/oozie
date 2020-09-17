@@ -16,12 +16,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<workflow-app xmlns="uri:oozie:workflow:0.2" name="sqoop-wf">
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="sqoop-wf">
     <start to="sqoop-node"/>
 
     <action name="sqoop-node">
-        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
-            <job-tracker>${jobTracker}</job-tracker>
+        <sqoop xmlns="uri:oozie:sqoop-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
                 <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/sqoop"/>

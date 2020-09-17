@@ -78,7 +78,7 @@ public class DagELFunctions {
                                   new XConfiguration(new StringReader(workflow.getProtoActionConf())));
         }
         catch (IOException ex) {
-            throw new RuntimeException("It should not happen", ex);
+            throw new RuntimeException("Failed to read the configuration", ex);
         }
     }
 
@@ -119,7 +119,8 @@ public class DagELFunctions {
                     HADOOP_JOBS_PREFIX + action.getExternalChildIDs());
         }
         if (action.getStats() != null) {
-            workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + MapReduceActionExecutor.HADOOP_COUNTERS,
+            workflowInstance.setVar(action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR
+                    + MapReduceActionExecutor.HADOOP_COUNTERS,
                     action.getStats());
         }
         if (action.getErrorCode() != null) {

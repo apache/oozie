@@ -19,7 +19,7 @@
 package org.apache.oozie.workflow.lite;
 
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -541,6 +541,27 @@ public class TestLiteWorkflowLib extends XTestCase {
         assertEquals(1, kills.size());
         assertEquals(1, exits.size());
         assertEquals(0, fails.size());
+    }
+
+    public void testForkBothAsynchFailingNodes() throws WorkflowException {
+
+        LiteWorkflowApp def = new LiteWorkflowApp("wf", "<worklfow-app/>",
+                new StartNodeDef(TestControlNodeHandler.class, "f"))
+                .addNode(new ForkNodeDef("f", TestControlNodeHandler.class, Arrays.asList(new String[]{"a", "b"})))
+                .addNode(new NodeDef("a", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
+                .addNode(new NodeDef("b", null, AsynchNodeHandler.class, Arrays.asList(new String[]{"j"})))
+                .addNode(new JoinNodeDef("j", TestControlNodeHandler.class, "end"))
+                .addNode(new EndNodeDef("end", TestControlNodeHandler.class));
+
+        LiteWorkflowInstance job = new LiteWorkflowInstance(def, new XConfiguration(), "1");
+        job.start();
+        assertEquals(WorkflowInstance.Status.RUNNING, job.getStatus());
+        job.fail("a");
+        job.fail("b");
+        assertEquals("Both nodes should be entered", 2, enters.size());
+        assertEquals("One of the nodes should be killed, which gets failed parallelly", 1, kills.size());
+        assertEquals("None of the nodes should be exited", 0, exits.size());
+        assertEquals("Both nodes should be failed", 2, fails.size());
     }
 
     public void testFailWithRunningNodes() throws WorkflowException {

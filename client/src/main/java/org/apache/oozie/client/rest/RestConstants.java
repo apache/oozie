@@ -41,6 +41,8 @@ public interface RestConstants {
 
     String PNG_IMAGE_CONTENT_TYPE = "image/png";
 
+    String SVG_IMAGE_CONTENT_TYPE = "image/svg+xml";
+
     String ACTION_PARAM = "action";
 
     String OFFSET_PARAM = "offset";
@@ -49,11 +51,17 @@ public interface RestConstants {
 
     String ORDER_PARAM = "order";
 
+    String SORTBY_PARAM = "sortby";
+
+    String ACTION_NAME_PARAM = "action-name";
+
     String JOB_FILTER_PARAM = "filter";
 
     String JOB_RESOURCE = "/job";
 
     String JOB_ACTION_START = "start";
+
+    String JOB_ACTION_SUBMIT = "submit";
 
     String JOB_ACTION_DRYRUN = "dryrun";
 
@@ -81,6 +89,8 @@ public interface RestConstants {
 
     String JOB_SHOW_PARAM = "show";
 
+    String JOB_SHOW_ACTION_RETRIES_PARAM = "retries";
+
     String JOB_SHOW_CONFIG = "config";
 
     String JOB_SHOW_INFO = "info";
@@ -97,7 +107,11 @@ public interface RestConstants {
 
     String JOB_SHOW_KILL_PARAM = "show-kill";
 
+    String JOB_FORMAT_PARAM = "format";
+
     String JOB_SHOW_STATUS = "status";
+
+    String JOB_SHOW_WF_ACTIONS_IN_COORD = "wf-actions";
 
     String JOB_BUNDLE_RERUN_COORD_SCOPE_PARAM = "coord-scope";
 
@@ -150,6 +164,8 @@ public interface RestConstants {
     String ADMIN_QUEUE_DUMP_RESOURCE = "queue-dump";
 
     String ADMIN_METRICS_RESOURCE = "metrics";
+
+    String ADMIN_PROMETHEUS_RESOURCE = "prometheus";
 
     String OOZIE_ERROR_CODE = "oozie-error-code";
 
@@ -215,4 +231,12 @@ public interface RestConstants {
 
     String USER_PARAM = "user";
 
+    String COORD_ACTION_MISSING_DEPENDENCIES = "missing-dependencies";
+
+    String ADMIN_PURGE = "purge";
+    String PURGE_WF_AGE = "wf";
+    String PURGE_COORD_AGE = "coord";
+    String PURGE_BUNDLE_AGE = "bundle";
+    String PURGE_LIMIT = "limit";
+    String PURGE_OLD_COORD_ACTION = "oldcoordaction";
 }

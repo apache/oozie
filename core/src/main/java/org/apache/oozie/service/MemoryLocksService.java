@@ -24,11 +24,14 @@ import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.lock.MemoryLocks;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.oozie.util.XLog;
 
 /**
  * Service that provides in-memory locks.  Assumes no other Oozie servers are using the database.
  */
 public class MemoryLocksService implements Service, Instrumentable {
+
+    private static final XLog LOG = XLog.getLog(MemoryLocksService.class);
 
     public static enum Type {
         READ, WRITE
@@ -87,7 +90,8 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public LockToken getReadLock(String resource, long wait) throws InterruptedException {
+    public LockToken getReadLock(final String resource, final long wait) throws InterruptedException {
+        LOG.trace("Acquiring in-memory read lock. [resource={0};wait={1}]", resource, wait);
         return locks.getLock(resource, Type.READ, wait);
     }
 
@@ -99,7 +103,8 @@ public class MemoryLocksService implements Service, Instrumentable {
      * @return the lock token for the resource, or <code>null</code> if the lock could not be obtained.
      * @throws InterruptedException thrown if the thread was interrupted while waiting.
      */
-    public LockToken getWriteLock(String resource, long wait) throws InterruptedException {
+    public LockToken getWriteLock(final String resource, final long wait) throws InterruptedException {
+        LOG.trace("Acquiring in-memory write lock. [resource={0};wait={1}]", resource, wait);
         return locks.getLock(resource, Type.WRITE, wait);
     }
 

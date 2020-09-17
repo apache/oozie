@@ -42,7 +42,8 @@ public class V0AdminServlet extends BaseAdminServlet {
 
     static {
         RESOURCES_INFO[0] = new ResourceInfo(RestConstants.ADMIN_STATUS_RESOURCE, Arrays.asList("PUT", "GET"),
-                                             Arrays.asList(new ParameterInfo(RestConstants.ADMIN_SAFE_MODE_PARAM, Boolean.class, true,
+                                             Arrays.asList(new ParameterInfo(RestConstants.ADMIN_SAFE_MODE_PARAM, Boolean.class,
+                                                     true,
                                                                              Arrays.asList("PUT"))));
         RESOURCES_INFO[1] = new ResourceInfo(RestConstants.ADMIN_OS_ENV_RESOURCE, Arrays.asList("GET"),
                 Collections.EMPTY_LIST);
@@ -61,13 +62,6 @@ public class V0AdminServlet extends BaseAdminServlet {
         modeTag = RestConstants.ADMIN_SAFE_MODE_PARAM;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#populateOozieMode(org.json.
-     * simple.JSONObject)
-     */
     @Override
     protected void populateOozieMode(JSONObject json) {
         if (Services.get().getSystemMode() != SYSTEM_MODE.NORMAL) {
@@ -78,38 +72,15 @@ public class V0AdminServlet extends BaseAdminServlet {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#setOozieMode(javax.servlet.
-     * http.HttpServletRequest, javax.servlet.http.HttpServletResponse,
-     * java.lang.String)
-     */
     @Override
     protected void setOozieMode(HttpServletRequest request, HttpServletResponse response, String resourceName)
             throws XServletException {
-        if (resourceName.equals(RestConstants.ADMIN_STATUS_RESOURCE)) {
-            boolean safeMode = Boolean.parseBoolean(request.getParameter(modeTag));
-            //Services.get().setSafeMode(safeMode);
-            SYSTEM_MODE sysMode = safeMode == true ? SYSTEM_MODE.NOWEBSERVICE : SYSTEM_MODE.NORMAL;
-            System.out.println(modeTag + " DDDD " + sysMode);
-            Services.get().setSystemMode(sysMode);
-            response.setStatus(HttpServletResponse.SC_OK);
-        }
-        else {
-            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST,
-                                        ErrorCode.E0301, resourceName);
-        }
+        boolean safeMode = Boolean.parseBoolean(request.getParameter(modeTag));
+        SYSTEM_MODE sysMode = safeMode ? SYSTEM_MODE.NOWEBSERVICE : SYSTEM_MODE.NORMAL;
+        Services.get().setSystemMode(sysMode);
+        response.setStatus(HttpServletResponse.SC_OK);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple
-     * .JSONObject)
-     */
     @Override
     protected void getQueueDump(JSONObject json) throws XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, "cannot get queue dump");
@@ -128,6 +99,11 @@ public class V0AdminServlet extends BaseAdminServlet {
 
     @Override
     protected void sendMetricsResponse(HttpServletResponse response) throws IOException, XServletException {
+        throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
+    }
+
+    @Override
+    protected void sendPrometheusResponse(HttpServletResponse response) throws IOException, XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0302, "Not supported in v0");
     }
 }

@@ -117,13 +117,19 @@ public class Services {
                                          DateUtils.getOozieProcessingTimeZone().getID());
         }
         systemId = ConfigurationService.get(conf, CONF_SYSTEM_ID);
-        if (systemId.length() > MAX_SYSTEM_ID_LEN) {
-            systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
-            XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming", systemId,
-                                         MAX_SYSTEM_ID_LEN);
-        }
+        systemId = trimIfExceedsLimit(systemId);
         setSystemMode(SYSTEM_MODE.valueOf(ConfigurationService.get(conf, CONF_SYSTEM_MODE)));
         runtimeDir = createRuntimeDir();
+    }
+
+    protected String trimIfExceedsLimit(String systemId) {
+        if (systemId.length() > MAX_SYSTEM_ID_LEN) {
+            String origSystemId = systemId;
+            systemId = systemId.substring(0, MAX_SYSTEM_ID_LEN);
+            XLog.getLog(getClass()).warn("System ID [{0}] exceeds maximum length [{1}], trimming to [{2}]",
+                    origSystemId, MAX_SYSTEM_ID_LEN, systemId);
+        }
+        return systemId;
     }
 
     private String createRuntimeDir() throws ServiceException {
@@ -148,7 +154,7 @@ public class Services {
     /**
      * Return active system mode. <p> .
      *
-     * @return
+     * @return systemMode returns active system mode
      */
 
     public SYSTEM_MODE getSystemMode() {
@@ -204,7 +210,6 @@ public class Services {
      *
      * @throws ServiceException thrown if any of the services could not initialize.
      */
-    @SuppressWarnings("unchecked")
     public void init() throws ServiceException {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         log.trace("Initializing");
@@ -255,9 +260,9 @@ public class Services {
      *                configuration.
      * @throws ServiceException thrown if a service class could not be loaded.
      */
-    private void loadServices(Class[] classes, List<Service> list) throws ServiceException {
+    private void loadServices(Class<?>[] classes, List<Service> list) throws ServiceException {
         XLog log = new XLog(LogFactory.getLog(getClass()));
-        for (Class klass : classes) {
+        for (Class<?> klass : classes) {
             try {
                 Service service = (Service) klass.newInstance();
                 log.debug("Loading service [{0}] implementation [{1}]", service.getInterface(),
@@ -284,10 +289,10 @@ public class Services {
     private void loadServices() throws ServiceException {
         XLog log = new XLog(LogFactory.getLog(getClass()));
         try {
-            Map<Class, Service> map = new LinkedHashMap<Class, Service>();
-            Class[] classes = ConfigurationService.getClasses(conf, CONF_SERVICE_CLASSES);
+            Map<Class<?>, Service> map = new LinkedHashMap<Class<?>, Service>();
+            Class<?>[] classes = ConfigurationService.getClasses(conf, CONF_SERVICE_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_CLASSES + "'");
-            Class[] classesExt = ConfigurationService.getClasses(conf, CONF_SERVICE_EXT_CLASSES);
+            Class<?>[] classesExt = ConfigurationService.getClasses(conf, CONF_SERVICE_EXT_CLASSES);
             log.debug("Services list obtained from property '" + CONF_SERVICE_EXT_CLASSES + "'");
             List<Service> list = new ArrayList<Service>();
             loadServices(classes, list);
@@ -301,11 +306,12 @@ public class Services {
                 }
                 map.put(service.getInterface(), service);
             }
-            for (Map.Entry<Class, Service> entry : map.entrySet()) {
+            for (Map.Entry<Class<?>, Service> entry : map.entrySet()) {
                 setService(entry.getValue().getClass());
             }
         } catch (RuntimeException rex) {
-            log.fatal("Runtime Exception during Services Load. Check your list of '" + CONF_SERVICE_CLASSES + "' or '" + CONF_SERVICE_EXT_CLASSES + "'");
+            log.fatal("Runtime Exception during Services Load. Check your list of [{0}] or [{1}]",
+                    CONF_SERVICE_CLASSES, CONF_SERVICE_EXT_CLASSES, rex);
             throw new ServiceException(ErrorCode.E0103, rex.getMessage(), rex);
         }
     }
@@ -352,6 +358,7 @@ public class Services {
     /**
      * Return a service by its public interface.
      *
+     * @param <T> child type of Service
      * @param serviceKlass service public interface.
      * @return the associated service, or <code>null</code> if not define.
      */

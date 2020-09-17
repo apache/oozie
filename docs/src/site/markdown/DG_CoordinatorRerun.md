@@ -1,0 +1,53 @@
+
+
+[::Go back to Oozie Documentation Index::](index.html)
+
+# Coordinator Rerun
+
+<!-- MACRO{toc|fromDepth=1|toDepth=4} -->
+
+## Pre-Conditions
+
+   * Rerun coordinator action must be in TIMEDOUT/SUCCEEDED/KILLED/FAILED.
+   * Coordinator actions cannot be rerun if the coordinator job is in the PREP or IGNORED state.
+   * Rerun a PAUSED coordinator job, the status and pause time and pending flag will not be reset.
+   * Rerun a SUSPENDED coordinator job, the status will reset to RUNNING.
+   * All rerun actions must exist already.
+   * Coordinator Rerun will only use the original configs from first run.
+   * Coordinator Rerun will not re-read the coordinator.xml in hdfs.
+
+## Rerun Arguments
+
+
+```
+$oozie job -rerun <coord_Job_id> [-nocleanup] [-refresh] [-failed] [-config <arg>]
+[-action 1, 3-4, 7-40] (-action or -date is required to rerun.)
+[-date 2009-01-01T01:00Z::2009-05-31T23:59Z, 2009-11-10T01:00Z, 2009-12-31T22:00Z]
+(if neither -action nor -date is given, the exception will be thrown.)
+```
+
+   * Either -action or -date should be given.
+   * If -action and -date both are given, an error will be thrown.
+   * Multiple ranges can be used in -action or -date. See the above examples.
+   * If one of action in the given list of -action does not exist or not in terminal state, the rerun throws an error.
+   * The dates specified in -date must be UTC.
+   * Single date specified in -date must be able to find an action with matched nominal time to be effective.
+   * If -nocleanup is given, coordinator directories will not be removed; otherwise the 'output-event' will be deleted, unless nocleanup attribute is explicitly set in coordinator.xml
+   * If -refresh is set, new dataset is re-evaluated for latest() and future().
+   * If -refresh is set, all dependencies will be re-checked; otherwise only missed dependencies will be checked.
+   * If -failed is set, re-runs the failed workflow actions of the coordinator actions.
+   * -config can be used to supply properties to workflow by job configuration file '.xml' or '.properties'.
+
+## Rerun coordinator actions
+
+   * Rerun terminated (timeout, succeeded, killed, failed) coordinator actions.
+   * By default, Oozie will delete the 'output-event' directories before changing actions' status and materializing actions.
+   * If coordinator job is RUNNING, rerun actions will be materialized and compete with current running actions.
+   * Rerun for job, user should use job's start date and end date in -date.
+   * If the user specifies a date range (say Jan 1 to May 1), the actions that will be re-run are the existing actions
+     within that range.  If the existing actions are action #5....#40, which map to Jan 15 to Feb 15, then only those actions will run.
+   * The rerun action_id and nominal_time of the actions which are eligible to rerun will be returned.
+
+[::Go back to Oozie Documentation Index::](index.html)
+
+

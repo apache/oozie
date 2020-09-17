@@ -100,7 +100,8 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                     + numRunningJobs + ", numLeftover=" + numActionsToStart);
             // no actions to start
             if (numActionsToStart == 0) {
-                log.warn("No actions to start for jobId=" + jobId + " as max concurrency reached!");
+                log.info("Not starting any additional actions because max concurrency [{0}]" +
+                        " for coordinator [{1}] has been reached.", jobConcurrency, jobId);
             }
         }
         // get list of actions that are READY and fit in the concurrency and execution
@@ -135,10 +136,8 @@ public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
                                     DateUtils.formatDateOozieTZ(now), DateUtils.formatDateOozieTZ(nextNominalTime));
                         }
                     }
-                } catch (ParseException e) {
-                    LOG.error("Should not happen", e);
-                } catch (JDOMException e) {
-                    LOG.error("Should not happen", e);
+                } catch (ParseException | JDOMException e) {
+                    LOG.error("Failed to calculate next nominal time", e);
                 }
             }
         }

@@ -63,7 +63,7 @@ public abstract class SqlStatement {
          * Move the Result Set to next record
          *
          * @return true if there is a next record
-         * @throws SQLException
+         * @throws SQLException if a database access error occurs or this method is called on a closed result set
          */
         public boolean next() throws SQLException {
             return rSet.next();
@@ -72,7 +72,7 @@ public abstract class SqlStatement {
         /**
          * Close the Result Set
          *
-         * @throws SQLException
+         * @throws SQLException if a database access error occurs
          */
         public void close() throws SQLException {
             rSet.close();
@@ -85,7 +85,8 @@ public abstract class SqlStatement {
          * @param clazz Class of the Type
          * @param col Column name
          * @return Column data
-         * @throws SQLException
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         @SuppressWarnings("unchecked")
         public <T> T get(Class<T> clazz, Column col) throws SQLException {
@@ -108,7 +109,7 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException
+         * @throws SQLException when accessing binary stream fails
          */
         public byte[] getByteArray(Column col) throws SQLException {
             byte[] bArray = null;
@@ -142,7 +143,8 @@ public abstract class SqlStatement {
          *
          * @param col Column Name
          * @return Column data
-         * @throws SQLException
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public String getString(Column col) throws SQLException {
             return get(String.class, col);
@@ -153,7 +155,8 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public Timestamp getTimestamp(Column col) throws SQLException {
             return get(Timestamp.class, col);
@@ -164,7 +167,8 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public Boolean getBoolean(Column col) throws SQLException {
             return get(Boolean.class, col);
@@ -175,7 +179,8 @@ public abstract class SqlStatement {
          *
          * @param col Column name
          * @return Column data
-         * @throws SQLException
+         * @throws SQLException if the columnLabel is not valid;
+         * if a database access error occurs or this method is called on a closed result set
          */
         public Long getLong(Column col) throws SQLException {
             return get(Long.class, col);
@@ -292,8 +297,8 @@ public abstract class SqlStatement {
     /**
      * Generate Condition statement for equality check
      *
-     * @param column
-     * @param value
+     * @param column the column
+     * @param value the value
      * @return Equality Condition statement
      */
     public static Condition isEqual(Column column, Object value) {
@@ -303,8 +308,8 @@ public abstract class SqlStatement {
     /**
      * Generate InEquality Condition statement
      *
-     * @param column
-     * @param value
+     * @param column the column
+     * @param value the value
      * @return Inequality Condition statement
      */
     public static Condition isNotEqual(Column column, Object value) {
@@ -314,8 +319,8 @@ public abstract class SqlStatement {
     /**
      * Generate Condition statement for LESS THAN condition checking
      *
-     * @param column
-     * @param value
+     * @param column the column
+     * @param value the value
      * @return less than condition statement
      */
     public static Condition lessThan(Column column, Object value) {
@@ -325,8 +330,8 @@ public abstract class SqlStatement {
     /**
      * Generate Condition statement for GREATER THAN condition checking
      *
-     * @param column
-     * @param value
+     * @param column the column
+     * @param value the value
      * @return greater than condition statement
      */
     public static Condition greaterThan(Column column, Object value) {
@@ -336,8 +341,8 @@ public abstract class SqlStatement {
     /**
      * Generate Condition statement for LESS THAN OR EQUAL condition checking
      *
-     * @param column
-     * @param value
+     * @param column the column
+     * @param value the value
      * @return less than or equal condition statement
      */
     public static Condition lessThanOrEqual(Column column, Object value) {
@@ -347,8 +352,8 @@ public abstract class SqlStatement {
     /**
      * Generate Condition statement for GREATER THAN OR EQUAL condition checking
      *
-     * @param column
-     * @param value
+     * @param column the column
+     * @param value the value
      * @return greater than or equal condition statement
      */
     public static Condition greaterThanOrEqual(Column column, Object value) {
@@ -385,8 +390,8 @@ public abstract class SqlStatement {
     /**
      * IN Condition for checking multiple values
      *
-     * @param column
-     * @param values
+     * @param column the column
+     * @param values the values
      * @return In condition statement
      */
     public static Condition in(Column column, Object... values) {
@@ -396,8 +401,8 @@ public abstract class SqlStatement {
     /**
      * NOT IN Condition for checking multiple values
      *
-     * @param column
-     * @param values
+     * @param column the column
+     * @param values the values
      * @return not in condition statement
      */
     public static Condition notIn(Column column, Object... values) {
@@ -407,8 +412,8 @@ public abstract class SqlStatement {
     /**
      * Sub query with IN condition
      *
-     * @param column
-     * @param select
+     * @param column the column
+     * @param select the sub query
      * @return Sub query using in
      */
     public static Condition in(Column column, Select select) {
@@ -418,8 +423,8 @@ public abstract class SqlStatement {
     /**
      * Sub query with NOT IN condition
      *
-     * @param column
-     * @param select
+     * @param column the column
+     * @param select the sub query
      * @return sub query using not in
      */
     public static Condition notIn(Column column, Select select) {
@@ -444,7 +449,7 @@ public abstract class SqlStatement {
     /**
      * BETWEEN range checking statement
      *
-     * @param column
+     * @param column the column
      * @param lVal min value for range checking
      * @param rVal max value for range checking
      * @return between condition statement
@@ -456,7 +461,7 @@ public abstract class SqlStatement {
     /**
      * NOT BETWEEN range checking statement
      *
-     * @param column
+     * @param column the column
      * @param lVal min value for range checking
      * @param rVal max value for range checking
      * @return not between condition statement
@@ -553,7 +558,7 @@ public abstract class SqlStatement {
                 this.sb.setLength(sb.length() - 1);
             }
             else {
-                throw new RuntimeException("Need atleast 1 Table !!");
+                throw new RuntimeException("Need at least 1 Table !!");
             }
         }
 
@@ -575,7 +580,7 @@ public abstract class SqlStatement {
                 this.sb.setLength(sb.length() - 1);
             }
             else {
-                throw new RuntimeException("Need atleast 1 Column !!");
+                throw new RuntimeException("Need at least 1 Column !!");
             }
         }
 
@@ -633,8 +638,8 @@ public abstract class SqlStatement {
         /**
          * Setting the offset and limit for LIMIT clause
          *
-         * @param offset
-         * @param limit
+         * @param offset the offset
+         * @param limit the limit
          * @return <code>Select</code> for cascading
          */
         public Select limit(int offset, int limit) {
@@ -666,7 +671,7 @@ public abstract class SqlStatement {
         public String toString() {
             String oBy = "";
             if ((orderby != null) && (isAscending != null) && (orderby.length == isAscending.length)) {
-                StringBuffer osb = new StringBuffer(" ORDER BY ");
+                StringBuilder osb = new StringBuilder(" ORDER BY ");
                 int i = 0;
                 for (Column column : orderby) {
                     osb.append(column.asLabel()).append(isAscending[i] ? " ASC ," : " DESC ,");
@@ -803,9 +808,9 @@ public abstract class SqlStatement {
         /**
          * Set the VALUES that are to be inserted
          *
-         * @param column
+         * @param column the column
          * @param value A temporary place holder which will be replaced while preparing
-         * @return
+         * @return retVal Set the VALUES that are to be inserted
          */
         public Insert value(Column column, Object value) {
             Insert retVal = new Insert(this);
@@ -832,7 +837,7 @@ public abstract class SqlStatement {
      *
      * @param conn Connection
      * @return Prepared SQL Statement
-     * @throws SQLException
+     * @throws SQLException when setting prepared statement values fails
      */
     public PreparedStatement prepareAndSetValues(Connection conn) throws SQLException {
         String stmt = toString();
@@ -855,7 +860,7 @@ public abstract class SqlStatement {
      *
      * @param pStmt Prepared Statement
      * @return PreparedStatement with values set
-     * @throws SQLException
+     * @throws SQLException when setting prepared statement values fails
      */
     public PreparedStatement prepare(PreparedStatement pStmt) throws SQLException {
         int i = 1;
@@ -872,7 +877,7 @@ public abstract class SqlStatement {
      *
      * @param conn Connection
      * @return PreparedStatement
-     * @throws SQLException
+     * @throws SQLException when creating prepared statement fails
      */
     public PreparedStatement prepare(Connection conn) throws SQLException {
         String stmt = toString();
@@ -887,8 +892,9 @@ public abstract class SqlStatement {
      *
      * @param conn Connection
      * @param values A list of maps that contains the actual values
+     * @param pStmt prepared statement
      * @return Prepared Statement
-     * @throws SQLException
+     * @throws SQLException when creating prepared statement fails
      */
     public PreparedStatement prepareForBatch(Connection conn, List<? extends Map<Object, Object>> values,
                                              PreparedStatement pStmt) throws SQLException {
@@ -925,7 +931,7 @@ public abstract class SqlStatement {
      * Replace the keys(newValues) which are place holders in the sql statements with the corresponding new values. And
      * Gives back a new SQL Statement so that the actual statement can be re-used
      *
-     * @param newValues
+     * @param newValues the new values
      * @return A New SQL Statement object with actual values set in its member
      */
     public SqlStatement getNewStatementWithValues(Map<Object, Object> newValues) {
@@ -945,8 +951,8 @@ public abstract class SqlStatement {
     /**
      * Create the Appropriate SQL Statement with the given values
      *
-     * @param temp
-     * @return
+     * @param temp the values
+     * @return retVal Create the Appropriate SQL Statement with the given values
      */
     private SqlStatement create(ArrayList<Object> temp) {
         SqlStatement retVal = null;
@@ -986,7 +992,7 @@ public abstract class SqlStatement {
     /**
      * Return a new Insert Statement
      *
-     * @param table
+     * @param table the target table
      * @return Insert statement
      */
     public static Insert insertInto(Table table) {
@@ -996,7 +1002,7 @@ public abstract class SqlStatement {
     /**
      * Return a new Update Statement
      *
-     * @param table
+     * @param table the target table
      * @return Update statement
      */
     public static Update update(Table table) {
@@ -1006,7 +1012,7 @@ public abstract class SqlStatement {
     /**
      * Return a new Delete Statement
      *
-     * @param table
+     * @param table the target table
      * @return Delete Statement
      */
     public static Delete deleteFrom(Table table) {
@@ -1016,7 +1022,7 @@ public abstract class SqlStatement {
     /**
      * Return a Select All Statement
      *
-     * @param tables
+     * @param tables the target tables
      * @return Select * statement
      */
     public static Select selectAllFrom(Table... tables) {
@@ -1036,7 +1042,7 @@ public abstract class SqlStatement {
     /**
      * Select count(*) Statement generator.
      *
-     * @param tables
+     * @param tables the target table
      * @return "select count(*) from tables" statement
      */
     public static Select getCount(Table... tables) {

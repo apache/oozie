@@ -59,7 +59,7 @@ public class HadoopELFunctions {
 
     public static String hadoop_conf(String hadoopConfHostPort, String propName) {
         Configuration conf = Services.get().get(HadoopAccessorService.class)
-            .createJobConf(hadoopConfHostPort);
+            .createConfiguration(hadoopConfHostPort);
         String prop = conf.get(propName);
         if (prop == null || prop.equals("")) {
             conf = new Configuration();
@@ -76,7 +76,7 @@ public class HadoopELFunctions {
         if (jsonCounters == null) {
             throw new IllegalArgumentException(XLog.format("Hadoop counters not available for action [{0}]", nodeName));
         }
-        return (Map) JSONValue.parse(jsonCounters);
+        return (Map<String, Map<String, Long>>) JSONValue.parse(jsonCounters);
     }
 
 }

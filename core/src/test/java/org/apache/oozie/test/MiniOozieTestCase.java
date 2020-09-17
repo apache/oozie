@@ -40,13 +40,15 @@ import org.apache.oozie.local.LocalOozie;
  * <p/>
  * The test working directory is created in the specified FS URI, under the current user name home directory, under the
  * subdirectory name specified wit the system property {@link XTestCase#OOZIE_TEST_DIR}. The default value is '/tmp'.
- * <p/> The path of the test working directory is: '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/$TEST_CASE_METHOD/'
+ * <p/> The path of the test working directory is: '$FS_URI/user/$USER/$OOZIE_TEST_DIR/oozietest/$TEST_CASE_CLASS/
+ * $TEST_CASE_METHOD/'
  * <p/> For example: 'hdfs://localhost:9000/user/tucu/tmp/oozietest/org.apache.oozie.service.TestELService/testEL/'
  * <p/>
  * To run Oozie test, subclass create OozieClient via <code>OozieClient wc = getClient()</code> and submit Oozie job
  * with job properties and job xml.
  * <p/>
- * To check job's progress, subclass retrieve job object via <code>getJobInfo()</code> and then check job's status via <code>getStatus()</code>.
+ * To check job's progress, subclass retrieve job object via <code>getJobInfo()</code> and then check job's status via
+ *  <code>getStatus()</code>.
  * <p/>
  * For example,
  * <code>
@@ -59,12 +61,16 @@ public abstract class MiniOozieTestCase extends XFsTestCase {
     protected void setUp() throws Exception {
         System.setProperty("hadoop20", "true");
         super.setUp();
-        LocalOozie.start();
+        if (!LocalOozie.isStarted()) {
+            LocalOozie.start();
+        }
     }
 
     @Override
     protected void tearDown() throws Exception {
-        LocalOozie.stop();
+        if (LocalOozie.isStarted()) {
+            LocalOozie.stop();
+        }
         super.tearDown();
     }
 

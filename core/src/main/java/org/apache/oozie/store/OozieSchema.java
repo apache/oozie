@@ -21,6 +21,7 @@ package org.apache.oozie.store;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,17 +38,21 @@ public class OozieSchema {
 
     private static final String OOZIE_VERSION = "0.1";
 
-    public static final Map<Table, List<Column>> TABLE_COLUMNS = new HashMap<Table, List<Column>>();
+    public static final Map<Table, List<Column>> TABLE_COLUMNS;
 
     static {
+        Map<Table, List<Column>> tmpColumns = new HashMap<>();
+
         for (Column column : OozieColumn.values()) {
-            List<Column> tColumns = TABLE_COLUMNS.get(column.table());
+            List<Column> tColumns = tmpColumns.get(column.table());
             if (tColumns == null) {
                 tColumns = new ArrayList<Column>();
-                TABLE_COLUMNS.put(column.table(), tColumns);
+                tmpColumns.put(column.table(), tColumns);
             }
             tColumns.add(column);
         }
+
+        TABLE_COLUMNS = Collections.unmodifiableMap(tmpColumns);
     }
 
     public static void setOozieDbName(String dbName) {
@@ -192,8 +197,8 @@ public class OozieSchema {
     /**
      * Generates the create table SQL Statement
      *
-     * @param table
-     * @param dbType
+     * @param table table
+     * @param dbType database type
      * @return SQL Statement to create the table
      */
     public static String generateCreateTableScript(Table table, DBType dbType) {
@@ -203,8 +208,8 @@ public class OozieSchema {
     /**
      * Gets the query that will be used to validate the connection
      *
-     * @param dbName
-     * @return
+     * @param dbName database name
+     * @return String returns the query that will be used to validate the connection
      */
     public static String getValidationQuery(String dbName) {
         return "select count(" + OozieColumn.VER_versionNumber.columnName() + ") from " + dbName + "."
@@ -214,8 +219,8 @@ public class OozieSchema {
     /**
      * Generates the Insert statement to insert the OOZIE_VERSION to table
      *
-     * @param dbName
-     * @return
+     * @param dbName database name
+     * @return String returns the Insert statement for the OOZIE_VERSION to a table
      */
     public static String generateInsertVersionScript(String dbName) {
         return "INSERT INTO " + dbName + "." + OozieTable.VERSION.name().toUpperCase() + "("
@@ -225,7 +230,7 @@ public class OozieSchema {
     /**
      * Gets the Oozie Schema Version
      *
-     * @return
+     * @return String returns the Oozie Schema Version
      */
     public static String getOozieVersion() {
         return OOZIE_VERSION;

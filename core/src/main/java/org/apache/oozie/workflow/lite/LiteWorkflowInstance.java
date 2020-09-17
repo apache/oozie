@@ -25,6 +25,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.XLogService;
+import org.apache.oozie.util.StringSerializationUtil;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 //TODO javadoc
 public class LiteWorkflowInstance implements Writable, WorkflowInstance {
@@ -51,10 +53,6 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     private static String PATH_SEPARATOR = "/";
     private static String ROOT = PATH_SEPARATOR;
     private static String TRANSITION_SEPARATOR = "#";
-
-    // Using unique string to indicate version. This is to make sure that it
-    // doesn't match with user data.
-    private static final String DATA_VERSION = "V==1";
 
     private static class NodeInstance {
         String nodeName;
@@ -162,9 +160,9 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     public LiteWorkflowInstance(LiteWorkflowApp def, Configuration conf, String instanceId) {
         this();
-        this.def = ParamChecker.notNull(def, "def");
-        this.instanceId = ParamChecker.notNull(instanceId, "instanceId");
-        this.conf = ParamChecker.notNull(conf, "conf");
+        this.def = Objects.requireNonNull(def, "def cannot be null");
+        this.instanceId = Objects.requireNonNull(instanceId, "instanceId cannot be null");
+        this.conf = Objects.requireNonNull(conf, "conf cannot be null");
         refreshLog();
         status = Status.PREP;
     }
@@ -183,7 +181,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     public synchronized boolean signal(String executionPath, String signalValue) throws WorkflowException {
         ParamChecker.notEmpty(executionPath, "executionPath");
-        ParamChecker.notNull(signalValue, "signalValue");
+        Objects.requireNonNull(signalValue, "signalValue cannot be null");
 
         if (status != Status.RUNNING) {
             throw new WorkflowException(ErrorCode.E0716);
@@ -336,9 +334,6 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
     }
 
     public synchronized void fail(String nodeName) throws WorkflowException {
-        if (status.isEndState()) {
-            throw new WorkflowException(ErrorCode.E0718);
-        }
         String failedNode = failNode(nodeName);
         if (failedNode != null) {
             log.warn(XLog.STD, "Workflow Failed. Failing node [{0}]", failedNode);
@@ -346,11 +341,20 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         else {
             //TODO failed attempting to fail the action. EXCEPTION
         }
-        List<String> killedNodes = killNodes();
-        if (killedNodes.size() > 1) {
-            log.warn(XLog.STD, "Workflow Failed, killing [{0}] nodes", killedNodes.size());
+
+        if (status.isEndState()) {
+            if (status == Status.FAILED) {
+                log.warn(XLog.STD, "An attempt was made to fail the workflow, which is already failed");
+            } else {
+                throw new WorkflowException(ErrorCode.E0718);
+            }
+        } else {
+            List<String> killedNodes = killNodes();
+            if (killedNodes.size() > 1) {
+                log.warn(XLog.STD, "Workflow Failed, killing [{0}] nodes", killedNodes.size());
+            }
+            status = Status.FAILED;
         }
-        status = Status.FAILED;
     }
 
     public synchronized void kill() throws WorkflowException {
@@ -556,6 +560,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
 
     @Override
     public void write(DataOutput dOut) throws IOException {
+
         dOut.writeUTF(instanceId);
 
         //Hadoop Configuration has to get its act right
@@ -577,7 +582,7 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         dOut.writeInt(persistentVars.size());
         for (Map.Entry<String, String> entry : persistentVars.entrySet()) {
             dOut.writeUTF(entry.getKey());
-            writeStringAsBytes(entry.getValue(), dOut);
+            StringSerializationUtil.writeString(dOut, entry.getValue());
         }
     }
 
@@ -607,32 +612,9 @@ public class LiteWorkflowInstance implements Writable, WorkflowInstance {
         int numVars = dIn.readInt();
         for (int x = 0; x < numVars; x++) {
             String vName = dIn.readUTF();
-            String vVal = readBytesAsString(dIn);
-            persistentVars.put(vName, vVal);
+            persistentVars.put(vName, StringSerializationUtil.readString(dIn));
         }
         refreshLog();
-    }
-
-    private void writeStringAsBytes(String value, DataOutput dOut) throws IOException {
-        if (value == null) {
-            dOut.writeUTF(null);
-            return;
-        }
-        dOut.writeUTF(DATA_VERSION);
-        byte[] data = value.getBytes("UTF-8");
-        dOut.writeInt(data.length);
-        dOut.write(data);
-    }
-
-    private String readBytesAsString(DataInput dIn) throws IOException {
-        String value = dIn.readUTF();
-        if (value != null && value.equals(DATA_VERSION)) {
-            int length = dIn.readInt();
-            byte[] data = new byte[length];
-            dIn.readFully(data);
-            value = new String(data, "UTF-8");
-        }
-        return value;
     }
 
     @Override

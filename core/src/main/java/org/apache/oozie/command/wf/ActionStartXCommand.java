@@ -40,6 +40,7 @@ import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.XCommand;
@@ -55,8 +56,10 @@ import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
@@ -224,13 +227,19 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 wfAction.setErrorInfo(null, null);
                 incrActionCounter(wfAction.getType(), 1);
 
-                LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval [{3}]",
+                LOG.info("Start action [{0}] with user-retry state : userRetryCount [{1}], userRetryMax [{2}], userRetryInterval"
+                        + " [{3}]",
                                 wfAction.getId(), wfAction.getUserRetryCount(), wfAction.getUserRetryMax(), wfAction
                                         .getUserRetryInterval());
 
                 Instrumentation.Cron cron = new Instrumentation.Cron();
                 cron.start();
-                context.setStartTime();
+                // do not override starttime for retries
+                if (wfAction.getStartTime() == null) {
+                    context.setStartTime();
+                }
+                context.setVar(JobUtils.getRetryKey(wfAction, JsonTags.WORKFLOW_ACTION_START_TIME),
+                        String.valueOf(new Date().getTime()));
                 executor.start(context, wfAction);
                 cron.stop();
                 FaultInjection.activate("org.apache.oozie.command.SkipCommitFaultInjection");
@@ -302,7 +311,8 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                     try {
                         failJob(context);
                         endWF();
-                        SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(), Status.FAILED,
+                        SLAEventBean slaEvent1 = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
+                                Status.FAILED,
                                 SlaAppType.WORKFLOW_ACTION);
                         if(slaEvent1 != null) {
                             insertList.add(slaEvent1);
@@ -344,9 +354,9 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
     /**
      * Get action executor context
-     * @param isRetry
-     * @param isUserRetry
-     * @return
+     * @param isRetry set to true if retry mode
+     * @param isUserRetry set to true is user retry mode
+     * @return ActionExecutorContext returns action executor context
      */
     protected ActionExecutorContext getContext(boolean isRetry, boolean isUserRetry) {
         return new ActionXCommand.ActionExecutorContext(wfJob, wfAction, isRetry, isUserRetry);
@@ -381,9 +391,6 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
         return;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getKey()
-     */
     @Override
     public String getKey(){
         return getName() + "_" + actionId;

@@ -23,7 +23,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowException;
@@ -38,6 +37,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -105,9 +105,9 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Read workflow definition.
      *
-     *
      * @param appPath application path.
      * @param user user name.
+     * @param conf configuration
      * @return workflow definition.
      * @throws WorkflowException thrown if the definition could not be read.
      */
@@ -116,8 +116,8 @@ public abstract class WorkflowAppService implements Service {
         try {
             URI uri = new URI(appPath);
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            JobConf jobConf = has.createJobConf(uri.getAuthority());
-            FileSystem fs = has.createFileSystem(user, uri, jobConf);
+            Configuration appConf = has.createConfiguration(uri.getAuthority());
+            FileSystem fs = has.createFileSystem(user, uri, appConf);
 
             // app path could be a directory
             Path path = new Path(uri.getPath());
@@ -130,7 +130,7 @@ public abstract class WorkflowAppService implements Service {
                 throw new WorkflowException(ErrorCode.E0736, fsStatus.getLen(), this.maxWFLength);
             }
 
-            Reader reader = new InputStreamReader(fs.open(path));
+            Reader reader = new InputStreamReader(fs.open(path), StandardCharsets.UTF_8);
             StringWriter writer = new StringWriter();
             IOUtils.copyCharStream(reader, writer);
             return writer.toString();
@@ -152,6 +152,7 @@ public abstract class WorkflowAppService implements Service {
             throw new WorkflowException(ErrorCode.E0710, ex.getMessage(), ex);
         }
     }
+
     /**
      * Create proto configuration. <p> The proto configuration includes the user,group and the paths which need to be
      * added to distributed cache. These paths include .jar,.so and the resource file paths.
@@ -167,9 +168,8 @@ public abstract class WorkflowAppService implements Service {
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
             URI uri = new URI(jobConf.get(OozieClient.APP_PATH));
 
-            Configuration conf = has.createJobConf(uri.getAuthority());
+            Configuration conf = has.createConfiguration(uri.getAuthority());
             XConfiguration protoConf = new XConfiguration();
-
 
             String user = jobConf.get(OozieClient.USER_NAME);
             conf.set(OozieClient.USER_NAME, user);
@@ -192,15 +192,15 @@ public abstract class WorkflowAppService implements Service {
                 }
             }
             else {
-                filePaths = new LinkedHashSet<String>();
+                filePaths = new LinkedHashSet<>();
             }
 
             String[] libPaths = jobConf.getStrings(OozieClient.LIBPATH);
             if (libPaths != null && libPaths.length > 0) {
-                for (int i = 0; i < libPaths.length; i++) {
-                    if (libPaths[i].trim().length() > 0) {
-                        Path libPath = new Path(libPaths[i].trim());
-                        Collection<String> libFilePaths = getLibFiles(fs, libPath);
+                for (String libPath : libPaths) {
+                    if (libPath.trim().length() > 0) {
+                        Path path = new Path(libPath.trim());
+                        Collection<String> libFilePaths = getLibFiles(fs, path);
                         filePaths.addAll(libFilePaths);
                     }
                 }
@@ -219,7 +219,7 @@ public abstract class WorkflowAppService implements Service {
                         filePathsNames[i] = p.getName();
                     }
                     Arrays.sort(filePathsNames);
-                    List<String> nonDuplicateParentFilePaths = new ArrayList<String>();
+                    List<String> nonDuplicateParentFilePaths = new ArrayList<>();
                     for (String parentFilePath : parentFilePaths) {
                         Path p = new Path(parentFilePath);
                         if (Arrays.binarySearch(filePathsNames, p.getName()) < 0) {
@@ -263,9 +263,9 @@ public abstract class WorkflowAppService implements Service {
     /**
      * Parse workflow definition.
      *
-     * @param jobConf
-     * @return
-     * @throws WorkflowException
+     * @param jobConf job configuration
+     * @return WorkflowApp
+     * @throws WorkflowException thrown if the workflow application could not be parsed.
      */
     public abstract WorkflowApp parseDef(Configuration jobConf) throws WorkflowException;
 
@@ -276,7 +276,7 @@ public abstract class WorkflowAppService implements Service {
      * @param configDefault config from config-default.xml
      * @return workflow application thrown if the workflow application could not
      *         be parsed
-     * @throws WorkflowException
+     * @throws WorkflowException thrown if the workflow application could not be parsed.
      */
     public abstract WorkflowApp parseDef(Configuration jobConf, Configuration configDefault) throws WorkflowException;
 
@@ -298,7 +298,7 @@ public abstract class WorkflowAppService implements Service {
      * @throws IOException thrown if the lib paths could not be obtained.
      */
     private Collection<String> getLibFiles(FileSystem fs, Path libPath) throws IOException {
-        Set<String> libPaths = new LinkedHashSet<String>();
+        Set<String> libPaths = new LinkedHashSet<>();
         if (fs.exists(libPath)) {
             FileStatus[] files = fs.listStatus(libPath, new NoPathFilter());
 

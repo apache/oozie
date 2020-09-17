@@ -39,6 +39,7 @@ import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ConfigurationService;
@@ -51,6 +52,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -64,6 +66,7 @@ import org.apache.oozie.workflow.lite.NodeDef;
  */
 public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
+    public static final String RETRY = "retry.";
 
     protected static final String RECOVERY_ID_SEPARATOR = "@";
 
@@ -147,7 +150,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      *
      * @param context the execution context.
      * @param executor the executor instance being used.
-     * @param message
+     * @param message error message
      * @param isStart whether the error was generated while starting or ending an action.
      * @param status the status to be set for the action.
      * @throws CommandException thrown if unable to handle action error
@@ -157,8 +160,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         LOG.warn("Setting Action Status to [{0}]", status);
         ActionExecutorContext aContext = (ActionExecutorContext) context;
         WorkflowActionBean action = (WorkflowActionBean) aContext.getAction();
-        WorkflowJobBean wfJob = (WorkflowJobBean) context.getWorkflow();
-        if (!handleUserRetry(action, wfJob)) {
+        if (!handleUserRetry(context, action)) {
             incrActionErrorCounter(action.getType(), "error", 1);
             action.setPending();
             if (isStart) {
@@ -192,7 +194,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
      */
     public void failJob(ActionExecutor.Context context, WorkflowActionBean action) throws CommandException {
         WorkflowJobBean workflow = (WorkflowJobBean) context.getWorkflow();
-        if (!handleUserRetry(action, workflow)) {
+        if (!handleUserRetry(context, action)) {
             incrActionErrorCounter(action.getType(), "failed", 1);
             LOG.warn("Failing Job due to failed action [{0}]", action.getName());
             try {
@@ -216,11 +218,13 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
     /**
      * Execute retry for action if this action is eligible for user-retry
      *
+     * @param context executor context
      * @param action the Workflow action bean
      * @return true if user-retry has to be handled for this action
      * @throws CommandException thrown if unable to fail job
      */
-    public boolean handleUserRetry(WorkflowActionBean action, WorkflowJobBean wfJob) throws CommandException {
+    public boolean handleUserRetry(ActionExecutor.Context context, WorkflowActionBean action) throws CommandException {
+        WorkflowJobBean wfJob = (WorkflowJobBean) context.getWorkflow();
         String errorCode = action.getErrorCode();
         Set<String> allowedRetryCode = LiteWorkflowStoreService.getUserRetryErrorCode();
 
@@ -232,6 +236,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             ActionExecutor.RETRYPOLICY retryPolicy = getUserRetryPolicy(action, wfJob);
             long interval = getRetryDelay(action.getUserRetryCount(), action.getUserRetryInterval() * 60, retryPolicy);
             action.setStatus(WorkflowAction.Status.USER_RETRY);
+            context.setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_END_TIME), String.valueOf(new Date().getTime()));
             action.incrmentUserRetryCount();
             action.setPending();
             queue(new ActionStartXCommand(action.getId(), action.getType()), interval);
@@ -240,25 +245,35 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         return false;
     }
 
-	/*
-	 * In case of action error increment the error count for instrumentation
-	 */
+    /**
+     * In case of action error increment the error count for instrumentation
+     *
+     * @param type counter type
+     * @param error error type
+     * @param count error count
+     */
     private void incrActionErrorCounter(String type, String error, int count) {
         getInstrumentation().incr(INSTRUMENTATION_GROUP, type + "#ex." + error, count);
     }
 
-	/**
-	 * Increment the action counter in the instrumentation log. indicating how
-	 * many times the action was executed since the start Oozie server
-	 */
+    /**
+     * Increment the action counter in the instrumentation log. indicating how
+     * many times the action was executed since the start Oozie server
+     *
+     * @param type counter type
+     * @param count value to update
+     */
     protected void incrActionCounter(String type, int count) {
         getInstrumentation().incr(INSTRUMENTATION_GROUP, type + "#" + getName(), count);
     }
 
-	/**
-	 * Adding a cron for the instrumentation time for the given Instrumentation
-	 * group
-	 */
+    /**
+     * Adding a cron for the instrumentation time for the given Instrumentation
+     * group
+     *
+     * @param type counter type
+     * @param cron cron instance
+     */
     protected void addActionCron(String type, Instrumentation.Cron cron) {
         getInstrumentation().addCron(INSTRUMENTATION_GROUP, type + "#" + getName(), cron);
     }
@@ -295,42 +310,42 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         private Job.Status jobStatus;
 
         /**
-		 * Constructing the ActionExecutorContext, setting the private members
-		 * and constructing the proto configuration
-		 */
-        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry, boolean isUserRetry) {
+         * Constructing the ActionExecutorContext, setting the private members
+         * and constructing the proto configuration
+         *
+         * @param workflow workflow
+         * @param action action
+         * @param isRetry set to true if retry mode
+         * @param isUserRetry set to true if user retry mode
+         */
+        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action, boolean isRetry,
+                boolean isUserRetry) {
             this.workflow = workflow;
             this.action = action;
             this.isRetry = isRetry;
             this.isUserRetry = isUserRetry;
-            try {
-                protoConf = new XConfiguration(new StringReader(workflow.getProtoActionConf()));
-            }
-            catch (IOException ex) {
-                throw new RuntimeException("It should not happen", ex);
+            if (null != workflow.getProtoActionConf()) {
+                try {
+                    protoConf = new XConfiguration(new StringReader(workflow.getProtoActionConf()));
+                }
+                catch (IOException ex) {
+                    throw new RuntimeException("Failed to construct the proto configuration", ex);
+                }
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getCallbackUrl(java.lang.String)
-         */
+        public ActionExecutorContext(WorkflowJobBean workflow, WorkflowActionBean action) {
+            this(workflow, action, false, false);
+        }
+
         public String getCallbackUrl(String externalStatusVar) {
             return Services.get().get(CallbackService.class).createCallBackUrl(action.getId(), externalStatusVar);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getProtoActionConf()
-         */
         public Configuration getProtoActionConf() {
             return protoConf;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getWorkflow()
-         */
         public WorkflowJob getWorkflow() {
             return workflow;
         }
@@ -344,28 +359,20 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return action;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getELEvaluator()
-         */
         public ELEvaluator getELEvaluator() {
             ELEvaluator evaluator = Services.get().get(ELService.class).createEvaluator("workflow");
             DagELFunctions.configureEvaluator(evaluator, workflow, action);
             return evaluator;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setVar(java.lang.String, java.lang.String)
-         */
         public void setVar(String name, String value) {
             setVarToWorkflow(name, value);
         }
 
         /**
          * This is not thread safe, don't use if workflowjob is shared among multiple actions command
-         * @param name
-         * @param value
+         * @param name variable name
+         * @param value variable value
          */
         public void setVarToWorkflow(String name, String value) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
@@ -374,20 +381,13 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             workflow.setWorkflowInstance(wfInstance);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getVar(java.lang.String)
-         */
         public String getVar(String name) {
             name = action.getName() + WorkflowInstance.NODE_VAR_SEPARATOR + name;
             return workflow.getWorkflowInstance().getVar(name);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setStartData(java.lang.String, java.lang.String, java.lang.String)
-         */
         public void setStartData(String externalId, String trackerUri, String consoleUrl) {
+            setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_CONSOLE_URL), consoleUrl);
             action.setStartData(externalId, trackerUri, consoleUrl);
             started = true;
         }
@@ -400,46 +400,27 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             action.setStartTime(now);
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setExecutionData(java.lang.String, java.util.Properties)
-         */
         public void setExecutionData(String externalStatus, Properties actionData) {
             action.setExecutionData(externalStatus, actionData);
             executed = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setExecutionStats(java.lang.String)
-         */
         public void setExecutionStats(String jsonStats) {
             action.setExecutionStats(jsonStats);
             executed = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setExternalChildIDs(java.lang.String)
-         */
         public void setExternalChildIDs(String externalChildIDs) {
+            setVar(JobUtils.getRetryKey(action, JsonTags.WORKFLOW_ACTION_EXTERNAL_CHILD_IDS), externalChildIDs);
             action.setExternalChildIDs(externalChildIDs);
             executed = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setEndData(org.apache.oozie.client.WorkflowAction.Status, java.lang.String)
-         */
         public void setEndData(WorkflowAction.Status status, String signalValue) {
             action.setEndData(status, signalValue);
             ended = true;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#isRetry()
-         */
         public boolean isRetry() {
             return isRetry;
         }
@@ -489,9 +470,6 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return action.getId() + RECOVERY_ID_SEPARATOR + workflow.getRun();
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getActionDir()
-         */
         public Path getActionDir() throws HadoopAccessorException, IOException, URISyntaxException {
             String name = getWorkflow().getId() + "/" + action.getName() + "--" + action.getType();
             FileSystem fs = getAppFileSystem();
@@ -500,21 +478,15 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return fqActionDir;
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#getAppFileSystem()
-         */
         public FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException {
             WorkflowJob workflow = getWorkflow();
             URI uri = new URI(getWorkflow().getAppPath());
             HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-            Configuration fsConf = has.createJobConf(uri.getAuthority());
+            Configuration fsConf = has.createConfiguration(uri.getAuthority());
             return has.createFileSystem(workflow.getUser(), uri, fsConf);
 
         }
 
-        /* (non-Javadoc)
-         * @see org.apache.oozie.action.ActionExecutor.Context#setErrorInfo(java.lang.String, java.lang.String)
-         */
         @Override
         public void setErrorInfo(String str, String exMsg) {
             action.setErrorInfo(str, exMsg);
@@ -546,7 +518,7 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
         }
 
         public void setVar(String name, String value) {
-            if (value != null) {
+            if (value == null) {
                 contextVariableMap.remove(name);
             }
             else {

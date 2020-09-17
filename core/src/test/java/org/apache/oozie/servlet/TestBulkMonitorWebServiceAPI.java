@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -93,8 +94,8 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         if (parameters.size() > 0) {
             String separator = "?";
             for (Map.Entry<String, String> param : parameters.entrySet()) {
-                sb.append(separator).append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=")
-                        .append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                sb.append(separator).append(URLEncoder.encode(param.getKey(), StandardCharsets.UTF_8.name())).append("=")
+                        .append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.name()));
                 separator = "&";
             }
         }
@@ -126,8 +127,9 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
             for (int i = 0; i < servletPath.length; i++) {
                 container.addServletEndpoint(servletPath[i], servletClass[i]);
             }
-            container.addFilter("*", HostnameFilter.class);
-            container.addFilter("*", AuthFilter.class);
+            container.addFilter("/*", HostnameFilter.class);
+            container.addFilter("/*", AuthFilter.class);
+            container.addFilter("/*", HttpResponseHeaderFilter.class);
             setSystemProperty("user.name", getTestUser());
             container.start();
             assertions.call();
@@ -357,7 +359,8 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         conn.setRequestMethod("GET");
         assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
         assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-        JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+        JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                StandardCharsets.UTF_8));
         JSONArray array = (JSONArray) json.get(JsonTags.BULK_RESPONSES);
         return array;
     }

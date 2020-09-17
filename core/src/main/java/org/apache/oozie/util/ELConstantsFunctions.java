@@ -19,13 +19,11 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
-import org.jdom.Element;
 import org.json.simple.JSONValue;
 
-import java.text.SimpleDateFormat;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.Date;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
@@ -161,7 +159,7 @@ public class ELConstantsFunctions {
      * @return the trimmed version of the given string or the empty string if the given string was <code>null</code>
      */
     public static String trim(String input) {
-        return (input == null) ? "" : input.trim();
+        return org.apache.commons.lang3.StringUtils.trimToEmpty(input);
     }
 
     /**
@@ -182,11 +180,12 @@ public class ELConstantsFunctions {
      * @return the encoded <code>String</code>
      */
     public static String urlEncode(String input) {
+        final String encoding = StandardCharsets.UTF_8.name();
         try {
-            return (input == null) ? "" : URLEncoder.encode(input, "UTF-8");
+            return (input == null) ? "" : URLEncoder.encode(input, encoding);
         }
         catch (UnsupportedEncodingException uee) {
-            throw new RuntimeException("It should never happen");
+            throw new RuntimeException(encoding + " encoding is not supported", uee);
         }
     }
 

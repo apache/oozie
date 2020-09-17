@@ -72,7 +72,7 @@ public class XLog implements Log {
         }
 
         /**
-         * Remove all defined context parameters. <p>
+         * Remove all defined context parameters.
          */
         public static void reset() {
             template = "";
@@ -672,9 +672,21 @@ public class XLog implements Log {
     public static String format(String msgTemplate, Object... params) {
         ParamChecker.notEmpty(msgTemplate, "msgTemplate");
         msgTemplate = msgTemplate.replace("{E}", System.getProperty("line.separator"));
+        msgTemplate = replaceEmptyPositions(msgTemplate);
         if (params != null && params.length > 0) {
             msgTemplate = MessageFormat.format(msgTemplate, params);
         }
+        return msgTemplate;
+    }
+
+    private static String replaceEmptyPositions(String msgTemplate) {
+        int pos = 0;
+
+        while (msgTemplate.contains("{}")) {
+            msgTemplate = msgTemplate.replace("{}", String.format("{%d}", pos));
+            pos++;
+        }
+
         return msgTemplate;
     }
 

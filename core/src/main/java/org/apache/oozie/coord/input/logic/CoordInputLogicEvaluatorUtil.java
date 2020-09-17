@@ -24,7 +24,7 @@ import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlEngine;
 import org.apache.commons.jexl2.NamespaceResolver;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.command.CommandException;
@@ -83,7 +83,7 @@ public class CoordInputLogicEvaluatorUtil {
      * Validate input logic.
      *
      * @throws JDOMException the JDOM exception
-     * @throws CommandException
+     * @throws CommandException when evaluation fails
      */
     public void validateInputLogic() throws JDOMException, CommandException {
         JexlEngine jexl = new OozieJexlEngine();

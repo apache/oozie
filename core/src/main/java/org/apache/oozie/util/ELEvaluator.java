@@ -18,10 +18,10 @@
 
 package org.apache.oozie.util;
 
-import org.apache.commons.el.ExpressionEvaluatorImpl;
-import org.apache.commons.el.ExpressionString;
+import javax.el.ELException;
+import org.apache.jasper.el.ExpressionEvaluatorImpl;
 
-import javax.servlet.jsp.el.ELException;
+import javax.el.ExpressionFactory;
 import javax.servlet.jsp.el.ExpressionEvaluator;
 import javax.servlet.jsp.el.FunctionMapper;
 import javax.servlet.jsp.el.VariableResolver;
@@ -35,6 +35,8 @@ import java.util.Map;
  */
 public class ELEvaluator {
 
+    public static final XLog LOG = XLog.getLog(ELEvaluator.class);
+
     /**
      * Provides functions and variables for the EL evaluator. <p> All functions and variables in the context of an EL
      * evaluator are accessible from EL expressions.
@@ -47,8 +49,8 @@ public class ELEvaluator {
          * Create an empty context.
          */
         public Context() {
-            vars = new HashMap<String, Object>();
-            functions = new HashMap<String, Method>();
+            vars = new HashMap<>();
+            functions = new HashMap<>();
         }
 
         /**
@@ -122,9 +124,13 @@ public class ELEvaluator {
             }
             return functions.get(name);
         }
+
+        public String toString() {
+            return vars.toString() + " "+functions.toString();
+        }
     }
 
-    private static ThreadLocal<ELEvaluator> current = new ThreadLocal<ELEvaluator>();
+    private static ThreadLocal<ELEvaluator> current = new ThreadLocal<>();
 
     /**
      * If within the scope of a EL evaluation call, it gives access to the ELEvaluator instance performing the EL
@@ -140,7 +146,8 @@ public class ELEvaluator {
 
     private Context context;
 
-    private ExpressionEvaluatorImpl evaluator = new ExpressionEvaluatorImpl();
+    private ExpressionFactory factory = ExpressionFactory.newInstance();
+    private ExpressionEvaluator evaluator = new ExpressionEvaluatorImpl(factory);
 
     /**
      * Creates an ELEvaluator with no functions and no variables defined.
@@ -190,22 +197,24 @@ public class ELEvaluator {
     /**
      * Evaluate an EL expression. <p>
      *
+     * @param <T> the return type of the expression
      * @param expr EL expression to evaluate.
      * @param clazz return type of the EL expression.
      * @return the object the EL expression evaluated to.
      * @throws Exception thrown if an EL function failed due to a transient error or EL expression could not be
      * evaluated.
      */
-    @SuppressWarnings({"unchecked", "deprecation"})
+    @SuppressWarnings({"unchecked"})
     public <T> T evaluate(String expr, Class<T> clazz) throws Exception {
         ELEvaluator existing = current.get();
         try {
             current.set(this);
             return (T) evaluator.evaluate(expr, clazz, context, context);
         }
-        catch (ELException ex) {
-            if (ex.getRootCause() instanceof Exception) {
-                throw (Exception) ex.getRootCause();
+        catch (RuntimeException ex) {
+            if (ex.getCause() instanceof Exception) {
+                LOG.debug("Unfolding exception", ex);
+                throw (Exception) ex.getCause();
             }
             else {
                 throw ex;
@@ -216,41 +225,4 @@ public class ELEvaluator {
         }
     }
 
-    /**
-     * Check if the input expression contains sequence statically. for example
-     * identify if "," is present outside of a function invocation in the given
-     * expression. Ex "${func('abc')},${func('def'}",
-     *
-     * @param expr - Expression string
-     * @param sequence - char sequence to check in the input expression
-     * @return true if present
-     * @throws Exception Exception thrown if an EL function failed due to a
-     *         transient error or EL expression could not be parsed
-     */
-    public boolean checkForExistence(String expr, String sequence)
-            throws Exception {
-        try {
-            Object exprString = evaluator.parseExpressionString(expr);
-            if (exprString instanceof ExpressionString) {
-                for (Object element : ((ExpressionString)exprString).getElements()) {
-                    if (element instanceof String &&
-                            element.toString().contains(sequence)) {
-                        return true;
-                    }
-                }
-            } else if (exprString instanceof String) {
-                if (((String)exprString).contains(sequence)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (ELException ex) {
-            if (ex.getRootCause() instanceof Exception) {
-                throw (Exception) ex.getRootCause();
-            }
-            else {
-                throw ex;
-            }
-        }
-    }
 }

@@ -67,7 +67,7 @@ public class OoziePigStats extends ActionStats {
         pigStatsGroup.put("SMM_SPILL_COUNT", Long.toString(pigStats.getSMMSpillCount()));
 
         PigStats.JobGraph jobGraph = pigStats.getJobGraph();
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String separator = ",";
 
         for (JobStats jobStats : jobGraph) {
@@ -119,18 +119,16 @@ public class OoziePigStats extends ActionStats {
         jobStatsGroup.put("MULTI_STORE_COUNTERS", toJSONFromMultiStoreCounters(jobStats.getMultiStoreCounters()));
 
         return jobStatsGroup;
-
     }
 
     // multistorecounters to JSON
     @SuppressWarnings("unchecked")
     private static JSONObject toJSONFromMultiStoreCounters(Map<String, Long> map) {
         JSONObject group = new JSONObject();
-        for (String cName : map.keySet()) {
-            group.put(cName, map.get(cName));
+        for (Map.Entry cName : map.entrySet()) {
+            group.put(cName.getKey(), cName.getValue());
         }
         return group;
-
     }
 
     // hadoop counters to JSON
@@ -151,7 +149,5 @@ public class OoziePigStats extends ActionStats {
             groups.put(gName, group);
         }
         return groups;
-
     }
-
 }

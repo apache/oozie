@@ -44,10 +44,8 @@ import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor;
 import org.apache.oozie.executor.jpa.SLARegistrationQueryExecutor.SLARegQuery;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor;
 import org.apache.oozie.executor.jpa.SLASummaryQueryExecutor.SLASummaryQuery;
-import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchedulerService;
-import org.apache.oozie.service.Service;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -55,10 +53,10 @@ import org.apache.oozie.sla.SLASummaryBean;
 import org.apache.oozie.store.StoreException;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
-import org.apache.oozie.util.XCallable;
 
 public class TestCoordChangeXCommand extends XDataTestCase {
     private Services services;
+    public static final int HOURS_IN_MS = 60 * 60 * 1000;
 
     /**
      * Return the UTC date and time in W3C format down to second
@@ -69,20 +67,6 @@ public class TestCoordChangeXCommand extends XDataTestCase {
      */
     public static String convertDateToString(long timeStamp) {
         return DateUtils.formatDateOozieTZ(new Date(timeStamp));
-    }
-
-    /**
-     * Class is used to change the queueservice, as that one meddles with the actions in the background.
-     */
-    static class FakeCallableQueueService extends CallableQueueService implements Service {
-        @Override
-        public void init(Services services){}
-
-        @Override
-        public void destroy(){}
-
-        @Override
-        public synchronized boolean queueSerial(List<? extends XCallable<?>> callables, long delay){return false;}
     }
 
     @Override
@@ -538,7 +522,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     // Testcase to check status for coord whose enddate is set before startdate.
     public void testCoordChangeEndTimeBeforeStart() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000)); // 4 hrs
+        Date end = new Date(start.getTime() + (4 * HOURS_IN_MS)); // 4 hrs
         Date endTime = new Date(start.getTime() - 3000);
 
         String endTimeChangeStr = "endtime=" + DateUtils.formatDateOozieTZ(endTime);
@@ -624,7 +608,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2013-08-01T04:59Z");
 
-        Date pauseTime = new Date(startTime.getTime() + (3 * 60 * 60 * 1000));  //2 hrs
+        Date pauseTime = new Date(startTime.getTime() + (3 * HOURS_IN_MS));  //2 hrs
         String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING, startTime,
                 endTime, endTime, true, false, 4);
@@ -729,7 +713,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     public void testChangeTimeDeleteRunning() throws Exception {
         Date startTime = DateUtils.parseDateOozieTZ("2013-08-01T00:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2013-08-01T04:59Z");
-        Date pauseTime = new Date(startTime.getTime() + (2 * 60 * 60 * 1000)); // 2 hrs
+        Date pauseTime = new Date(startTime.getTime() + (2 * HOURS_IN_MS)); // 2 hrs
         String pauseTimeChangeStr = "pausetime=" + DateUtils.formatDateOozieTZ(pauseTime);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.RUNNING,
                 startTime, endTime, endTime, true, false, 4);
@@ -763,7 +747,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
     public void testCoordStatus_Ignored() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (5 * 60 * 60 * 1000)); // 5 hrs
+        Date end = new Date(start.getTime() + (5 * HOURS_IN_MS)); // 5 hrs
         String statusToRUNNING = "status=RUNNING";
         String statusToIGNORED = "status=IGNORED";
         final CoordinatorJobBean job1 = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.IGNORED, start,
@@ -808,7 +792,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     // Status change from failed- successful
     public void testCoordStatus_Failed() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (5 * 60 * 60 * 1000)); // 5 hrs
+        Date end = new Date(start.getTime() + (5 * HOURS_IN_MS)); // 5 hrs
         String status = "status=RUNNING";
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.FAILED, start,
                 end, end, true, false, 4);
@@ -837,7 +821,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     //  Status change from Killed- successful
     public void testCoordStatus_Killed() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (5 * 60 * 60 * 1000)); // 5 hrs
+        Date end = new Date(start.getTime() + (5 * HOURS_IN_MS)); // 5 hrs
         String status = "status=RUNNING";
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.KILLED, start,
                 end, end, true, false, 4);
@@ -866,7 +850,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     // Check status change from Succeeded-  exception
     public void testCoordStatus_Changefailed() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000)); // 5 hrs
+        Date end = new Date(start.getTime() + (4 * HOURS_IN_MS)); // 5 hrs
         String status = "status=RUNNING";
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.SUCCEEDED, start,
                 end, end, true, false, 4);
@@ -886,7 +870,7 @@ public class TestCoordChangeXCommand extends XDataTestCase {
     // Check status change - with multiple option. Pause can't be applied to killed job, old behavior.
     public void testCoord_throwException() throws Exception {
         Date start = new Date();
-        Date end = new Date(start.getTime() + (4 * 60 * 60 * 1000)); // 4 hrs
+        Date end = new Date(start.getTime() + (4 * HOURS_IN_MS)); // 4 hrs
         String status = "status=RUNNING;pausetime=" + DateUtils.formatDateOozieTZ(end);
         final CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.KILLED, start,
                 end, end, true, false, 4);
@@ -903,6 +887,29 @@ public class TestCoordChangeXCommand extends XDataTestCase {
             assertTrue(e.getMessage().contains("Cannot change a killed coordinator job"));
         }
     }
+
+    // Check status change - when job is killed with no action created
+    public void testRunningStatusWithNoAction() throws Exception {
+        Date now = new Date();
+        Date start = new Date(now.getTime() - (4 * HOURS_IN_MS)); // 4 hrs
+        Date end = new Date(now.getTime() + (4 * HOURS_IN_MS)); // 4 hrs
+
+        String status = "status=RUNNING";
+        CoordinatorJobBean job = addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status.KILLED, start, end,
+                null, true, false, 0);
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, job.getId());
+        assertEquals("KILLED", job.getStatusStr());
+        assertNull(job.getNextMaterializedTime());
+        new CoordChangeXCommand(job.getId(), status).call();
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, job.getId());
+        assertEquals("RUNNING", job.getStatusStr());
+        // make sure that action is created
+        new CoordMaterializeTransitionXCommand(job.getId(), 3600).call();
+        job = CoordJobQueryExecutor.getInstance().get(CoordJobQueryExecutor.CoordJobQuery.GET_COORD_JOB, job.getId());
+        assertNotNull(job.getNextMaterializedTime());
+        assertEquals(1, job.getLastActionNumber());
+    }
+
     protected CoordinatorJobBean addRecordToCoordJobTableForPauseTimeTest(CoordinatorJob.Status status, Date start,
             Date end, Date lastActionTime, boolean pending, boolean doneMatd, int lastActionNum) throws Exception {
         CoordinatorJobBean coordJob = createCoordJob(status, start, end, pending, doneMatd, lastActionNum);
@@ -941,7 +948,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"5\" start='2009-02-01T01:00Z' end='2009-02-01T01:09Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"5\" start='2009-02-01T01:00Z'"
+                + " end='2009-02-01T01:09Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
         appXml += "<concurrency>2</concurrency>";
@@ -949,7 +957,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='MINUTE'"
+                + " end_of_duration='NONE'>";
         appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:latest(0)}</instance>";
@@ -957,7 +966,8 @@ public class TestCoordChangeXCommand extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='MINUTE' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='5' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit="
+                + "'MINUTE' end_of_duration='NONE'>";
         appXml += "<uri-template>file:///tmp/coord/workflows/${YEAR}/${DAY}</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:current(-1)}</instance>";

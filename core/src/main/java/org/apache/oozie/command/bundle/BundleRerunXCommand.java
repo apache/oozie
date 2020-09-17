@@ -82,9 +82,6 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         this.noCleanup = noCleanup;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#loadState()
-     */
     @Override
     protected void loadState() throws CommandException {
         try {
@@ -101,9 +98,6 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.RerunTransitionXCommand#rerunChildren()
-     */
     @Override
     public void rerunChildren() throws CommandException {
         boolean isUpdateActionDone = false;
@@ -195,9 +189,6 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         updateList.add(new UpdateEntry<BundleActionQuery>(BundleActionQuery.UPDATE_BUNDLE_ACTION_PENDING_MODTIME, action));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#updateJob()
-     */
     @Override
     public void updateJob() {
         // rerun a paused bundle job will keep job status at paused and pending at previous pending
@@ -216,9 +207,6 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         updateList.add(new UpdateEntry<BundleJobQuery>(BundleJobQuery.UPDATE_BUNDLE_JOB_STATUS_PENDING, bundleJob));
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.RerunTransitionXCommand#performWrites()
-     */
     @Override
     public void performWrites() throws CommandException {
         try {
@@ -229,42 +217,26 @@ public class BundleRerunXCommand extends RerunTransitionXCommand<Void> {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#getEntityKey()
-     */
     @Override
     public String getEntityKey() {
         return jobId;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#isLockRequired()
-     */
     @Override
     protected boolean isLockRequired() {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#getJob()
-     */
     @Override
     public Job getJob() {
         return bundleJob;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#notifyParent()
-     */
     @Override
     public void notifyParent() throws CommandException {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.RerunTransitionXCommand#getLog()
-     */
     @Override
     public XLog getLog() {
         return LOG;

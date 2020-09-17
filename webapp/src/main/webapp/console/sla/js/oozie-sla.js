@@ -17,45 +17,43 @@
  */
 
 function initializeDatePicker() {
-    $("#startDate").datetimepicker({
-        dateFormat: 'yy-mm-dd'
-   });
-
-   $("#endDate").datetimepicker({
-        dateFormat: 'yy-mm-dd'
+   $(".datepicker").datetimepicker({
+           dateFormat: 'yy-mm-dd'
    });
 }
 
 function onSearchClick(){
-    var queryParams = null;
-    var filter = "filter=";
+    var queryParams = "";
+    var elements = document.querySelectorAll("#inputArea input")
+
+    for (var i = 0; i < elements.length; i++) {
+        if(elements[i].value != "" && elements[i].id != "job_id") {
+            if (i!=0) {
+                queryParams += ";";
+            }
+            if (elements[i].classList.contains("datepicker")) {
+                var splitDate = elements[i].value.split(" ");
+                queryParams += elements[i].id + "=" + splitDate[0] + "T" + splitDate[1] + "Z";
+            } else {
+                queryParams += elements[i].id + "=" + encodeURIComponent(elements[i].value);
+            }
+        }
+    }
+
     var appName = $("#app_name").val();
     var jobId = $("#job_id").val();
-    var nominalStart = $("#startDate").val();
-    var nominalEnd = $("#endDate").val();
 
     if (appName == "" && jobId == "") {
         alert("AppName or JobId is required");
     }
-    else if (appName != "" && jobId != "") {
-        alert("Enter only one of AppName or JobId");
-    }
     else {
-        if (appName != "") {
-            queryParams = filter+"app_name="+appName;
+        if (jobId != "") {
+            if (queryParams.length>0) {
+                queryParams += ";";
+            }
+            queryParams += "id=" + jobId + ";parent_id=" + jobId;
         }
-        else if (jobId != "") {
-            queryParams = filter+"id="+jobId+";parent_id="+jobId;
-        }
-        if (nominalStart != "") {
-            var splitNominalStart = nominalStart.split(" ");
-            queryParams += ";nominal_start="+splitNominalStart[0]+"T"+splitNominalStart[1]+"Z";
-        }
-        if (nominalEnd != "") {
-            var splitNominalEnd = nominalEnd.split(" ");
-            queryParams += ";nominal_end="+splitNominalEnd[0]+"T"+splitNominalEnd[1]+"Z";
-        }
-        fetchData(queryParams);
+        fetchData("filter="+queryParams);
     }
 }
 

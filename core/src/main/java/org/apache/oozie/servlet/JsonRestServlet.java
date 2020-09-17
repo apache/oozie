@@ -18,6 +18,7 @@
 
 package org.apache.oozie.servlet;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.RestConstants;
@@ -41,6 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -51,11 +53,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class JsonRestServlet extends HttpServlet {
 
-    static final String JSON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    private static final String UTF_8_ENCODING = StandardCharsets.UTF_8.name();
 
-    protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    static final String JSON_UTF8 = RestConstants.JSON_CONTENT_TYPE + "; charset=\""+UTF_8_ENCODING+"\"";
 
-    protected static final String TEXT_UTF8 = RestConstants.TEXT_CONTENT_TYPE + "; charset=\"UTF-8\"";
+    protected static final String XML_UTF8 = RestConstants.XML_CONTENT_TYPE + "; charset=\""+UTF_8_ENCODING+"\"";
+
+    protected static final String TEXT_UTF8 = RestConstants.TEXT_CONTENT_TYPE + "; charset=\""+UTF_8_ENCODING+"\"";
 
     protected static final String AUDIT_OPERATION = "audit.operation";
     protected static final String AUDIT_PARAM = "audit.param";
@@ -90,9 +94,9 @@ public abstract class JsonRestServlet extends HttpServlet {
             if (type != Integer.class && type != Boolean.class && type != String.class) {
                 throw new IllegalArgumentException("Type must be integer, boolean or string");
             }
-            this.type = ParamChecker.notNull(type, "type");
+            this.type = Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
-            this.methods = ParamChecker.notNull(methods, "methods");
+            this.methods = Objects.requireNonNull(methods, "methods cannot be null");
         }
 
     }
@@ -119,7 +123,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             for (ParameterInfo parameter : parameters) {
                 this.parameters.put(parameter.name, parameter);
             }
-            this.methods = ParamChecker.notNull(methods, "methods");
+            this.methods = Objects.requireNonNull(methods, "methods cannot be null");
         }
     }
 
@@ -189,7 +193,7 @@ public abstract class JsonRestServlet extends HttpServlet {
      * @param name name of the timer for the cron.
      * @param cron cron to add to a instrumentation timer.
      */
-    private void addCron(String name, Instrumentation.Cron cron) {
+    protected void addCron(String name, Instrumentation.Cron cron) {
         instrumentation.addCron(INSTRUMENTATION_GROUP, name, cron);
     }
 
@@ -228,7 +232,7 @@ public abstract class JsonRestServlet extends HttpServlet {
      * @param name counter name.
      * @param count count to increment the counter.
      */
-    private void incrCounter(String name, int count) {
+    protected void incrCounter(String name, int count) {
         if (instrumentation != null) {
             instrumentation.incr(INSTRUMENTATION_GROUP, name, count);
         }
@@ -291,11 +295,11 @@ public abstract class JsonRestServlet extends HttpServlet {
         requestCron.set(cron);
         try {
             cron.start();
+            TOTAL_REQUESTS_SAMPLER_COUNTER.incrementAndGet();
+            samplerCounter.incrementAndGet();
             validateRestUrl(request.getMethod(), getResourceName(request), request.getParameterMap());
             XLog.Info.get().clear();
             String user = getUser(request);
-            TOTAL_REQUESTS_SAMPLER_COUNTER.incrementAndGet();
-            samplerCounter.incrementAndGet();
             //If trace is enabled then display the request headers
             XLog log = XLog.getLog(getClass());
             if (log.isTraceEnabled()){
@@ -380,7 +384,7 @@ public abstract class JsonRestServlet extends HttpServlet {
      * @param timeZoneId time zone to use for dates in the JSON response.
      * @throws java.io.IOException thrown if the bean could not be serialized to the response output stream.
      */
-    protected void sendJsonResponse(HttpServletResponse response, int statusCode, JsonBean bean, String timeZoneId) 
+    protected void sendJsonResponse(HttpServletResponse response, int statusCode, JsonBean bean, String timeZoneId)
             throws IOException {
         response.setStatus(statusCode);
         JSONObject json = bean.toJSONObject(timeZoneId);
@@ -401,7 +405,7 @@ public abstract class JsonRestServlet extends HttpServlet {
             throws IOException {
         response.setHeader(RestConstants.OOZIE_ERROR_CODE, error);
         response.setHeader(RestConstants.OOZIE_ERROR_MESSAGE, message);
-        response.sendError(statusCode);
+        response.sendError(statusCode, StringEscapeUtils.escapeHtml4(message));
     }
 
     protected void sendJsonResponse(HttpServletResponse response, int statusCode, JSONStreamAware json)
@@ -580,6 +584,17 @@ public abstract class JsonRestServlet extends HttpServlet {
             XLog.Info.get().setParameter(XLogService.USER, userName);
         }
         return (userName != null) ? userName : UNDEF;
+    }
+
+    /**
+     * Gets proxy user.
+     * If there is any proxy user, then <code>HttpServletRequest</code> contains proxy user.
+     * Otherwise it is the normal user.
+     * @param request  the request
+     * @return the username
+     */
+    protected String getProxyUser(HttpServletRequest request) {
+        return (String) request.getAttribute(USER_NAME);
     }
 
     /**

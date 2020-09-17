@@ -21,10 +21,6 @@ package org.apache.oozie.service;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -34,7 +30,7 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.LauncherMapperHelper;
+import org.apache.oozie.action.hadoop.LauncherHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.CoordinatorAction;
@@ -77,7 +73,7 @@ import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -85,6 +81,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -122,7 +119,8 @@ public class TestRecoveryService extends XDataTestCase {
      */
     public void testWorkflowActionRecoveryService() throws Exception {
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(),
+                "workflow.xml")), StandardCharsets.UTF_8);
         createTestCaseSubDir("lib");
         IOUtils.copyCharStream(reader, writer);
 
@@ -249,24 +247,14 @@ public class TestRecoveryService extends XDataTestCase {
 
         ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job1, action1, false, false);
         MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
-        String user = conf.get("user.name");
-        String group = conf.get("group.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-
+        Configuration conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action1.getConf()));
         String launcherId = action1.getExternalId();
 
-        final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
+        waitUntilYarnAppDoneAndAssertSuccess(launcherId);
 
-        waitFor(240 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-        Map<String, String> actionData = LauncherMapperHelper.getActionData(getFileSystem(), context.getActionDir(),
+        Map<String, String> actionData = LauncherHelper.getActionData(getFileSystem(), context.getActionDir(),
                 conf);
-        assertTrue(LauncherMapperHelper.hasIdSwap(actionData));
+        assertTrue(LauncherHelper.hasIdSwap(actionData));
     }
 
     /**
@@ -274,10 +262,8 @@ public class TestRecoveryService extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRecoveryCoordCreate() throws Exception {
-        final BundleActionBean bundleAction;
-        final BundleJobBean bundle;
-        bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
-        bundleAction = addRecordToBundleActionTable(bundle.getId(), "coord1", 1, Job.Status.PREP);
+        final BundleJobBean bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
+        addRecordToBundleActionTable(bundle.getId(), "coord1", 1, Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
 
         sleep(3000);
@@ -290,7 +276,7 @@ public class TestRecoveryService extends XDataTestCase {
                         jpaService.execute(new BundleActionGetJPAExecutor(bundle.getId(), "coord1"));
                 try {
                     if (mybundleAction.getCoordId() != null) {
-                        CoordinatorJobBean coord = jpaService.execute(new CoordJobGetJPAExecutor(mybundleAction.getCoordId()));
+                        jpaService.execute(new CoordJobGetJPAExecutor(mybundleAction.getCoordId()));
                         return true;
                     }
                 } catch (Exception e) {
@@ -345,12 +331,11 @@ public class TestRecoveryService extends XDataTestCase {
      * @throws Exception
      */
     public void testBundleRecoveryCoordExists() throws Exception {
-        final BundleActionBean bundleAction;
         final BundleJobBean bundle;
         final CoordinatorJob coord;
         bundle = addRecordToBundleJobTable(Job.Status.RUNNING, false);
         coord = addRecordToCoordJobTable(Job.Status.PREP, false, false);
-        bundleAction = addRecordToBundleActionTable(bundle.getId(), coord.getId(), "coord1", 1, Job.Status.PREP);
+        addRecordToBundleActionTable(bundle.getId(), coord.getId(), "coord1", 1, Job.Status.PREP);
         final JPAService jpaService = Services.get().get(JPAService.class);
 
         sleep(3000);
@@ -394,7 +379,8 @@ public class TestRecoveryService extends XDataTestCase {
         waitFor(10000, new Predicate() {
             public boolean evaluate() throws Exception {
                 CoordinatorActionBean bean = ce.getCoordAction(actionId);
-                return (bean.getStatus() == CoordinatorAction.Status.RUNNING || bean.getStatus() == CoordinatorAction.Status.SUCCEEDED);
+                return (bean.getStatus() == CoordinatorAction.Status.RUNNING || bean.getStatus()
+                        == CoordinatorAction.Status.SUCCEEDED);
             }
         });
 
@@ -553,7 +539,8 @@ public class TestRecoveryService extends XDataTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with SUSPENDED and
-     * action with SUSPENDED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status changes to SUSPENDED.
+     * action with SUSPENDED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status
+     *  changes to SUSPENDED.
      *
      * @throws Exception
      */
@@ -590,7 +577,8 @@ public class TestRecoveryService extends XDataTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with KILLED and
-     * action with KILLED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow status changes to KILLED.
+     * action with KILLED and workflow with RUNNING. Then, runs the recovery runnable and ensures the workflow
+     *  status changes to KILLED.
      *
      * @throws Exception
      */
@@ -627,7 +615,8 @@ public class TestRecoveryService extends XDataTestCase {
 
     /**
      * Tests functionality of the Recovery Service Runnable command. </p> Insert a coordinator job with RUNNING and
-     * action with RUNNING and workflow with SUSPENDED. Then, runs the recovery runnable and ensures the workflow status changes to RUNNING.
+     * action with RUNNING and workflow with SUSPENDED. Then, runs the recovery runnable and ensures the workflow status
+     *  changes to RUNNING.
      *
      * @throws Exception
      */
@@ -710,7 +699,9 @@ public class TestRecoveryService extends XDataTestCase {
         action.setLastModifiedTime(new Date());
         action.setStatus(CoordinatorAction.Status.SUBMITTED);
         String appPath = getTestCaseFileUri("one-op/workflow.xml");
-        String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
+        String actionXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' xmlns:sla='uri:oozie:sla:0.1' name='NAME'"
+                + " frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z' timezone='UTC' freq_timeunit='DAY'"
+                + " end_of_duration='NONE'  instance-number=\"1\" action-nominal-time=\"2009-02-01T01:00Z\">";
         actionXml += "<controls>";
         actionXml += "<timeout>10</timeout>";
         actionXml += "<concurrency>2</concurrency>";
@@ -718,7 +709,8 @@ public class TestRecoveryService extends XDataTestCase {
         actionXml += "</controls>";
         actionXml += "<input-events>";
         actionXml += "<data-in name='A' dataset='a'>";
-        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("workflows/workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:latest(0)}</instance>";
@@ -726,7 +718,8 @@ public class TestRecoveryService extends XDataTestCase {
         actionXml += "</input-events>";
         actionXml += "<output-events>";
         actionXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        actionXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         actionXml += "<uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template>";
         actionXml += "</dataset>";
         actionXml += "<instance>${coord:current(-1)}</instance>";
@@ -779,7 +772,7 @@ public class TestRecoveryService extends XDataTestCase {
         File wf = new File(appPath, "workflow.xml");
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(content);
         }
         catch (IOException iex) {
@@ -812,7 +805,8 @@ public class TestRecoveryService extends XDataTestCase {
 
         String confStr = "<configuration></configuration>";
         coordJob.setConf(confStr);
-        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z' end='2009-02-03T23:59Z'";
+        String appXml = "<coordinator-app xmlns='uri:oozie:coordinator:0.2' name='NAME' frequency=\"1\" start='2009-02-01T01:00Z'"
+                + " end='2009-02-03T23:59Z'";
         appXml += " timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<controls>";
         appXml += "<timeout>10</timeout>";
@@ -821,7 +815,8 @@ public class TestRecoveryService extends XDataTestCase {
         appXml += "</controls>";
         appXml += "<input-events>";
         appXml += "<data-in name='A' dataset='a'>";
-        appXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:latest(0)}</instance>";
@@ -829,7 +824,8 @@ public class TestRecoveryService extends XDataTestCase {
         appXml += "</input-events>";
         appXml += "<output-events>";
         appXml += "<data-out name='LOCAL_A' dataset='local_a'>";
-        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC' freq_timeunit='DAY' end_of_duration='NONE'>";
+        appXml += "<dataset name='local_a' frequency='7' initial-instance='2009-02-01T01:00Z' timezone='UTC'"
+                + " freq_timeunit='DAY' end_of_duration='NONE'>";
         appXml += "<uri-template>" + getTestCaseFileUri("workflows/${YEAR}/${DAY}") + "</uri-template>";
         appXml += "</dataset>";
         appXml += "<instance>${coord:current(-1)}</instance>";
@@ -916,7 +912,7 @@ public class TestRecoveryService extends XDataTestCase {
         Path outputDir = new Path(getFsTestCaseDir(), "output");
 
         FileSystem fs = getFileSystem();
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")));
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
         w.write("dummy\n");
         w.write("dummy\n");
         w.close();

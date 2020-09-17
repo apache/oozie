@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -20,8 +20,6 @@
 function printUsage() {
   echo
   echo " Usage  : oozie-setup.sh <Command and OPTIONS>"
-  echo "          prepare-war [-d directory] [-secure] (-d identifies an alternative directory for processing jars"
-  echo "                                                -secure will configure the war file to use HTTPS (SSL))"
   echo "          sharelib create -fs FS_URI [-locallib SHARED_LIBRARY] [-concurrency CONCURRENCY]"
   echo "                                                                (create sharelib for oozie,"
   echo "                                                                FS_URI is the fs.default.name"
@@ -125,7 +123,6 @@ additionalDir=""
 extjsHome=""
 jarsPath=""
 prepareWar=""
-secure=""
 
 while [ $# -gt 0 ]
 do
@@ -163,14 +160,9 @@ do
       ${JAVA_BIN} ${OOZIE_OPTS} -cp ${OOZIECPPATH} org.apache.oozie.tools.OozieDBImportCLI "${@}"
     fi
     exit $?
-  elif [ "$1" = "-secure" ]; then
-    shift
-    secure=true
   elif [ "$1" = "-d" ]; then
     shift
     additionalDir=$1
-  elif [ "$1" = "prepare-war" ]; then
-    prepareWar=true
   else
     printUsage
     exit -1

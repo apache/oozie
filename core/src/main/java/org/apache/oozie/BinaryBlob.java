@@ -21,8 +21,10 @@ package org.apache.oozie;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.compression.CompressionCodec;
+import org.apache.oozie.util.ByteArrayUtils;
 
 /**
  * BinaryBlob to maintain compress and uncompressed data
@@ -35,26 +37,26 @@ public class BinaryBlob {
     /**
      * Construct a binaryblob
      *
-     * @param byteArray
+     * @param byteArray the source byte array
      * @param isUncompressed - true if data is uncompressed
      */
     public BinaryBlob(byte[] byteArray, boolean isUncompressed) {
         if (isUncompressed) {
-            this.bytes = byteArray;
+            this.bytes = ByteArrayUtils.weakIntern(byteArray);
             this.rawBlob = null;
         }
         else {
-            this.rawBlob = byteArray;
+            this.rawBlob = ByteArrayUtils.weakIntern(byteArray);
         }
     }
 
     /**
      * Set bytes
      *
-     * @param byteArray
+     * @param byteArray the byte array
      */
     public void setBytes(byte[] byteArray) {
-        this.bytes = byteArray;
+        this.bytes = ByteArrayUtils.weakIntern(byteArray);
         this.rawBlob = null;
     }
 
@@ -74,10 +76,10 @@ public class BinaryBlob {
             DataInputStream dais = new DataInputStream(new ByteArrayInputStream(rawBlob));
             CompressionCodec codec = CodecFactory.getDeCompressionCodec(dais);
             if (codec != null) {
-                bytes = codec.decompressToBytes(dais);
+                bytes = ByteArrayUtils.weakIntern(codec.decompressToBytes(dais));
             }
             else {
-                bytes = rawBlob;
+                bytes = ByteArrayUtils.weakIntern(rawBlob);
             }
             dais.close();
         }
@@ -104,14 +106,14 @@ public class BinaryBlob {
         if (CodecFactory.isCompressionEnabled()) {
             byte[] headerBytes = CodecFactory.getHeaderBytes();
             try {
-                rawBlob = CodecFactory.getCompressionCodec().compressBytes(headerBytes, bytes);
+                rawBlob = ByteArrayUtils.weakIntern(CodecFactory.getCompressionCodec().compressBytes(headerBytes, bytes));
             }
             catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
         else {
-            rawBlob = bytes;
+            rawBlob = ByteArrayUtils.weakIntern(bytes);
         }
         return rawBlob;
     }

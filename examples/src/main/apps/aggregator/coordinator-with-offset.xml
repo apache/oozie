@@ -51,8 +51,8 @@
             <app-path>${nameNode}/user/${coord:user()}/${examplesRoot}/apps/aggregator</app-path>
             <configuration>
                 <property>
-                    <name>jobTracker</name>
-                    <value>${jobTracker}</value>
+                    <name>resourceManager</name>
+                    <value>${resourceManager}</value>
                 </property>
                 <property>
                     <name>nameNode</name>

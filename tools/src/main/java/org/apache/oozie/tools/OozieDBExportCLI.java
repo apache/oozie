@@ -19,6 +19,7 @@
 package org.apache.oozie.tools;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.cli.CLIParser;
@@ -35,18 +36,17 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
  * This class provides the following functionality:
- * <p/>
  * <ul>
  * <li>Exports the data from the Oozie database to a specified target zip file</li>
  * <li>This class uses the current oozie configuration in oozie-site.xml</li>
  * </ul>
- * <p/>
  */
 
 public class OozieDBExportCLI {
@@ -177,10 +177,10 @@ public class OozieDBExportCLI {
     }
 
     private static int exportTableToJSON(Query query, ZipOutputStream zipOutputStream, String filename) throws IOException {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
         ZipEntry zipEntry = new ZipEntry(filename);
         zipOutputStream.putNextEntry(zipEntry);
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, "UTF-8"));
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
         query.setMaxResults(LIMIT);
         int exported = 0;
         List<?> list = query.getResultList();

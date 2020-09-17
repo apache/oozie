@@ -18,6 +18,7 @@
 
 package org.apache.oozie.tools;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -29,11 +30,14 @@ import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.db.CompositeIndex;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -52,16 +56,17 @@ import java.util.Map;
  * Command line tool to create/upgrade Oozie Database
  */
 public class OozieDBCLI {
-    public static final String HELP_CMD = "help";
-    public static final String VERSION_CMD = "version";
-    public static final String CREATE_CMD = "create";
-    public static final String UPGRADE_CMD = "upgrade";
-    public static final String POST_UPGRADE_CMD = "postupgrade";
-    public static final String SQL_FILE_OPT = "sqlfile";
-    public static final String RUN_OPT = "run";
+    private static final String HELP_CMD = "help";
+    private static final String VERSION_CMD = "version";
+    private static final String CREATE_CMD = "create";
+    private static final String UPGRADE_CMD = "upgrade";
+    private static final String POST_UPGRADE_CMD = "postupgrade";
+    private static final String SQL_FILE_OPT = "sqlfile";
+    private static final String RUN_OPT = "run";
     private final static String DB_VERSION_PRE_4_0 = "1";
     private final static String DB_VERSION_FOR_4_0 = "2";
-    final static String DB_VERSION_FOR_5_0 = "3";
+    private static String DB_VERSION_FOR_4_1 = "3";
+    final static String DB_VERSION_FOR_5_0 = "4";
     private final static String DISCRIMINATOR_COLUMN = "bean_type";
     private final static String TEMP_COLUMN_PREFIX = "temp_";
     private HashMap <String, List<String>> clobColumnMap;
@@ -119,9 +124,12 @@ public class OozieDBCLI {
                     throw new Exception("'-sqlfile <FILE>' or '-run' options must be specified");
                 }
                 CommandLine commandLine = command.getCommandLine();
-                String sqlFile = (commandLine.hasOption(SQL_FILE_OPT))
-                                 ? commandLine.getOptionValue(SQL_FILE_OPT)
-                                 : File.createTempFile("ooziedb-", ".sql").getAbsolutePath();
+                String sqlFile =  commandLine.getOptionValue(SQL_FILE_OPT);
+                if (sqlFile == null || sqlFile.isEmpty()) {
+                    File tempFile = File.createTempFile("ooziedb-", ".sql");
+                    tempFile.deleteOnExit();
+                    sqlFile = tempFile.getAbsolutePath();
+                }
                 boolean run = commandLine.hasOption(RUN_OPT);
                 if (command.getName().equals(CREATE_CMD)) {
                     createDB(sqlFile, run);
@@ -161,7 +169,7 @@ public class OozieDBCLI {
         }
     }
 
-    private Map<String, String> getJdbcConf() throws Exception {
+    protected Map<String, String> getJdbcConf() throws Exception {
         Services services = new Services();
         Configuration conf = services.getConf();
         Map<String, String> jdbcConf = new HashMap<String, String>();
@@ -176,6 +184,7 @@ public class OozieDBCLI {
         }
         dbType = dbType.substring(0, dbType.indexOf(":"));
         jdbcConf.put("dbtype", dbType);
+        services.destroy();
         return jdbcConf;
     }
 
@@ -187,6 +196,7 @@ public class OozieDBCLI {
 
         verifyOozieSysTable(false);
         createUpgradeDB(sqlFile, run, true);
+        ddlTweaksFor50(sqlFile, run);
         createOozieSysTable(sqlFile, run, DB_VERSION_FOR_5_0);
         System.out.println();
         if (run) {
@@ -213,6 +223,7 @@ public class OozieDBCLI {
             System.out.println("Oozie DB already upgraded to Oozie version '" + version + "'");
             return;
         }
+
         createUpgradeDB(sqlFile, run, false);
 
         while (!ver.equals(DB_VERSION_FOR_5_0)) {
@@ -222,6 +233,11 @@ public class OozieDBCLI {
                 ver = run ? getOozieDBVersion().trim() : DB_VERSION_FOR_4_0;
             }
             else if (ver.equals(DB_VERSION_FOR_4_0)) {
+                System.out.println("Upgrading to db schema for Oozie " + version);
+                upgradeDBtoPre50(sqlFile, run, startingVersion);
+                ver = run ? getOozieDBVersion().trim() : DB_VERSION_FOR_4_1;
+            }
+            else if (ver.equals(DB_VERSION_FOR_4_1)) {
                 System.out.println("Upgrading to db schema for Oozie " + version);
                 upgradeDBto50(sqlFile, run, startingVersion);
                 ver = run ? getOozieDBVersion().trim() : DB_VERSION_FOR_5_0;
@@ -241,9 +257,14 @@ public class OozieDBCLI {
         ddlTweaks(sqlFile, run);
     }
 
+    private void upgradeDBtoPre50(String sqlFile, boolean run, String startingVersion) throws Exception {
+        upgradeOozieDBVersion(sqlFile, run, DB_VERSION_FOR_4_1);
+        ddlTweaksForPre50(sqlFile, run, startingVersion);
+    }
+
     private void upgradeDBto50(String sqlFile, boolean run, String startingVersion) throws Exception {
         upgradeOozieDBVersion(sqlFile, run, DB_VERSION_FOR_5_0);
-        ddlTweaksFor50(sqlFile, run, startingVersion);
+        ddlTweaksFor50(sqlFile, run);
     }
 
     private final static String UPDATE_OOZIE_VERSION =
@@ -252,7 +273,8 @@ public class OozieDBCLI {
 
     private void upgradeOozieDBVersion(String sqlFile, boolean run, String version) throws Exception {
         String updateDBVersion = "update OOZIE_SYS set data='" + version + "' where name='db.version'";
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         writer.println(UPDATE_OOZIE_VERSION);
         writer.println(updateDBVersion);
@@ -283,7 +305,7 @@ public class OozieDBCLI {
             postUpgradeDBTo40(sqlFile, run);
         }
         else {
-            System.out.println("No Post ugprade updates available for " + version);
+            System.out.println("No Post upgrade updates available for " + version);
         }
     }
 
@@ -297,7 +319,7 @@ public class OozieDBCLI {
         postUpgradeTasks(sqlFile, run, true);
         if (run) {
             System.out.println();
-            System.out.println("Post ugprade updates have been executed");
+            System.out.println("Post upgrade updates have been executed");
         }
         System.out.println();
     }
@@ -338,7 +360,8 @@ public class OozieDBCLI {
             "UPDATE COORD_ACTIONS SET MISSING_DEPENDENCIES = REPLACE(CAST(MISSING_DEPENDENCIES AS varchar(MAX)),';','!!')";
 
     private void postUpgradeTasks(String sqlFile, boolean run, boolean force) throws Exception {
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         boolean skipUpdates = getDBVendor().equals("mysql");
         Connection conn = (run) ? createConnection() : null;
@@ -414,7 +437,8 @@ public class OozieDBCLI {
     }
 
     private void postUpgradeTasksFor40(String sqlFile, boolean run) throws Exception {
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         Connection conn = (run) ? createConnection() : null;
         try {
@@ -542,7 +566,8 @@ public class OozieDBCLI {
 
     private void convertClobToBlobInMysql(String sqlFile, Connection conn) throws Exception {
         System.out.println("Converting mediumtext/text columns to mediumblob for all tables");
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         Statement statement = conn != null ? conn.createStatement() : null;
         for (Map.Entry<String, List<String>> tableClobColumnMap : getTableClobColumnMap().entrySet()) {
@@ -571,7 +596,8 @@ public class OozieDBCLI {
         Statement statement = null;
         PrintWriter writer = null;
         try {
-            writer = new PrintWriter(new FileWriter(sqlFile, true));
+            writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                    StandardCharsets.UTF_8));
             writer.println();
             statement = conn != null ? conn.createStatement() : null;
 
@@ -583,8 +609,8 @@ public class OozieDBCLI {
                             && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
                         // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as TEXT and we're
                         // going to convert it to
-                        // BYTEA in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
-                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
+                        // BYTEA in DB_VERSION_FOR_4_1.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
+                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_4_1) push_missing_depdencies will already be a
                         // BYTEA because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
                         continue;
                     }
@@ -635,8 +661,8 @@ public class OozieDBCLI {
                     if (startingVersion.equals(DB_VERSION_PRE_4_0)
                             && tableName.equals("COORD_ACTIONS") && column.equals("push_missing_dependencies")) {
                         // The push_missing_depdencies column was added in DB_VERSION_FOR_4_0 as a CLOB and we're going to convert
-                        // it to BLOB in DB_VERSION_FOR_5_0.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
-                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_5_0) push_missing_depdencies will already be a
+                        // it to BLOB in DB_VERSION_FOR_4_1.  However, if Oozie 5 did the upgrade from DB_VERSION_PRE_4_0 to
+                        // DB_VERSION_FOR_4_0 (and is now doing it for DB_VERSION_FOR_4_1) push_missing_depdencies will already be a
                         // BLOB because Oozie 5 created the column instead of Oozie 4; and the update query below will fail.
                         continue;
                     }
@@ -646,7 +672,7 @@ public class OozieDBCLI {
                     }
                     PreparedStatement ps = conn.prepareStatement("update " + tableName + " set " + TEMP_COLUMN_PREFIX
                             + column + "=? where id = ?");
-                    byte[] data = IOUtils.toByteArray(confClob.getCharacterStream(), "UTF-8");
+                    byte[] data = IOUtils.toByteArray(confClob.getCharacterStream(), StandardCharsets.UTF_8);
                     ps.setBinaryStream(1, new ByteArrayInputStream(data), data.length);
                     ps.setString(2, rs.getString(1));
                     ps.executeUpdate();
@@ -689,7 +715,7 @@ public class OozieDBCLI {
         return selectQuery.toString();
     }
 
-    private void ddlTweaksFor50(String sqlFile, boolean run, String startingVersion) throws Exception {
+    private void ddlTweaksForPre50(String sqlFile, boolean run, String startingVersion) throws Exception {
         String dbVendor = getDBVendor();
         Connection conn = (run) ? createConnection() : null;
 
@@ -706,7 +732,8 @@ public class OozieDBCLI {
             convertClobToBlobinDerby(conn, startingVersion);
         }
         System.out.println("Dropping discriminator column");
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         ArrayList<String> ddlQueries = new ArrayList<String>();
         ddlQueries.add(getDropColumnQuery("WF_JOBS", DISCRIMINATOR_COLUMN));
@@ -729,6 +756,29 @@ public class OozieDBCLI {
             conn.close();
         }
     }
+
+
+    @SuppressFBWarnings(value = {"SQL_INJECTION_JDBC"}, justification = "Final values are used")
+    private void ddlTweaksFor50(final String sqlFile, final boolean run) throws Exception {
+        System.out.println("Creating composite indexes");
+        try (final Connection conn = createConnection();
+             final PrintWriter writer = new PrintWriter(new OutputStreamWriter(
+                     new FileOutputStream(sqlFile,true), StandardCharsets.UTF_8));
+             final Statement stmt = conn.createStatement())
+        {
+            writer.println();
+            final List<String> createCoveringIndexStatements = CompositeIndex.getIndexStatements();
+
+            for (final String query : createCoveringIndexStatements) {
+                writer.println(query + ";");
+                if (run) {
+                    stmt.executeUpdate(query);
+                }
+            }
+            System.out.println("DONE");
+        }
+    }
+
 
     private Map<String, List<String>> getTableClobColumnMap() {
         if (clobColumnMap != null) {
@@ -753,7 +803,8 @@ public class OozieDBCLI {
 
 
     private void ddlTweaks(String sqlFile, boolean run) throws Exception {
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         String dbVendor = getDBVendor();
         ArrayList<String> ddlQueries = new ArrayList<String>();
@@ -977,7 +1028,8 @@ public class OozieDBCLI {
         // so we need to explicitly create a clustered index for OOZIE_SYS table
         boolean createIndex = getDBVendor().equals("sqlserver");
 
-        PrintWriter writer = new PrintWriter(new FileWriter(sqlFile, true));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(sqlFile,true),
+                StandardCharsets.UTF_8));
         writer.println();
         writer.println(CREATE_OOZIE_SYS);
         if (createIndex){
@@ -1101,6 +1153,7 @@ public class OozieDBCLI {
         org.apache.openjpa.jdbc.meta.MappingTool.main(args);
         if (run) {
             args = createMappingToolArguments(null);
+            // OpenJPA MappingTool also adds indices, no need to add them manually
             org.apache.openjpa.jdbc.meta.MappingTool.main(args);
         }
         System.out.println("DONE");

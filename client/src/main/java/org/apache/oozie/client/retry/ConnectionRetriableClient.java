@@ -63,6 +63,7 @@ public abstract class ConnectionRetriableClient {
                 // No retry for other exceptions
             }
         }
+        cliException.printStackTrace();
         throw new IOException("Error while connecting Oozie server. No of retries = " + numTries + ". Exception = "
                 + cliException.getMessage(), cliException);
     }

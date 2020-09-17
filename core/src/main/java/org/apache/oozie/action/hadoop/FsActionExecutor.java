@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,13 +35,13 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
+import org.apache.oozie.command.wf.WorkflowXCommand;
 import org.apache.oozie.dependency.FSURIHandler;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.service.ConfigurationService;
@@ -50,6 +51,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UserGroupInformationService;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.XConfiguration;
+import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
@@ -60,11 +62,29 @@ public class FsActionExecutor extends ActionExecutor {
 
     public static final String ACTION_TYPE = "fs";
 
+    public static final String FS_OP_MKDIR = "mkdir";
+    public static final String FS_OP_DELETE = "delete";
+    public static final String FS_OP_MOVE = "move";
+    public static final String FS_OP_CHMOD = "chmod";
+    public static final String FS_OP_TOUCHZ = "touchz";
+    public static final String FS_OP_CHGRP = "chgrp";
+    public static final String FS_OP_SETREP = "setrep";
+
+    public static final String FS_TAG_PATH = "path";
+    public static final String FS_TAG_SOURCE = "source";
+    public static final String FS_TAG_TARGET = "target";
+    public static final String FS_TAG_RECURSIVE = "recursive";
+    public static final String FS_TAG_DIRFILES = "dir-files";
+    public static final String FS_TAG_SKIPTRASH = "skip-trash";
+    public static final String FS_TAG_PERMISSIONS = "permissions";
+
     private final int maxGlobCount;
+
+    private final XLog LOG = XLog.getLog(getClass());
 
     public FsActionExecutor() {
         super(ACTION_TYPE);
-        maxGlobCount = ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX);
+        maxGlobCount = ConfigurationService.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_FS_GLOB_MAX);
     }
 
     /**
@@ -178,66 +198,101 @@ public class FsActionExecutor extends ActionExecutor {
 
             for (Element commandElement : (List<Element>) element.getChildren()) {
                 String command = commandElement.getName();
-                if (command.equals("mkdir")) {
-                    Path path = getPath(commandElement, "path");
-                    mkdir(context, fsConf, nameNodePath, path);
-                }
-                else {
-                    if (command.equals("delete")) {
-                        Path path = getPath(commandElement, "path");
-                        boolean skipTrash = true;
-                        if (commandElement.getAttributeValue("skip-trash") != null &&
-                                commandElement.getAttributeValue("skip-trash").equals("false")) {
-                            skipTrash = false;
-                        }
-                        delete(context, fsConf, nameNodePath, path, skipTrash);
-                    }
-                    else {
-                        if (command.equals("move")) {
-                            Path source = getPath(commandElement, "source");
-                            Path target = getPath(commandElement, "target");
-                            move(context, fsConf, nameNodePath, source, target, recovery);
-                        }
-                        else {
-                            if (command.equals("chmod")) {
-                                Path path = getPath(commandElement, "path");
-                                boolean recursive = commandElement.getChild("recursive", commandElement.getNamespace()) != null;
-                                String str = commandElement.getAttributeValue("dir-files");
-                                boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
-                                String permissionsMask = commandElement.getAttributeValue("permissions").trim();
-                                chmod(context, fsConf, nameNodePath, path, permissionsMask, dirFiles, recursive);
-                            }
-                            else {
-                                if (command.equals("touchz")) {
-                                    Path path = getPath(commandElement, "path");
-                                    touchz(context, fsConf, nameNodePath, path);
-                                }
-                                else {
-                                    if (command.equals("chgrp")) {
-                                        Path path = getPath(commandElement, "path");
-                                        boolean recursive = commandElement.getChild("recursive",
-                                                commandElement.getNamespace()) != null;
-                                        String group = commandElement.getAttributeValue("group");
-                                        String str = commandElement.getAttributeValue("dir-files");
-                                        boolean dirFiles = (str == null) || Boolean.parseBoolean(str);
-                                        chgrp(context, fsConf, nameNodePath, path, context.getWorkflow().getUser(),
-                                                group, dirFiles, recursive);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                switch (command) {
+                    case FS_OP_MKDIR:
+                        doMkdirOperation(context, fsConf, nameNodePath, commandElement);
+                        break;
+                    case FS_OP_DELETE:
+                        doDeleteOperation(context, fsConf, nameNodePath, commandElement);
+                        break;
+                    case FS_OP_MOVE:
+                        doMoveOperation(context, fsConf, nameNodePath, commandElement, recovery);
+                        break;
+                    case FS_OP_CHMOD:
+                        doChmodOperation(context, fsConf, nameNodePath, commandElement);
+                        break;
+                    case FS_OP_TOUCHZ:
+                        doTouchzOperation(context, fsConf, nameNodePath, commandElement);
+                        break;
+                    case FS_OP_CHGRP:
+                        doChgrpOperation(context, fsConf, nameNodePath, commandElement);
+                        break;
+                    case FS_OP_SETREP:
+                        doSetrepOperation(context, commandElement);
+                        break;
+                    default:
+                        LOG.warn("Fs Action don't support [{0}] operation for the time being ", command);
                 }
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw convertException(ex);
+        }
+    }
+
+    private void doMkdirOperation(Context context,  XConfiguration fsConf, Path nameNodePath,
+                                  Element commandElement) throws ActionExecutorException {
+        Path path = getPath(commandElement, FS_TAG_PATH);
+        mkdir(context, fsConf, nameNodePath, path);
+    }
+
+    private void doDeleteOperation(Context context, XConfiguration fsConf, Path nameNodePath,
+                                   Element commandElement) throws ActionExecutorException {
+        Path path = getPath(commandElement, FS_TAG_PATH);
+        boolean skipTrash = true;
+        String skipTrashTag = commandElement.getAttributeValue(FS_TAG_SKIPTRASH);
+        if (skipTrashTag != null && skipTrashTag.equals("false")) {
+            skipTrash = false;
+        }
+        delete(context, fsConf, nameNodePath, path, skipTrash);
+    }
+
+    private void doMoveOperation(Context context, XConfiguration fsConf, Path nameNodePath,
+                                 Element commandElement, boolean recovery) throws ActionExecutorException {
+        Path source = getPath(commandElement, FS_TAG_SOURCE);
+        Path target = getPath(commandElement, FS_TAG_TARGET);
+        move(context, fsConf, nameNodePath, source, target, recovery);
+    }
+
+    private void doChmodOperation(Context context, XConfiguration fsConf, Path nameNodePath,
+                                  Element commandElement) throws ActionExecutorException {
+        Path path = getPath(commandElement, FS_TAG_PATH);
+        String permissionsTag = commandElement.getAttributeValue(FS_TAG_PERMISSIONS).trim();
+        String dirFilesTag = commandElement.getAttributeValue(FS_TAG_DIRFILES);
+        boolean dirFiles = (dirFilesTag == null) || Boolean.parseBoolean(dirFilesTag);
+        boolean recursive = commandElement.getChild(FS_TAG_RECURSIVE, commandElement.getNamespace()) != null;
+        chmod(context, fsConf, nameNodePath, path, permissionsTag, dirFiles, recursive);
+    }
+
+    private void doTouchzOperation(Context context, XConfiguration fsConf, Path nameNodePath,
+                                   Element commandElement) throws ActionExecutorException {
+        Path path = getPath(commandElement, FS_TAG_PATH);
+        touchz(context, fsConf, nameNodePath, path);
+    }
+
+    private void doChgrpOperation(Context context, XConfiguration fsConf, Path nameNodePath,
+                                  Element commandElement) throws ActionExecutorException {
+        Path path = getPath(commandElement, FS_TAG_PATH);
+        String groupTag = commandElement.getAttributeValue("group");
+        String dirFilesTag = commandElement.getAttributeValue(FS_TAG_DIRFILES);
+        boolean dirFiles = (dirFilesTag == null) || Boolean.parseBoolean(dirFilesTag);
+        boolean recursive = commandElement.getChild(FS_TAG_RECURSIVE, commandElement.getNamespace()) != null;
+        chgrp(context, fsConf, nameNodePath, path, context.getWorkflow().getUser(),
+                groupTag, dirFiles, recursive);
+    }
+
+    private void doSetrepOperation(Context context, Element commandElement)
+            throws ActionExecutorException, HadoopAccessorException {
+        Path path = getPath(commandElement, FS_TAG_PATH);
+        String replicationFactor = commandElement.getAttributeValue("replication-factor");
+        if (replicationFactor != null) {
+            setrep(context, path, Short.parseShort(replicationFactor));
         }
     }
 
     void chgrp(Context context, XConfiguration fsConf, Path nameNodePath, Path path, String user, String group,
             boolean dirFiles, boolean recursive) throws ActionExecutorException {
 
+        LOG.info("Setting ownership for [{0}] to group: [{1}], user: [{2}]. Recursive mode: [{3}]", path, group, user, recursive);
         HashMap<String, String> argsMap = new HashMap<String, String>();
         argsMap.put("user", user);
         argsMap.put("group", group);
@@ -267,7 +322,7 @@ public class FsActionExecutor extends ActionExecutor {
             FileStatus pathStatus = fs.getFileStatus(path);
             List<Path> paths = new ArrayList<Path>();
 
-            if (dirFiles && pathStatus.isDir()) {
+            if (dirFiles && pathStatus.isDirectory()) {
                 if (isRoot) {
                     paths.add(path);
                 }
@@ -275,7 +330,7 @@ public class FsActionExecutor extends ActionExecutor {
                 for (int i = 0; i < filesStatus.length; i++) {
                     Path p = filesStatus[i].getPath();
                     paths.add(p);
-                    if (recursive && filesStatus[i].isDir()) {
+                    if (recursive && filesStatus[i].isDirectory()) {
                         recursiveFsOperation(op, fs, null, p, argsMap, dirFiles, recursive, false);
                     }
                 }
@@ -294,12 +349,12 @@ public class FsActionExecutor extends ActionExecutor {
 
     private void doFsOperation(String op, FileSystem fs, Path p, Map<String, String> argsMap)
             throws ActionExecutorException, IOException {
-        if (op.equals("chmod")) {
-            String permissions = argsMap.get("permissions");
+        if (op.equals(FS_OP_CHMOD)) {
+            String permissions = argsMap.get(FS_TAG_PERMISSIONS);
             FsPermission newFsPermission = createShortPermission(permissions, p);
             fs.setPermission(p, newFsPermission);
         }
-        else if (op.equals("chgrp")) {
+        else if (op.equals(FS_OP_CHGRP)) {
             String user = argsMap.get("user");
             String group = argsMap.get("group");
             fs.setOwner(p, user, group);
@@ -307,16 +362,16 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     /**
-     * @param path
-     * @param context
-     * @param fsConf
+     * @param path file path
+     * @param context executor context
+     * @param fsConf file system configuration
      * @return FileSystem
-     * @throws HadoopAccessorException
+     * @throws HadoopAccessorException if FS is not accessible
      */
     private FileSystem getFileSystemFor(Path path, Context context, XConfiguration fsConf) throws HadoopAccessorException {
         String user = context.getWorkflow().getUser();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf conf = has.createJobConf(path.toUri().getAuthority());
+        Configuration conf = has.createConfiguration(path.toUri().getAuthority());
         XConfiguration.copy(context.getProtoActionConf(), conf);
         if (fsConf != null) {
             XConfiguration.copy(fsConf, conf);
@@ -325,14 +380,14 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     /**
-     * @param path
-     * @param user
+     * @param path file path
+     * @param user user
      * @return FileSystem
-     * @throws HadoopAccessorException
+     * @throws HadoopAccessorException if FS is not accessible
      */
     private FileSystem getFileSystemFor(Path path, String user) throws HadoopAccessorException {
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
-        JobConf jobConf = has.createJobConf(path.toUri().getAuthority());
+        Configuration jobConf = has.createConfiguration(path.toUri().getAuthority());
         return has.createFileSystem(user, path.toUri(), jobConf);
     }
 
@@ -341,6 +396,7 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     void mkdir(Context context, XConfiguration fsConf, Path nameNodePath, Path path) throws ActionExecutorException {
+        LOG.info("Creating directory [{0}]", path);
         try {
             path = resolveToFullPath(nameNodePath, path, true);
             FileSystem fs = getFileSystemFor(path, context, fsConf);
@@ -350,6 +406,8 @@ public class FsActionExecutor extends ActionExecutor {
                     throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS004",
                                                       "mkdir, path [{0}] could not create directory", path);
                 }
+            } else {
+                LOG.info("[{0}] already exist, no need for creation", path);
             }
         }
         catch (Exception ex) {
@@ -360,9 +418,9 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Delete path
      *
-     * @param context
-     * @param path
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param path file path
+     * @throws ActionExecutorException if FS error occurs
      */
     public void delete(Context context, Path path) throws ActionExecutorException {
         delete(context, null, null, path, true);
@@ -371,14 +429,16 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Delete path
      *
-     * @param context
-     * @param fsConf
-     * @param nameNodePath
-     * @param path
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param fsConf file system configuration
+     * @param nameNodePath configured name node path
+     * @param path file path
+     * @param skipTrash flag to skip the trash.
+     * @throws ActionExecutorException if FS error occurs
      */
     public void delete(Context context, XConfiguration fsConf, Path nameNodePath, Path path, boolean skipTrash)
             throws ActionExecutorException {
+        LOG.info("Deleting [{0}]. Skipping trash: [{1}]", path, skipTrash);
         URI uri = path.toUri();
         URIHandler handler;
         org.apache.oozie.dependency.URIHandler.Context hcatContext = null;
@@ -434,10 +494,10 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Delete path
      *
-     * @param user
-     * @param group
-     * @param path
-     * @throws ActionExecutorException
+     * @param user user
+     * @param group group
+     * @param path file path
+     * @throws ActionExecutorException if FS error occurs
      */
     public void delete(String user, String group, Path path) throws ActionExecutorException {
         try {
@@ -459,11 +519,11 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Move source to target
      *
-     * @param context
-     * @param source
-     * @param target
-     * @param recovery
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param source source path
+     * @param target target path
+     * @param recovery set to true if in recovery mode
+     * @throws ActionExecutorException if FS error occurs
      */
     public void move(Context context, Path source, Path target, boolean recovery) throws ActionExecutorException {
         move(context, null, null, source, target, recovery);
@@ -472,16 +532,17 @@ public class FsActionExecutor extends ActionExecutor {
     /**
      * Move source to target
      *
-     * @param context
-     * @param fsConf
-     * @param nameNodePath
-     * @param source
-     * @param target
-     * @param recovery
-     * @throws ActionExecutorException
+     * @param context executor context
+     * @param fsConf file system configuration
+     * @param nameNodePath configured name node path
+     * @param source source path
+     * @param target target path
+     * @param recovery set to true if in recovery mode
+     * @throws ActionExecutorException if FS error occurs
      */
     public void move(Context context, XConfiguration fsConf, Path nameNodePath, Path source, Path target, boolean recovery)
             throws ActionExecutorException {
+        LOG.info("Moving [{0}] to [{1}]", source, target);
         try {
             source = resolveToFullPath(nameNodePath, source, true);
             validateSameNN(source, target);
@@ -523,8 +584,9 @@ public class FsActionExecutor extends ActionExecutor {
     void chmod(Context context, XConfiguration fsConf, Path nameNodePath, Path path, String permissions,
             boolean dirFiles, boolean recursive) throws ActionExecutorException {
 
+        LOG.info("Setting permissions [{0}] on [{1}]. Recursive mode: [{2}]", permissions, path, recursive);
         HashMap<String, String> argsMap = new HashMap<String, String>();
-        argsMap.put("permissions", permissions);
+        argsMap.put(FS_TAG_PERMISSIONS, permissions);
         try {
             FileSystem fs = getFileSystemFor(path, context, fsConf);
             path = resolveToFullPath(nameNodePath, path, true);
@@ -535,7 +597,7 @@ public class FsActionExecutor extends ActionExecutor {
             }
             checkGlobMax(pathArr);
             for (Path p : pathArr) {
-                recursiveFsOperation("chmod", fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
+                recursiveFsOperation(FS_OP_CHMOD, fs, nameNodePath, p, argsMap, dirFiles, recursive, true);
             }
 
         }
@@ -549,6 +611,8 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     void touchz(Context context, XConfiguration fsConf, Path nameNodePath, Path path) throws ActionExecutorException {
+
+        LOG.info ("Performing touch on [{0}]", path);
         try {
             path = resolveToFullPath(nameNodePath, path, true);
             FileSystem fs = getFileSystemFor(path, context, fsConf);
@@ -556,7 +620,7 @@ public class FsActionExecutor extends ActionExecutor {
             FileStatus st;
             if (fs.exists(path)) {
                 st = fs.getFileStatus(path);
-                if (st.isDir()) {
+                if (st.isDirectory()) {
                     throw new Exception(path.toString() + " is a directory");
                 } else if (st.getLen() != 0) {
                     throw new Exception(path.toString() + " must be a zero-length file");
@@ -603,6 +667,7 @@ public class FsActionExecutor extends ActionExecutor {
 
     @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Starting action");
         try {
             context.setStartData("-", "-", "-");
             Element actionXml = XmlUtils.parseXml(action.getConf());
@@ -620,7 +685,7 @@ public class FsActionExecutor extends ActionExecutor {
         WorkflowAction.Status status = externalStatus.equals("OK") ? WorkflowAction.Status.OK :
                                        WorkflowAction.Status.ERROR;
         context.setEndData(status, getActionSignal(status));
-        if (!context.getProtoActionConf().getBoolean("oozie.action.keep.action.dir", false)) {
+        if (!context.getProtoActionConf().getBoolean(WorkflowXCommand.KEEP_WF_ACTION_DIR, false)) {
             try {
                 FileSystem fs = context.getAppFileSystem();
                 fs.delete(context.getActionDir(), true);
@@ -629,6 +694,7 @@ public class FsActionExecutor extends ActionExecutor {
                 throw convertException(ex);
             }
         }
+        LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
     }
 
     @Override
@@ -637,11 +703,11 @@ public class FsActionExecutor extends ActionExecutor {
     }
 
     /**
-     * @param context
-     * @return
-     * @throws HadoopAccessorException
-     * @throws IOException
-     * @throws URISyntaxException
+     * @param context executor context
+     * @return Path returns recovery path
+     * @throws HadoopAccessorException if accessing file system fails
+     * @throws IOException in case of IO error
+     * @throws URISyntaxException if the processed uri is not a valid URI
      */
     public Path getRecoveryPath(Context context) throws HadoopAccessorException, IOException, URISyntaxException {
         return new Path(context.getActionDir(), "fs-" + context.getRecoveryId());
@@ -651,6 +717,20 @@ public class FsActionExecutor extends ActionExecutor {
         if(pathArr.length > maxGlobCount) {
             throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "FS013",
                     "too many globbed files/dirs to do FS operation");
+        }
+    }
+    void setrep(Context context, Path path, short replicationFactor)
+            throws ActionExecutorException, HadoopAccessorException {
+        LOG.info("Setting replication factor: [{0}] for [{1}]", replicationFactor, path);
+        try {
+            path = resolveToFullPath(null, path, true);
+            FileSystem fs = getFileSystemFor(path, context, null);
+
+            if (fs.isFile(path)) {
+                fs.setReplication(path, replicationFactor);
+            }
+        } catch (IOException ex) {
+            convertException(ex);
         }
     }
 

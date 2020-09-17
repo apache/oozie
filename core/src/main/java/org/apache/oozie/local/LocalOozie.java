@@ -18,11 +18,14 @@
 
 package org.apache.oozie.local;
 
+import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.LocalOozieClient;
+import org.apache.oozie.LocalOozieClientBundle;
 import org.apache.oozie.LocalOozieClientCoord;
 import org.apache.oozie.client.OozieClient;
+import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
@@ -84,6 +87,10 @@ public class LocalOozie {
         XLog.getLog(LocalOozie.class).info("LocalOozie started callback set to [{0}]", callbackUrl);
     }
 
+    public static boolean isStarted() {
+        return localOozieActive;
+    }
+
     /**
      * Stop LocalOozie.
      */
@@ -114,12 +121,20 @@ public class LocalOozie {
     }
 
     /**
-     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie. <p> The returned instance is configured
-     * with the user name of the JVM (the value of the system property 'user.name'). <p> The following methods of the
-     * client are NOP in the returned instance: {@link org.apache.oozie.client.OozieClient#validateWSVersion}, {@link
-     * org.apache.oozie.client.OozieClient#setHeader}, {@link org.apache.oozie.client.OozieClient#getHeader}, {@link
-     * org.apache.oozie.client.OozieClient#removeHeader}, {@link org.apache.oozie.client.OozieClient#getHeaderNames} and
-     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)}.
+     * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
+     * <p>
+     *     The returned instance is configured
+     *     with the user name of the JVM (the value of the system property 'user.name').
+     * <p>
+     * The following methods of the client are NOP in the returned instance:
+     * {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames},
+     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)},
+     * {@link org.apache.oozie.client.OozieClient#getHeaders},
+     * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
      *
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
      */
@@ -138,8 +153,10 @@ public class LocalOozie {
      * {@link org.apache.oozie.client.OozieClient#setHeader},
      * {@link org.apache.oozie.client.OozieClient#getHeader},
      * {@link org.apache.oozie.client.OozieClient#removeHeader},
-     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and
-     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)}.
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames},
+     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)},
+     * {@link org.apache.oozie.client.OozieClient#getHeaders},
+     * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
      *
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
      */
@@ -151,10 +168,14 @@ public class LocalOozie {
      * Return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for a given user.
      * <p>
      * The following methods of the client are NOP in the returned instance:
-     * {@link org.apache.oozie.client.OozieClient#validateWSVersion}, {@link org.apache.oozie.client.OozieClient#setHeader},
-     * {@link org.apache.oozie.client.OozieClient#getHeader}, {@link org.apache.oozie.client.OozieClient#removeHeader},
-     * {@link org.apache.oozie.client.OozieClient#getHeaderNames}
-     * and {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)}.
+     * {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames},
+     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)},
+     * {@link org.apache.oozie.client.OozieClient#getHeaders},
+     * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
      *
      * @param user user name to use in LocalOozie for running workflows.
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie configured for the given user.
@@ -177,8 +198,10 @@ public class LocalOozie {
      * {@link org.apache.oozie.client.OozieClient#setHeader},
      * {@link org.apache.oozie.client.OozieClient#getHeader},
      * {@link org.apache.oozie.client.OozieClient#removeHeader},
-     * {@link org.apache.oozie.client.OozieClient#getHeaderNames} and
-     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)}.
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames},
+     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)},
+     * {@link org.apache.oozie.client.OozieClient#getHeaders},
+     * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
      *
      * @param user user name to use in LocalOozie for running coordinator.
      * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie
@@ -193,4 +216,51 @@ public class LocalOozie {
         return new LocalOozieClientCoord(coordEngine);
     }
 
+    /**
+     * <p>
+     * The returned instance is configured with the user name of the JVM (the
+     * value of the system property 'user.name').
+     * <p>
+     * The following methods of the client are NOP in the returned instance:
+     * {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames},
+     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)},
+     * {@link org.apache.oozie.client.OozieClient#getHeaders},
+     * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
+     *
+     * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
+     */
+    public static OozieClient getClientBundle() {
+        return getClientBundle(System.getProperty("user.name"));
+    }
+
+    /**
+     * <p>
+     * The returned instance is configured with the user name of the JVM (the
+     * value of the system property 'user.name').
+     * <p>
+     * The following methods of the client are NOP in the returned instance:
+     * {@link org.apache.oozie.client.OozieClient#validateWSVersion},
+     * {@link org.apache.oozie.client.OozieClient#setHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeader},
+     * {@link org.apache.oozie.client.OozieClient#removeHeader},
+     * {@link org.apache.oozie.client.OozieClient#getHeaderNames},
+     * {@link org.apache.oozie.client.OozieClient#setSystemMode(OozieClient.SYSTEM_MODE)},
+     * {@link org.apache.oozie.client.OozieClient#getHeaders},
+     * {@link org.apache.oozie.client.OozieClient#getClientBuildVersion}.
+     *
+     * @param user user
+     * @return a {@link org.apache.oozie.client.OozieClient} for LocalOozie.
+     */
+    public static OozieClient getClientBundle(String user) {
+        if (!localOozieActive) {
+            throw new IllegalStateException("LocalOozie is not initialized");
+        }
+        ParamChecker.notEmpty(user, "user");
+        BundleEngine bundleEngine = Services.get().get(BundleEngineService.class).getBundleEngine(user);
+        return new LocalOozieClientBundle(bundleEngine);
+    }
 }

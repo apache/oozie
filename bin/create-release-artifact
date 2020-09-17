@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -16,20 +16,32 @@
 # limitations under the License.
 
 run() {
-  echo "\$ ${@}"
+  echo "\$ ${*}"
   "${@}"
   exitCode=$?
   if [[ $exitCode != 0 ]]; then
     echo
-    echo "Failed! running ${@} in `pwd`"
+    echo "Failed! running ${*} in $(pwd)"
     echo
     exit $exitCode
   fi
 }
 
-branchUrl=`git ls-remote --get-url`
+update_buildinfo() {
+  if [ "${VC_REV}" != "" ]; then
+    BUILDINFO_DIR=client/src/main/resources
+    BUILDINFO_FILE="oozie-${releaseVersion}/${BUILDINFO_DIR}/oozie-buildinfo.properties"
+    VC_REV_ESC=$(echo "${VC_REV}" | sed -e 's/[\/&]/\\&/g')
+    VC_URL_ESC=$(echo "${VC_URL}" | sed -e 's/[\/&]/\\&/g')
+    run sed -i .bak "s/\${vc.revision}/${VC_REV_ESC}/g" "${BUILDINFO_FILE}"
+    run sed -i .bak "s/\${vc.url}/${VC_URL_ESC}/g" "${BUILDINFO_FILE}"
+    run rm "${BUILDINFO_FILE}.bak"
+  fi
+}
 
-branchName=`git rev-parse --abbrev-ref HEAD`
+branchUrl=$(git ls-remote --get-url)
+
+branchName=$(git rev-parse --abbrev-ref HEAD)
 
 tempDir="/tmp/oozie.$$"
 
@@ -37,47 +49,56 @@ run mkdir $tempDir
 
 run cd $tempDir
 
-run git clone $branchUrl -b $branchName oozie-src
+run git clone "$branchUrl" -b "$branchName" oozie-src
 
 run cd oozie-src
 
+VC_REV=$(git branch -v | awk '/^\*/ {printf("%s@%s\n", $2, $3); }')
+VC_URL=$(git remote -v | grep origin | grep fetch | awk '{print $2}')
+
 rm -rf .git
 
-releaseVersion=`mvn help:evaluate -Dexpression=project.version | grep -v INFO | grep -v WARNING`
+releaseVersion=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
 
-if [ "$releaseVersion}" = "" ]; then
+if [ "${releaseVersion}" == "" ]; then
   echo "Could not determine branch version from POM"
   exit 1
 fi
 
 run cd ..
 
-run mv oozie-src oozie-$releaseVersion
+run mv oozie-src "oozie-$releaseVersion"
 
-run tar czf oozie-${releaseVersion}.tar.gz oozie-$releaseVersion
+update_buildinfo
 
-run cp oozie-$releaseVersion/release-log.txt .
+run tar czf "oozie-${releaseVersion}.tar.gz" "oozie-$releaseVersion"
 
-run cd oozie-$releaseVersion
+run cp "oozie-$releaseVersion/release-log.txt" .
+
+run cd "oozie-$releaseVersion"
 
 run mvn apache-rat:check
 
 run cd ..
 
-run cp oozie-${releaseVersion}/target/rat.txt rat_report
+run cp "oozie-${releaseVersion}"/target/rat.txt rat_report
 
-run rm -rf oozie-${releaseVersion}
+run rm -rf "oozie-${releaseVersion}"
 
-MD5CMD="md5sum"
-which $MD5CMD
-if [[ $? != 0 ]]; then
-  MD5CMD="md5"
+# Our run function doesn't handle this one nicely because of the stdout redirect, so do the echo and exit code check here instead
+echo "\$ gpg --print-md SHA512 oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.sha512"
+gpg --print-md SHA512 "oozie-${releaseVersion}.tar.gz" > "oozie-${releaseVersion}.tar.gz.sha512"
+exitCode=$?
+if [[ $exitCode != 0 ]]; then
+  echo
+  echo "Failed! running gpg --print-md SHA512 oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.sha512 in $(pwd)"
+  echo
+  exit $exitCode
 fi
-run $MD5CMD oozie-${releaseVersion}.tar.gz > oozie-${releaseVersion}.tar.gz.md5
 
-run gpg --armor --output oozie-${releaseVersion}.tar.gz.asc --detach-sig oozie-${releaseVersion}.tar.gz
+run gpg --armor --output "oozie-${releaseVersion}.tar.gz.asc" --detach-sig "oozie-${releaseVersion}.tar.gz"
 
-run gpg --verify oozie-${releaseVersion}.tar.gz.asc oozie-${releaseVersion}.tar.gz
+run gpg --verify "oozie-${releaseVersion}.tar.gz.asc" "oozie-${releaseVersion}.tar.gz"
 
 echo
 echo

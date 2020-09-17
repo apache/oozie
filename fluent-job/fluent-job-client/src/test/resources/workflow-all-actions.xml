@@ -1,0 +1,234 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<workflow-app xmlns="uri:oozie:workflow:1.0"
+              xmlns:sla="uri:oozie:sla:0.2"
+              name="jaxb-example-wf">
+
+    <start to="mr-node"/>
+
+    <action name="mr-node">
+        <map-reduce>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+                <property>
+                    <name>mapred.mapper.class</name>
+                    <value>org.apache.oozie.example.SampleMapper</value>
+                </property>
+                <property>
+                    <name>mapred.reducer.class</name>
+                    <value>org.apache.oozie.example.SampleReducer</value>
+                </property>
+                <property>
+                    <name>mapred.map.tasks</name>
+                    <value>1</value>
+                </property>
+                <property>
+                    <name>mapred.input.dir</name>
+                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
+                </property>
+                <property>
+                    <name>mapred.output.dir</name>
+                    <value>/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}</value>
+                </property>
+            </configuration>
+        </map-reduce>
+        <ok to="distcp"/>
+        <error to="fail"/>
+        <!--<sla:info>-->
+            <!--<sla:nominal-time>${nominal_time}</sla:nominal-time>-->
+            <!--<sla:should-start>${5 * MINUTES}</sla:should-start>-->
+            <!--<sla:should-end>${15 * MINUTES}</sla:should-end>-->
+            <!--<sla:max-duration>${15 * MINUTES}</sla:max-duration>-->
+            <!--<sla:alert-events>start_miss,end_met,end_miss</sla:alert-events>-->
+            <!--<sla:alert-contact>joe@example.com</sla:alert-contact>-->
+        <!--</sla:info>-->
+    </action>
+
+    <action name="distcp">
+        <distcp xmlns="uri:oozie:distcp-action:1.0">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
+                <mkdir path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>a</name>
+                    <value>A</value>
+                </property>
+                <property>
+                    <name>b</name>
+                    <value>B</value>
+                </property>
+            </configuration>
+            <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/input-data/${inputDir}/data.txt</arg>
+            <arg>${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}/data.txt</arg>
+        </distcp>
+        <ok to="email"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="email">
+        <email xmlns="uri:oozie:email-action:0.2">
+            <to>foo@bar.com</to>
+            <subject>foo</subject>
+            <body>bar</body>
+        </email>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="hive2">
+        <hive2 xmlns="uri:oozie:hive2-action:1.0">
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
+            <prepare>
+                <delete path="${jobOutput}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <jdbc-url>jdbc:hive2://localhost:10000/default</jdbc-url>
+            <password>foo</password>
+            <script>myscript.q</script>
+            <param>InputDir=/home/rkanter/input-data</param>
+            <param>OutputDir=${jobOutput}</param>
+        </hive2>
+        <ok to="hive"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="hive">
+        <hive xmlns="uri:oozie:hive-action:1.0">
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
+            <prepare>
+                <delete path="${jobOutput}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <script>myscript.q</script>
+            <param>InputDir=/home/tucu/input-data</param>
+            <param>OutputDir=${jobOutput}</param>
+        </hive>
+        <ok to="shell"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="shell">
+        <shell xmlns="uri:oozie:shell-action:1.0">
+            <exec>echo</exec>
+            <argument>foo</argument>
+            <capture-output/>
+        </shell>
+        <ok to="spark"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="spark">
+        <spark xmlns="uri:oozie:spark-action:1.0">
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
+            <prepare>
+                <delete path="${jobOutput}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <master>local[*]</master>
+            <mode>client</mode>
+            <name>Spark Example</name>
+            <class>org.apache.spark.examples.mllib.JavaALS</class>
+            <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
+            <spark-opts>--executor-memory 20G --num-executors 50
+                --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"</spark-opts>
+            <arg>inputpath=hdfs://localhost/input/file.txt</arg>
+            <arg>value=2</arg>
+        </spark>
+        <ok to="sqoop"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="sqoop">
+        <sqoop xmlns="uri:oozie:sqoop-action:1.0">
+            <job-tracker>foo:8021</job-tracker>
+            <name-node>bar:8020</name-node>
+            <prepare>
+                <delete path="${jobOutput}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+            <command>
+                import --connect jdbc:hsqldb:file:db.hsqldb --table TT --target-dir hdfs://localhost:8020/user/tucu/foo -m 1
+            </command>
+        </sqoop>
+        <ok to="ssh"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="ssh">
+        <ssh xmlns="uri:oozie:ssh-action:0.2">
+            <host>foo@bar.com</host>
+            <command>uploaddata</command>
+            <args>jdbc:derby://bar.com:1527/myDB</args>
+            <args>hdfs://foobar.com:8020/usr/tucu/myData</args>
+        </ssh>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <kill name = "fail">
+        <message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+
+    <end name="end"/>
+
+    <sla:info>
+        <sla:nominal-time>${nominal_time}</sla:nominal-time>
+        <sla:should-start>${10 * MINUTES}</sla:should-start>
+        <sla:should-end>${30 * MINUTES}</sla:should-end>
+        <sla:max-duration>${30 * MINUTES}</sla:max-duration>
+        <sla:alert-events>start_miss,end_met,end_miss</sla:alert-events>
+        <sla:alert-contact>joe@example.com</sla:alert-contact>
+    </sla:info>
+
+</workflow-app>

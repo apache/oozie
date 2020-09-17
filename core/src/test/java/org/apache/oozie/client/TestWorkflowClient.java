@@ -18,6 +18,7 @@
 
 package org.apache.oozie.client;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -39,6 +40,8 @@ import org.apache.oozie.servlet.V2AdminServlet;
 import org.apache.oozie.servlet.V2JobServlet;
 import org.apache.oozie.servlet.V2SLAServlet;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -412,8 +415,12 @@ public class TestWorkflowClient extends DagServletTestCase {
             public Void call() throws Exception {
                 String oozieUrl = getContextURL();
                 OozieClient wc = new OozieClient(oozieUrl);
-                assertEquals(BuildInfo.getBuildInfo().getProperty(BuildInfo.BUILD_VERSION),
-                             wc.getServerBuildVersion());
+                String buildVersion = wc.getServerBuildVersion();
+                JSONObject buildInfo = (JSONObject) JSONValue.parse(buildVersion);
+                for (String buildInfoKey : BuildInfo.getBuildInfo().stringPropertyNames()) {
+                    assertEquals("Build value difference in key " + buildInfoKey,
+                            BuildInfo.getBuildInfo().getProperty(buildInfoKey), buildInfo.get(buildInfoKey));
+                }
                 return null;
             }
         });
@@ -476,16 +483,16 @@ public class TestWorkflowClient extends DagServletTestCase {
 
                 PrintStream oldStream = System.out;
                 ByteArrayOutputStream data = new ByteArrayOutputStream();
-                System.setOut(new PrintStream(data));
+                System.setOut(new PrintStream(data,false,StandardCharsets.UTF_8.name()));
                 try {
                     wc.getSlaInfo(0, 10, null);
                 }
                 finally {
                     System.setOut(oldStream);
                 }
-                assertTrue(data.toString().contains("<sla-message>"));
-                assertTrue(data.toString().contains("<last-sequence-id>0</last-sequence-id>"));
-                assertTrue(data.toString().contains("</sla-message>"));
+                assertTrue(data.toString(StandardCharsets.UTF_8.name()).contains("<sla-message>"));
+                assertTrue(data.toString(StandardCharsets.UTF_8.name()).contains("<last-sequence-id>0</last-sequence-id>"));
+                assertTrue(data.toString(StandardCharsets.UTF_8.name()).contains("</sla-message>"));
 
                 return null;
             }
@@ -503,7 +510,7 @@ public class TestWorkflowClient extends DagServletTestCase {
 
         @SuppressWarnings("unchecked")
         @Override
-        protected HttpURLConnection createConnection(URL url, String method) throws IOException, OozieClientException {
+        protected HttpURLConnection createConnection(URL url, String method) throws IOException {
             HttpURLConnection result = mock(HttpURLConnection.class);
             when(result.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
 
@@ -514,7 +521,8 @@ public class TestWorkflowClient extends DagServletTestCase {
             versions.writeJSONString(writer);
             writer.flush();
 
-            when(result.getInputStream()).thenReturn(new ByteArrayInputStream(writer.toString().getBytes()));
+            when(result.getInputStream()).thenReturn(new ByteArrayInputStream(
+                    writer.toString().getBytes(StandardCharsets.UTF_8)));
             return result;
         }
 

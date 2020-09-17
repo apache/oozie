@@ -19,12 +19,21 @@
 package org.apache.oozie.test;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TestEmbeddedServletContainer extends XTestCase {
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
+public class TestEmbeddedServletContainer {
+
+    @Test
     public void testEmbeddedServletContainer() throws Exception {
         EmbeddedServletContainer container = new EmbeddedServletContainer("blah");
         container.addServletEndpoint("/ping/*", PingServlet.class);
@@ -34,19 +43,59 @@ public class TestEmbeddedServletContainer extends XTestCase {
             PingServlet.FILTER_INIT = false;
             PingServlet.DO_FILTER = false;
             container.start();
-            URL url = new URL(container.getServletURL("/ping/*") + "bla");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.connect();
-            assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            assertEquals("ping", reader.readLine());
-            assertEquals(null, reader.readLine());
-            assertTrue(PingServlet.FILTER_INIT);
-            assertTrue(PingServlet.DO_FILTER);
+            assertHttpResponse(container);
         }
         finally {
             container.stop();
         }
+    }
+
+    @Test
+    public void testMultipleParallelStarts() throws Exception {
+        final List<EmbeddedServletContainer> containers = new ArrayList<>();
+        PingServlet.FILTER_INIT = false;
+        PingServlet.DO_FILTER = false;
+
+        for(int i = 0; i < 10; ++i){
+            final EmbeddedServletContainer c = new EmbeddedServletContainer("path"+i);
+            c.addServletEndpoint("/ping/*", PingServlet.class);
+            c.addFilter("/ping/*", PingServlet.class);
+            containers.add(c);
+        }
+
+        startAllContainers(containers);
+
+        for(final EmbeddedServletContainer c : containers){
+            assertHttpResponse(c);
+        }
+
+        stopAllContainers(containers);
+
+    }
+
+    private void stopAllContainers(List<EmbeddedServletContainer> containers) {
+        for(final EmbeddedServletContainer c : containers){
+            c.stop();
+        }
+    }
+
+    private void startAllContainers(List<EmbeddedServletContainer> containers) throws Exception {
+        for(final EmbeddedServletContainer c : containers){
+            c.start();
+        }
+    }
+
+    private void assertHttpResponse(EmbeddedServletContainer c) throws IOException {
+        final URL url = new URL(c.getServletURL("/ping/*") + "bla");
+        final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.connect();
+        assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+                StandardCharsets.UTF_8));
+        assertEquals("ping", reader.readLine());
+        assertEquals(null, reader.readLine());
+        assertTrue(PingServlet.FILTER_INIT);
+        assertTrue(PingServlet.DO_FILTER);
     }
 
 }

@@ -193,7 +193,7 @@ public class URIHandlerService implements Service {
      * Get the URI with scheme://host:port removing the path
      * @param uri uri template
      * @return URI with authority and scheme
-     * @throws URIHandlerException
+     * @throws URIHandlerException if the provided uri is malformed
      */
     public URI getAuthorityWithScheme(String uri) throws URIHandlerException {
         int index = uri.indexOf("://");

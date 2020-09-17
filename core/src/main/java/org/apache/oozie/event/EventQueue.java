@@ -41,13 +41,13 @@ public interface EventQueue {
 
     /**
      * Initialize the event queue
-     * @param conf
+     * @param conf configuration
      */
     void init(Configuration conf);
 
     /**
      * Add event to queue
-     * @param e
+     * @param e event
      */
     void add(Event e);
 

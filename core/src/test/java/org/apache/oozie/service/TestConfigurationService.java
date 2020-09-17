@@ -19,16 +19,16 @@
 package org.apache.oozie.service;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.action.hadoop.CredentialsProvider;
+import org.apache.oozie.action.hadoop.CredentialsProviderFactory;
 import org.apache.oozie.action.hadoop.DistcpActionExecutor;
-import org.apache.oozie.action.hadoop.JavaActionExecutor;
-import org.apache.oozie.action.hadoop.LauncherMapper;
+import org.apache.oozie.action.hadoop.LauncherAMUtils;
 import org.apache.oozie.command.coord.CoordActionInputCheckXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.wf.JobXCommand;
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.event.listener.ZKConnectionListener;
 import org.apache.oozie.executor.jpa.CoordActionGetForInfoJPAExecutor;
+import static org.apache.oozie.service.ConfigurationService.HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH;
 import org.apache.oozie.servlet.AuthFilter;
 import org.apache.oozie.servlet.V1JobServlet;
 import org.apache.oozie.sla.service.SLAService;
@@ -36,8 +36,11 @@ import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.workflow.lite.LiteWorkflowAppParser;
+import org.apache.xerces.jaxp.DocumentBuilderFactoryImpl;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -173,10 +176,10 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("oozie-conf", ConfigurationService.get("test.nonexist"));
         assertEquals(ConfigUtils.STRING_DEFAULT, ConfigurationService.get(testConf, "test.nonexist"));
 
-        assertEquals("http://localhost:8080/oozie/callback", ConfigurationService.get(CallbackService.CONF_BASE_URL));
+        assertEquals("http://0.0.0.0:11000/oozie/callback", ConfigurationService.get(CallbackService.CONF_BASE_URL));
         assertEquals(5, ConfigurationService.getInt(CallbackService.CONF_EARLY_REQUEUE_MAX_RETRIES));
         assertEquals("gz", ConfigurationService.get(CodecFactory.COMPRESSION_OUTPUT_CODEC));
-        assertEquals(4096, ConfigurationService.getInt(XLogStreamingService.STREAM_BUFFER_LEN));
+        assertEquals(4096, ConfigurationService.getInt(XLogStreamer.STREAM_BUFFER_LEN));
         assertEquals(10000,  ConfigurationService.getLong(JvmPauseMonitorService.WARN_THRESHOLD_KEY));
         assertEquals(60, ConfigurationService.getInt(InstrumentationService.CONF_LOGGING_INTERVAL));
         assertEquals(30, ConfigurationService.getInt(PurgeService.CONF_OLDER_THAN));
@@ -201,21 +204,18 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("sa", ConfigurationService.get(JPAService.CONF_USERNAME));
         assertEquals("", ConfigurationService.get(JPAService.CONF_PASSWORD).trim());
         assertEquals("10", ConfigurationService.get(JPAService.CONF_MAX_ACTIVE_CONN).trim());
-        assertEquals("org.apache.commons.dbcp.BasicDataSource",
+        assertEquals("org.apache.oozie.util.db.BasicDataSourceWrapper",
                 ConfigurationService.get(JPAService.CONF_CONN_DATA_SOURCE));
         assertEquals("", ConfigurationService.get(JPAService.CONF_CONN_PROPERTIES).trim());
         assertEquals("300000", ConfigurationService.get(JPAService.CONF_VALIDATE_DB_CONN_EVICTION_INTERVAL).trim());
         assertEquals("10", ConfigurationService.get(JPAService.CONF_VALIDATE_DB_CONN_EVICTION_NUM).trim());
 
-        assertEquals(2048, ConfigurationService.getInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA));
-        assertEquals("http://localhost:8080/oozie?job=", ConfigurationService.get(JobXCommand.CONF_CONSOLE_URL));
-        assertEquals(true, ConfigurationService.getBoolean(JavaActionExecutor.CONF_HADOOP_YARN_UBER_MODE));
-        assertEquals(false, ConfigurationService.getBoolean(
-                "oozie.action.shell.launcher." + JavaActionExecutor.HADOOP_YARN_UBER_MODE));
+        assertEquals(2048, ConfigurationService.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA));
+        assertEquals("http://0.0.0.0:11000/oozie?job=", ConfigurationService.get(JobXCommand.CONF_CONSOLE_URL));
         assertEquals(false, ConfigurationService.getBoolean(HadoopAccessorService.KERBEROS_AUTH_ENABLED));
 
         assertEquals(0, ConfigurationService.getStrings("no.defined").length);
-        assertEquals(0, ConfigurationService.getStrings(CredentialsProvider.CRED_KEY).length);
+        assertEquals(0, ConfigurationService.getStrings(CredentialsProviderFactory.CRED_KEY).length);
         assertEquals(1, ConfigurationService.getStrings(DistcpActionExecutor.CLASS_NAMES).length);
         assertEquals("distcp=org.apache.hadoop.tools.DistCp",
                 ConfigurationService.getStrings(DistcpActionExecutor.CLASS_NAMES)[0]);
@@ -245,7 +245,7 @@ public class TestConfigurationService extends XTestCase {
         assertEquals("org.apache.oozie.dependency.FSURIHandler",
                 ConfigurationService.getStrings(URIHandlerService.URI_HANDLERS)[0]);
         assertEquals(cl.getConf().getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false),
-                ConfigurationService.getBoolean(LauncherMapper.HADOOP2_WORKAROUND_DISTRIBUTED_CACHE));
+                ConfigurationService.getBoolean(LauncherAMUtils.HADOOP2_WORKAROUND_DISTRIBUTED_CACHE));
 
         assertEquals("org.apache.oozie.event.MemoryEventQueue",
                 (ConfigurationService.getClass(cl.getConf(), EventHandlerService.CONF_EVENT_QUEUE).getName()));
@@ -276,8 +276,82 @@ public class TestConfigurationService extends XTestCase {
         assertEquals(5000, ConfigurationService.getInt(SLAService.CONF_CAPACITY));
         assertEquals(11000, ConfigurationService.getInt("oozie.http.port"));
         assertEquals(11443, ConfigurationService.getInt("oozie.https.port"));
+        assertFalse(ConfigurationService.getBoolean("oozie.https.enabled"));
+        assertEquals(65536, ConfigurationService.getInt("oozie.http.response.header.size"));
+        assertEquals(65536, ConfigurationService.getInt("oozie.http.request.header.size"));
+        assertEquals("TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2", ConfigurationService.get("oozie.https.include.protocols"));
+        assertEquals("", ConfigurationService.get("oozie.https.exclude.protocols"));
+        assertEquals("", ConfigurationService.get("oozie.https.include.cipher.suites"));
+        assertEquals("TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,SSL_RSA_WITH_DES_CBC_SHA," +
+                "SSL_DHE_RSA_WITH_DES_CBC_SHA,SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA," +
+                "SSL_RSA_WITH_RC4_128_MD5", ConfigurationService.get("oozie.https.exclude.cipher.suites"));
+        assertEquals(150, ConfigurationService.getInt("oozie.server.threadpool.max.threads"));
 
         cl.destroy();
     }
 
+    public void testDocumentBuilderFactorySystemPropertyDefault() throws Exception {
+        verifyDocumentBuilderFactoryClass(DocumentBuilderFactoryImpl.class.getName(), DocumentBuilderFactoryImpl.class);
+    }
+
+    public void testDocumentBuilderFactorySystemPropertyCustom() throws Exception {
+        prepareOozieConfDir("oozie-site-documentbuilderfactory.xml");
+        verifyDocumentBuilderFactoryClass(DummyDocumentBuilderFactoryImpl.class.getName(), DummyDocumentBuilderFactoryImpl.class);
+    }
+
+    public void testDocumentBuilderFactorySystemPropertyEmpty() throws Exception {
+        // Determine the class that the JVM would provide if we don't set the property
+        setSystemProperty("javax.xml.parsers.DocumentBuilderFactory", null);
+        assertNull(System.getProperty("javax.xml.parsers.DocumentBuilderFactory"));
+        Class<?> dbfClass = DocumentBuilderFactory.newInstance().getClass();
+
+        prepareOozieConfDir("oozie-site-documentbuilderfactory-empty.xml");
+        verifyDocumentBuilderFactoryClass(null, dbfClass);
+    }
+
+    public void testJceksUrlReplacement() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-jceks.xml",
+                "localjceks://file/somewhere/on/local/filesystem");
+    }
+
+    public void testJceksLocaljceksUrlReplacement() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-localjceks.xml",
+                "localjceks://file/somewhere/on/local/filesystem");
+    }
+
+    public void testJceksUrlReplacementWithNonFileContinuation() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-jceks-nonfile.xml",
+                "jceks://something/somewhere/on/local/filesystem");
+    }
+
+    public void testJceksUrlReplacementWithFilesomethingContinuation() throws Exception {
+        assertForJceksReplacement(
+                "oozie-site-with-jceks-filesomething.xml",
+                "jceks://filesomething/somewhere/on/local/filesystem");
+    }
+
+    private void assertForJceksReplacement(String siteXml, String expectedResult) throws Exception{
+        prepareOozieConfDir(siteXml);
+        ConfigurationService cl = new ConfigurationService();
+        cl.init(null);
+        assertEquals(expectedResult, cl.getConf().get(HADOOP_SECURITY_CREDENTIAL_PROVIDER_PATH));
+        cl.destroy();
+    }
+
+    private void verifyDocumentBuilderFactoryClass(String expectedPropertyValue, Class<?> expectedClass) throws Exception {
+        setSystemProperty("javax.xml.parsers.DocumentBuilderFactory", null);
+        assertNull(System.getProperty("javax.xml.parsers.DocumentBuilderFactory"));
+        ConfigurationService cl = new ConfigurationService();
+        cl.init(null);
+        assertEquals(expectedPropertyValue, System.getProperty("javax.xml.parsers.DocumentBuilderFactory"));
+        DocumentBuilderFactory docFac = DocumentBuilderFactory.newInstance();
+        assertTrue("Expected DocumentBuilderFactory to be of class [" + expectedClass.getName() + "] but was ["
+                + docFac.getClass().getName() + "]", expectedClass.isInstance(docFac));
+        cl.destroy();
+    }
+
 }
+

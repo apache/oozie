@@ -16,15 +16,15 @@
  * limitations under the License.
  */
 
-
 package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -36,6 +36,7 @@ import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
@@ -65,19 +66,26 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
     public CoordUpdateXCommand(boolean dryrun, Configuration conf, String jobId) {
         super(dryrun, conf);
         this.jobId = jobId;
-        isConfChange = conf.size() == 0 ? false : true;
+        isConfChange = conf.size() != 0;
     }
 
     public CoordUpdateXCommand(boolean dryrun, Configuration conf, String jobId, boolean showDiff) {
         super(dryrun, conf);
         this.jobId = jobId;
         this.showDiff = showDiff;
-        isConfChange = conf.size() == 0 ? false : true;
+        isConfChange = conf.size() != 0;
     }
 
     @Override
     protected String storeToDB(String xmlElement, Element eJob, CoordinatorJobBean coordJob) throws CommandException {
         check(oldCoordJob, coordJob);
+
+        ConfigUtils.checkAndSetDisallowedProperties(conf,
+                this.oldCoordJob.getUser(),
+                new CommandException(ErrorCode.E1003,
+                        String.format("%s=%s", OozieClient.USER_NAME, conf.get(OozieClient.USER_NAME))),
+                true);
+
         computeDiff(eJob);
         oldCoordJob.setAppPath(conf.get(OozieClient.COORDINATOR_APP_PATH));
         if (isConfChange) {
@@ -89,7 +97,6 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
         oldCoordJob.setExecution(coordJob.getExecution());
         oldCoordJob.setTimeout(coordJob.getTimeout());
         oldCoordJob.setJobXml(XmlUtils.prettyPrint(eJob).toString());
-
 
         if (!dryrun) {
             oldCoordJob.setLastModifiedTime(new Date());
@@ -146,7 +153,6 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
         coordJob.setConf(XmlUtils.prettyPrint(conf).toString());
         setJob(coordJob);
         LogUtils.setLogInfo(coordJob);
-
     }
 
     @Override
@@ -164,7 +170,6 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
      * @param eJob the e job
      * @return the diff
      */
-
     private void computeDiff(Element eJob) {
         try {
             diff.append("**********Job definition changes**********").append(System.getProperty("line.separator"));
@@ -195,12 +200,12 @@ public class CoordUpdateXCommand extends CoordSubmitXCommand {
      */
     private String getDiffinGitFormat(String string1, String string2) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        RawText rt1 = new RawText(string1.getBytes());
-        RawText rt2 = new RawText(string2.getBytes());
+        RawText rt1 = new RawText(string1.getBytes(StandardCharsets.UTF_8));
+        RawText rt2 = new RawText(string2.getBytes(StandardCharsets.UTF_8));
         EditList diffList = new EditList();
         diffList.addAll(new HistogramDiff().diff(RawTextComparator.DEFAULT, rt1, rt2));
         new DiffFormatter(out).format(diffList, rt1, rt2);
-        return out.toString();
+        return out.toString(StandardCharsets.UTF_8.name());
     }
 
     @Override

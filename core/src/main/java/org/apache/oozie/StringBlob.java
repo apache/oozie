@@ -21,10 +21,12 @@ package org.apache.oozie;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.oozie.compression.CodecFactory;
 import org.apache.oozie.compression.CompressionCodec;
+import org.apache.oozie.util.ByteArrayUtils;
+import org.apache.oozie.util.StringUtils;
 
 /**
  * StringBlob to maintain compress and uncompressed data
@@ -37,29 +39,29 @@ public class StringBlob {
     /**
      * Construct string blob from compressed byte array
      *
-     * @param byteArray
+     * @param byteArray the byte array
      */
     public StringBlob(byte[] byteArray) {
-        this.rawBlob = byteArray;
+        this.rawBlob = ByteArrayUtils.weakIntern(byteArray);
     }
 
     /**
      * Construct StringBlob with uncompressed string
      *
-     * @param inputString
+     * @param inputString the string
      */
     public StringBlob(String inputString) {
-        this.string = inputString;
+        this.string = StringUtils.intern(inputString);
         this.rawBlob = null;
     }
 
     /**
      * Set string
      *
-     * @param str
+     * @param str the string
      */
     public void setString(String str) {
-        this.string = str;
+        this.string = StringUtils.intern(str);
         this.rawBlob = null;
     }
 
@@ -79,10 +81,10 @@ public class StringBlob {
             DataInputStream dais = new DataInputStream(new ByteArrayInputStream(rawBlob));
             CompressionCodec codec = CodecFactory.getDeCompressionCodec(dais);
             if (codec != null) {
-                string = codec.decompressToString(dais);
+                string = StringUtils.intern(codec.decompressToString(dais));
             }
             else {
-                string = new String(rawBlob, CodecFactory.UTF_8_ENCODING);
+                string = StringUtils.intern((new String(rawBlob, CodecFactory.UTF_8_ENCODING)));
             }
             dais.close();
 
@@ -109,14 +111,14 @@ public class StringBlob {
         if (CodecFactory.isCompressionEnabled()) {
             byte[] bytes = CodecFactory.getHeaderBytes();
             try {
-                rawBlob = CodecFactory.getCompressionCodec().compressString(bytes, string);
+                rawBlob = ByteArrayUtils.weakIntern(CodecFactory.getCompressionCodec().compressString(bytes, string));
             }
             catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
         else {
-            rawBlob = string.getBytes();
+            rawBlob = ByteArrayUtils.weakIntern(string.getBytes(StandardCharsets.UTF_8));
         }
         return rawBlob;
     }

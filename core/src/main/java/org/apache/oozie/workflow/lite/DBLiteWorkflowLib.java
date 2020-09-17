@@ -20,13 +20,13 @@ package org.apache.oozie.workflow.lite;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Objects;
 import javax.xml.validation.Schema;
 
 import org.apache.oozie.store.OozieSchema.OozieColumn;
 import org.apache.oozie.store.OozieSchema.OozieTable;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
-import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.WritableUtils;
 import org.apache.oozie.util.db.SqlStatement.ResultSetReader;
 import org.apache.oozie.util.db.SqlStatement;
@@ -47,12 +47,12 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Save the Workflow Instance for the given Workflow Application.
      *
-     * @param instance
-     * @throws WorkflowException
+     * @param instance workflow instance
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public void insert(WorkflowInstance instance) throws WorkflowException {
-        ParamChecker.notNull(instance, "instance");
+        Objects.requireNonNull(instance, "instance cannot be null");
         try {
             SqlStatement.insertInto(OozieTable.WF_PROCESS_INSTANCE).value(OozieColumn.PI_wfId, instance.getId()).value(
                     OozieColumn.PI_state, WritableUtils.toByteArray((LiteWorkflowInstance) instance))
@@ -66,16 +66,16 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Loads the Workflow instance with the given ID.
      *
-     * @param id
-     * @return
-     * @throws WorkflowException
+     * @param id workflow id
+     * @return pInstance returns a workflow instance with the given ID
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public WorkflowInstance get(String id) throws WorkflowException {
-        ParamChecker.notNull(id, "id");
+        Objects.requireNonNull(id, "id cannot be null");
         try {
             ResultSetReader rs = SqlStatement.parse(SqlStatement.selectColumns(OozieColumn.PI_state).where(
-                    SqlStatement.isEqual(OozieColumn.PI_wfId, ParamChecker.notNull(id, "id"))).
+                    SqlStatement.isEqual(OozieColumn.PI_wfId, Objects.requireNonNull(id, "id cannot be null"))).
                     prepareAndSetValues(connection).executeQuery());
             rs.next();
             LiteWorkflowInstance pInstance = WritableUtils.fromByteArray(rs.getByteArray(OozieColumn.PI_state),
@@ -90,15 +90,16 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Updates the Workflow Instance to DB.
      *
-     * @param instance
-     * @throws WorkflowException
+     * @param instance workflow instance
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public void update(WorkflowInstance instance) throws WorkflowException {
-        ParamChecker.notNull(instance, "instance");
+        Objects.requireNonNull(instance, "instance cannot be null");
         try {
             SqlStatement.update(OozieTable.WF_PROCESS_INSTANCE).set(OozieColumn.PI_state,
-                                                                    WritableUtils.toByteArray((LiteWorkflowInstance) instance)).where(
+                                                                    WritableUtils
+                                                                    .toByteArray((LiteWorkflowInstance) instance)).where(
                     SqlStatement.isEqual(OozieColumn.PI_wfId, instance.getId())).
                     prepareAndSetValues(connection).executeUpdate();
         }
@@ -110,12 +111,12 @@ public class DBLiteWorkflowLib extends LiteWorkflowLib {
     /**
      * Delets the Workflow Instance with the given id.
      *
-     * @param id
-     * @throws WorkflowException
+     * @param id workflow id
+     * @throws WorkflowException if workflow related issue occurs
      */
     @Override
     public void delete(String id) throws WorkflowException {
-        ParamChecker.notNull(id, "id");
+        Objects.requireNonNull(id, "id cannot be null");
         try {
             SqlStatement.deleteFrom(OozieTable.WF_PROCESS_INSTANCE).where(
                     SqlStatement.isEqual(OozieColumn.PI_wfId, id)).prepareAndSetValues(connection).executeUpdate();

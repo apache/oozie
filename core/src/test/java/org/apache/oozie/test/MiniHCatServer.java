@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -146,11 +145,7 @@ public class MiniHCatServer {
     }
 
     public static void resetHiveConfStaticVariables() throws Exception {
-        // HiveConf initializes location of hive-site.xml in static block.
-        // So this is needed so that tests like TestHiveMain that create hive-site.xml don't fail.
-        Field declaredField = HiveConf.class.getDeclaredField("hiveSiteURL");
-        declaredField.setAccessible(true);
-        declaredField.set(null, HiveConf.class.getClassLoader().getResource("hive-site.xml"));
+        HiveConf.setHiveSiteLocation(HiveConf.class.getClassLoader().getResource("hive-site.xml"));
     }
 
     private void setSystemProperty(String name, String value) {
@@ -206,6 +201,12 @@ public class MiniHCatServer {
         return new URI(uri.toString());
     }
 
+    public URI getHCatURI(String db, String table) throws URISyntaxException {
+        StringBuilder uri = new StringBuilder();
+        uri.append("hcat://").append(getMetastoreAuthority()).append("/").append(db).append("/").append(table);
+        return new URI(uri.toString());
+    }
+
     public void createDatabase(String db, String location) throws Exception {
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(db).ifNotExists(true).location(location).build();
         hcatClient.createDatabase(dbDesc);
@@ -228,6 +229,23 @@ public class MiniHCatServer {
         tblProps.put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, "hcat." + db + "." + table);
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc.create(db, table, cols).fileFormat("textfile")
                 .partCols(ptnCols).tblProps(tblProps ).build();
+        hcatClient.createTable(tableDesc);
+        List<String> tables = hcatClient.listTableNamesByPattern(db, "*");
+        assertTrue(tables.contains(table));
+    }
+
+    public void createTable(String db, String table) throws Exception {
+        List<HCatFieldSchema> cols = new ArrayList<HCatFieldSchema>();
+        cols.add(new HCatFieldSchema("userid", Type.INT, "userid"));
+        cols.add(new HCatFieldSchema("viewtime", Type.BIGINT, "view time"));
+        cols.add(new HCatFieldSchema("pageurl", Type.STRING, "page url visited"));
+        cols.add(new HCatFieldSchema("ip", Type.STRING, "IP Address of the User"));
+
+        // Remove this once NotificationListener is fixed and available in HCat snapshot
+        Map<String, String> tblProps = new HashMap<String, String>();
+        tblProps.put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, "hcat." + db + "." + table);
+        HCatCreateTableDesc tableDesc = HCatCreateTableDesc.create(db, table, cols).fileFormat("textfile")
+                .tblProps(tblProps ).build();
         hcatClient.createTable(tableDesc);
         List<String> tables = hcatClient.listTableNamesByPattern(db, "*");
         assertTrue(tables.contains(table));

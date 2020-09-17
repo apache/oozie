@@ -18,14 +18,13 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.SaslRpcServer;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.SaslRpcServer;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.oozie.util.XLog;
@@ -33,7 +32,7 @@ import org.apache.oozie.util.XLog;
 /**
  * Helper class to handle the HCat credentials
  * Performs internally the heavy-lifting of fetching delegation tokens from Hive Metastore, abstracted from the user
- * Token is added to jobConf
+ * Token is added to the credentials
  */
 public class HCatCredentialHelper {
 
@@ -45,28 +44,29 @@ public class HCatCredentialHelper {
     private static final String HADOOP_RPC_PROTECTION = "hadoop.rpc.protection";
 
     /**
-     * This Function will set the HCat token to jobconf
-     * @param launcherJobConf - job conf
+     * This Function will set the HCat token to the credentials
+     * @param credentials - the credentials
+     * @param launcherConfig - launcher configuration
      * @param principal - principal for HCat server
      * @param server - Serevr URI for HCat server
-     * @throws Exception
+     * @throws Exception in case of HCat client creation or close error
      */
-    public void set(JobConf launcherJobConf, String principal, String server) throws Exception {
+    public void set(Credentials credentials, Configuration launcherConfig, String principal, String server) throws Exception {
         HCatClient client = null;
         try {
-            client = getHCatClient(launcherJobConf, principal, server);
+            client = getHCatClient(launcherConfig, principal, server);
             XLog.getLog(getClass()).debug(
-                    "HCatCredentialHelper: set: User name for which token will be asked from HCat: "
-                            + launcherJobConf.get(USER_NAME));
-            String tokenStrForm = client.getDelegationToken(launcherJobConf.get(USER_NAME), UserGroupInformation
+                    "HCatCredentialHelper: set: User name for which token will be asked from HCat: {0}",
+                            launcherConfig.get(USER_NAME));
+            String tokenStrForm = client.getDelegationToken(launcherConfig.get(USER_NAME), UserGroupInformation
                     .getLoginUser().getShortUserName());
             Token<DelegationTokenIdentifier> hcatToken = new Token<DelegationTokenIdentifier>();
             hcatToken.decodeFromUrlString(tokenStrForm);
-            launcherJobConf.getCredentials().addToken(new Text("HCat Token"), hcatToken);
-            XLog.getLog(getClass()).debug("Added the HCat token in job conf");
+            credentials.addToken(CredentialsProviderFactory.getUniqueAlias(hcatToken), hcatToken);
+            XLog.getLog(getClass()).debug("Added the HCat token to launcher's credentials");
         }
         catch (Exception ex) {
-            XLog.getLog(getClass()).debug("set Exception" + ex.getMessage());
+            XLog.getLog(getClass()).debug("set Exception {0}", ex.getMessage());
             throw ex;
         }
         finally {
@@ -78,28 +78,28 @@ public class HCatCredentialHelper {
 
     /**
      * Getting the HCat client.
-     * @param launcherJobConf
-     * @param principal
-     * @param server
-     * @return HCatClient
-     * @throws HCatException
+     * @param launcherConfig - launcher configuration
+     * @param principal - principal for HCat server
+     * @param server - Serevr URI for HCat server
+     * @return HCatClient an HCatClient instance
+     * @throws HCatException if creating client fails
      */
-    public HCatClient getHCatClient(JobConf launcherJobConf,
+    public HCatClient getHCatClient(Configuration launcherConfig,
         String principal, String server) throws HCatException {
         HiveConf hiveConf = null;
         HCatClient hiveclient = null;
         hiveConf = new HiveConf();
-        XLog.getLog(getClass()).debug("getHCatClient: Principal: " + principal + " Server: " + server);
+        XLog.getLog(getClass()).debug("getHCatClient: Principal: {0} Server: {1}", principal, server);
         // specified a thrift url
 
         hiveConf.set(HIVE_METASTORE_SASL_ENABLED, "true");
         hiveConf.set(HIVE_METASTORE_KERBEROS_PRINCIPAL, principal);
         hiveConf.set(HIVE_METASTORE_LOCAL, "false");
         hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, server);
-        String protection = launcherJobConf.get(HADOOP_RPC_PROTECTION,
+        String protection = launcherConfig.get(HADOOP_RPC_PROTECTION,
            SaslRpcServer.QualityOfProtection.AUTHENTICATION.name()
               .toLowerCase());
-        XLog.getLog(getClass()).debug("getHCatClient, setting rpc protection to " + protection);
+        XLog.getLog(getClass()).debug("getHCatClient, setting rpc protection to {0}", protection);
         hiveConf.set(HADOOP_RPC_PROTECTION, protection);
 
         hiveclient = HCatClient.create(hiveConf);

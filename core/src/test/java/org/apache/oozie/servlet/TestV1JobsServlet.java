@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -35,7 +36,6 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XConfiguration;
@@ -72,7 +72,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
 
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 URL url = createURL("", params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -80,7 +80,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
                              obj.get(JsonTags.JOB_ID));
                 assertFalse(MockDagEngineService.started.get(wfCount));
@@ -90,7 +91,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.APP_PATH, appPath);
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_START);
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
@@ -99,7 +100,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
                 assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
                              obj.get(JsonTags.JOB_ID));
                 assertTrue(MockDagEngineService.started.get(wfCount));
@@ -112,7 +114,7 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf = new XConfiguration();
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -129,20 +131,14 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.LIBPATH, libPath1.toString());
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             obj.get(JsonTags.JOB_ID));
-                assertFalse(MockDagEngineService.started.get(wfCount));
-                wfCount++;
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
 
                 Path libPath2 = new Path(getFsTestCaseDir(), "libpath2");
                 fs.mkdirs(libPath2);
@@ -150,20 +146,14 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 jobConf.set(OozieClient.USER_NAME, getTestUser());
                 jobConf.set(OozieClient.LIBPATH, libPath1.toString() + "," + libPath2.toString());
 
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 url = createURL("", params);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
                 conn.setDoOutput(true);
                 jobConf.writeXml(conn.getOutputStream());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                assertEquals(HttpServletResponse.SC_CREATED, conn.getResponseCode());
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
-                             obj.get(JsonTags.JOB_ID));
-                assertFalse(MockDagEngineService.started.get(wfCount));
-                wfCount++;
+                assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
 
                 return null;
             }
@@ -183,7 +173,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 JSONArray array = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());
                 for (int i = 0; i < MockDagEngineService.INIT_WF_COUNT; i++) {
@@ -202,7 +193,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 array = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
 
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());
@@ -222,7 +214,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONObject obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals("id-valid", obj.get(JsonTags.JOB_ID));
 
                 params = new HashMap<String, String>();
@@ -232,7 +225,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                obj = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertNull(obj.get(JsonTags.JOB_ID));
 
                 params = new HashMap<String, String>();
@@ -243,7 +237,8 @@ public class TestV1JobsServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 array = (JSONArray) json.get(JsonTags.WORKFLOWS_JOBS);
                 assertEquals(MockDagEngineService.INIT_WF_COUNT, array.size());
                 return null;

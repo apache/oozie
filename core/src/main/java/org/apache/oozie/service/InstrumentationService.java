@@ -29,7 +29,9 @@ import java.util.Map;
  * This service provides an {@link Instrumentation} instance configured to support samplers. <p> This service depends
  * on the {@link SchedulerService}. <p> The {@link #CONF_LOGGING_INTERVAL} configuration property indicates how often
  * snapshots of the instrumentation should be logged.
+ * @deprecated since 5.0.0
  */
+@Deprecated
 public class InstrumentationService implements Service {
     private static final String JVM_INSTRUMENTATION_GROUP = "jvm";
 

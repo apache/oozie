@@ -20,7 +20,6 @@ package org.apache.oozie.servlet;
 
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.client.OozieClient;
-import org.apache.oozie.servlet.VersionServlet;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 
@@ -28,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -47,7 +47,8 @@ public class TestVersionServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONArray array = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                JSONArray array = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream(),
+                        StandardCharsets.UTF_8));
                 assertEquals(3, array.size());
                 assertEquals(OozieClient.WS_PROTOCOL_VERSION_1, array.get(1));
                 return null;

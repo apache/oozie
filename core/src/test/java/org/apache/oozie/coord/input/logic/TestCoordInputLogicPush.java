@@ -19,12 +19,14 @@
 package org.apache.oozie.coord.input.logic;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,9 +66,10 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
     private String server;
     private static final String table = "table1";
 
-    final long TIME_DAYS = 60 * 60 * 1000 * 24;
 
-    enum TEST_TYPE {
+    public final static long TIME_DAYS = 60 * 60 * 1000 * 24;
+
+    public static enum TEST_TYPE {
         CURRENT_SINGLE, CURRENT_RANGE, LATEST_SINGLE, LATEST_RANGE;
     };
 
@@ -132,7 +135,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
          "</or>";
         //@formatter:on
         conf.set("partitionName", "test");
-        String jobId = _testCoordSubmit("coord-inputlogic-hcat.xml", conf, inputLogic, TEST_TYPE.CURRENT_SINGLE);
+        String jobId = submitCoord("coord-inputlogic-hcat.xml", conf, inputLogic, TEST_TYPE.CURRENT_SINGLE);
 
         String input = addPartition("db_b", "table1", "dt=20141008;country=usa");
 
@@ -168,7 +171,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
          "</and>";
         //@formatter:on
         conf.set("partitionName", "test");
-        final String jobId = _testCoordSubmit("coord-inputlogic-hcat.xml", conf, inputLogic, TEST_TYPE.CURRENT_SINGLE);
+        final String jobId = submitCoord("coord-inputlogic-hcat.xml", conf, inputLogic, TEST_TYPE.CURRENT_SINGLE);
 
         String input1 = addPartition("db_a", "table1", "dt=20141008;country=usa");
         String input2 = addPartition("db_b", "table1", "dt=20141008;country=usa");
@@ -215,7 +218,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
          "</and>";
         //@formatter:on
         conf.set("partitionName", "test");
-        final String jobId = _testCoordSubmit("coord-inputlogic-hcat.xml", conf, inputLogic, TEST_TYPE.CURRENT_RANGE,
+        final String jobId = submitCoord("coord-inputlogic-hcat.xml", conf, inputLogic, TEST_TYPE.CURRENT_RANGE,
                 TEST_TYPE.LATEST_RANGE);
         List<String> inputPartition = createPartitionWithTime("db_a", now, 0, 1, 2);
         inputPartition.addAll(createPartitionWithTime("db_c", now, 0, 1, 2));
@@ -246,7 +249,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
               "<data-in dataset=\"B\" />" +
          "</and>";
         //@formatter:on
-        String jobId = _testCoordSubmit("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE);
+        String jobId = submitCoord("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE);
 
         List<String> inputDir = createDirWithTime("input-data/b/", now, 0, 1, 2, 3, 4, 5);
         inputDir.addAll(createPartitionWithTime("db_a", now, 0, 1, 2, 3, 4, 5));
@@ -280,7 +283,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
               "<data-in dataset=\"B\"/>" +
          "</and>";
         //@formatter:on
-        String jobId = _testCoordSubmit("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE,
+        String jobId = submitCoord("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE,
                 TEST_TYPE.CURRENT_RANGE);
 
         List<String> inputDir = createDirWithTime("input-data/b/", now, 0, 1, 2, 3, 4, 5);
@@ -322,7 +325,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         "</or>";
 
         //@formatter:on
-        String jobId = _testCoordSubmit("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE);
+        String jobId = submitCoord("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE);
         List<String> inputDir = createDirWithTime("input-data/b/", now, 0, 1, 2, 3, 4, 5);
         inputDir.addAll(createPartitionWithTime("db_a", now, 0, 1, 2, 3, 4, 5));
 
@@ -351,7 +354,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
                        "<data-in name=\"testB\" dataset=\"B\" />" +
             "</and>";
             //@formatter:on
-        String jobId = _testCoordSubmit("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.CURRENT_SINGLE);
+        String jobId = submitCoord("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.CURRENT_SINGLE);
 
         String input1 = createTestCaseSubDir("input-data/b/2014/10/08/_SUCCESS".split("/"));
         String input2 = addPartition("db_a", "table1", "dt=20141008;country=usa");
@@ -394,7 +397,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
             "</and>";
 
         //@formatter:on
-        String jobId = _testCoordSubmit("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE);
+        String jobId = submitCoord("coord-inputlogic-combine.xml", conf, inputLogic, TEST_TYPE.LATEST_RANGE);
 
         String input1 = createTestCaseSubDir(("input-data/d/" + sd.format(now) + "/_SUCCESS").split("/"));
         sd = new SimpleDateFormat("yyyyMMdd");
@@ -429,31 +432,31 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         conf.set("db_e", "db_e");
         conf.set("db_f", "db_f");
         conf.set("table", table);
-        conf.set("wfPath", getWFPath());
+        conf.set("wfPath", getWFPath(getTestCaseFileUri("workflow.xml")));
         conf.set("partitionName", "test");
 
         return conf;
-
     }
 
-    private Configuration getConfForCombine() throws Exception {
+    public Configuration getConfForCombine() throws Exception {
+        return getConfForCombine("file://" + getTestCaseDir(), "hcat://" + getMetastoreAuthority());
+    }
+
+    public static Configuration getConfForCombine(String testCaseDir, String hcatURL) throws Exception {
         Configuration conf = new XConfiguration();
         conf.set("start_time", "2014-10-08T00:00Z");
         conf.set("end_time", "2015-10-08T00:00Z");
         conf.set("initial_instance", "2014-10-08T00:00Z");
 
-        conf.set("data_set_b", "file://" + getTestCaseDir() + "/input-data/b");
-        conf.set("data_set_d", "file://" + getTestCaseDir() + "/input-data/d");
-        conf.set("data_set_f", "file://" + getTestCaseDir() + "/input-data/f");
+        conf.set("data_set_b", testCaseDir + "/input-data/b");
+        conf.set("data_set_d", testCaseDir + "/input-data/d");
+        conf.set("data_set_f", testCaseDir + "/input-data/f");
 
         conf.set("start_time", "2014-10-08T00:00Z");
         conf.set("end_time", "2015-10-08T00:00Z");
         conf.set("initial_instance_a", "2014-10-08T00:00Z");
         conf.set("initial_instance_b", "2014-10-08T00:00Z");
-
-        String dataset1 = "hcat://" + getMetastoreAuthority();
-
-        conf.set("data_set", dataset1.toString());
+        conf.set("data_set", hcatURL);
         conf.set("db_a", "db_a");
         conf.set("db_b", "db_b");
         conf.set("db_c", "db_c");
@@ -461,16 +464,19 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         conf.set("db_e", "db_e");
         conf.set("db_f", "db_f");
         conf.set("table", table);
-        conf.set("wfPath", getWFPath());
+        conf.set("wfPath", getWFPath(testCaseDir  + "/workflow.xml"));
         conf.set("partitionName", "test");
-
         return conf;
-
     }
 
-    private String _testCoordSubmit(String coordinatorXml, Configuration conf, String inputLogic, TEST_TYPE... testType)
+    public   String  submitCoord(String coordinatorXml, Configuration conf, String inputLogic, TEST_TYPE... testType)
             throws Exception {
-        String appPath = "file://" + getTestCaseDir() + File.separator + "coordinator.xml";
+        return submitCoord(getTestCaseDir(), coordinatorXml, conf, inputLogic, testType);
+    }
+
+    public static String submitCoord(String testCaseDir, String coordinatorXml, Configuration conf, String inputLogic,
+            TEST_TYPE... testType) throws Exception {
+        String appPath = "file://" + testCaseDir + File.separator + "coordinator.xml";
 
         String content = IOUtils.getResourceAsString(coordinatorXml, -1);
         content = content.replaceAll("=input-logic=", inputLogic);
@@ -483,7 +489,8 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
             }
         }
 
-        Writer writer = new FileWriter(new URI(appPath).getPath());
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new URI(appPath).getPath()),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(new StringReader(content), writer);
         conf.set(OozieClient.COORDINATOR_APP_PATH, appPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
@@ -504,8 +511,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         return coordId;
     }
 
-    public String getWFPath() throws Exception {
-        String workflowUri = getTestCaseFileUri("workflow.xml");
+    public static String getWFPath(String workflowUri) throws Exception {
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='map-reduce-wf'> " + "<start to='end' /> "
                 + "<end name='end' /> " + "</workflow-app>";
 
@@ -513,11 +519,11 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         return workflowUri;
     }
 
-    private void writeToFile(String appXml, String appPath) throws IOException {
+    private static void writeToFile(String appXml, String appPath) throws IOException {
         File wf = new File(URI.create(appPath));
         PrintWriter out = null;
         try {
-            out = new PrintWriter(new FileWriter(wf));
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
             out.println(appXml);
         }
         catch (IOException iOException) {
@@ -593,7 +599,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
         return conf;
     }
 
-    private String getEnumText(TEST_TYPE testType) {
+    private  static String getEnumText(TEST_TYPE testType) {
         switch (testType) {
             case LATEST_SINGLE:
                 return "<instance>\\${coord:latest(0)}</instance>";

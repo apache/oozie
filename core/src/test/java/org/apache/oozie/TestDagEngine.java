@@ -35,17 +35,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.io.StringReader;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class TestDagEngine extends XTestCase {
     private EmbeddedServletContainer container;
     private Services services;
+    private DagEngine engine;
 
     public static class CallbackServlet extends HttpServlet {
         public static volatile String JOB_ID = null;
@@ -78,6 +80,7 @@ public class TestDagEngine extends XTestCase {
         services = new Services();
         services.init();
         services.get(ActionService.class).registerAndInitExecutor(ForTestingActionExecutor.class);
+        engine = new DagEngine(getTestUser());
     }
 
     protected void tearDown() throws Exception {
@@ -89,7 +92,8 @@ public class TestDagEngine extends XTestCase {
     public void testSubmit() throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow.xml")),
+                StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         OutputStream os = new FileOutputStream(new File(getTestCaseDir(), "config-default.xml"));
@@ -147,7 +151,8 @@ public class TestDagEngine extends XTestCase {
     public void testJobDefinition() throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow" +
+                ".xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
 
         final DagEngine engine = new DagEngine(getTestUser());
@@ -169,69 +174,95 @@ public class TestDagEngine extends XTestCase {
     public void testGetJobs() throws Exception {
         String workflowPath = getTestCaseFileUri("workflow.xml");
         Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
-        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        Writer writer = new OutputStreamWriter(new FileOutputStream(new File(getTestCaseDir(), "workflow" +
+                ".xml")), StandardCharsets.UTF_8);
         IOUtils.copyCharStream(reader, writer);
-
         final DagEngine engine = new DagEngine(getTestUser());
         Configuration conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, workflowPath);
         conf.set(OozieClient.USER_NAME, getTestUser());
-
         conf.set(OozieClient.LOG_TOKEN, "t");
         conf.set("signal-value", "OK");
         conf.set("external-status", "ok");
         conf.set("error", "end.error");
+        engine.submitJob(conf, true);
+        engine.submitJob(conf, false);
+    }
 
-        final String jobId1 = engine.submitJob(conf, true);
-        String jobId2 = engine.submitJob(conf, false);
-/*
-        WorkflowsInfo wfInfo = engine.getJobs("group=" + getTestGroup(), 1, 1);
-        List<WorkflowJobBean> workflows = wfInfo.getWorkflows();
-        assertEquals(1, workflows.size());
-        assertEquals(getTestGroup(), workflows.get(0).getGroup());
-        assertEquals(jobId1, workflows.get(0).getId());
+    public void testValidateRerunConfigurationMissingApplicationPath() {
+        String appPath = null;
+        boolean rerunFailNodes = false;
+        String rerunSkipNodes = null;
+        Configuration rerunConfig = setupRerunConfig(appPath, rerunFailNodes, rerunSkipNodes);
+        try {
+            engine.validateReRunConfiguration(rerunConfig);
+            fail("DagEngineException should have been thrown");
+        }
+        catch (DagEngineException e) {
+            assertEquals("Missing expected error code", ErrorCode.E0401, e.getErrorCode());
+            assertTrue("Missing expected error message", e.getMessage().contains(OozieClient.APP_PATH));
+        }
+    }
 
-        wfInfo = engine.getJobs("group=" + getTestGroup(), 1, 5);
-        workflows = wfInfo.getWorkflows();
-        assertEquals(2, workflows.size());
-        assertEquals(getTestGroup(), workflows.get(0).getGroup());
-        assertEquals(jobId1, workflows.get(0).getId());
-        assertEquals(jobId2, workflows.get(1).getId());
+    public void testValidateRerunConfigurationFalseRerunFailNodesEmptySkipNodes() throws DagEngineException {
+        String appPath = getTestCaseDir();
+        boolean rerunFailNodes = false;
+        String rerunSkipNodes = null;
+        Configuration rerunConfig = setupRerunConfig(appPath, rerunFailNodes, rerunSkipNodes);
+        engine.validateReRunConfiguration(rerunConfig);
+    }
 
-        wfInfo = engine.getJobs("user=" + getTestUser(), 1, 1);
-        workflows = wfInfo.getWorkflows();
-        assertEquals(1, workflows.size());
-        assertEquals(getTestUser(), workflows.get(0).getUser());
-        assertEquals(jobId1, workflows.get(0).getId());
+    public void testValidateRerunConfigurationNullRerunFailNodesNullSkipNodes() throws DagEngineException {
+        String appPath = getTestCaseDir();
+        Boolean rerunFailNodes = null;
+        String rerunSkipNodes = null;
+        Configuration rerunConfig = setupRerunConfig(appPath, rerunFailNodes, rerunSkipNodes);
+        engine.validateReRunConfiguration(rerunConfig);
+    }
 
-        wfInfo = engine.getJobs("user=" + getTestUser(), 2, 5);
-        workflows = wfInfo.getWorkflows();
-        assertEquals(1, workflows.size());
-        assertEquals(getTestUser(), workflows.get(0).getUser());
-        assertEquals(jobId2, workflows.get(0).getId());
+    public void testValidateRerunConfigurationTrueRerunFailNodesEmptySkipNodes() throws DagEngineException {
+        String appPath = getTestCaseDir();
+        boolean rerunFailNodes = true;
+        String rerunSkipNodes = null;
+        Configuration rerunConfig = setupRerunConfig(appPath, rerunFailNodes, rerunSkipNodes);
+        engine.validateReRunConfiguration(rerunConfig);
+    }
 
-        waitFor(5000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                WorkflowJobBean bean = Services.get().get(WorkflowStoreService.class).create().getWorkflow(jobId1, false);
-                return bean.getWorkflowInstance().getStatus().isEndState();
-            }
-        });
+    public void testValidateRerunConfigurationFalseRerunFailNodesNonEmptySkipNodes() throws DagEngineException {
+        String appPath = getTestCaseDir();
+        boolean rerunFailNodes = false;
+        String rerunSkipNodes = "node1";
+        Configuration rerunConfig = setupRerunConfig(appPath, rerunFailNodes, rerunSkipNodes);
+        engine.validateReRunConfiguration(rerunConfig);
+    }
 
-        wfInfo = engine.getJobs("status=PREP", 1, 5);
-        workflows = wfInfo.getWorkflows();
-        assertEquals(1, workflows.size());
-        assertEquals(jobId2, workflows.get(0).getId());
+    public void testValidateRerunConfigurationTrueRerunFailNodesNonEmptySkipNodes() {
+        String appPath = getTestCaseDir();
+        boolean rerunFailNodes = true;
+        String rerunSkipNodes = "node1";
+        Configuration rerunConfig = setupRerunConfig(appPath, rerunFailNodes, rerunSkipNodes);
+        try {
+            engine.validateReRunConfiguration(rerunConfig);
+            fail("DagEngineException should have been thrown");
+        }
+        catch (DagEngineException e) {
+            assertEquals("Missing expected error code",ErrorCode.E0404, e.getErrorCode());
+            assertTrue("Missing expected error message", e.getMessage().contains(OozieClient.RERUN_FAIL_NODES));
+            assertTrue("Missing expected error message", e.getMessage().contains(OozieClient.RERUN_SKIP_NODES));
+        }
+    }
 
-        wfInfo = engine.getJobs("name=test-wf", 1, 5);
-        workflows = wfInfo.getWorkflows();
-        assertEquals(2, workflows.size());
-        assertEquals(jobId1, workflows.get(0).getId());
-        assertEquals(jobId2, workflows.get(1).getId());
-
-        wfInfo = engine.getJobs("name=test-wf;status=PREP", 1, 5);
-        workflows = wfInfo.getWorkflows();
-        assertEquals(1, workflows.size());
-        assertEquals(jobId2, workflows.get(0).getId());
-*/
+    private Configuration setupRerunConfig(final String appPath, final Boolean rerunFailNodes, final String rerunSkipNodes) {
+        Configuration rerunConfig = new Configuration();
+        if (appPath != null) {
+            rerunConfig.set(OozieClient.APP_PATH, appPath);
+        }
+        if (rerunFailNodes != null) {
+            rerunConfig.setBoolean(OozieClient.RERUN_FAIL_NODES, rerunFailNodes);
+        }
+        if (rerunSkipNodes != null) {
+            rerunConfig.setStrings(OozieClient.RERUN_SKIP_NODES, rerunSkipNodes);
+        }
+        return rerunConfig;
     }
 }

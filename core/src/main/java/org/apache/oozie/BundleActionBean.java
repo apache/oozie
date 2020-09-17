@@ -43,39 +43,61 @@ import org.json.simple.JSONObject;
 @Entity
 @Table(name = "BUNDLE_ACTIONS")
 @NamedQueries( {
-        @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleActionId = :bundleActionId"),
+        @NamedQuery(name = "DELETE_BUNDLE_ACTION", query = "delete from BundleActionBean w where w.bundleActionId"
+                + " = :bundleActionId"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_ACTION_PENDING_MODTIME", query = "update BundleActionBean w set w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.bundleActionId = :bundleActionId"),
+        @NamedQuery(name = "UPDATE_BUNDLE_ACTION_PENDING_MODTIME", query = "update BundleActionBean w set w.lastModifiedTimestamp"
+                + " = :lastModifiedTime, w.pending = :pending where w.bundleActionId = :bundleActionId"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME", query = "update BundleActionBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.bundleActionId = :bundleActionId"),
+        @NamedQuery(name = "UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME", query = "update BundleActionBean w set w.statusStr "
+                + "= :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending where w.bundleActionId "
+                + "= :bundleActionId"),
 
-        @NamedQuery(name = "UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID", query = "update BundleActionBean w set w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending, w.coordId = :coordId where w.bundleActionId = :bundleActionId"),
+        @NamedQuery(name = "UPDATE_BUNDLE_ACTION_STATUS_PENDING_MODTIME_COORDID", query = "update BundleActionBean w set"
+                + " w.statusStr = :status, w.lastModifiedTimestamp = :lastModifiedTime, w.pending = :pending, w.coordId "
+                + "= :coordId where w.bundleActionId = :bundleActionId"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE", query = "select OBJECT(w) from BundleActionBean w where w.bundleId = :bundleId AND w.statusStr <> 'IGNORED'"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_STATUS_UNIGNORED_FOR_BUNDLE", query = "select OBJECT(w) from BundleActionBean w"
+                + " where w.bundleId = :bundleId AND w.statusStr <> 'IGNORED'"),
 
-        @NamedQuery(name = "GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE", query = "select w.coordId, w.statusStr, w.pending from BundleActionBean w where w.bundleId = :bundleId AND w.statusStr <> 'IGNORED'"),
+        @NamedQuery(name = "GET_BUNDLE_UNIGNORED_ACTION_STATUS_PENDING_FOR_BUNDLE", query = "select w.coordId, w.statusStr,"
+                + " w.pending from BundleActionBean w where w.bundleId = :bundleId AND w.statusStr <> 'IGNORED'"),
 
         @NamedQuery(name = "GET_BUNDLE_ACTIONS", query = "select OBJECT(w) from BundleActionBean w"),
 
-        @NamedQuery(name = "GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN", query = "select w.bundleActionId, w.bundleId, w.statusStr, w.coordId, w.coordName from BundleActionBean w where w.pending > 0 AND w.lastModifiedTimestamp <= :lastModifiedTime"),
+        @NamedQuery(name = "GET_BUNDLE_WAITING_ACTIONS_OLDER_THAN", query = "select w.bundleActionId, w.bundleId, w.statusStr,"
+                + " w.coordId, w.coordName from BundleActionBean w where w.pending > 0 AND w.lastModifiedTimestamp "
+                + "<= :lastModifiedTime"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleActionId = :bundleActionId"),
+        @NamedQuery(name = "GET_BUNDLE_ACTION", query = "select OBJECT(w) from BundleActionBean w where w.bundleActionId "
+                + "= :bundleActionId"),
 
         @NamedQuery(name = "GET_BUNDLE_ACTIONS_COUNT", query = "select count(w) from BundleActionBean w"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_COUNT_BY_JOB", query = "select count(w) from BundleActionBean w where w.bundleId = :bundleId"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_COUNT_BY_JOB", query = "select count(w) from BundleActionBean w where w.bundleId"
+                + " = :bundleId"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_PENDING_TRUE_COUNT", query = "select count(w) from BundleActionBean w where w.bundleId = :bundleId AND w.pending > 0"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_PENDING_TRUE_COUNT", query = "select count(w) from BundleActionBean w where"
+                + " w.bundleId = :bundleId AND w.pending > 0"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_NOT_EQUAL_STATUS_COUNT", query = "select count(w) from BundleActionBean w where w.bundleId = :bundleId AND w.statusStr <> :status"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_NOT_EQUAL_STATUS_COUNT", query = "select count(w) from BundleActionBean w where"
+                + " w.bundleId = :bundleId AND w.statusStr <> :status"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_NOT_TERMINATE_STATUS_COUNT", query = "select count(w) from BundleActionBean w where w.bundleId = :bundleId AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' OR w.statusStr = 'RUNNINGWITHERROR' OR w.statusStr = 'SUSPENDED' OR w.statusStr = 'SUSPENDEDWITHERROR' OR w.statusStr = 'PREPSUSPENDED' OR w.statusStr = 'PAUSED' OR  w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr = 'PREPPAUSED')"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_NOT_TERMINATE_STATUS_COUNT", query = "select count(w) from BundleActionBean w"
+                + " where w.bundleId = :bundleId AND (w.statusStr = 'PREP' OR w.statusStr = 'RUNNING' OR w.statusStr "
+                + "= 'RUNNINGWITHERROR' OR w.statusStr = 'SUSPENDED' OR w.statusStr = 'SUSPENDEDWITHERROR' OR w.statusStr "
+                + "= 'PREPSUSPENDED' OR w.statusStr = 'PAUSED' OR  w.statusStr = 'PAUSEDWITHERROR' OR w.statusStr "
+                + "= 'PREPPAUSED')"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_FAILED_NULL_COORD_COUNT", query = "select count(w) from BundleActionBean w where w.bundleId = :bundleId AND w.statusStr = 'FAILED' AND w.coordId IS NULL"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_FAILED_NULL_COORD_COUNT", query = "select count(w) from BundleActionBean w where"
+                + " w.bundleId = :bundleId AND w.statusStr = 'FAILED' AND w.coordId IS NULL"),
 
-        @NamedQuery(name = "GET_BUNDLE_ACTIONS_OLDER_THAN", query = "select OBJECT(w) from BundleActionBean w order by w.lastModifiedTimestamp"),
+        @NamedQuery(name = "GET_BUNDLE_ACTIONS_OLDER_THAN", query = "select OBJECT(w) from BundleActionBean w order by"
+                + " w.lastModifiedTimestamp"),
 
-        @NamedQuery(name = "DELETE_COMPLETED_ACTIONS_FOR_BUNDLE", query = "delete from BundleActionBean a where a.bundleId = :bundleId and (a.statusStr = 'SUCCEEDED' OR a.statusStr = 'FAILED' OR a.statusStr= 'KILLED' OR a.statusStr = 'DONEWITHERROR')"),
+        @NamedQuery(name = "DELETE_COMPLETED_ACTIONS_FOR_BUNDLE", query = "delete from BundleActionBean a where a.bundleId "
+                + "= :bundleId and (a.statusStr = 'SUCCEEDED' OR a.statusStr = 'FAILED' OR a.statusStr= 'KILLED' "
+                + "OR a.statusStr = 'DONEWITHERROR')"),
 
         @NamedQuery(name = "DELETE_ACTIONS_FOR_BUNDLE", query = "delete from BundleActionBean a where a.bundleId  IN (:bundleId)")})
 public class BundleActionBean implements Writable, JsonBean {
@@ -141,7 +163,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Bundle Id.
      *
-     * @param bundleId
+     * @param bundleId the bundle Id
      */
     public void setBundleId(String bundleId) {
         this.bundleId = bundleId;
@@ -159,7 +181,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Coordinator name.
      *
-     * @param coordName
+     * @param coordName the Coordinator name
      */
     public void setCoordName(String coordName) {
         this.coordName = coordName;
@@ -177,7 +199,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the coordinator Id.
      *
-     * @param coordId
+     * @param coordId the coordinator id
      */
     public void setCoordId(String coordId) {
         this.coordId = coordId;
@@ -213,7 +235,7 @@ public class BundleActionBean implements Writable, JsonBean {
     /**
      * Set the Status of the Bundle Action
      *
-     * @param val
+     * @param val the status to set
      */
     public void setStatus(Status val) {
         this.statusStr = val.toString();

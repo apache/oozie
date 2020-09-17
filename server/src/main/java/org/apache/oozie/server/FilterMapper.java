@@ -18,23 +18,23 @@
 
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.oozie.servlet.AuthFilter;
+import org.apache.oozie.servlet.HttpResponseHeaderFilter;
 import org.apache.oozie.servlet.HostnameFilter;
 import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
+import java.util.Objects;
 
 public class FilterMapper {
     private final WebAppContext servletContextHandler;
 
     @Inject
     public FilterMapper(final WebAppContext servletContextHandler) {
-        this.servletContextHandler = Preconditions.checkNotNull(servletContextHandler, "ServletContextHandler is null");
+        this.servletContextHandler = Objects.requireNonNull(servletContextHandler, "ServletContextHandler is null");
     }
 
     /**
@@ -42,6 +42,7 @@ public class FilterMapper {
      * */
     void addFilters() {
         mapFilter(new FilterHolder(new HostnameFilter()), "/*");
+        mapFilter(new FilterHolder(new HttpResponseHeaderFilter()), "/*");
 
         FilterHolder authFilter = new FilterHolder(new AuthFilter());
         mapFilter(authFilter, "/versions/*");
@@ -53,9 +54,11 @@ public class FilterMapper {
         mapFilter(authFilter, "/*.js");
         mapFilter(authFilter, "/ext-2.2/*");
         mapFilter(authFilter, "/docs/*");
+        mapFilter(authFilter, "/error/*");
     }
 
-    private void mapFilter(FilterHolder authFilter, String pathSpec) {
-        servletContextHandler.addFilter(authFilter, pathSpec, EnumSet.of(DispatcherType.REQUEST));
+    private void mapFilter(FilterHolder filterHolder, String pathSpec) {
+        servletContextHandler.addFilter(filterHolder, pathSpec,
+                EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.INCLUDE));
     }
 }

@@ -48,8 +48,8 @@
             <app-path>${nameNode}/user/${coord:user()}/${examplesRoot}/apps/sla/workflow.xml</app-path>
             <configuration>
                 <property>
-                    <name>jobTracker</name>
-                    <value>${jobTracker}</value>
+                    <name>resourceManager</name>
+                    <value>${resourceManager}</value>
                 </property>
                 <property>
                     <name>nameNode</name>

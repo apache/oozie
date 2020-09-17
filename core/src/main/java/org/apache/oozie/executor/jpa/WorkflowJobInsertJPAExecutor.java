@@ -21,7 +21,8 @@ package org.apache.oozie.executor.jpa;
 import javax.persistence.EntityManager;
 
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.util.ParamChecker;
+
+import java.util.Objects;
 
 /**
  * Persist the WorkflowJob bean.
@@ -31,21 +32,14 @@ public class WorkflowJobInsertJPAExecutor implements JPAExecutor<String> {
     private WorkflowJobBean wfJob = null;
 
     public WorkflowJobInsertJPAExecutor(WorkflowJobBean wfJob) {
-        ParamChecker.notNull(wfJob, "wfJob");
-        this.wfJob = wfJob;
+        this.wfJob = Objects.requireNonNull(wfJob, "wfJob cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobInsertJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     public String execute(EntityManager em) throws JPAExecutorException {
         em.persist(wfJob);

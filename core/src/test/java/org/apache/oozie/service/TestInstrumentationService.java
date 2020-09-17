@@ -40,11 +40,21 @@ public class TestInstrumentationService extends XTestCase {
         assertNotNull(Services.get().get(InstrumentationService.class));
         assertNotNull(Services.get().get(InstrumentationService.class).get());
         Instrumentation instr = Services.get().get(InstrumentationService.class).get();
-        assertFalse(instr instanceof MetricsInstrumentation);
+        assertTrue("Metrics is enabled by default since 5.0.0", instr instanceof MetricsInstrumentation);
     }
 
-    public void testIsEnabled() {
-        assertTrue(InstrumentationService.isEnabled());
-        assertFalse(MetricsInstrumentationService.isEnabled());
+    public void testIsDisabledByDefault() {
+        assertFalse("Instrumentation is disabled by default since 5.0.0", InstrumentationService.isEnabled());
+        assertTrue("Metrics is enabled by default since 5.0.0", MetricsInstrumentationService.isEnabled());
+    }
+
+    public void testEnable() throws ServiceException {
+        Services.get().destroy();
+        setSystemProperty(Services.CONF_SERVICE_EXT_CLASSES, InstrumentationService.class.getName());
+
+        new Services().init();
+
+        assertTrue("Instrumentation is enabled successfully", InstrumentationService.isEnabled());
+        assertFalse("Metrics is disabled successfully", MetricsInstrumentationService.isEnabled());
     }
 }

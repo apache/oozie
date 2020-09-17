@@ -53,6 +53,7 @@ public class SLAService implements Service {
     public static final String CONF_SLA_CHECK_INITIAL_DELAY = CONF_PREFIX + "check.initial.delay";
     public static final String CONF_SLA_CALC_LOCK_TIMEOUT = CONF_PREFIX + "oozie.sla.calc.default.lock.timeout";
     public static final String CONF_SLA_HISTORY_PURGE_INTERVAL = CONF_PREFIX + "history.purge.interval";
+    public static final String CONF_MAXIMUM_RETRY_COUNT = CONF_PREFIX + "maximum.retry.count";
 
     private static SLACalculator calcImpl;
     private static boolean slaEnabled = false;
@@ -112,6 +113,11 @@ public class SLAService implements Service {
 
     public void runSLAWorker() {
         new SLAWorker(calcImpl).run();
+    }
+
+    @VisibleForTesting
+    public void startSLAWorker() {
+        new Thread(new SLAWorker(calcImpl)).start();
     }
 
     private class SLAWorker implements Runnable {

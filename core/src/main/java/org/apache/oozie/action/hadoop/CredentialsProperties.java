@@ -84,4 +84,9 @@ public class CredentialsProperties {
     public void setProperties(HashMap<String, String> properties) {
         this.properties = properties;
     }
+
+    @Override
+    public String toString() {
+        return String.format("name=%s, type=%s", name, type);
+    }
 }

@@ -18,16 +18,20 @@
 
 package org.apache.oozie.util;
 
-import org.apache.oozie.test.XTestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 
-public class TestIOUtils extends XTestCase {
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 
-    public void testGetReaderAsString() throws Exception {
+public class TestIOUtils  {
+
+    @Test
+    public void testGetReaderAsString() throws IOException {
         try {
             IOUtils.getReaderAsString(new StringReader("1234"), 2);
             fail();
@@ -38,7 +42,8 @@ public class TestIOUtils extends XTestCase {
         assertEquals("1234", IOUtils.getReaderAsString(new StringReader("1234"), 4));
     }
 
-    public void testGetResourceAsString() throws Exception {
+    @Test
+    public void testGetResourceAsString() throws IOException {
         try {
             IOUtils.getResourceAsString("invalid-resource.txt", 2);
             fail();
@@ -57,10 +62,12 @@ public class TestIOUtils extends XTestCase {
         }
     }
 
-    public void testGetResourceAsReader() throws Exception {
+    @Test
+    public void testGetResourceAsReader() throws IOException {
         IOUtils.getResourceAsReader("test-ioutils.txt", 10);
     }
 
+    @Test
     public void testCopyStream() throws IOException {
         byte[] original = new byte[]{0, 1, 2};
         ByteArrayInputStream is = new ByteArrayInputStream(original);

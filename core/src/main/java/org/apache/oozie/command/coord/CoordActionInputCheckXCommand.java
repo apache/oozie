@@ -34,6 +34,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.coord.CoordELEvaluator;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.coord.ElException;
 import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.executor.jpa.CoordActionGetForInputCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
@@ -169,9 +170,17 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             LOG.info("[" + actionId + "]::CoordActionInputCheck:: Missing deps:" + firstMissingDependency + " "
                     + nonResolvedList.toString());
 
+            boolean status = false;
+            try {
+                status = checkResolvedInput(actionXml, existList, nonExistList, actionConf);
+            }
+            catch (Exception e){
+                if(existList.length() > 0){
+                    isChangeInDependency = isChangeInDependency(nonExistList, missingDependencies, nonResolvedList, status);
+                }
+                throw e;
+            }
 
-            boolean status = checkResolvedInput(actionXml, existList, nonExistList, actionConf);
-            String nonExistListStr = nonExistList.toString();
             boolean isPushDependenciesMet = coordPushInputDependency.isDependencyMet();
             if (status && nonResolvedList.length() > 0) {
                 status = (isPushDependenciesMet) ? checkUnResolvedInput(actionXml, actionConf) : false;
@@ -182,13 +191,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             isChangeInDependency = isChangeInDependency(nonExistList, missingDependencies, nonResolvedList, status);
 
             if (status && isPushDependenciesMet) {
-                String newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId,
-                        coordPullInputDependency, coordPushInputDependency);
-                actionXml.replace(0, actionXml.length(), newActionXml);
-                coordAction.setActionXml(actionXml.toString());
-                coordAction.setStatus(CoordinatorAction.Status.READY);
-                updateCoordAction(coordAction, true);
-                new CoordActionReadyXCommand(coordAction.getJobId()).call();
+                moveCoordActionToReady(actionXml, actionConf, coordPullInputDependency, coordPushInputDependency);
             }
             else if (!isTimeout(currentTime)) {
                 if (!status) {
@@ -201,7 +204,7 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
                 updateCoordAction(coordAction, isChangeInDependency);
             }
             else {
-                if (!nonExistListStr.isEmpty() && isPushDependenciesMet) {
+                if (isPushDependenciesMet) {
                     queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
                 }
                 else {
@@ -429,7 +432,38 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
     }
 
     /**
+     * Resolves coordinator configuration and moves CoordAction to READY state
+     *
+     * @param actionXml
+     * @param actionConf
+     * @param coordPullInputDependency
+     * @param coordPushInputDependency
+     * @throws Exception
+     */
+    private void moveCoordActionToReady(StringBuilder actionXml, Configuration actionConf,
+            CoordInputDependency coordPullInputDependency, CoordInputDependency coordPushInputDependency)
+            throws Exception {
+        String newActionXml = null;
+        try {
+            newActionXml = resolveCoordConfiguration(actionXml, actionConf, actionId, coordPullInputDependency,
+                    coordPushInputDependency);
+        }
+        catch (ElException e) {
+            coordAction.setStatus(CoordinatorAction.Status.FAILED);
+            updateCoordAction(coordAction, true);
+            throw e;
+        }
+        actionXml.replace(0, actionXml.length(), newActionXml);
+        coordAction.setActionXml(actionXml.toString());
+        coordAction.setStatus(CoordinatorAction.Status.READY);
+        updateCoordAction(coordAction, true);
+        new CoordActionReadyXCommand(coordAction.getJobId()).call();
+    }
+
+    /**
      * getting the error code of the coord action. (used mainly for unit testing)
+     *
+     * @return error code
      */
     protected String getCoordActionErrorCode() {
         if (coordAction != null) {
@@ -440,6 +474,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
 
     /**
      * getting the error message of the coord action. (used mainly for unit testing)
+     *
+     * @return error message
      */
     protected String getCoordActionErrorMsg() {
         if (coordAction != null) {
@@ -465,8 +501,13 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
         }
         try {
             coordAction = jpaService.execute(new CoordActionGetForInputCheckJPAExecutor(actionId));
-            coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_INPUT_CHECK,
-                    coordAction.getJobId());
+            if (coordAction != null){
+                coordJob = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB_INPUT_CHECK,
+                        coordAction.getJobId());
+            }
+            else {
+                throw new CommandException(ErrorCode.E0605, actionId);
+            }
         }
         catch (JPAExecutorException je) {
             throw new CommandException(je);
@@ -487,7 +528,8 @@ public class CoordActionInputCheckXCommand extends CoordinatorXCommand<Void> {
             return;
         }
 
-        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR && coordJob.getStatus() != Job.Status.PAUSED
+        if (coordJob.getStatus() != Job.Status.RUNNING && coordJob.getStatus() != Job.Status.RUNNINGWITHERROR
+                && coordJob.getStatus() != Job.Status.PAUSED
                 && coordJob.getStatus() != Job.Status.PAUSEDWITHERROR) {
             throw new PreconditionException(
                     ErrorCode.E1100, "["+ actionId + "]::CoordActionInputCheck:: Ignoring action." +

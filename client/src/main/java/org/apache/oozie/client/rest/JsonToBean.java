@@ -165,6 +165,7 @@ public class JsonToBean {
         COORD_JOB.put("getLastActionTime", new Property(JsonTags.COORDINATOR_JOB_LAST_ACTION_TIME, Date.class));
         COORD_JOB.put("getNextMaterializedTime",
                       new Property(JsonTags.COORDINATOR_JOB_NEXT_MATERIALIZED_TIME, Date.class));
+        COORD_JOB.put("getCreatedTime", new Property(JsonTags.COORDINATOR_JOB_CREATED_TIME, Date.class));
         COORD_JOB.put("getStartTime", new Property(JsonTags.COORDINATOR_JOB_START_TIME, Date.class));
         COORD_JOB.put("getEndTime", new Property(JsonTags.COORDINATOR_JOB_END_TIME, Date.class));
         COORD_JOB.put("getPauseTime", new Property(JsonTags.COORDINATOR_JOB_PAUSE_TIME, Date.class));

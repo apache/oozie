@@ -24,7 +24,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -34,6 +34,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.coord.ElException;
 import org.apache.oozie.coord.input.dependency.CoordInputDependency;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.dependency.DependencyChecker;
@@ -184,7 +185,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                 if (isTimeout()) {
                     LOG.debug("Queueing timeout command");
                     // XCommand.queue() will not work when there is a Exception
-                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(), coordJob.getAppName()));
+                    callableQueueService.queue(new CoordActionTimeOutXCommand(coordAction, coordJob.getUser(),
+                            coordJob.getAppName()));
                     unregisterMissingDependencies(missingDependenciesArray, actionId);
                 }
                 else if (coordPullInputDependency.getMissingDependenciesAsList().size() > 0) {
@@ -202,7 +204,7 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
 
     /**
      * Return the re-queue interval for coord push dependency check
-     * @return
+     * @return requeueInterval returns the requeue interval for coord push dependency check
      */
     public long getCoordPushCheckRequeueInterval() {
         long requeueInterval = ConfigurationService.getLong(CONF_COORD_PUSH_CHECK_REQUEUE_INTERVAL);
@@ -262,6 +264,11 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
                             .getPushInputDependencies());
             actionXml.replace(0, actionXml.length(), newActionXml);
             return actionXml.toString();
+        }
+        catch (ElException e) {
+            coordAction.setStatus(CoordinatorAction.Status.FAILED);
+            updateCoordAction(coordAction, true);
+            throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
         }
         catch (Exception e) {
             throw new CommandException(ErrorCode.E1021, e.getMessage(), e);
@@ -381,6 +388,8 @@ public class CoordPushDependencyCheckXCommand extends CoordinatorXCommand<Void> 
             }
         }
         catch (JPAExecutorException je) {
+            final CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+            callableQueueService.queue(new CoordPushDependencyCheckXCommand(actionId), getCoordPushCheckRequeueInterval());
             throw new CommandException(je);
         }
     }

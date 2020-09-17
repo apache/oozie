@@ -45,7 +45,7 @@ public class TestBundleJobXCommand extends XDataTestCase {
 
     /**
      * Test: submit bundle job, then check job info
-     * 
+     *
      * @throws Exception
      */
     public void testBundleJobInfo1() throws Exception {
@@ -66,7 +66,7 @@ public class TestBundleJobXCommand extends XDataTestCase {
 
     /**
      * Test: jobId is wrong
-     * 
+     *
      * @throws Exception
      */
     public void testBundleJobInfoFailed() throws Exception {

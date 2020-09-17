@@ -29,10 +29,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordCommandUtils;
 import org.apache.oozie.coord.CoordELFunctions;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.util.WritableUtils;
+import org.jdom.JDOMException;
 
 public class CoordPullInputDependency extends AbstractCoordInputDependency {
     private Map<String, CoordUnResolvedInputDependency> unResolvedList = new HashMap<String, CoordUnResolvedInputDependency>();
@@ -64,7 +68,7 @@ public class CoordPullInputDependency extends AbstractCoordInputDependency {
     }
 
     public String getMissingDependencies() {
-        StringBuffer bf = new StringBuffer(super.getMissingDependencies());
+        StringBuilder bf = new StringBuilder(super.getMissingDependencies());
         String unresolvedMissingDependencies = getUnresolvedMissingDependencies();
         if (!StringUtils.isEmpty(unresolvedMissingDependencies)) {
             bf.append(CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR);
@@ -74,7 +78,7 @@ public class CoordPullInputDependency extends AbstractCoordInputDependency {
     }
 
     public String getUnresolvedMissingDependencies() {
-        StringBuffer bf = new StringBuffer();
+        StringBuilder bf = new StringBuilder();
         if (unResolvedList != null) {
             for (CoordUnResolvedInputDependency coordUnResolvedDependency : unResolvedList.values()) {
                 if (!coordUnResolvedDependency.isResolved()) {
@@ -147,5 +151,20 @@ public class CoordPullInputDependency extends AbstractCoordInputDependency {
         else{
             return super.isDataSetResolved(dataSet);
         }
+    }
+
+    @Override
+    public Map<String, ActionDependency> getMissingDependencies(CoordinatorActionBean coordAction)
+            throws CommandException, IOException, JDOMException {
+        Map<String, ActionDependency> missingDependenciesMap = new HashMap<String, ActionDependency>();
+        missingDependenciesMap.putAll(super.getMissingDependencies(coordAction));
+
+        for (String key : unResolvedList.keySet()) {
+            if (!unResolvedList.get(key).isResolved()) {
+                missingDependenciesMap.put(key,
+                        new ActionDependency(unResolvedList.get(key).getDependencies(), new ArrayList<String>()));
+            }
+        }
+        return missingDependenciesMap;
     }
 }

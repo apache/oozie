@@ -53,7 +53,7 @@ public interface BundleJob extends Job {
      * @return the list of CoordinatorJob.
      */
     List<CoordinatorJob> getCoordinators();
-    
+
     /**
      * Return the JOB Kickoff time.
      *

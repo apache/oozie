@@ -18,6 +18,7 @@
 
 package org.apache.oozie.util;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -46,7 +47,7 @@ public class ClassUtils {
                     if (toReturn.startsWith("file:")) {
                         toReturn = toReturn.substring("file:".length());
                     }
-                    toReturn = URLDecoder.decode(toReturn, "UTF-8");
+                    toReturn = URLDecoder.decode(toReturn, StandardCharsets.UTF_8.name());
                     return toReturn.replaceAll("!.*$", "");
                 }
             }

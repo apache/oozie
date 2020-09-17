@@ -47,9 +47,6 @@ public abstract class PauseTransitionXCommand extends TransitionXCommand<Void> {
      */
     public abstract void pauseChildren() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
     @Override
     public final void transitToNext() throws CommandException {
         if (job == null) {
@@ -73,9 +70,6 @@ public abstract class PauseTransitionXCommand extends TransitionXCommand<Void> {
         //job.setPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#execute()
-     */
     @Override
     protected Void execute() throws CommandException {
         try {

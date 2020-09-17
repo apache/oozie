@@ -19,7 +19,9 @@
 package org.apache.oozie.client;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -28,8 +30,6 @@ import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockDagEngineService;
 import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.servlet.V1AdminServlet;
-
-import java.io.File;
 
 public class TestWorkflowXClient extends DagServletTestCase {
 
@@ -60,14 +60,15 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 Path libPath = new Path(getFsTestCaseDir(), "lib");
                 getFileSystem().mkdirs(libPath);
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
                 String[] params = new String[]{"INPUT=input.txt"};
 
 
 
                 String pigScriptFile = getTestCaseDir() + "/test";
-                BufferedWriter writer = new BufferedWriter(new FileWriter(pigScriptFile));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(pigScriptFile),
+                        StandardCharsets.UTF_8));
                 writer.write("a = load '${INPUT}';\n dump a;");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
@@ -90,14 +91,15 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 getFileSystem().mkdirs(libPath);
                 System.out.println(libPath.toString());
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
                 String[] params = new String[]{"NAME=test"};
 
 
                 String hiveScriptFile = getTestCaseDir() + "/test";
                 System.out.println(hiveScriptFile);
-                BufferedWriter writer = new BufferedWriter(new FileWriter(hiveScriptFile));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(hiveScriptFile),
+                        StandardCharsets.UTF_8));
                 writer.write("CREATE EXTERNAL TABLE ${NAME} (a INT);");
                 writer.close();
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
@@ -120,7 +122,7 @@ public class TestWorkflowXClient extends DagServletTestCase {
                 getFileSystem().mkdirs(libPath);
                 System.out.println(libPath.toString());
                 conf.setProperty(OozieClient.LIBPATH, libPath.toString());
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 conf.setProperty(XOozieClient.NN, "hdfs://localhost:9000");
 
                 assertEquals(MockDagEngineService.JOB_ID + wfCount + MockDagEngineService.JOB_ID_END,
@@ -154,9 +156,9 @@ public class TestWorkflowXClient extends DagServletTestCase {
                     fail("submit client without JT should throw exception");
                 }
                 catch (RuntimeException exception) {
-                    assertEquals("java.lang.RuntimeException: jobtracker is not specified in conf", exception.toString());
+                    assertEquals("java.lang.RuntimeException: Resource manager is not specified in conf", exception.toString());
                 }
-                conf.setProperty(XOozieClient.JT, "localhost:9001");
+                conf.setProperty(XOozieClient.RM, "localhost:9001");
                 try {
                     wc.submitMapReduce(conf);
                     fail("submit client without NN should throw exception");

@@ -44,6 +44,16 @@ public class TestServices extends XTestCase {
         }
     }
 
+    public void testSystemIdTrim() throws Exception {
+        Services services = new Services();
+        final String systemId = services.trimIfExceedsLimit("1234567890oozieee");
+        try {
+            assertEquals("System id length is larger than expected", 10, systemId.length());
+        } finally {
+            services.destroy();
+        }
+    }
+
     public static class S1 implements Service {
         public static boolean INITED_S1 = false;
 

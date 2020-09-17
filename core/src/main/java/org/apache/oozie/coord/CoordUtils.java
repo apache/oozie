@@ -23,13 +23,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorEngine;
@@ -74,7 +76,7 @@ public class CoordUtils {
 
     public static Configuration getHadoopConf(Configuration jobConf) {
         Configuration conf = new Configuration();
-        ParamChecker.notNull(jobConf, "Configuration to be used for hadoop setup ");
+        Objects.requireNonNull(jobConf, "Configuration to be used for hadoop setup  cannot be null");
         String user = ParamChecker.notEmpty(jobConf.get(OozieClient.USER_NAME), OozieClient.USER_NAME);
         conf.set(HADOOP_USER, user);
         return conf;
@@ -85,8 +87,9 @@ public class CoordUtils {
      * @param rangeType the rerun type (date, action)
      * @param jobId the coordinator job id
      * @param scope the date scope or action id scope
+     * @param active set to true if non-terminated
      * @return the list of Coordinator actions
-     * @throws CommandException
+     * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
     public static List<CoordinatorActionBean> getCoordActions(String rangeType, String jobId, String scope,
             boolean active) throws CommandException {
@@ -100,11 +103,35 @@ public class CoordUtils {
         return coordActions;
     }
 
+    public static List<String> getActionListForScopeAndDate(String id, String scope, String dates) throws CommandException {
+        List<String> actionIds = new ArrayList<String>();
+
+        List<String> parsed = new ArrayList<String>();
+        if (scope == null && dates == null) {
+            parsed.add(id);
+            return parsed;
+        }
+
+        if (dates != null) {
+            List<CoordinatorActionBean> actionSet = CoordUtils.getCoordActionsFromDates(id, dates, true);
+            for (CoordinatorActionBean action : actionSet) {
+                actionIds.add(action.getId());
+            }
+            parsed.addAll(actionIds);
+        }
+        if (scope != null) {
+            parsed.addAll(CoordUtils.getActionsIds(id, scope));
+        }
+        return parsed;
+    }
+
+
     /**
      * Get the list of actions for given date ranges
      *
      * @param jobId coordinator job id
      * @param scope a comma-separated list of date ranges. Each date range element is specified with two dates separated by '::'
+     * @param active set to true if non-terminated
      * @return the list of Coordinator actions for the date range
      * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
@@ -115,7 +142,7 @@ public class CoordUtils {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
 
-        Set<CoordinatorActionBean> actionSet = new HashSet<CoordinatorActionBean>();
+        Set<CoordinatorActionBean> actionSet = new LinkedHashSet<CoordinatorActionBean>();
         String[] list = scope.split(",");
         for (String s : list) {
             s = s.trim();
@@ -169,7 +196,7 @@ public class CoordUtils {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
 
-        Set<String> actions = new HashSet<String>();
+        Set<String> actions = new LinkedHashSet<String>();
         String[] list = scope.split(",");
         for (String s : list) {
             s = s.trim();
@@ -178,7 +205,8 @@ public class CoordUtils {
                 String[] range = s.split("-");
                 // Check the format for action's range
                 if (range.length != 2) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', an example of correct format is 1-5");
+                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', an example of"
+                            + " correct format is 1-5");
                 }
                 int start;
                 int end;
@@ -253,11 +281,11 @@ public class CoordUtils {
 
      /**
       * Check if sla alert is disabled for action.
-      * @param actionBean
-      * @param coordName
-      * @param jobConf
-      * @return
-      * @throws ParseException
+      * @param actionBean the action bean
+      * @param coordName the coordinator name
+      * @param jobConf the job configuration
+      * @return true if SLA alert is disabled for action
+      * @throws ParseException if date parse fails
       */
     public static boolean isSlaAlertDisabled(CoordinatorActionBean actionBean, String coordName, Configuration jobConf)
             throws ParseException {
@@ -308,8 +336,8 @@ public class CoordUtils {
      * @param coordName
      * @param jobConf
      * @param slaAlertType
-     * @return
-     * @throws ParseException
+     * @return status of coord action SLA alert
+     * @throws ParseException if parsing date is not possible
      */
     private static boolean getCoordActionSLAAlertStatus(CoordinatorActionBean actionBean, String coordName,
             Configuration jobConf, String slaAlertType) throws ParseException {
@@ -360,7 +388,7 @@ public class CoordUtils {
         Map<String, Object> params = new HashMap<String, Object>();
         int pcnt= 1;
         for (Map.Entry<Pair<String, CoordinatorEngine.FILTER_COMPARATORS>, List<Object>> filter : filterMap.entrySet()) {
-            String field = filter.getKey().getFist();
+            String field = filter.getKey().getFirst();
             CoordinatorEngine.FILTER_COMPARATORS comp = filter.getKey().getSecond();
             String sqlField;
             if (field.equals(OozieClient.FILTER_STATUS)) {

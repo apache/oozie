@@ -58,7 +58,7 @@ public class FSLauncherURIHandler implements LauncherURIHandler {
             FileSystem fs = FileSystem.get(uri, conf);
             Path[] pathArr = FileUtil.stat2Paths(fs.globStatus(getNormalizedPath(uri)));
             if (pathArr != null && pathArr.length > 0) {
-                int fsGlobMax = conf.getInt(LauncherMapper.CONF_OOZIE_ACTION_FS_GLOB_MAX, 1000);
+                int fsGlobMax = conf.getInt(LauncherAMUtils.CONF_OOZIE_ACTION_FS_GLOB_MAX, 1000);
                 if (pathArr.length > fsGlobMax) {
                     throw new LauncherException("exceeds max number (" + fsGlobMax
                             + ") of files/dirs to delete in <prepare>");

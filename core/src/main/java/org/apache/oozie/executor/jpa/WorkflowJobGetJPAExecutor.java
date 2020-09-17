@@ -19,13 +19,13 @@
 package org.apache.oozie.executor.jpa;
 
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.util.ParamChecker;
 
 /**
  * Load the WorkflowJob into a Bean and return it.
@@ -35,21 +35,14 @@ public class WorkflowJobGetJPAExecutor implements JPAExecutor<WorkflowJobBean> {
     private String wfJobId = null;
 
     public WorkflowJobGetJPAExecutor(String wfJobId) {
-        ParamChecker.notNull(wfJobId, "wfJobId");
-        this.wfJobId = wfJobId;
+        this.wfJobId = Objects.requireNonNull(wfJobId, "wfJobId cannot be null");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#getName()
-     */
     @Override
     public String getName() {
         return "WorkflowJobGetJPAExecutor";
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.executor.jpa.JPAExecutor#execute(javax.persistence.EntityManager)
-     */
     @Override
     @SuppressWarnings("unchecked")
     public WorkflowJobBean execute(EntityManager em) throws JPAExecutorException {

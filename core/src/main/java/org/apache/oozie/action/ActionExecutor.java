@@ -18,7 +18,7 @@
 
 package org.apache.oozie.action;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.Configuration;
@@ -34,7 +34,9 @@ import org.apache.oozie.service.Services;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -58,13 +60,12 @@ public abstract class ActionExecutor {
 
     public static final String OOZIE_ACTION_YARN_TAG = "oozie.action.yarn.tag";
 
-
     /**
      * Error code used by {@link #convertException} when there is not register error information for an exception.
      */
     public static final String ERROR_OTHER = "OTHER";
 
-    public static enum RETRYPOLICY {
+    public enum RETRYPOLICY {
         EXPONENTIAL, PERIODIC
     }
 
@@ -81,7 +82,7 @@ public abstract class ActionExecutor {
     }
 
     private static boolean initMode = false;
-    private static Map<String, Map<String, ErrorInfo>> ERROR_INFOS = new HashMap<String, Map<String, ErrorInfo>>();
+    private static Map<String, Map<String, ErrorInfo>> ERROR_INFOS = new HashMap<>();
 
     /**
      * Context information passed to the ActionExecutor methods.
@@ -207,9 +208,9 @@ public abstract class ActionExecutor {
 
         /**
          * @return filesystem handle for the application deployment fs.
-         * @throws IOException
-         * @throws URISyntaxException
-         * @throws HadoopAccessorException
+         * @throws IOException if IO error occurs
+         * @throws URISyntaxException if processed uri is not a proper URI
+         * @throws HadoopAccessorException if accessing hadoop fails
          */
         FileSystem getAppFileSystem() throws HadoopAccessorException, IOException, URISyntaxException;
 
@@ -350,8 +351,13 @@ public abstract class ActionExecutor {
         }
         catch (java.lang.NoClassDefFoundError err) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            err.printStackTrace(new PrintStream(baos));
-            XLog.getLog(getClass()).warn(baos.toString());
+
+            try {
+                err.printStackTrace(new PrintStream(baos, false, StandardCharsets.UTF_8.name()));
+                XLog.getLog(getClass()).warn(baos.toString(StandardCharsets.UTF_8.name()));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -596,8 +602,8 @@ public abstract class ActionExecutor {
      * @param action the action
      * @return the action yarn tag
      */
-    public String getActionYarnTag(Configuration conf, WorkflowJob wfJob, WorkflowAction action) {
-        if (conf.get(OOZIE_ACTION_YARN_TAG) != null) {
+    public static String getActionYarnTag(Configuration conf, WorkflowJob wfJob, WorkflowAction action) {
+        if (conf != null && conf.get(OOZIE_ACTION_YARN_TAG) != null) {
             return conf.get(OOZIE_ACTION_YARN_TAG) + "@" + action.getName();
         }
         else if (wfJob.getParentId() != null) {

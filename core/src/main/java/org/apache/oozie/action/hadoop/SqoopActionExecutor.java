@@ -18,11 +18,18 @@
 
 package org.apache.oozie.action.hadoop;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.oozie.action.ActionExecutorException;
@@ -33,25 +40,24 @@ import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-
 public class SqoopActionExecutor extends JavaActionExecutor {
 
   public static final String OOZIE_ACTION_EXTERNAL_STATS_WRITE = "oozie.action.external.stats.write";
+  @VisibleForTesting
+  static final String OOZIE_ACTION_SQOOP_SHELLSPLITTER = "oozie.action.sqoop.shellsplitter";
+  private static final boolean SHELLSPLITTER_DEFAULT = false;
   private static final String SQOOP_MAIN_CLASS_NAME = "org.apache.oozie.action.hadoop.SqoopMain";
   static final String SQOOP_ARGS = "oozie.sqoop.args";
+  private static final String SQOOP = "sqoop";
+  private ShellSplitter shellSplitter = new ShellSplitter();
 
     public SqoopActionExecutor() {
-        super("sqoop");
+        super(SQOOP);
     }
 
     @Override
-    public List<Class> getLauncherClasses() {
-        List<Class> classes = new ArrayList<Class>();
+    public List<Class<?>> getLauncherClasses() {
+        List<Class<?>> classes = new ArrayList<>();
         try {
             classes.add(Class.forName(SQOOP_MAIN_CLASS_NAME));
         }
@@ -63,11 +69,10 @@ public class SqoopActionExecutor extends JavaActionExecutor {
 
     @Override
     protected String getLauncherMain(Configuration launcherConf, Element actionXml) {
-        return launcherConf.get(LauncherMapper.CONF_OOZIE_ACTION_MAIN_CLASS, SQOOP_MAIN_CLASS_NAME);
+        return launcherConf.get(LauncherAMUtils.CONF_OOZIE_ACTION_MAIN_CLASS, SQOOP_MAIN_CLASS_NAME);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     Configuration setupActionConf(Configuration actionConf, Context context, Element actionXml, Path appPath)
             throws ActionExecutorException {
         super.setupActionConf(actionConf, context, actionXml, appPath);
@@ -78,37 +83,70 @@ public class SqoopActionExecutor extends JavaActionExecutor {
             if (e != null) {
                 String strConf = XmlUtils.prettyPrint(e).toString();
                 XConfiguration inlineConf = new XConfiguration(new StringReader(strConf));
-                checkForDisallowedProps(inlineConf, "inline configuration");
                 XConfiguration.copy(inlineConf, actionConf);
+                checkForDisallowedProps(inlineConf, "inline configuration");
             }
         } catch (IOException ex) {
             throw convertException(ex);
         }
 
-        String[] args;
+        List<String> argList = new ArrayList<>();
+        // Build a list of arguments from either a tokenized <command> string or a list of <arg>
         if (actionXml.getChild("command", ns) != null) {
             String command = actionXml.getChild("command", ns).getTextTrim();
-            StringTokenizer st = new StringTokenizer(command, " ");
-            List<String> l = new ArrayList<String>();
-            while (st.hasMoreTokens()) {
-                l.add(st.nextToken());
-            }
-            args = l.toArray(new String[l.size()]);
+            argList = splitCommand(actionConf, command);
         }
         else {
+            @SuppressWarnings("unchecked")
             List<Element> eArgs = (List<Element>) actionXml.getChildren("arg", ns);
-            args = new String[eArgs.size()];
-            for (int i = 0; i < eArgs.size(); i++) {
-                args[i] = eArgs.get(i).getTextTrim();
+            for (Element elem : eArgs) {
+                argList.add(elem.getTextTrim());
             }
         }
-
-        setSqoopCommand(actionConf, args);
+        // If the command is given accidentally as "sqoop import --option"
+        // instead of "import --option" we can make a user's life easier
+        // by removing away the unnecessary "sqoop" token.
+        // However, we do not do this if the command looks like
+        // "sqoop --option", as that's entirely invalid.
+        if (argList.size() > 1 &&
+                argList.get(0).equalsIgnoreCase(SQOOP) &&
+                !argList.get(1).startsWith("-")) {
+            XLog.getLog(getClass()).info(
+                    "Found a redundant 'sqoop' prefixing the command. Removing it.");
+            argList.remove(0);
+        }
+        setSqoopCommand(actionConf, argList.toArray(new String[argList.size()]));
         return actionConf;
     }
 
+    private List<String> splitCommand(Configuration actionConf, String command) throws ActionExecutorException {
+        List<String> argList;
+        boolean useShellSplitter = actionConf.getBoolean(OOZIE_ACTION_SQOOP_SHELLSPLITTER, SHELLSPLITTER_DEFAULT);
+        if (useShellSplitter) {
+            try {
+                argList = shellSplitter.split(command);
+            } catch (ShellSplitterException e) {
+                throw new ActionExecutorException(ActionExecutorException.ErrorType.ERROR, "SQOOP002",
+                        "Cannot parse sqoop command: [{0}]", command, e);
+            }
+        }
+        else {
+            argList = splitBySpace(command);
+        }
+        return argList;
+    }
+
+    private List<String> splitBySpace(final String command) {
+        List<String> tokens = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(command, " ");
+        while (st.hasMoreTokens()) {
+            tokens.add(st.nextToken());
+        }
+        return tokens;
+    }
+
     private void setSqoopCommand(Configuration conf, String[] args) {
-        MapReduceMain.setStrings(conf, SQOOP_ARGS, args);
+        ActionUtils.setStrings(conf, SQOOP_ARGS, args);
     }
 
     /**
@@ -119,7 +157,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
      *
      * @param context Action context
      * @param action Workflow action
-     * @throws ActionExecutorException
+     * @throws ActionExecutorException thrown if action end execution fails.
      */
     @Override
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
@@ -130,7 +168,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
         try {
             if (action.getStatus() == WorkflowAction.Status.OK) {
                 Element actionXml = XmlUtils.parseXml(action.getConf());
-                JobConf jobConf = createBaseHadoopConf(context, actionXml);
+                Configuration jobConf = createBaseHadoopConf(context, actionXml);
                 jobClient = createJobClient(context, jobConf);
 
                 // Cumulative counters for all Sqoop mapreduce jobs
@@ -172,7 +210,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
                     // do not store the action stats
                     if (Boolean.parseBoolean(evaluateConfigurationProperty(actionXml,
                             OOZIE_ACTION_EXTERNAL_STATS_WRITE, "true"))
-                            && (statsJsonString.getBytes().length <= getMaxExternalStatsSize())) {
+                            && (statsJsonString.getBytes(StandardCharsets.UTF_8).length <= getMaxExternalStatsSize())) {
                         context.setExecutionStats(statsJsonString);
                         LOG.debug(
                           "Printing stats for sqoop action as a JSON string : [{0}]", statsJsonString);
@@ -229,7 +267,7 @@ public class SqoopActionExecutor extends JavaActionExecutor {
      * Return the sharelib name for the action.
      *
      * @return returns <code>sqoop</code>.
-     * @param actionXml
+     * @param actionXml action xml element
      */
     @Override
     protected String getDefaultShareLibName(Element actionXml) {

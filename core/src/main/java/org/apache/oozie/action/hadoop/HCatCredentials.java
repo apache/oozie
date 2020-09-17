@@ -21,25 +21,23 @@ package org.apache.oozie.action.hadoop;
 import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.security.Credentials;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutor.Context;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.XLog;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /**
  * Credentials implementation to store in jobConf, HCat-specific properties such as Principal and Uri
  * User specifies these credential properties along with the action configuration
  * The jobConf is used further to pass credentials to the tasks while running
- * Oozie server should be configured to use this Credentials class by including it via property 'oozie.credentials.credentialclasses'
+ * Oozie server should be configured to use this Credentials class by including it via property
+ * 'oozie.credentials.credentialclasses'
  * User can extend the parent class to implement own class as well
  * for handling custom token-based credentials and add to the above server property
  */
-public class HCatCredentials extends Credentials {
+public class HCatCredentials implements CredentialsProvider {
 
     private static final String HCAT_METASTORE_PRINCIPAL = "hcat.metastore.principal";
     private static final String HCAT_METASTORE_URI = "hcat.metastore.uri";
@@ -50,11 +48,9 @@ public class HCatCredentials extends Credentials {
         hiveConf.addResource("hive-site.xml");
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.action.hadoop.Credentials#addtoJobConf(org.apache.hadoop.mapred.JobConf, org.apache.oozie.action.hadoop.CredentialsProperties, org.apache.oozie.action.ActionExecutor.Context)
-     */
     @Override
-    public void addtoJobConf(JobConf jobconf, CredentialsProperties props, Context context) throws Exception {
+    public void updateCredentials(Credentials credentials, Configuration config, CredentialsProperties props,
+            Context context) throws Exception {
         try {
 
             String principal = getProperty(props.getProperties(), HCAT_METASTORE_PRINCIPAL, HIVE_METASTORE_PRINCIPAL);
@@ -69,10 +65,10 @@ public class HCatCredentials extends Credentials {
                         HCAT_METASTORE_URI + " is required to get hcat credential");
             }
             HCatCredentialHelper hcch = new HCatCredentialHelper();
-            hcch.set(jobconf, principal, server);
+            hcch.set(credentials, config, principal, server);
         }
         catch (Exception e) {
-            XLog.getLog(getClass()).warn("Exception in addtoJobConf", e);
+            XLog.getLog(getClass()).warn("Exception in updateCredentials", e);
             throw e;
         }
     }
@@ -102,4 +98,6 @@ public class HCatCredentials extends Credentials {
         }
         return value;
     }
+
+
 }

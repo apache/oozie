@@ -34,12 +34,13 @@ import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.db.SLADbOperations;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
@@ -172,6 +173,13 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             }
             runConf.unset(CoordRerunXCommand.RERUN_CONF);
         }
+
+        ConfigUtils.checkAndSetDisallowedProperties(runConf,
+                this.user,
+                new CommandException(ErrorCode.E1003,
+                        String.format("%s=%s", OozieClient.USER_NAME, runConf.get(OozieClient.USER_NAME))),
+                true);
+
         return runConf;
     }
 
@@ -184,16 +192,18 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
 
         log.debug("actionid=" + actionId + ", status=" + coordAction.getStatus());
         if (coordAction.getStatus() == CoordinatorAction.Status.SUBMITTED) {
-            // log.debug("getting.. job id: " + coordAction.getJobId());
-            // create merged runConf to pass to WF Engine
-            Configuration runConf = mergeConfig(coordAction);
-            coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
-            // log.debug("%%% merged runconf=" +
-            // XmlUtils.prettyPrint(runConf).toString());
-            DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
             try {
+                // log.debug("getting.. job id: " + coordAction.getJobId());
+                // create merged runConf to pass to WF Engine
+                Configuration runConf = mergeConfig(coordAction);
+                coordAction.setRunConf(XmlUtils.prettyPrint(runConf).toString());
+                // log.debug("%%% merged runconf=" +
+                // XmlUtils.prettyPrint(runConf).toString());
+                DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(user);
+
                 Configuration conf = new XConfiguration(new StringReader(coordAction.getRunConf()));
-                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.STARTED,
+                SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(),
+                        Status.STARTED,
                         SlaAppType.COORDINATOR_ACTION, log);
                 if(slaEvent != null) {
                     insertList.add(slaEvent);
@@ -221,7 +231,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                 JPAService jpaService = Services.get().get(JPAService.class);
                 if (jpaService != null) {
                     log.debug("Updating WF record for WFID :" + coordAction.getExternalId() + " with parent id: " + actionId);
-                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME, coordAction.getExternalId());
+                    WorkflowJobBean wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW_STARTTIME,
+                            coordAction.getExternalId());
                     wfJob.setParentId(actionId);
                     wfJob.setLastModifiedTime(new Date());
                     BatchQueryExecutor executor = BatchQueryExecutor.getInstance();
@@ -254,7 +265,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
             catch (CommandException ce) {
                 errMsg = ce.getMessage();
                 errCode = ce.getErrorCode().toString();
-                log.warn("command exception occured ", ce);
+                log.warn("command exception occurred ", ce);
             }
             catch (java.io.IOException ioe) {
                 errMsg = ioe.getMessage();
@@ -281,7 +292,8 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                                     CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction));
                     insertList = new ArrayList<JsonBean>();
 
-                    SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(), Status.FAILED,
+                    SLAEventBean slaEvent = SLADbOperations.createStatusEvent(coordAction.getSlaXml(), coordAction.getId(),
+                            Status.FAILED,
                             SlaAppType.COORDINATOR_ACTION, log);
                     if(slaEvent != null) {
                         insertList.add(slaEvent); //Update SLA events

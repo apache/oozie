@@ -1,0 +1,73 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+*
+http://www.apache.org/licenses/LICENSE-2.0
+*
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<workflow-app name="parallel-fs-and-shell" xmlns="uri:oozie:workflow:0.5">
+    <start to="decision"/>
+    <kill name="kill">
+        <message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <action name="fs1">
+        <fs>
+            <delete path='${nameNodeBasePath}/user/${wf:user()}/fs1'/>
+            <mkdir path='${nameNodeBasePath}/user/${wf:user()}/fs1'/>
+            <touchz path='${nameNodeBasePath}/user/${wf:user()}/fs1/fs1.out'/>
+        </fs>
+        <ok to="shell1"/>
+        <error to="kill"/>
+    </action>
+    <action name="fs2">
+        <fs>
+            <delete path='${nameNodeBasePath}/user/${wf:user()}/fs2'/>
+            <mkdir path='${nameNodeBasePath}/user/${wf:user()}/fs2'/>
+            <touchz path='${nameNodeBasePath}/user/${wf:user()}/fs2/fs2.out'/>
+        </fs>
+        <ok to="shell2"/>
+        <error to="kill"/>
+    </action>
+    <decision name="decision">
+        <switch>
+            <case to="fs1">
+                ${ choosePath1 }
+            </case>
+            <case to="fs2">
+                ${ !choosePath1 }
+            </case>
+            <default to="End"/>
+        </switch>
+    </decision>
+    <action name="shell1">
+        <shell xmlns="uri:oozie:shell-action:0.1">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <exec>ls</exec>
+            <capture-output/>
+        </shell>
+        <ok to="End"/>
+        <error to="kill"/>
+    </action>
+    <action name="shell2">
+        <shell xmlns="uri:oozie:shell-action:0.1">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <exec>ls</exec>
+            <capture-output/>
+        </shell>
+        <ok to="End"/>
+        <error to="kill"/>
+    </action>
+    <end name="End"/>
+</workflow-app>

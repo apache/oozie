@@ -21,6 +21,7 @@ package org.apache.oozie.action.oozie;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
@@ -28,8 +29,10 @@ import org.apache.oozie.action.hadoop.LauncherMainTester;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.client.WorkflowJob.Status;
 import org.apache.oozie.command.wf.SuspendXCommand;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.XLogService;
@@ -37,12 +40,14 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 
-import java.io.*;
-import java.net.URI;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
-    private static final int JOB_TIMEOUT = 100 * 1000;
 
     public void testType() {
         SubWorkflowActionExecutor subWorkflow = new SubWorkflowActionExecutor();
@@ -83,7 +88,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testSubWorkflowStart() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -129,7 +135,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -185,7 +191,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -245,7 +251,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -324,7 +330,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
 
@@ -387,7 +393,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
         Path subWorkflowAppPath = new Path(getFsTestCaseDir().toString(), "subwf");
         Path workflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-        Writer writer = new OutputStreamWriter(fs.create(workflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(workflowPath), StandardCharsets.UTF_8);
         writer.write(APP1);
         writer.close();
         Path subwfLibJar = new Path(subWorkflowAppPath, "lib/subwfLibrary.jar");
@@ -425,7 +431,8 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
     public void testSubworkflowDepth() throws Exception {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
-        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")));
+        Writer writer = new OutputStreamWriter(fs.create(new Path(subWorkflowAppPath, "workflow.xml")),
+                StandardCharsets.UTF_8);
         // Infinitly recursive workflow
 
         String appStr = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
@@ -483,45 +490,12 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
     public void testSubWorkflowSuspend() throws Exception {
         try {
-            Path subWorkflowAppPath = getFsTestCaseDir();
-            FileSystem fs = getFileSystem();
-            Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-            Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
-            writer.write(getLazyWorkflow());
-            writer.close();
-
-            String workflowUri = getTestCaseFileUri("workflow.xml");
-            String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
-                    "<start to=\"subwf\"/>" +
-                    "<action name=\"subwf\">" +
-                    "     <sub-workflow xmlns='uri:oozie:workflow:0.4'>" +
-                    "          <app-path>" + subWorkflowAppPath.toString() + "</app-path>" +
-                    "     </sub-workflow>" +
-                    "     <ok to=\"end\"/>" +
-                    "     <error to=\"fail\"/>" +
-                    "</action>" +
-                    "<kill name=\"fail\">" +
-                    "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
-                    "</kill>" +
-                    "<end name=\"end\"/>" +
-                    "</workflow-app>";
-
-            writeToFile(appXml, workflowUri);
+            String workflowUri = createSubWorkflowWithLazyAction(true);
             LocalOozie.start();
             final OozieClient wfClient = LocalOozie.getClient();
-            Properties conf = wfClient.createConfiguration();
-            conf.setProperty(OozieClient.APP_PATH, workflowUri);
-            conf.setProperty(OozieClient.USER_NAME, getTestUser());
-            conf.setProperty("appName", "var-app-name");
-            final String jobId = wfClient.submit(conf);
-            wfClient.start(jobId);
+            final String jobId = submitWorkflow(workflowUri, wfClient);
 
-            waitFor(JOB_TIMEOUT, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return (wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING) &&
-                            (wfClient.getJobInfo(jobId).getActions().get(1).getStatus() == WorkflowAction.Status.RUNNING);
-                }
-            });
+            waitForWorkflowToStart(wfClient, jobId);
             WorkflowJob wf = wfClient.getJobInfo(jobId);
             // Suspending subworkflow
             new SuspendXCommand(wf.getActions().get(1).getExternalId()).call();
@@ -536,34 +510,30 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
     }
 
-    private void writeToFile(String appXml, String appPath) throws IOException {
-        // TODO Auto-generated method stub
-        File wf = new File(URI.create(appPath));
-        PrintWriter out = null;
+    public void testSubWorkflowKillExternalChild() throws Exception {
         try {
-            out = new PrintWriter(new FileWriter(wf));
-            out.println(appXml);
+            LocalOozie.start();
+            final String workflowUri = createSubWorkflowWithLazyAction(true);
+            final OozieClient wfClient = LocalOozie.getClient();
+            final String jobId = submitWorkflow(workflowUri, wfClient);
+            final Configuration conf = Services.get().get(HadoopAccessorService.class).createConfiguration(getJobTrackerUri());
+
+            waitForWorkflowToStart(wfClient, jobId);
+
+            final ApplicationId externalChildJobId = getChildMRJobApplicationId(conf);
+            killWorkflow(jobId);
+            waitUntilYarnAppKilledAndAssertSuccess(externalChildJobId.toString());
+        } finally {
+            LocalOozie.stop();
         }
-        catch (IOException iex) {
-            throw iex;
-        }
-        finally {
-            if (out != null) {
-                out.close();
-            }
-        }
+
     }
 
-    public String getLazyWorkflow() {
+    public String getLazyWorkflow(boolean launchMRAction) {
         return  "<workflow-app xmlns='uri:oozie:workflow:0.4' name='app'>" +
                 "<start to='java' />" +
                 "       <action name='java'>" +
-                "<java>" +
-                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<main-class>" + JavaSleepAction.class.getName() + "</main-class>" +
-                "<arg>exit0</arg>" +
-                "</java>"
+                getJavaAction(launchMRAction)
                 + "<ok to='end' />"
                 + "<error to='fail' />"
                 + "</action>"
@@ -576,30 +546,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
     public void testSubWorkflowRerun() throws Exception {
         try {
-            Path subWorkflowAppPath = getFsTestCaseDir();
-            FileSystem fs = getFileSystem();
-            Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
-            Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
-            writer.write(getLazyWorkflow());
-            writer.close();
-
-            String workflowUri = getTestCaseFileUri("workflow.xml");
-            String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
-                    "<start to=\"subwf\"/>" +
-                    "<action name=\"subwf\">" +
-                    "     <sub-workflow xmlns='uri:oozie:workflow:0.4'>" +
-                    "          <app-path>" + subWorkflowAppPath.toString() + "</app-path>" +
-                    "     </sub-workflow>" +
-                    "     <ok to=\"end\"/>" +
-                    "     <error to=\"fail\"/>" +
-                    "</action>" +
-                    "<kill name=\"fail\">" +
-                    "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
-                    "</kill>" +
-                    "<end name=\"end\"/>" +
-                    "</workflow-app>";
-
-            writeToFile(appXml, workflowUri);
+            String workflowUri = createSubWorkflowWithLazyAction(false);
             LocalOozie.start();
             final OozieClient wfClient = LocalOozie.getClient();
             Properties conf = wfClient.createConfiguration();
@@ -609,12 +556,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             final String jobId = wfClient.submit(conf);
             wfClient.start(jobId);
 
-            waitFor(JOB_TIMEOUT, new Predicate() {
-                public boolean evaluate() throws Exception {
-                    return (wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING) &&
-                            (wfClient.getJobInfo(jobId).getActions().get(1).getStatus() == WorkflowAction.Status.RUNNING);
-                }
-            });
+            waitForWorkflowToStart(wfClient, jobId);
 
             String subWorkflowExternalId = wfClient.getJobInfo(jobId).getActions().get(1).getExternalId();
             wfClient.kill(wfClient.getJobInfo(jobId).getActions().get(1).getExternalId());
@@ -629,7 +571,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             conf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
             wfClient.reRun(jobId,conf);
 
-            waitFor(JOB_TIMEOUT, new Predicate() {
+            waitFor(JOB_TIMEOUT * 2, new Predicate() {
                 public boolean evaluate() throws Exception {
                     return (wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.SUCCEEDED) &&
                             (wfClient.getJobInfo(jobId).getActions().get(2).getStatus() == WorkflowAction.Status.OK);
@@ -647,11 +589,68 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
 
     }
 
-    public void testParentGlobalConf() throws Exception {
-        try {
-            Path subWorkflowAppPath = createSubWorkflowXml();
+    private String createSubWorkflowWithLazyAction(boolean launchMRAction) throws IOException {
+        Path subWorkflowAppPath = getFsTestCaseDir();
+        FileSystem fs = getFileSystem();
+        Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+        try (Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath), StandardCharsets.UTF_8)) {
+            writer.write(getLazyWorkflow(launchMRAction));
+        }
 
-            String workflowUri = createTestWorkflowXml(subWorkflowAppPath);
+        String workflowUri = getTestCaseFileUri("workflow.xml");
+        String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:1.0\" name=\"workflow\">" +
+                "<start to=\"subwf\"/>" +
+                "<action name=\"subwf\">" +
+                "     <sub-workflow xmlns='uri:oozie:workflow:1.0'>" +
+                "          <app-path>" + subWorkflowAppPath.toString() + "</app-path>" +
+                "     </sub-workflow>" +
+                "     <ok to=\"end\"/>" +
+                "     <error to=\"fail\"/>" +
+                "</action>" +
+                "<kill name=\"fail\">" +
+                "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                "</kill>" +
+                "<end name=\"end\"/>" +
+                "</workflow-app>";
+
+        writeToFile(appXml, workflowUri);
+        return workflowUri;
+    }
+
+    public void testSubWorkflowRerunTermination() throws Exception {
+        try {
+            Path subWorkflowAppPath = getFsTestCaseDir();
+            FileSystem fs = getFileSystem();
+            Path subWorkflowPath = new Path(subWorkflowAppPath, "workflow.xml");
+            Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath), StandardCharsets.UTF_8);
+            writer.write(getFailingSubWorkflow());
+            writer.close();
+            String workflowUri = getTestCaseFileUri("workflow.xml");
+            String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"workflow\">" +
+                    "<start to=\"shell-node\"/>" +
+                    "<action name=\"shell-node\">" +
+                    "<shell xmlns=\"uri:oozie:shell-action:0.3\">" +
+                    "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                    "<name-node>" + getNameNodeUri() + "</name-node>" +
+                    "<exec>dummycommand</exec>" +
+                    "</shell>" +
+                    "<ok to=\"subwf\"/>" +
+                    "<error to=\"subwf\"/>" +
+                    "</action>" +
+                    "<action name=\"subwf\">" +
+                    "     <sub-workflow xmlns='uri:oozie:workflow:0.4'>" +
+                    "          <app-path>" + subWorkflowAppPath.toString() + "</app-path>" +
+                    "     </sub-workflow>" +
+                    "     <ok to=\"end\"/>" +
+                    "     <error to=\"fail\"/>" +
+                    "</action>" +
+                    "<kill name=\"fail\">" +
+                    "     <message>Sub workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                    "</kill>" +
+                    "<end name=\"end\"/>" +
+                    "</workflow-app>";
+
+            writeToFile(appXml, workflowUri);
             LocalOozie.start();
             final OozieClient wfClient = LocalOozie.getClient();
             Properties conf = wfClient.createConfiguration();
@@ -660,6 +659,38 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
             conf.setProperty("appName", "var-app-name");
             final String jobId = wfClient.submit(conf);
             wfClient.start(jobId);
+
+            waitFor(JOB_TIMEOUT, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return (wfClient.getJobInfo(jobId).getStatus() == Status.KILLED);
+                }
+            });
+
+            conf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
+            wfClient.reRun(jobId,conf);
+
+            waitFor(JOB_TIMEOUT, new Predicate() {
+                public boolean evaluate() throws Exception {
+                    return (wfClient.getJobInfo(jobId).getStatus() == Status.KILLED);
+                }
+            });
+
+            WorkflowJob job = wfClient.getJobInfo(jobId);
+            assertEquals(job.getStatus(), Status.KILLED);
+
+        } finally {
+            LocalOozie.stop();
+        }
+    }
+
+    public void testParentGlobalConf() throws Exception {
+        try {
+            Path subWorkflowAppPath = createSubWorkflowXml();
+
+            String workflowUri = createTestWorkflowXml(subWorkflowAppPath);
+            LocalOozie.start();
+            final OozieClient wfClient = LocalOozie.getClient();
+            final String jobId = submitWorkflow(workflowUri, wfClient);
 
             waitFor(JOB_TIMEOUT, new Predicate() {
                 public boolean evaluate() throws Exception {
@@ -827,7 +858,7 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
         Path subWorkflowAppPath = getFsTestCaseDir();
         FileSystem fs = getFileSystem();
         Path subWorkflowPath = new Path(subWorkflowAppPath, fileName);
-        Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath));
+        Writer writer = new OutputStreamWriter(fs.create(subWorkflowPath), StandardCharsets.UTF_8);
         writer.write(content);
         writer.close();
         return subWorkflowAppPath;
@@ -869,5 +900,24 @@ public class TestSubWorkflowActionExecutor extends ActionExecutorTestCase {
                 + "</kill>"
                 + "<end name='end' />"
                 + "</workflow-app>";
+    }
+
+    private String getFailingSubWorkflow() {
+        return  "<workflow-app xmlns='uri:oozie:workflow:0.4' name='app'>" +
+                "<start to=\"shell-node\"/>" +
+                "<action name=\"shell-node\">" +
+                "<shell xmlns=\"uri:oozie:shell-action:0.3\">" +
+                "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
+                "<name-node>" + getNameNodeUri() + "</name-node>" +
+                "<exec>dummycommand</exec>" +
+                "</shell>" +
+                "<ok to=\"subwf\"/>" +
+                "<error to=\"subwf\"/>" +
+                "</action>" +
+                "<kill name='fail'>" +
+                "<message>shell action fail, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>" +
+                "</kill>" +
+                "<end name='end' />" +
+                "</workflow-app>";
     }
 }

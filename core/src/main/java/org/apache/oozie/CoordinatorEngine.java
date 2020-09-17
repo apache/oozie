@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
@@ -49,6 +49,7 @@ import org.apache.oozie.command.coord.CoordActionInfoXCommand;
 import org.apache.oozie.command.coord.CoordActionsIgnoreXCommand;
 import org.apache.oozie.command.coord.CoordActionsKillXCommand;
 import org.apache.oozie.command.coord.CoordChangeXCommand;
+import org.apache.oozie.command.coord.CoordActionMissingDependenciesXCommand;
 import org.apache.oozie.command.coord.CoordJobXCommand;
 import org.apache.oozie.command.coord.CoordJobsXCommand;
 import org.apache.oozie.command.coord.CoordKillXCommand;
@@ -60,6 +61,8 @@ import org.apache.oozie.command.coord.CoordSLAChangeXCommand;
 import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
+import org.apache.oozie.command.coord.CoordWfActionInfoXCommand;
+import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -74,8 +77,8 @@ import org.apache.oozie.util.JobUtils;
 import org.apache.oozie.util.Pair;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.apache.oozie.util.XLogAuditFilter;
 import org.apache.oozie.util.XLogFilter;
+import org.apache.oozie.util.XLogStreamer;
 import org.apache.oozie.util.XLogUserFilterParam;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -121,11 +124,6 @@ public class CoordinatorEngine extends BaseEngine {
         this.user = ParamChecker.notEmpty(user, "user");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getDefinition(java.lang.String)
-     */
     @Override
     public String getDefinition(String jobId) throws BaseEngineException {
         CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
@@ -133,9 +131,9 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     /**
-     * @param jobId
+     * @param jobId the job ID
      * @return CoordinatorJobBean
-     * @throws BaseEngineException
+     * @throws BaseEngineException if the bean could not be retrieved
      */
     private CoordinatorJobBean getCoordJobWithNoActionInfo(String jobId) throws BaseEngineException {
         try {
@@ -147,9 +145,9 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     /**
-     * @param actionId
+     * @param actionId the ID of the action
      * @return CoordinatorActionBean
-     * @throws BaseEngineException
+     * @throws BaseEngineException if the bean could not be retrieved
      */
     public CoordinatorActionBean getCoordAction(String actionId) throws BaseEngineException {
         try {
@@ -160,11 +158,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String)
-     */
     @Override
     public CoordinatorJobBean getCoordJob(String jobId) throws BaseEngineException {
         try {
@@ -175,11 +168,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getCoordJob(java.lang.String, java.lang.String, int, int)
-     */
     @Override
     public CoordinatorJobBean getCoordJob(String jobId, String filter, int offset, int length, boolean desc)
             throws BaseEngineException {
@@ -192,21 +180,11 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getJobIdForExternalId(java.lang.String)
-     */
     @Override
     public String getJobIdForExternalId(String externalId) throws CoordinatorEngineException {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#kill(java.lang.String)
-     */
     @Override
     public void kill(String jobId) throws CoordinatorEngineException {
         try {
@@ -227,9 +205,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.BaseEngine#change(java.lang.String, java.lang.String)
-     */
     @Override
     public void change(String jobId, String changeValue) throws CoordinatorEngineException {
         try {
@@ -261,12 +236,15 @@ public class CoordinatorEngine extends BaseEngine {
     /**
      * Rerun coordinator actions for given rerunType
      *
-     * @param jobId
-     * @param rerunType
-     * @param scope
-     * @param refresh
-     * @param noCleanup
-     * @throws BaseEngineException
+     * @param jobId the job ID
+     * @param rerunType rerun type {@link RestConstants#JOB_COORD_SCOPE_DATE} or {@link RestConstants#JOB_COORD_SCOPE_ACTION}
+     * @param scope the rerun scope for given rerunType separated by ","
+     * @param refresh true if user wants to refresh input/output dataset urls
+     * @param noCleanup false if user wants to cleanup output events for given rerun actions
+     * @param failed true if user wants to rerun only failed nodes
+     * @param conf configuration values for actions
+     * @return  the action info
+     * @throws BaseEngineException thrown if the actions could not be rerun
      */
     public CoordinatorActionInfo reRun(String jobId, String rerunType, String scope, boolean refresh, boolean noCleanup,
                                        boolean failed, Configuration conf)
@@ -280,11 +258,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#resume(java.lang.String)
-     */
     @Override
     public void resume(String jobId) throws CoordinatorEngineException {
         try {
@@ -301,56 +274,20 @@ public class CoordinatorEngine extends BaseEngine {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "invalid use of start"));
     }
 
-    @Override
-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BaseEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
-    }
 
     @Override
-    public void streamErrorLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-            BaseEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.ERROR_LOG);
-    }
-
-    @Override
-    public void streamAuditLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
-    BaseEngineException {
-        try {
-            streamJobLog(new XLogAuditFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.AUDIT_LOG);
-        }
-        catch (CommandException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private void streamJobLog(String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+    protected void streamJobLog(XLogStreamer logStreamer, String jobId, Writer writer)
             throws IOException, BaseEngineException {
-        try {
-            streamJobLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, logType);
+        logStreamer.getXLogFilter().setParameter(DagXLogInfoService.JOB, jobId);
+        Date lastTime = null;
+        CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
+        if (job.isTerminalStatus()) {
+            lastTime = job.getLastModifiedTime();
         }
-        catch (Exception e) {
-            throw new IOException(e);
+        if (lastTime == null) {
+            lastTime = new Date();
         }
-    }
-
-    private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
-            throws IOException, BaseEngineException {
-        try {
-            filter.setParameter(DagXLogInfoService.JOB, jobId);
-            Date lastTime = null;
-            CoordinatorJobBean job = getCoordJobWithNoActionInfo(jobId);
-            if (job.isTerminalStatus()) {
-                lastTime = job.getLastModifiedTime();
-            }
-            if (lastTime == null) {
-                lastTime = new Date();
-            }
-            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
-        }
-        catch (Exception e) {
-            throw new IOException(e);
-        }
+        Services.get().get(XLogStreamingService.class).streamLog(logStreamer, job.getCreatedTime(), lastTime, writer);
     }
 
     /**
@@ -360,17 +297,17 @@ public class CoordinatorEngine extends BaseEngine {
      * @param logRetrievalScope Value for the retrieval type
      * @param logRetrievalType Based on which filter criteria the log is retrieved
      * @param writer writer to stream the log to
-     * @param params additional parameters from the request
-     * @throws IOException
-     * @throws BaseEngineException
-     * @throws CommandException
+     * @param requestParameters additional parameters from the request
+     * @throws IOException in case of IO error
+     * @throws BaseEngineException if there is an error during streaming
+     * @throws CommandException if a parameter could not be parsed
      */
     public void streamLog(String jobId, String logRetrievalScope, String logRetrievalType, Writer writer,
-            Map<String, String[]> params) throws IOException, BaseEngineException, CommandException {
+            Map<String, String[]> requestParameters) throws IOException, BaseEngineException, CommandException {
 
         Date startTime = null;
         Date endTime = null;
-        XLogFilter filter = new XLogFilter(new XLogUserFilterParam(params));
+        XLogFilter filter = new XLogFilter(new XLogUserFilterParam(requestParameters));
 
         filter.setParameter(DagXLogInfoService.JOB, jobId);
         if (logRetrievalScope != null && logRetrievalType != null) {
@@ -526,16 +463,10 @@ public class CoordinatorEngine extends BaseEngine {
                 }
             }
         }
-        Services.get().get(XLogStreamingService.class).streamLog(filter, startTime, endTime, writer, params);
+        Services.get().get(XLogStreamingService.class).streamLog(new XLogStreamer(filter, requestParameters), startTime,
+                endTime, writer);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.BaseEngine#submitJob(org.apache.hadoop.conf.Configuration
-     * , boolean)
-     */
     @Override
     public String submitJob(Configuration conf, boolean startJob) throws CoordinatorEngineException {
         try {
@@ -547,12 +478,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.BaseEngine#dryRunSubmit(org.apache.hadoop.conf.Configuration)
-     */
     @Override
     public String dryRunSubmit(Configuration conf) throws CoordinatorEngineException {
         try {
@@ -564,11 +489,6 @@ public class CoordinatorEngine extends BaseEngine {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#suspend(java.lang.String)
-     */
     @Override
     public void suspend(String jobId) throws CoordinatorEngineException {
         try {
@@ -580,21 +500,11 @@ public class CoordinatorEngine extends BaseEngine {
 
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String)
-     */
     @Override
     public WorkflowJob getJob(String jobId) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from CoordinatorEngine"));
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.oozie.BaseEngine#getJob(java.lang.String, int, int)
-     */
     @Override
     public WorkflowJob getJob(String jobId, int start, int length) throws BaseEngineException {
         throw new BaseEngineException(new XException(ErrorCode.E0301, "cannot get a workflow job from CoordinatorEngine"));
@@ -617,11 +527,12 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     /**
-     * @param filter
-     * @param start
-     * @param len
+     * @param filter he filter to parse. Elements must be semicolon-separated name=value pairs.
+     *               Supported names are in{@link CoordinatorEngine#FILTER_NAMES}.
+     * @param start start from this job in the coordinator
+     * @param len maximum number of results
      * @return CoordinatorJobInfo
-     * @throws CoordinatorEngineException
+     * @throws CoordinatorEngineException if the job info could no be retrieved
      */
     public CoordinatorJobInfo getCoordJobs(String filter, int start, int len) throws CoordinatorEngineException {
         Map<String, List<String>> filterList = parseJobsFilter(filter);
@@ -704,9 +615,10 @@ public class CoordinatorEngine extends BaseEngine {
     }
 
     /**
-     * @param filter
-     * @return Map<String, List<String>>
-     * @throws CoordinatorEngineException
+     * @param filter the filter to parse. Elements must be semicolon-separated name=value pairs.
+     *               Supported names are in{@link CoordinatorEngine#FILTER_NAMES}.
+     * @return Map<String, List<String>> map of parsed filters
+     * @throws CoordinatorEngineException if the parameter could not be parsed
      */
     @VisibleForTesting
     Map<String, List<String>> parseJobsFilter(String filter) throws CoordinatorEngineException {
@@ -918,10 +830,10 @@ public class CoordinatorEngine extends BaseEngine {
     /**
      * return a list of killed Coordinator job
      *
-     * @param filter, the filter string for which the coordinator jobs are killed
-     * @param start, the starting index for coordinator jobs
-     * @param length, maximum number of jobs to be killed
-     * @return the list of jobs being killed
+     * @param filter the filter string for which the coordinator jobs are killed
+     * @param start the starting index for coordinator jobs
+     * @param length maximum number of jobs to be killed
+     * @return coordinatorJobInfo the list of jobs being killed
      * @throws CoordinatorEngineException thrown if one or more of the jobs cannot be killed
      */
     public CoordinatorJobInfo killJobs(String filter, int start, int length) throws CoordinatorEngineException {
@@ -944,8 +856,8 @@ public class CoordinatorEngine extends BaseEngine {
      * @param filter Filter for jobs that will be suspended, can be name, user, group, status, id or combination of any
      * @param start Offset for the jobs that will be suspended
      * @param length maximum number of jobs that will be suspended
-     * @return
-     * @throws CoordinatorEngineException
+     * @return coordinatorJobInfo
+     * @throws CoordinatorEngineException if the jobs could not be suspended
      */
     public CoordinatorJobInfo suspendJobs(String filter, int start, int length) throws CoordinatorEngineException {
         try {
@@ -967,8 +879,8 @@ public class CoordinatorEngine extends BaseEngine {
      * @param filter Filter for jobs that will be resumed, can be name, user, group, status, id or combination of any
      * @param start Offset for the jobs that will be resumed
      * @param length maximum number of jobs that will be resumed
-     * @return
-     * @throws CoordinatorEngineException
+     * @return coordinatorJobInfo returns resumed jobs
+     * @throws CoordinatorEngineException if the jobs could not be resumed
      */
     public CoordinatorJobInfo resumeJobs(String filter, int start, int length) throws CoordinatorEngineException {
         try {
@@ -984,4 +896,36 @@ public class CoordinatorEngine extends BaseEngine {
             throw new CoordinatorEngineException(ex);
         }
     }
+    /**
+     * Get coord action missing dependencies
+     * @param id jobID
+     * @param actions action list
+     * @param dates nominal time list
+     * @return CoordActionMissingDependenciesXCommand pair of coord action bean and
+     * list of missing input dependencies.
+     * @throws CommandException if the actions could not be retrieved
+     */
+    public List<Pair<CoordinatorActionBean, Map<String, ActionDependency>>> getCoordActionMissingDependencies(String id,
+            String actions, String dates) throws CommandException {
+        return new CoordActionMissingDependenciesXCommand(id, actions, dates).call();
+    }
+
+    /**
+     * get wf actions by action name in a coordinator job
+     * @param jobId coordinator job id
+     * @param wfActionName workflow action name
+     * @param offset offset in the coordinator job
+     * @param len maximum number of results
+     * @return CoordWfActionInfoXCommand list of CoordinatorWfActionBean in a coordinator
+     * @throws CoordinatorEngineException if the actions could not be retrieved
+     */
+     public List<CoordinatorWfActionBean> getWfActionByJobIdAndName(String jobId, String wfActionName, int offset, int len)
+             throws CoordinatorEngineException {
+        try {
+            return new CoordWfActionInfoXCommand(jobId, wfActionName, offset, len).call();
+        }
+        catch (CommandException ex) {
+            throw new CoordinatorEngineException(ex);
+        }
+     }
 }

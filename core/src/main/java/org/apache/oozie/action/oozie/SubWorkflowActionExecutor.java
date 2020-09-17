@@ -56,7 +56,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String SUBWORKFLOW_DEPTH = "oozie.action.subworkflow.depth";
     public static final String SUBWORKFLOW_RERUN = "oozie.action.subworkflow.rerun";
 
-    private static final Set<String> DISALLOWED_DEFAULT_PROPERTIES = new HashSet<String>();
+    private static final Set<String> DISALLOWED_USER_PROPERTIES = new HashSet<String>();
     public XLog LOG = XLog.getLog(getClass());
 
 
@@ -66,9 +66,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
                 PropertiesUtils.RECORDS, PropertiesUtils.MAP_IN, PropertiesUtils.MAP_OUT, PropertiesUtils.REDUCE_IN,
                 PropertiesUtils.REDUCE_OUT, PropertiesUtils.GROUPS};
 
-        String[] badDefaultProps = {PropertiesUtils.HADOOP_USER};
-        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_DEFAULT_PROPERTIES);
-        PropertiesUtils.createPropertySet(badDefaultProps, DISALLOWED_DEFAULT_PROPERTIES);
+        PropertiesUtils.createPropertySet(badUserProps, DISALLOWED_USER_PROPERTIES);
     }
 
     protected SubWorkflowActionExecutor() {
@@ -101,7 +99,8 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             String strConf = XmlUtils.prettyPrint(eConf).toString();
             Configuration conf = new XConfiguration(new StringReader(strConf));
             try {
-                PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_DEFAULT_PROPERTIES);
+                PropertiesUtils.checkDisallowedProperties(conf, DISALLOWED_USER_PROPERTIES);
+                PropertiesUtils.checkDefaultDisallowedProperties(conf);
             }
             catch (CommandException ex) {
                 throw convertException(ex);
@@ -164,6 +163,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     }
 
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Starting action");
         try {
             Element eConf = XmlUtils.parseXml(action.getConf());
             Namespace ns = eConf.getNamespace();
@@ -235,6 +235,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             else {
                 subWorkflowId = runningJobId;
             }
+            LOG.info("Sub workflow id: [{0}]", subWorkflowId);
             WorkflowJob workflow = oozieClient.getJobInfo(subWorkflowId);
             String consoleUrl = workflow.getConsoleUrl();
             context.setStartData(subWorkflowId, oozieUri, consoleUrl);
@@ -254,6 +255,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
             WorkflowAction.Status status = externalStatus.equals("SUCCEEDED") ? WorkflowAction.Status.OK
                                            : WorkflowAction.Status.ERROR;
             context.setEndData(status, getActionSignal(status));
+            LOG.info("Action ended with external status [{0}]", action.getExternalStatus());
         }
         catch (Exception ex) {
             throw convertException(ex);
@@ -284,6 +286,7 @@ public class SubWorkflowActionExecutor extends ActionExecutor {
     }
 
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
+        LOG.info("Killing action");
         try {
             String subWorkflowId = action.getExternalId();
             String oozieUri = action.getTrackerUri();

@@ -18,10 +18,10 @@
 
 package org.apache.oozie.server;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.server.guice.OozieGuiceModule;
 import org.apache.oozie.service.ConfigurationService;
@@ -41,14 +41,21 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 /**
  *  Class to start Oozie inside an embedded Jetty server.
  */
 public class EmbeddedOozieServer {
     private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOozieServer.class);
+    protected static final String OOZIE_HTTPS_TRUSTSTORE_FILE = "oozie.https.truststore.file";
+    protected static final String OOZIE_HTTPS_TRUSTSTORE_PASS = "oozie.https.truststore.pass";
+    protected static final String TRUSTSTORE_PATH_SYSTEM_PROPERTY = "javax.net.ssl.trustStore";
+    protected static final String TRUSTSTORE_PASS_SYSTEM_PROPERTY = "javax.net.ssl.trustStorePassword";
+    private static String contextPath;
     protected Server server;
     private int httpPort;
     private int httpsPort;
@@ -72,7 +79,7 @@ public class EmbeddedOozieServer {
      * @param servletContextHandler main web application context handler
      * @param oozieServletMapper maps servlets to URLs
      * @param oozieFilterMapper  maps filters
-     * @param constraintSecurityHandler
+     * @param constraintSecurityHandler constraint security handler
      */
     @Inject
     public EmbeddedOozieServer(final Server server,
@@ -86,27 +93,27 @@ public class EmbeddedOozieServer {
                                final ConstraintSecurityHandler constraintSecurityHandler)
     {
         this.constraintSecurityHandler = constraintSecurityHandler;
-        this.serviceController = Preconditions.checkNotNull(serviceController, "serviceController is null");
-        this.jspHandler = Preconditions.checkNotNull(jspHandler, "jspHandler is null");
-        this.sslServerConnectorFactory = Preconditions.checkNotNull(sslServerConnectorFactory,
+        this.serviceController = Objects.requireNonNull(serviceController, "serviceController is null");
+        this.jspHandler = Objects.requireNonNull(jspHandler, "jspHandler is null");
+        this.sslServerConnectorFactory = Objects.requireNonNull(sslServerConnectorFactory,
                 "sslServerConnectorFactory is null");
-        this.server = Preconditions.checkNotNull(server, "server is null");
-        this.oozieRewriteHandler = Preconditions.checkNotNull(oozieRewriteHandler, "rewriter is null");
-        this.servletContextHandler = Preconditions.checkNotNull(servletContextHandler, "servletContextHandler is null");
-        this.oozieServletMapper = Preconditions.checkNotNull(oozieServletMapper, "oozieServletMapper is null");
-        this.oozieFilterMapper = Preconditions.checkNotNull(oozieFilterMapper, "oozieFilterMapper is null");
+        this.server = Objects.requireNonNull(server, "server is null");
+        this.oozieRewriteHandler = Objects.requireNonNull(oozieRewriteHandler, "rewriter is null");
+        this.servletContextHandler = Objects.requireNonNull(servletContextHandler, "servletContextHandler is null");
+        this.oozieServletMapper = Objects.requireNonNull(oozieServletMapper, "oozieServletMapper is null");
+        this.oozieFilterMapper = Objects.requireNonNull(oozieFilterMapper, "oozieFilterMapper is null");
     }
 
     /**
      * Set up the Oozie server by configuring jetty server settings and starts Oozie services
      *
-     * @throws URISyntaxException
-     * @throws IOException
-     * @throws ServiceException
+     * @throws URISyntaxException if the server URI is not well formatted
+     * @throws IOException in case of IO issues
+     * @throws ServiceException if the server could not start
      */
     public void setup() throws URISyntaxException, IOException, ServiceException {
         conf = serviceController.get(ConfigurationService.class).getConf();
-
+        setContextPath(conf);
         httpPort = getConfigPort(ConfigUtils.OOZIE_HTTP_PORT);
 
         HttpConfiguration httpConfiguration = new HttpConfigurationWrapper(conf).getDefaultHttpConfiguration();
@@ -116,6 +123,8 @@ public class EmbeddedOozieServer {
         connector.setHost(conf.get(ConfigUtils.OOZIE_HTTP_HOSTNAME));
 
         HandlerCollection handlerCollection = new HandlerCollection();
+        setTrustStore();
+        setTrustStorePassword();
 
         if (isSecured()) {
             httpsPort =  getConfigPort(ConfigUtils.OOZIE_HTTPS_PORT);
@@ -128,7 +137,7 @@ public class EmbeddedOozieServer {
             server.setConnectors(new Connector[]{connector});
         }
 
-        servletContextHandler.setContextPath("/oozie/");
+        servletContextHandler.setContextPath(contextPath);
         oozieServletMapper.mapOozieServlets();
         oozieFilterMapper.addFilters();
 
@@ -142,10 +151,48 @@ public class EmbeddedOozieServer {
         server.setHandler(handlerCollection);
     }
 
+    /**
+     * set the truststore path from the config file, if is not set by the user
+     */
+    private void setTrustStore() {
+        if (System.getProperty(TRUSTSTORE_PATH_SYSTEM_PROPERTY) == null) {
+            final String trustStorePath = conf.get(OOZIE_HTTPS_TRUSTSTORE_FILE);
+            if (trustStorePath != null) {
+                LOG.info("Setting javax.net.ssl.trustStore from config file");
+                System.setProperty(TRUSTSTORE_PATH_SYSTEM_PROPERTY, trustStorePath);
+            }
+        } else {
+            LOG.info("javax.net.ssl.trustStore is already set. The value from config file will be ignored");
+        }
+    }
+
+    /**
+     * set the truststore password from the config file, if is not set by the user
+     */
+    private void setTrustStorePassword() {
+        if (System.getProperty(TRUSTSTORE_PASS_SYSTEM_PROPERTY) == null) {
+            final String trustStorePassword = conf.get(OOZIE_HTTPS_TRUSTSTORE_PASS);
+            if (trustStorePassword != null) {
+                LOG.info("Setting javax.net.ssl.trustStorePassword from config file");
+                System.setProperty(TRUSTSTORE_PASS_SYSTEM_PROPERTY, trustStorePassword);
+            }
+        } else {
+            LOG.info("javax.net.ssl.trustStorePassword is already set. The value from config file will be ignored");
+        }
+    }
+
     private void addErrorHandler() {
         ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
-        errorHandler.addErrorPage(404, "/404.html");
-        errorHandler.addErrorPage(403, "/403.html");
+        errorHandler.addErrorPage(HttpServletResponse.SC_BAD_REQUEST, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_UNAUTHORIZED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_FORBIDDEN, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_CONFLICT, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_NOT_IMPLEMENTED, "/error");
+        errorHandler.addErrorPage(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "/error");
+        errorHandler.addErrorPage("java.lang.Throwable", "/error");
         servletContextHandler.setErrorHandler(errorHandler);
     }
 
@@ -168,10 +215,38 @@ public class EmbeddedOozieServer {
         return isSSLEnabled != null && Boolean.valueOf(isSSLEnabled);
     }
 
+    public static void setContextPath(Configuration oozieConfiguration) {
+        String baseUrl = oozieConfiguration.get("oozie.base.url");
+        String contextPath = baseUrl.substring(baseUrl.lastIndexOf("/"));
+        LOG.info("Server started with contextPath = " + contextPath);
+        EmbeddedOozieServer.contextPath = contextPath;
+    }
+
+    public static String getContextPath(Configuration oozieConfiguration) {
+        if (contextPath != null) {
+            return contextPath;
+        }
+
+        setContextPath(oozieConfiguration);
+        return EmbeddedOozieServer.contextPath;
+    }
 
     public void start() throws Exception {
         server.start();
         LOG.info("Server started.");
+    }
+
+    public void shutdown() throws Exception {
+        LOG.info("Shutting down.");
+        if (serviceController != null) {
+            serviceController.destroy();
+            LOG.info("Oozie services stopped.");
+        }
+
+        if (server != null) {
+            server.stop();
+            LOG.info("Server stopped.");
+        }
     }
 
     public void join() throws InterruptedException {
@@ -181,9 +256,11 @@ public class EmbeddedOozieServer {
     public void addShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-                LOG.info("Shutting down.");
-                serviceController.destroy();
-                LOG.info("Oozie services stopped.");
+                try {
+                    shutdown();
+                } catch (final Exception e) {
+                    LOG.error(String.format("There were errors during shutdown. Error message: %s", e.getMessage()));
+                }
             }
         });
     }
@@ -191,14 +268,21 @@ public class EmbeddedOozieServer {
     public static void main(String[] args) throws Exception {
         final Injector guiceInjector = Guice.createInjector(new OozieGuiceModule());
 
-        final EmbeddedOozieServer embeddedOozieServer = guiceInjector.getInstance(EmbeddedOozieServer.class);
+        EmbeddedOozieServer embeddedOozieServer = null;
+        try {
+            embeddedOozieServer = guiceInjector.getInstance(EmbeddedOozieServer.class);
+        }
+        catch (final ProvisionException ex) {
+            LOG.error(ex.getMessage());
+            System.exit(1);
+        }
 
-        embeddedOozieServer.setup();
         embeddedOozieServer.addShutdownHook();
+        embeddedOozieServer.setup();
         try {
             embeddedOozieServer.start();
-        } catch (Exception e) {
-            LOG.error("Could not start EmbeddedOozieServer!", e);
+        } catch (final Exception e) {
+            LOG.error(String.format("Could not start EmbeddedOozieServer! Error message: %s", e.getMessage()));
             System.exit(1);
         }
         embeddedOozieServer.join();

@@ -18,19 +18,29 @@
 
 package org.apache.oozie.util;
 
-import org.apache.oozie.test.XTestCase;
-import org.jdom.Element;
+import org.junit.Test;
+import org.jdom.input.JDOMParseException;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
-public class TestXmlUtils extends XTestCase {
+public class TestXmlUtils {
 
     private static String EXTERNAL_ENTITY_XML = "<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n"
             + "<foo>&xxe;</foo>";
 
+    @Test
     public void testExternalEntity() throws Exception {
-        Element e = XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
-        assertEquals(0, e.getText().length());
+        try {
+            XmlUtils.parseXml(EXTERNAL_ENTITY_XML);
+            fail("DOCTYPE should not be allowed");
+        } catch (JDOMParseException e) {
+            assertTrue("Exception has different message.", e.getMessage().
+                    contains("DOCTYPE is disallowed when the feature \"http://apache."
+                            + "org/xml/features/disallow-doctype-decl\" set to true"));
+        }
     }
 
+    @Test
     public void testRemoveComments() throws Exception {
         String xmlStr = "<test1> <!-- Comment1 -->1234 <test2> ABCD <!-- Comment2 --> </test2> "
                 + "<!-- Comment3 --> <test3> <!-- Comment4 -->EFGH  </test3> <!-- Comment5 --></test1>";

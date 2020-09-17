@@ -21,7 +21,7 @@ package org.apache.oozie.command.wf;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.local.LocalOozie;
-import org.apache.oozie.action.hadoop.MapReduceMain;
+import org.apache.oozie.action.hadoop.ActionUtils;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XLog;
@@ -46,7 +46,7 @@ public class TestSubmitSqoopXCommand extends XFsTestCase {
     public void testWFXmlGeneration() throws Exception {
         Configuration conf = new Configuration();
 
-        conf.set(XOozieClient.JT, "jobtracker");
+        conf.set(XOozieClient.RM, "jobtracker");
         conf.set(XOozieClient.NN, "namenode");
         conf.set(OozieClient.LIBPATH, "libpath");
 
@@ -54,7 +54,7 @@ public class TestSubmitSqoopXCommand extends XFsTestCase {
 
         String sqoopArgsStr = "-Da=aaa -Db=bbb";
         String[] args = sqoopArgsStr.split(" ");
-        MapReduceMain.setStrings(conf, XOozieClient.SQOOP_OPTIONS, args);
+        ActionUtils.setStrings(conf, XOozieClient.SQOOP_OPTIONS, args);
 
         SubmitSqoopXCommand submitSqoopCmd = new SubmitSqoopXCommand(conf);
         String xml = submitSqoopCmd.getWorkflowXml(conf);

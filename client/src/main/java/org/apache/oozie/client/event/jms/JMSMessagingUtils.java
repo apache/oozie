@@ -50,7 +50,7 @@ public class JMSMessagingUtils {
                 is.close();
             }
             catch (IOException ioe) {
-                throw new RuntimeException("I/O error occured for " + CLIENT_PROPERTIES, ioe);
+                throw new RuntimeException("I/O error occurred for " + CLIENT_PROPERTIES, ioe);
             }
         }
 
@@ -59,11 +59,11 @@ public class JMSMessagingUtils {
     /**
      * Constructs the EventMessage object from JMS message
      *
-     * @param <T>
+     * @param <T> the type of the message
      * @param msg the JMS message
      * @return the EventMessage
-     * @throws IOException
-     * @throws JMSException
+     * @throws IOException IOError
+     * @throws JMSException JMSException
      */
     public static <T extends EventMessage> T getEventMessage(Message msg) throws IOException, JMSException {
         if (msg == null) {

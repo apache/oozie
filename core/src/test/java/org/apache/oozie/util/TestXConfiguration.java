@@ -22,13 +22,15 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.ConfigurationService;
@@ -56,32 +58,25 @@ public class TestXConfiguration extends XTestCase {
         String parentXml = "parentXml";
         prepareXmlWithInclude(parentXml);
         try {
-            XConfiguration conf = new XConfiguration(new FileInputStream(new File(getTestCaseDir(), parentXml)));
-            assertEquals("DEFAULT", conf.get("oozie.dummy"));
-            // verify the properties from include file
-            assertEquals("bar", conf.get("foo"));
-            assertEquals("def", conf.get("abc"));
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("XInclude failed");
+            new XConfiguration(new FileInputStream(new File(getTestCaseDir(), parentXml)));
+            fail("XInclude should not be allowed");
         }
-
+        catch (IOException e) {
+            assertEquals("bad conf file: element not <property>", e.getMessage());
+        }
     }
 
     public void testAddXIncludeFromReader() throws IOException {
         String parentXml = "parentXml";
         prepareXmlWithInclude(parentXml);
         try {
-            XConfiguration conf = new XConfiguration(new FileReader(new File(getTestCaseDir(), parentXml)));
-            assertEquals("DEFAULT", conf.get("oozie.dummy"));
-            // verify the properties from include file
-            assertEquals("bar", conf.get("foo"));
-            assertEquals("def", conf.get("abc"));
-        }  catch (IOException e) {
-            e.printStackTrace();
-            fail("XInclude failed");
+            new XConfiguration(new InputStreamReader(new FileInputStream(new File(getTestCaseDir(),
+                    parentXml)), StandardCharsets.UTF_8));
+            fail("XInclude should not be allowed");
         }
-
+        catch (IOException e) {
+            assertEquals("bad conf file: element not <property>", e.getMessage());
+        }
     }
 
     // Copy the parent xml to testCaseDir and add the include element
@@ -91,9 +86,12 @@ public class TestXConfiguration extends XTestCase {
                 .getFile();
         // Get the parent file which will contain the include element
         URL url = Thread.currentThread().getContextClassLoader().getResource("test-oozie-default.xml");
-        BufferedReader br = new BufferedReader(new FileReader(url.getFile()));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(url.getFile()),
+                StandardCharsets.UTF_8));
         // Copy the parent file to testcase dir
-        BufferedWriter bw = new BufferedWriter(new FileWriter(new File(getTestCaseDir(), parentXml)));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(new File(getTestCaseDir(), parentXml)), StandardCharsets.UTF_8));
+
         // While copying, add the path for xml to be included
         // Make sure the path is absolute
         while (br.ready()) {
@@ -184,6 +182,7 @@ public class TestXConfiguration extends XTestCase {
 
     public void testResolve() {
         XConfiguration conf = new XConfiguration();
+        conf.setRestrictSystemProperties(false);
         conf.set("a", "A");
         conf.set("b", "${a}");
         assertEquals("A", conf.getRaw("a"));
@@ -205,14 +204,9 @@ public class TestXConfiguration extends XTestCase {
         assertEquals("${aa}", conf.getRaw("c"));
         assertEquals("A", conf.get("a"));
         assertEquals("A", conf.get("b"));
-        assertEquals("foo", conf.get("c"));
         assertEquals("${aaa}", conf.get("d"));
-
         conf.set("un","${user.name}");
-        assertEquals(System.getProperty("user.name"), conf.get("un"));
-        setSystemProperty("user.name", "foo");
-        assertEquals("foo", conf.get("un"));
-
+        assertEquals("${user.name}", conf.get("un"));
     }
 
     public void testSubstituteVar() throws ServiceException {
@@ -235,7 +229,8 @@ public class TestXConfiguration extends XTestCase {
         try {
             conf.get(String.valueOf("key" + (depth)));
             fail("Fail to apply substitution depth");
-        } catch (IllegalStateException e) {
+        }
+        catch (IllegalStateException e) {
             assertTrue(e.getMessage().contains("Variable substitution depth too large: " + depth));
         }
 

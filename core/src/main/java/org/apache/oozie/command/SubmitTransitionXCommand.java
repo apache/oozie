@@ -60,9 +60,6 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
      */
     protected abstract String submit() throws CommandException;
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.TransitionXCommand#transitToNext()
-     */
     @Override
     public void transitToNext() {
         if (job == null) {
@@ -72,9 +69,6 @@ public abstract class SubmitTransitionXCommand extends TransitionXCommand<String
         job.resetPending();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.oozie.command.XCommand#execute()
-     */
     @Override
     protected String execute() throws CommandException {
         try {

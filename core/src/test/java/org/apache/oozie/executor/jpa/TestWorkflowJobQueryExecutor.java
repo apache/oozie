@@ -194,6 +194,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
 
     public void testGet() throws Exception {
         WorkflowJobBean bean = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
+        assertNotNull(bean.getProtoActionConf());
         bean.setStartTime(new Date(System.currentTimeMillis() - 10));
         bean.setEndTime(new Date());
         WorkflowJobQueryExecutor.getInstance().executeUpdate(WorkflowJobQuery.UPDATE_WORKFLOW, bean);
@@ -301,7 +302,7 @@ public class TestWorkflowJobQueryExecutor extends XDataTestCase {
         assertEquals(ByteBuffer.wrap(bean.getWfInstanceBlob().getBytes()).getInt(),
                 ByteBuffer.wrap(retBean.getWfInstanceBlob().getBytes()).getInt());
         assertEquals(bean.getSlaXml(), retBean.getSlaXml());
-        assertNull(retBean.getProtoActionConf());
+        assertEquals(bean.getProtoActionConf(), retBean.getProtoActionConf());
         assertNull(retBean.getConf());
 
         // GET_WORKFLOW_RESUME

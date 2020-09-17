@@ -452,6 +452,25 @@ public class TestCoordJobInfoGetJPAExecutor extends XDataTestCase {
         compareCoordJobs(coordinatorJob1, ret.getCoordJobs().get(0));
     }
 
+    public void testGetJobInfoForBundleId() throws Exception {
+        String bundleId = "0000000-171003192756908-oozie-test-B";
+        String coordId = "0000000-171003192756999-oozie-test-C";
+        addRecordToCoordJobTableWithBundle(bundleId, coordId, CoordinatorJob.Status.SUCCEEDED, true, true, 1);
+
+        JPAService jpaService = Services.get().get(JPAService.class);
+        assertNotNull(jpaService);
+        Map<String, List<String>> filter = new HashMap<String, List<String>>();
+        List<String> jobIdList = new ArrayList<String>();
+        jobIdList.add(coordId);
+        filter.put(OozieClient.FILTER_ID, jobIdList);
+
+        CoordJobInfoGetJPAExecutor coordInfoGetCmd = new CoordJobInfoGetJPAExecutor(filter, 1, 20);
+        CoordinatorJobInfo ret = jpaService.execute(coordInfoGetCmd);
+        assertNotNull("CoordinatorJobInfo should not be null", ret);
+        assertEquals("The number of coord jobs should be 1", 1, ret.getCoordJobs().size());
+        assertEquals("Failed to verify bundle id of coord job", bundleId, ret.getCoordJobs().get(0).getBundleId());
+    }
+
     private void compareCoordJobs(CoordinatorJobBean coordBean, CoordinatorJobBean retCoordBean) {
         assertEquals(coordBean.getId(), retCoordBean.getId());
         assertEquals(coordBean.getStatusStr(), retCoordBean.getStatusStr());

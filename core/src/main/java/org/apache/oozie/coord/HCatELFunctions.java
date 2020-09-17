@@ -20,15 +20,18 @@ package org.apache.oozie.coord;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.dependency.URIHandler;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.HCatURI;
+import org.apache.oozie.util.HCatURIParser;
 import org.apache.oozie.util.XLog;
 
 /**
@@ -37,6 +40,8 @@ import org.apache.oozie.util.XLog;
 
 public class HCatELFunctions {
     private static final Configuration EMPTY_CONF = new Configuration(true);
+    private static final String HCAT_URI_REGEX_CONFIG = ConfigurationService.get("oozie.hcat.uri.regex.pattern");
+    private static final Pattern HCAT_URI_PATTERN = Pattern.compile(HCAT_URI_REGEX_CONFIG);
 
     enum EventType {
         input, output
@@ -49,7 +54,7 @@ public class HCatELFunctions {
      *
      * @param uri hcatalog partition uri.
      * @return <code>true</code> if the uri exists, <code>false</code> if it does not.
-     * @throws Exception
+     * @throws Exception if any exception occurs
      */
     public static boolean hcat_exists(String uri) throws Exception {
         URI hcatURI = new URI(uri);
@@ -65,7 +70,7 @@ public class HCatELFunctions {
     /**
      * Echo the same EL function without evaluating anything
      *
-     * @param dataInName
+     * @param dataInName data-IN name
      * @return the same EL function
      */
     public static String ph1_coord_databaseIn_echo(String dataInName) {
@@ -134,7 +139,7 @@ public class HCatELFunctions {
      * 'oozie.coord.el.dataset.bean' with synchronous dataset object
      * (SyncCoordDataset)
      *
-     * @param dataInName
+     * @param dataInName data-IN name
      * @return DB name
      */
     public static String ph3_coord_databaseIn(String dataInName) {
@@ -153,7 +158,7 @@ public class HCatELFunctions {
      * 'oozie.coord.el.dataset.bean' with synchronous dataset object
      * (SyncCoordDataset)
      *
-     * @param dataOutName
+     * @param dataOutName data-OUT name
      * @return DB name
      */
     public static String ph3_coord_databaseOut(String dataOutName) {
@@ -172,7 +177,7 @@ public class HCatELFunctions {
      * 'oozie.coord.el.dataset.bean' with synchronous dataset object
      * (SyncCoordDataset)
      *
-     * @param dataInName
+     * @param dataInName data-IN name
      * @return Table name
      */
     public static String ph3_coord_tableIn(String dataInName) {
@@ -191,7 +196,7 @@ public class HCatELFunctions {
      * 'oozie.coord.el.dataset.bean' with synchronous dataset object
      * (SyncCoordDataset)
      *
-     * @param dataOutName
+     * @param dataOutName data-OUT name
      * @return Table name
      */
     public static String ph3_coord_tableOut(String dataOutName) {
@@ -212,6 +217,7 @@ public class HCatELFunctions {
      *
      * @param dataInName : Datain name
      * @param type : for action type - pig, MR or hive
+     * @return partition filter
      */
     public static String ph3_coord_dataInPartitionFilter(String dataInName, String type) {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -231,6 +237,7 @@ public class HCatELFunctions {
      *
      * @param dataOutName : Dataout name
      * @param partitionName : Specific partition name whose value is wanted
+     * @return partition value
      */
     public static String ph3_coord_dataOutPartitionValue(String dataOutName, String partitionName) {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -256,6 +263,7 @@ public class HCatELFunctions {
      * unresolved, this function will echo back the original function <p> otherwise it sends the partition.
      *
      * @param dataOutName : DataOut name
+     * @return partitions
      */
     public static String ph3_coord_dataOutPartitions(String dataOutName) {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -280,6 +288,7 @@ public class HCatELFunctions {
      *
      * @param dataInName : DataIn name
      * @param type : for action type: hive-export
+     * @return partitions
      */
     public static String ph3_coord_dataInPartitions(String dataInName, String type) {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -291,7 +300,7 @@ public class HCatELFunctions {
         String partitionValue = null;
         if (uri != null) {
             if (type.equals("hive-export")) {
-                String[] uriList = uri.split(CoordELFunctions.DIR_SEPARATOR);
+                String[] uriList = HCatURIParser.splitHCatUris(uri, HCAT_URI_PATTERN);
                 if (uriList.length > 1) {
                     throw new RuntimeException("Multiple partitions not supported for hive-export type. Dataset name: "
                         + dataInName + " URI: " + uri);
@@ -314,13 +323,15 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the MAXIMUM value of an HCat partition which is input dependency for workflow job.<p> Look for two evaluator-level
+     * Used to specify the MINIMUM value of an HCat partition which is input dependency for workflow job.
+     * <p> Look for two evaluator-level
      * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
      * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
-     * unresolved, this function will echo back the original function <p> otherwise it sends the max partition value.
+     * unresolved, this function will echo back the original function <p> otherwise it sends the min partition value.
      *
      * @param dataInName : Datain name
-     * @param partitionName : Specific partition name whose MAX value is wanted
+     * @param partitionName : Specific partition name whose MIN value is wanted
+     * @return minimum of partition
      */
     public static String ph3_coord_dataInPartitionMin(String dataInName, String partitionName) {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -331,7 +342,7 @@ public class HCatELFunctions {
         }
         String minPartition = null;
         if (uris != null) {
-            String[] uriList = uris.split(CoordELFunctions.DIR_SEPARATOR);
+            String[] uriList = HCatURIParser.splitHCatUris(uris, HCAT_URI_PATTERN);
             // get the partition values list and find minimum
             try {
                 // initialize minValue with first partition value
@@ -359,13 +370,15 @@ public class HCatELFunctions {
     }
 
     /**
-     * Used to specify the MINIMUM value of an HCat partition which is input dependency for workflow job.<p> Look for two evaluator-level
+     * Used to specify the MAXIMUM value of an HCat partition which is input dependency for workflow job.
+     * <p> Look for two evaluator-level
      * variables <p> A) .datain.&lt;DATAIN_NAME&gt; B) .datain.&lt;DATAIN_NAME&gt;.unresolved <p> A defines the current list of
      * HCat URIs. <p> B defines whether there are any unresolved EL-function (i.e latest) <p> If there are something
-     * unresolved, this function will echo back the original function <p> otherwise it sends the min partition value.
+     * unresolved, this function will echo back the original function <p> otherwise it sends the max partition value.
      *
      * @param dataInName : Datain name
-     * @param partitionName : Specific partition name whose MIN value is wanted
+     * @param partitionName : Specific partition name whose MAX value is wanted
+     * @return maximum of partition
      */
     public static String ph3_coord_dataInPartitionMax(String dataInName, String partitionName) {
         ELEvaluator eval = ELEvaluator.getCurrent();
@@ -376,7 +389,7 @@ public class HCatELFunctions {
         }
         String maxPartition = null;
         if (uris != null) {
-            String[] uriList = uris.split(CoordELFunctions.DIR_SEPARATOR);
+            String[] uriList = HCatURIParser.splitHCatUris(uris, HCAT_URI_PATTERN);
             // get the partition values list and find minimum
             try {
                 // initialize minValue with first partition value
@@ -403,7 +416,7 @@ public class HCatELFunctions {
     }
 
     private static String createPartitionFilter(String uris, String type) {
-        String[] uriList = uris.split(CoordELFunctions.DIR_SEPARATOR);
+        String[] uriList = HCatURIParser.splitHCatUris(uris, HCAT_URI_PATTERN);
         StringBuilder filter = new StringBuilder("");
         if (uriList.length > 0) {
             for (String uri : uriList) {
@@ -433,7 +446,7 @@ public class HCatELFunctions {
             uris = (String) eval.getVariable(".dataout." + dataInName);
         }
         if (uris != null) {
-            String[] uri = uris.split(CoordELFunctions.DIR_SEPARATOR, -1);
+            String[] uri = HCatURIParser.splitHCatUris(uris, HCAT_URI_PATTERN);
             uriTemplate.append(uri[0]);
         }
         else {
