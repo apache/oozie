@@ -1,3 +1,5 @@
+-- Oozie 5.2.1 release (unreleased)
+
 -- Oozie 5.2.0 release
 
 OOZIE-3553 [examples] Fix sqoop example (asalamon74 via kmarton)

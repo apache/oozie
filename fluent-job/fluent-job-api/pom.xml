@@ -23,11 +23,11 @@
     <parent>
         <groupId>org.apache.oozie</groupId>
         <artifactId>oozie-fluent-job</artifactId>
-        <version>5.2.0</version>
+        <version>5.2.1</version>
     </parent>
 
     <artifactId>oozie-fluent-job-api</artifactId>
-    <version>5.2.0</version>
+    <version>5.2.1</version>
     <description>Apache Oozie Fluent Job API</description>
     <name>Apache Oozie Fluent Job API</name>
     <packaging>jar</packaging>
