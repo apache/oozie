@@ -42,7 +42,7 @@ More inforamtion could be found at:
 http://oozie.apache.org/
 
 Oozie Quick Start:
-http://oozie.apache.org/docs/5.2.0/DG_QuickStart.html
+http://oozie.apache.org/docs/5.2.1/DG_QuickStart.html
 
 
 Supported Hadoop Versions:
