@@ -474,6 +474,13 @@ public class MapReduceActionExecutor extends JavaActionExecutor {
         }
     }
 
+    @Override
+    protected void addActionSpecificEnvVars(Map<String, String> env) {
+        // need to specify HADOOP_MAPRED_HOME for hadoop3, otherwise mapreduce jars won't be included
+        // in the launcher's CLASSPATH.
+        env.put("HADOOP_MAPRED_HOME", "${HADOOP_HOME}");
+    }
+
     /**
      * Finds a Hadoop job ID based on {@code action-data.seq} file stored on HDFS by {@link MapReduceMain}.
      */
