@@ -118,7 +118,7 @@
             <plugin>
                 <groupId>com.github.davidmoten</groupId>
                 <artifactId>jax-maven-plugin</artifactId>
-                <version>0.1.6</version>
+                <version>0.1.8</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.jvnet.jaxb2_commons</groupId>

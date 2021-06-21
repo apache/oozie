@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3628 Fix Oozie build errors caused by Maven 3.8.1
 OOZIE-3605 ShareLib installation does not honor dfs.replication in HDFS configuration (luyuanhao via gezapeti)
 OOZIE-3608 Coordinator emits wrong WARN about TimeZones (larsfrancke via gezapeti)
 OOZIE-3586 Oozie spark actions using --keytab fail due to duplicate dist. cache (jmakai via asalamon74)
