@@ -187,11 +187,8 @@ public class JPAService implements Service, Instrumentable {
             throw new ServiceException(ErrorCode.E0609, dbType, ormFile);
         }
 
-        // support for mysql replication urls "jdbc:mysql:replication://master:port,slave:port[,slave:port]/db"
-        if (url.startsWith("jdbc:mysql:replication")) {
-            url = "\"".concat(url).concat("\"");
-            LOG.info("A jdbc replication url is provided. Url: [{0}]", url);
-        }
+        // Quotation marks around the JDBC URL let us have comma (,) in the URL.
+        url = "\"".concat(url).concat("\"");
 
 
         String connProps = "DriverClassName={0},Url={1},MaxActive={2}";
