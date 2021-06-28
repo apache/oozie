@@ -19,7 +19,7 @@ Oozie workflows definitions are written in hPDL (a XML Process Definition Langua
 Oozie workflow actions start jobs in remote systems (i.e. Hadoop, Pig). Upon action completion, the remote systems
 callback Oozie to notify the action completion, at this point Oozie proceeds to the next action in the workflow.
 
-Oozie uses a custom SecurityManager inside it's launcher to catch exit() calls from the user code. Make sure to delegate checkExit()
+Oozie uses a custom SecurityManager inside its launcher to catch exit() calls from the user code. Make sure to delegate checkExit()
 calls to Oozie's SecurityManager if the user code uses its own SecurityManager. The Launcher also grants java.security.AllPermission
 by default to the user code.
 
