@@ -57,7 +57,7 @@ class SSLServerConnectorFactory {
     private Configuration conf;
 
     @Inject
-    public SSLServerConnectorFactory(final SslContextFactory sslContextFactory) {
+    public SSLServerConnectorFactory(final SslContextFactory.Server sslContextFactory) {
         this.sslContextFactory = Objects.requireNonNull(sslContextFactory,  "sslContextFactory is null");
     }
 

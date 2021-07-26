@@ -54,7 +54,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class TestSSLServerConnectorFactory {
-    @Mock private SslContextFactory mockSSLContextFactory;
+    @Mock private SslContextFactory.Server mockSSLContextFactory;
     @Mock private SSLServerConnectorFactory mockSSLServerConnectorFactory;
     @Spy  private Server mockServer;
     @Mock private ServerConnector mockServerConnector;

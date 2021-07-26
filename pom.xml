@@ -107,7 +107,7 @@
          <joda.time.version>2.9.9</joda.time.version>
          <avro.version>1.8.2</avro.version>
 
-         <jetty.version>9.3.27.v20190418</jetty.version>
+         <jetty.version>9.4.36.v20210114</jetty.version>
          <apache.jsp.version>8.0.33</apache.jsp.version>
 
          <jline.version>0.9.94</jline.version>
