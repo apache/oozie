@@ -27,7 +27,7 @@ import java.util.List;
 public interface WorkflowJob {
 
     /**
-     * Defines the possible stati of a workflow.
+     * Defines the possible status of a workflow.
      */
     enum Status {
         PREP, RUNNING, SUCCEEDED, KILLED, FAILED, SUSPENDED
