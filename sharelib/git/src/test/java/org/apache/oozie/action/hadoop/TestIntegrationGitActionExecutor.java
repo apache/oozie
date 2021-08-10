@@ -46,20 +46,21 @@ public class TestIntegrationGitActionExecutor extends ActionExecutorTestCase{
         final Path gitIndex = Path.mergePaths(gitRepo, new Path("/.git/config"));
 
         final GitServer gitServer = new GitServer();
-
-        final String localRepo = String.format("git://127.0.0.1:%s/repo.git", gitServer.getLocalPort());
-        final String actionXml = "<git>" +
-                "<resource-manager>" + getJobTrackerUri() + "</resource-manager>" +
-                "<name-node>" + getNameNodeUri() + "</name-node>" +
-                "<git-uri>" + localRepo + "</git-uri>"+
-                "<destination-uri>" + gitRepo + "</destination-uri>" +
-                "</git>";
-
-        final Context context = createContext(actionXml);
-        final String launcherId = submitAction(context);
-
+        final Context context;
+        final String launcherId;
         try {
             gitServer.start();
+
+            final String localRepo = String.format("git://127.0.0.1:%s/repo.git", gitServer.getLocalPort());
+            final String actionXml = "<git>" +
+                    "<resource-manager>" + getJobTrackerUri() + "</resource-manager>" +
+                    "<name-node>" + getNameNodeUri() + "</name-node>" +
+                    "<git-uri>" + localRepo + "</git-uri>"+
+                    "<destination-uri>" + gitRepo + "</destination-uri>" +
+                    "</git>";
+
+            context = createContext(actionXml);
+            launcherId = submitAction(context);
 
             waitUntilYarnAppDoneAndAssertSuccess(launcherId);
         }

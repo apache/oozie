@@ -51,14 +51,10 @@ class GitServer {
      */
     private final Map<String, Repository> repositories = new HashMap<>();
     private Daemon server;
-    private final int localPort;
+    private int localPort;
 
     GitServer() throws IOException {
         LOG.info("Creating Git server");
-
-        this.localPort = findAvailablePort();
-
-        LOG.info("Git server created, port {0} will be used", this.localPort);
     }
 
     void start() throws IOException {
@@ -68,26 +64,17 @@ class GitServer {
             return;
         }
 
-        LOG.info("Starting Git server on port {0}", this.localPort);
-
-        this.server = new Daemon(new InetSocketAddress(this.localPort));
+        this.server = new Daemon();
         this.server.getService("git-receive-pack").setEnabled(true);
         this.server.setRepositoryResolver(new EmptyRepositoryResolverImplementation());
         this.server.start();
+        this.localPort = this.server.getAddress().getPort();
 
-        LOG.info("Git server started");
+        LOG.info("Git server started and port {0} will be used", this.localPort);
     }
 
     int getLocalPort() {
         return localPort;
-    }
-
-    private int findAvailablePort() throws IOException {
-        try (final ServerSocket serverSocket = new ServerSocket(0)) {
-            final int availablePort = serverSocket.getLocalPort();
-            LOG.info("Found available port {0}", availablePort);
-            return availablePort;
-        }
     }
 
     void stopAndCleanupReposServer() {
