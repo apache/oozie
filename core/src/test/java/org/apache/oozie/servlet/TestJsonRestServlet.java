@@ -191,7 +191,7 @@ public class TestJsonRestServlet extends XTestCase {
             public Void call() throws Exception {
                 HttpURLConnection conn = invoke("GET", "/any/any", "dummy", "dummy");
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST, conn.getResponseCode());
-                assertEquals("E0301: Invalid resource [any/any]", conn.getResponseMessage());
+                assertEquals("Bad Request", conn.getResponseMessage());
                 checkErrorResponse(conn, HttpServletResponse.SC_BAD_REQUEST, "E0301: Invalid resource [any/any]");
                 return null;
             }

@@ -43,7 +43,6 @@ import org.apache.oozie.service.CallableQueueService.CallableWrapper;
 import org.apache.oozie.util.NamedThreadFactory;
 import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XLog;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -191,7 +190,7 @@ public class AsyncXCommandExecutor {
 
         Set<CallableWrapper<?>> commandsForType = pendingCommandsPerType.get(type);
         if (commandsForType == null) {
-            commandsForType = new ConcurrentHashSet<>();
+            commandsForType = ConcurrentHashMap.newKeySet();
             Set<CallableWrapper<?>> oldCommandForType;
             oldCommandForType = pendingCommandsPerType.putIfAbsent(type, commandsForType);
 

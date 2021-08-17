@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,7 +61,6 @@ import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 
 public class OozieSharelibCLI {
     public static final String[] HELP_INFO = {
@@ -460,7 +460,7 @@ public class OozieSharelibCLI {
 
         private final int threadPoolSize;
         private final ExecutorService threadPool;
-        private final Set<CopyTaskConfiguration> failedCopyTasks = new ConcurrentHashSet<>();
+        private final Set<CopyTaskConfiguration> failedCopyTasks = ConcurrentHashMap.newKeySet();
 
         public ConcurrentCopyFromLocal(int threadPoolSize, long fsLimitsMinBlockSize, long bytesPerChecksum) {
             Preconditions.checkArgument(threadPoolSize > 0, "Thread Pool size must be greater than 0");

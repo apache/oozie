@@ -107,7 +107,7 @@
          <joda.time.version>2.9.9</joda.time.version>
          <avro.version>1.8.2</avro.version>
 
-         <jetty.version>9.3.27.v20190418</jetty.version>
+         <jetty.version>9.4.43.v20210629</jetty.version>
          <apache.jsp.version>8.0.33</apache.jsp.version>
 
          <jline.version>0.9.94</jline.version>
@@ -1016,6 +1016,10 @@
                         <groupId>hadoop</groupId>
                         <artifactId>core</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <artifactId>jetty-all</artifactId>
+                        <groupId>org.eclipse.jetty.aggregate</groupId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -1199,6 +1203,10 @@
                     <exclusion>
                         <artifactId>hive-contrib</artifactId>
                         <groupId>org.apache.hive</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>jetty-all</artifactId>
+                        <groupId>org.eclipse.jetty.aggregate</groupId>
                     </exclusion>
                     <exclusion>
                         <artifactId>jetty-util</artifactId>
@@ -1650,6 +1658,11 @@
                 <artifactId>spotbugs-annotations</artifactId>
                 <version>${spotbugs.annotations.version}</version>
                 <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-runner</artifactId>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>

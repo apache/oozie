@@ -53,11 +53,11 @@ class SSLServerConnectorFactory {
     @VisibleForTesting
     static final long OOZIE_DEFAULT_HSTS_MAX_AGE = 31536000;
 
-    private SslContextFactory sslContextFactory;
+    private SslContextFactory.Server sslContextFactory;
     private Configuration conf;
 
     @Inject
-    public SSLServerConnectorFactory(final SslContextFactory sslContextFactory) {
+    public SSLServerConnectorFactory(final SslContextFactory.Server sslContextFactory) {
         this.sslContextFactory = Objects.requireNonNull(sslContextFactory,  "sslContextFactory is null");
     }
 
