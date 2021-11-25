@@ -80,10 +80,10 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>2.6.0</hadoop.version>
-        <hadoop.majorversion>2</hadoop.majorversion>
+        <hadoop.version>3.1.1</hadoop.version>
+        <hadoop.majorversion>3</hadoop.majorversion>
         <hadooplib.version>hadoop-${hadoop.majorversion}-${project.version}</hadooplib.version>
-        <hbase.version>1.2.3</hbase.version>
+        <hbase.version>1.7.0</hbase.version>
 
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
 
@@ -91,19 +91,19 @@
 
 
          <!-- Sharelib component versions -->
-         <hive.version>1.2.2</hive.version>
+         <hive.version>3.1.0</hive.version>
          <hive.jline.version>2.12</hive.jline.version>
          <pig.version>0.16.0</pig.version>
          <pig.classifier>h2</pig.classifier>
          <hive.classifier>core</hive.classifier>
          <sqoop.version>1.4.7</sqoop.version>
-         <spark.version>1.6.1</spark.version>
-         <spark.streaming.kafka.version>1.6.1</spark.streaming.kafka.version>
-         <spark.bagel.version>1.6.1</spark.bagel.version>
+         <spark.version>2.4.6</spark.version>
+         <spark.streaming.kafka.version>2.4.6</spark.streaming.kafka.version>
+         <spark.bagel.version>2.4.6</spark.bagel.version>
          <spark.guava.version>14.0.1</spark.guava.version>
          <spark.scala.binary.version>2.10</spark.scala.binary.version>
          <sqoop.classifier>hadoop260</sqoop.classifier>
-         <tez.version>0.8.4</tez.version>
+         <tez.version>0.10.0</tez.version>
          <joda.time.version>2.9.9</joda.time.version>
          <avro.version>1.8.2</avro.version>
 
@@ -2108,6 +2108,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <testSourceDirectory>/core/src/test/java</testSourceDirectory>
     </build>
 
     <profiles>
