@@ -619,7 +619,7 @@ not provided, then it will be taken from the `oozie-default/oozie-site` configur
 
 ```
 
-GET /oozie/v2/admin/purge?wf=30&coord=7&bundle=7&limit=10&oldCoordAction=true
+PUT /oozie/v2/admin/purge?wf=30&coord=7&bundle=7&limit=10&oldCoordAction=true
 
 ```
 
