@@ -19,12 +19,20 @@
 package org.apache.oozie.command.wf;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Appender;
@@ -37,8 +45,11 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.ExtendedCallableQueueService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
@@ -62,6 +73,7 @@ public class TestSignalXCommand extends XDataTestCase {
         services.destroy();
         super.tearDown();
     }
+
     public void testJoinFail() throws Exception{
         ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, true);
         _testJoinFail();
@@ -87,6 +99,103 @@ public class TestSignalXCommand extends XDataTestCase {
         services.init();
         ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, false);
         _testSuspendPointsAll();
+    }
+
+    private void writeToFile(String appXml, String appPath) throws IOException {
+        File wf = new File(URI.create(appPath));
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(wf), StandardCharsets.UTF_8));
+            out.println(appXml);
+        }
+        catch (IOException iex) {
+            throw iex;
+        }
+        finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+    }
+
+    public void testPossibleDeadLock() throws Exception {
+        setSystemProperty(Services.CONF_SERVICE_EXT_CLASSES, ExtendedCallableQueueService.class.getName());
+
+        services = new Services();
+        Configuration conf1 = services.getConf();
+        conf1.set("oozie.service.CallableQueueService.threads", "1");
+        services.init();
+
+        ConfigurationService.setBoolean(SignalXCommand.FORK_PARALLEL_JOBSUBMISSION, true);
+
+        Configuration conf = new XConfiguration();
+        String workflowUri = getTestCaseFileUri("workflow.xml");
+        //@formatter:off
+        String appXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.4\" name=\"wf-fork\">"
+                + "<start to=\"fork1\"/>"
+                + "<fork name=\"fork1\">"
+                + "<path start=\"action1\"/>"
+                + "<path start=\"action2\"/>"
+                + "<path start=\"action3\"/>"
+                + "<path start=\"action4\"/>"
+                + "<path start=\"action5\"/>"
+                + "</fork>"
+                + "<action name=\"action1\">"
+                + "<fs></fs>"
+                + "<ok to=\"join1\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                + "<action name=\"action2\">"
+                + "<fs></fs><ok to=\"join1\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                + "<action name=\"action3\">"
+                + "<fs></fs><ok to=\"join1\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                + "<action name=\"action4\">"
+                + "<fs></fs><ok to=\"join1\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                + "<action name=\"action5\">"
+                + "<fs></fs><ok to=\"join1\"/>"
+                + "<error to=\"kill\"/>"
+                + "</action>"
+                + "<join name=\"join1\" to=\"end\"/>"
+                + "<kill name=\"kill\"><message>killed</message>"
+                + "</kill><"
+                + "end name=\"end\"/>"
+                + "</workflow-app>";
+        //@Formatter:on
+
+        writeToFile(appXml, workflowUri);
+        conf.set(OozieClient.APP_PATH, workflowUri);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+
+        SubmitXCommand sc = new SubmitXCommand(conf);
+        final String jobId = sc.call();
+        new StartXCommand(jobId).call();
+
+//        Thread.sleep(20 * 1000);
+
+//        ExtendedCallableQueueService queueService = (ExtendedCallableQueueService) Services.get().get(CallableQueueService.class);
+
+//        while (true) {
+//            Map<String, String> active = queueService.getActiveCallables();
+//            log.info("active callable: " + active);
+//            Thread.sleep(10 * 1000);
+//        }
+
+        waitFor(20 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQueryExecutor.WorkflowJobQuery.GET_WORKFLOW, jobId).getStatus()
+                        == WorkflowJob.Status.SUCCEEDED;
+            }
+        });
+
+        assertEquals(WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQueryExecutor.WorkflowJobQuery.GET_WORKFLOW, jobId).getStatus(),
+                WorkflowJob.Status.SUCCEEDED);
     }
 
     public void _testJoinFail() throws Exception {

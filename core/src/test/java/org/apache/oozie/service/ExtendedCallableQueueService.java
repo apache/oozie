@@ -19,7 +19,10 @@
 package org.apache.oozie.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.oozie.service.CallableQueueService;
 
@@ -34,4 +37,7 @@ public class ExtendedCallableQueueService extends CallableQueueService {
         }
     }
 
+    public Map<String, String > getActiveCallables() {
+        return activeCallablesDetails;
+    }
 }

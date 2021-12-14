@@ -100,7 +100,9 @@ public class CallableQueueService implements Service, Instrumentable {
     public static final int MAX_CALLABLE_WAITTIME_MS = 30_000;
     public static final int PRIORITIES = 3;
 
-    private final Map<String, AtomicInteger> activeCallables = new HashMap<String, AtomicInteger>();
+    protected final Map<String, String> activeCallablesDetails = new HashMap<>();
+
+    protected final Map<String, AtomicInteger> activeCallables = new HashMap<String, AtomicInteger>();
 
     private final Map<String, Date> uniqueCallables = new ConcurrentHashMap<String, Date>();
 
@@ -120,6 +122,7 @@ public class CallableQueueService implements Service, Instrumentable {
             if (counter == null) {
                 counter = new AtomicInteger(1);
                 activeCallables.put(callable.getType(), counter);
+                activeCallablesDetails.put(callable.getEntityKey(), callable.getType());
                 return true;
             }
             else {
@@ -131,6 +134,7 @@ public class CallableQueueService implements Service, Instrumentable {
 
     private void callableEnd(XCallable<?> callable) {
         synchronized (activeCallables) {
+            activeCallablesDetails.remove(callable.getEntityKey());
             AtomicInteger counter = activeCallables.get(callable.getType());
             if (counter == null) {
                 throw new IllegalStateException("Counter value should not be null");
@@ -584,6 +588,8 @@ public class CallableQueueService implements Service, Instrumentable {
         }
 
         maxCallableConcurrency = ConfigurationService.getInt(conf, CONF_CALLABLE_CONCURRENCY);
+
+        log.info("Thread size: " + threads);
     }
 
     /**
