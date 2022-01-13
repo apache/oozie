@@ -118,6 +118,7 @@
          <curator.version>2.5.0</curator.version>
          <jackson.version>2.6.5</jackson.version>
          <log4j.version>1.2.17</log4j.version>
+         <log4j2.version>2.17.1</log4j2.version>
          <activemq.version>5.15.9</activemq.version>
          <commons.lang3.version>3.3.2</commons.lang3.version>
          <httpcore.version>4.3.3</httpcore.version>
@@ -2586,6 +2587,37 @@
                                 <artifactId>jersey-json</artifactId>
                             </exclusion>
                         </exclusions>
+                    </dependency>
+                    <!-- Lock log4j2 artifact version -->
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-api</artifactId>
+                        <version>${log4j2.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-1.2-api</artifactId>
+                        <version>${log4j2.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-core</artifactId>
+                        <version>${log4j2.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-web</artifactId>
+                        <version>${log4j2.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-slf4j-impl</artifactId>
+                        <version>${log4j2.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-jcl</artifactId>
+                        <version>${log4j2.version}</version>
                     </dependency>
                 </dependencies>
             </dependencyManagement>
