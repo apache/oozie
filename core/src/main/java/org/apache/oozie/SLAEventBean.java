@@ -34,7 +34,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.oozie.client.rest.JsonSLAEvent;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 @Deprecated
 @Entity

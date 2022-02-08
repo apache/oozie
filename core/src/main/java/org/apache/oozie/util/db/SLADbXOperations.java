@@ -27,7 +27,7 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 @Deprecated
 public class SLADbXOperations {

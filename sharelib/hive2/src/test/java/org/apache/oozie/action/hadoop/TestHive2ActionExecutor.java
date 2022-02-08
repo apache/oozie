@@ -35,8 +35,8 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public class TestHive2ActionExecutor extends ActionExecutorTestCase {
 

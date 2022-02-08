@@ -45,7 +45,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 public class CoordActionReadyXCommand extends CoordinatorXCommand<Void> {
     private final String jobId;

@@ -19,7 +19,7 @@
 package org.apache.oozie.util;
 
 import org.junit.Test;
-import org.jdom.input.JDOMParseException;
+import org.jdom2.input.JDOMParseException;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 

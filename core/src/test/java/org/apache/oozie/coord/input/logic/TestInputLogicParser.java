@@ -23,8 +23,8 @@ package org.apache.oozie.coord.input.logic;
 
 import org.apache.oozie.coord.input.logic.InputLogicParser;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;

@@ -40,8 +40,8 @@ import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorUtil;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.WritableUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 public abstract class AbstractCoordInputDependency implements Writable, CoordInputDependency {
     protected boolean isDependencyMet = false;

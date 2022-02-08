@@ -211,7 +211,7 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                 LOG.warn("ELException in ActionStartXCommand ", ex.getMessage(), ex);
                 handleError(context, wfJob, wfAction);
             }
-            catch (org.jdom.JDOMException je) {
+            catch (org.jdom2.JDOMException je) {
                 caught = true;
                 context.setErrorInfo("ParsingError", je.getMessage());
                 LOG.warn("JDOMException in ActionStartXCommand ", je.getMessage(), je);

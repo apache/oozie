@@ -23,8 +23,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.action.hadoop.ActionUtils;
-import org.jdom.Namespace;
-import org.jdom.Element;
+import org.jdom2.Namespace;
+import org.jdom2.Element;
 
 public class SubmitSqoopXCommand extends SubmitHttpXCommand {
     public SubmitSqoopXCommand(Configuration conf) {

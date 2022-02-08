@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.util.XLog;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import java.util.ArrayList;
 import java.util.List;

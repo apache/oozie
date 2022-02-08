@@ -70,8 +70,8 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbOperations;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 /**
  * Rerun coordinator actions by a list of dates or ids. User can specify if refresh or noCleanup.

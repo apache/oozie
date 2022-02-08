@@ -20,8 +20,8 @@ package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.service.WorkflowAppService;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.command.CommandException;
 

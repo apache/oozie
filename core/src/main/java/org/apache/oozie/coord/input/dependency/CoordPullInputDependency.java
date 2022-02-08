@@ -36,7 +36,7 @@ import org.apache.oozie.command.coord.CoordCommandUtils;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.util.WritableUtils;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 public class CoordPullInputDependency extends AbstractCoordInputDependency {
     private Map<String, CoordUnResolvedInputDependency> unResolvedList = new HashMap<String, CoordUnResolvedInputDependency>();

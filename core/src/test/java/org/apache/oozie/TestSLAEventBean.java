@@ -22,7 +22,7 @@ import java.util.Date;
 
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

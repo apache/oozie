@@ -35,7 +35,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 /**
  * This class provide different evaluators required at different stages

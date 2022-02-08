@@ -22,9 +22,9 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
 
 public class ForTestingActionExecutor extends ActionExecutor {
     public final static String TEST_ERROR = "TEST_ERROR";

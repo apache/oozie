@@ -44,8 +44,8 @@ import org.apache.oozie.workflow.lite.NodeHandler;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.lite.StartNodeDef;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 import java.util.ArrayList;
 import java.util.Collection;

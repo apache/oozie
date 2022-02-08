@@ -47,7 +47,7 @@ import org.apache.oozie.sla.service.SLAService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowInstance;
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

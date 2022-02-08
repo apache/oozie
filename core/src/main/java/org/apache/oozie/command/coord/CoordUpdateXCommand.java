@@ -45,7 +45,7 @@ import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 /**
  * This class provides the functionalities to update coordinator job XML and properties. It uses CoordSubmitXCommand

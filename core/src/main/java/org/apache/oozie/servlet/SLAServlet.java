@@ -40,7 +40,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.SLAEventsXCommand;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 @SuppressWarnings("deprecation")
 public class SLAServlet extends JsonRestServlet {

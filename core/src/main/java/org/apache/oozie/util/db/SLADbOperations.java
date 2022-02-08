@@ -30,7 +30,7 @@ import org.apache.oozie.store.Store;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 @Deprecated
 public class SLADbOperations {

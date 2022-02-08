@@ -103,8 +103,8 @@ import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.LiteWorkflowInstance;
 import org.apache.oozie.workflow.lite.StartNodeDef;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 import com.google.common.annotations.VisibleForTesting;
 

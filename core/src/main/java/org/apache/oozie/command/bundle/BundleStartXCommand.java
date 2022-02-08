@@ -50,9 +50,9 @@ import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Attribute;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 /**
  * The command to start Bundle job

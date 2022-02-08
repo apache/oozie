@@ -24,8 +24,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.util.XLog;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

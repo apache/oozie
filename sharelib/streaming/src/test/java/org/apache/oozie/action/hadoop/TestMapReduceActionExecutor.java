@@ -82,7 +82,7 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     private static final XLog LOG = XLog.getLog(TestMapReduceActionExecutor.class);

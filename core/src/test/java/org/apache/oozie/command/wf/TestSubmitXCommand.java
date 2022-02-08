@@ -49,7 +49,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 public class TestSubmitXCommand extends XDataTestCase {
     @Override

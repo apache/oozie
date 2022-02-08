@@ -37,9 +37,9 @@ import org.apache.oozie.util.WritableUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowException;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
 import org.xml.sax.SAXException;
 
 import javax.xml.transform.stream.StreamSource;

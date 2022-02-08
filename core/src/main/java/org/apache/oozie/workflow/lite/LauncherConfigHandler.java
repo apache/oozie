@@ -20,8 +20,8 @@ package org.apache.oozie.workflow.lite;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.action.hadoop.JavaActionExecutor;
 import org.apache.oozie.action.hadoop.LauncherAM;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 class LauncherConfigHandler {
     private static final String LAUNCHER_MEMORY_MB = "memory.mb";

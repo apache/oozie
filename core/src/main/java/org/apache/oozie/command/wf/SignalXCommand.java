@@ -68,7 +68,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.util.db.SLADbXOperations;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import java.io.StringReader;
 import java.util.ArrayList;

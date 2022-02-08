@@ -28,8 +28,8 @@ import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.service.XLogService;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 import java.util.HashMap;
 import java.util.Map;

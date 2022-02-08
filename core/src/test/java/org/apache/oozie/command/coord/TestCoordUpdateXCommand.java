@@ -53,8 +53,8 @@ import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public class TestCoordUpdateXCommand extends XDataTestCase {
     private Services services;

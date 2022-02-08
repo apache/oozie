@@ -58,8 +58,8 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 /**
  * Email action executor. It takes to, cc, bcc addresses along with a subject and body and sends

@@ -26,8 +26,8 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.SparkConfigurationService;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 import java.io.IOException;
 import java.io.StringWriter;

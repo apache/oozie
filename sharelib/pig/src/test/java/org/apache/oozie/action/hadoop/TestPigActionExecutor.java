@@ -45,7 +45,7 @@ import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 

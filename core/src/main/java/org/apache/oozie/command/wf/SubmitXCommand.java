@@ -59,8 +59,8 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.JsonBean;
-import org.jdom.Element;
-import org.jdom.filter.ElementFilter;
+import org.jdom2.Element;
+import org.jdom2.filter.ElementFilter;
 
 import java.util.ArrayList;
 import java.util.Date;

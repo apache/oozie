@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3655 upgrade jdom to jdom2 2.0.6.1 (pj.fanning via dionusos)
 OOZIE-3653 Upgrade commons-io to 2.11.0 (groot via dionusos)
 OOZIE-3657 Upgrade Jetty to 9.4.44.v20210927 (pj.fanning via asalamon74)
 OOZIE-3650 Upgrade jackson version to 2.6.7 (pj.fanning via asalamon74)

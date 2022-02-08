@@ -69,8 +69,8 @@ import org.apache.oozie.util.XCallable;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Attribute;
-import org.jdom.Element;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
 
 /**
  * The Recovery Service checks for pending actions and premater coordinator jobs older than a configured age and then

@@ -56,7 +56,7 @@ import org.apache.oozie.util.StatusUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 /**
  * The command to check if an action's data input paths exist in the file system.

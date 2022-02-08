@@ -36,8 +36,8 @@ import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 public class CoordInputLogicEvaluatorUtil {
 

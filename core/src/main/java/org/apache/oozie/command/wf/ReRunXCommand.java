@@ -77,8 +77,8 @@ import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.WorkflowLib;
 import org.apache.oozie.workflow.lite.NodeHandler;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 /**
  * This is a RerunXCommand which is used for rerunn.

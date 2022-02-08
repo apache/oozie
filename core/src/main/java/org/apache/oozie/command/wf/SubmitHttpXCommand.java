@@ -42,8 +42,8 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.XOozieClient;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 import com.google.common.collect.ImmutableSet;
 

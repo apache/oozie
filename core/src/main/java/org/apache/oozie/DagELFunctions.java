@@ -29,7 +29,7 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;

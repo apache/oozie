@@ -23,7 +23,7 @@ import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XHCatTestCase;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import java.io.IOException;
 

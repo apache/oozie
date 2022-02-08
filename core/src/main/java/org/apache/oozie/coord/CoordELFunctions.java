@@ -35,7 +35,7 @@ import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.ParamChecker;
 import org.apache.oozie.util.XLog;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import java.net.URI;
 import java.text.DateFormat;

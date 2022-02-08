@@ -20,7 +20,7 @@ package org.apache.oozie.command.wf;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.XOozieClient;
-import org.jdom.Namespace;
+import org.jdom2.Namespace;
 
 public class SubmitHiveXCommand extends SubmitScriptLanguageXCommand {
     public SubmitHiveXCommand(Configuration conf) {

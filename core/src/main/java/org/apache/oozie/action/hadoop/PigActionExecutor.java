@@ -28,9 +28,9 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.XOozieClient;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
 import org.json.simple.parser.JSONParser;
 
 public class PigActionExecutor extends ScriptLanguageActionExecutor {

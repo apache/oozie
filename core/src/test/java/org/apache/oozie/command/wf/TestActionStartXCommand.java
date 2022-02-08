@@ -61,8 +61,8 @@ import org.apache.oozie.workflow.WorkflowInstance;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
 import org.apache.oozie.workflow.lite.StartNodeDef;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public class TestActionStartXCommand extends XDataTestCase {
     private Services services;

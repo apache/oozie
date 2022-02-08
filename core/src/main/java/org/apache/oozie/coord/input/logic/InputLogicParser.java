@@ -21,8 +21,8 @@ package org.apache.oozie.coord.input.logic;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 /**
  * Parses xml into jexl expression

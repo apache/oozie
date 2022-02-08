@@ -64,7 +64,7 @@ import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.FSUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import static org.apache.oozie.util.FSUtils.isLocalFile;
 

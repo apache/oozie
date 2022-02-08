@@ -28,8 +28,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.util.Apps;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.service.ConfigurationService;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public class ShellActionExecutor extends JavaActionExecutor {
 

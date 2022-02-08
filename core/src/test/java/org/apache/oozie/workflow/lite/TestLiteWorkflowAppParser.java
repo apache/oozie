@@ -42,8 +42,8 @@ import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.workflow.WorkflowException;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestActionNodeHandler;
 import org.apache.oozie.workflow.lite.TestLiteWorkflowLib.TestDecisionNodeHandler;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 import org.junit.Assert;
 
 public class TestLiteWorkflowAppParser extends XTestCase {

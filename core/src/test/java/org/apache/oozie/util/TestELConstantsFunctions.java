@@ -19,7 +19,7 @@
 package org.apache.oozie.util;
 
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 

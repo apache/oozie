@@ -44,8 +44,8 @@ import org.apache.oozie.util.PropertiesUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public class SubWorkflowActionExecutor extends ActionExecutor {
     public static final String ACTION_TYPE = "sub-workflow";

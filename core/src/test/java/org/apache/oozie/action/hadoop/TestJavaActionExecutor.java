@@ -39,7 +39,7 @@ import java.util.Set;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.Assert;
 
 import org.apache.hadoop.conf.Configuration;

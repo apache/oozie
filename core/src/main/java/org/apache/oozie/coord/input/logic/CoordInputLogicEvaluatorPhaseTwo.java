@@ -35,8 +35,8 @@ import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorResult.STATUS;
 import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.util.ELEvaluator;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 public class CoordInputLogicEvaluatorPhaseTwo extends CoordInputLogicEvaluatorPhaseOne {
 

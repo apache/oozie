@@ -26,8 +26,8 @@ import java.util.Map;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.dependency.ActionDependency;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 public interface CoordInputDependency {
 

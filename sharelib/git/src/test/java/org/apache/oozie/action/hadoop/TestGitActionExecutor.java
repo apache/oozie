@@ -30,7 +30,7 @@ import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.Assert;
 
 public class TestGitActionExecutor extends ActionExecutorTestCase {

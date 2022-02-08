@@ -41,9 +41,9 @@ import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.ActionExecutorException.ErrorType;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.util.XLog;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
 
 public class GitActionExecutor extends JavaActionExecutor {
 

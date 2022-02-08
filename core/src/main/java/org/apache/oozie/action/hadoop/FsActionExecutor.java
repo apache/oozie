@@ -53,7 +53,7 @@ import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 /**
  * File system action executor. <p> This executes the file system mkdir, move and delete commands

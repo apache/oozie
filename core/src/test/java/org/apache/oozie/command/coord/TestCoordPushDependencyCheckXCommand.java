@@ -45,7 +45,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XmlUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
