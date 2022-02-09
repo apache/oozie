@@ -24,11 +24,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 
 public class LocalFsOperations {
@@ -56,18 +58,36 @@ public class LocalFsOperations {
         System.out.println("======================");
 
         final Path root = folder.toPath();
-        Files.walkFileTree(root, EnumSet.of(FileVisitOption.FOLLOW_LINKS), WALK_DEPTH, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (attrs.isRegularFile()) {
-                    System.out.println("  File: " + root.relativize(file));
-                } else if (attrs.isDirectory()) {
-                    System.out.println("  Dir: " +  root.relativize(file) + "/");
-                }
+        // If a file is deleted between listing and printing, NoSuchFileException is thrown.
+        // This situation can happen when an agent attaches to the JVM.
+        // Retry at most 5 times to reduce the possibility of the error.
+        final int maxRetries = 5;
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                System.out.print(listContents(root));
+                return;
+            } catch (NoSuchFileException e) {
+                System.err.println("A file or directory may be deleted when printing the current directory. Retrying.");
+            }
+        }
+        throw new IOException("Cannot list the current dir after " + maxRetries + " tries: " + folder.getAbsolutePath());
+    }
 
+    @VisibleForTesting
+    String listContents(Path path) throws IOException {
+        final StringBuilder builder = new StringBuilder();
+        Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), WALK_DEPTH, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (attrs.isRegularFile()) {
+                    builder.append("  File: ").append(path.relativize(file)).append("\n");
+                } else if (attrs.isDirectory()) {
+                    builder.append("  Dir: ").append(path.relativize(file)).append("/\n");
+                }
                 return FileVisitResult.CONTINUE;
             }
         });
+        return builder.toString();
     }
 
     /**
