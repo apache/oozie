@@ -137,7 +137,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 this.wfJob = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQuery.GET_WORKFLOW, jobId);
                 LogUtils.setLogInfo(wfJob);
                 if (actionId != null) {
-                    this.wfAction = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQuery.GET_ACTION_SIGNAL, actionId);
+                    this.wfAction = WorkflowActionQueryExecutor.getInstance()
+                            .get(WorkflowActionQuery.GET_ACTION_SIGNAL, actionId);
                     LogUtils.setLogInfo(wfAction);
                 }
             }
@@ -468,21 +469,57 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
 
     public void startForkedActions(List<WorkflowActionBean> workflowActionBeanListForForked) throws CommandException {
 
-        List<CallableWrapper<ActionExecutorContext>> tasks = new ArrayList<CallableWrapper<ActionExecutorContext>>();
         List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
         List<JsonBean> insertList = new ArrayList<JsonBean>();
 
         boolean endWorkflow = false;
         boolean submitJobByQueuing = false;
-        for (WorkflowActionBean workflowActionBean : workflowActionBeanListForForked) {
-            LOG.debug("Starting forked actions parallely : " + workflowActionBean.getId());
-            tasks.add(Services.get().get(CallableQueueService.class).new CallableWrapper<ActionExecutorContext>(
-                    new ForkedActionStartXCommand(wfJob, workflowActionBean.getId(), workflowActionBean.getType()), 0));
-        }
 
         try {
-            List<Future<ActionExecutorContext>> futures = Services.get().get(CallableQueueService.class)
-                    .invokeAll(tasks);
+            /*
+             * The limited thread execution mechanism aims to solve the dead-lock when all active threads are
+             * executing the SignalXCommand's invokeAll method.
+             *
+             * Solution
+             * 1. Need to limit directly invokeAll call when the num of rest threads is less than the tasks
+             * 2. To obtain correct active threads number in callableQueue, the SignalXCommand.class lock is needed.
+             *
+             */
+            CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+            List<Future<ActionExecutorContext>> futures = new ArrayList<>();
+
+            synchronized (SignalXCommand.class) {
+                long limitedRestThreadNum =
+                        callableQueueService.getQueueThreadsNumber() - callableQueueService.getThreadActiveCount();
+                if (limitedRestThreadNum < workflowActionBeanListForForked.size()) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Limited callable queue rest threads number: "
+                                + limitedRestThreadNum + ", needed forked task size: "
+                                + workflowActionBeanListForForked.size()
+                                + ", tasks will be submitted to queue by async mode.");
+                    }
+                    submitJobByQueuing = true;
+                } else {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Starting forked actions parallely: " + workflowActionBeanListForForked);
+                    }
+                    for (WorkflowActionBean workflowActionBean : workflowActionBeanListForForked) {
+                        futures.add(
+                                callableQueueService.submit(callableQueueService.new CallableWrapper<ActionExecutorContext>(
+                                        new ForkedActionStartXCommand(wfJob,
+                                                workflowActionBean.getId(), workflowActionBean.getType()), 0))
+                        );
+                    }
+
+                    long startTime = System.currentTimeMillis();
+                    callableQueueService.blockingWait(futures);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Execution time of forked actions parallely: "
+                                + (System.currentTimeMillis() - startTime) / 1000 + " sec");
+                    }
+                }
+            }
+
             for (Future<ActionExecutorContext> result : futures) {
                 if (result == null) {
                     submitJobByQueuing = true;

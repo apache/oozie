@@ -30,7 +30,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -113,6 +115,8 @@ public class CallableQueueService implements Service, Instrumentable {
     private int maxCallableConcurrency;
 
     private int queueAwaitTerminationTimeoutSeconds;
+
+    private long queueThreadsNumber;
 
     private boolean callableBegin(XCallable<?> callable) {
         synchronized (activeCallables) {
@@ -584,6 +588,8 @@ public class CallableQueueService implements Service, Instrumentable {
         }
 
         maxCallableConcurrency = ConfigurationService.getInt(conf, CONF_CALLABLE_CONCURRENCY);
+
+        queueThreadsNumber = threads;
     }
 
     /**
@@ -871,5 +877,39 @@ public class CallableQueueService implements Service, Instrumentable {
 
     public Set<String> getInterruptTypes() {
         return interruptTypes;
+    }
+
+    public synchronized long getThreadActiveCount() {
+        return executor.getActiveCount();
+    }
+
+    public long getQueueThreadsNumber() {
+        return queueThreadsNumber;
+    }
+
+    public <T> Future<T> submit(CallableWrapper<T> task) throws InterruptedException {
+        return executor.submit((Callable<T>) task);
+    }
+
+    /*
+     * Refer to AbstractExecutorService.invokeAll of JDK and it will wait until all futures finished.
+     */
+    public <T> void blockingWait(List<Future<T>> futures) throws InterruptedException {
+        try {
+            for(Future<T> future : futures) {
+                if (!future.isDone()) {
+                    try {
+                        future.get();
+                    } catch (ExecutionException | CancellationException e) {
+                        // no-op
+                    }
+                }
+            }
+        } catch (Throwable throwable) {
+            for(Future<T> future : futures) {
+                future.cancel(true);
+            }
+            throw throwable;
+        }
     }
 }

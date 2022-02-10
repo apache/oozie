@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3646 Possible dead-lock in SignalXCommand (zuston via dionusos)
 OOZIE-3652 Oozie launcher should retry directory listing when NoSuchFileException occurs (aajisaka via dionusos)
 OOZIE-3655 upgrade jdom to jdom2 2.0.6.1 (pj.fanning via dionusos)
 OOZIE-3653 Upgrade commons-io to 2.11.0 (groot via dionusos)
