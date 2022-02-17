@@ -19,7 +19,6 @@
 package org.apache.oozie.jms;
 
 import java.util.Date;
-import java.util.Random;
 
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
@@ -36,10 +35,8 @@ import org.apache.oozie.client.event.jms.JMSMessagingUtils;
 import org.apache.oozie.client.event.jms.JMSHeaderConstants;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
-import org.apache.oozie.event.*;
-import org.apache.oozie.jms.ConnectionContext;
-import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.jms.JMSJobEventListener;
+import org.apache.oozie.event.CoordinatorActionEvent;
+import org.apache.oozie.event.WorkflowJobEvent;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
@@ -269,7 +266,6 @@ public class TestJMSJobEventListener extends XTestCase {
 
     @Test
     public void testConnectionDrop() throws Exception {
-        Random random = new Random();
         BrokerService broker = null;
         try {
             services.destroy();
@@ -277,17 +273,18 @@ public class TestJMSJobEventListener extends XTestCase {
             Configuration conf = services.getConf();
             conf.set(Services.CONF_SERVICE_EXT_CLASSES, JMSAccessorService.class.getName() + ","
                     + JMSTopicService.class.getName());
-            int randomPort = 30000 + random.nextInt(10000);
-            String brokerURl = "tcp://localhost:" + randomPort;
+            services.init();
+            broker = new BrokerService();
+            broker.setDataDirectory(getTestCaseDir());
+            broker.addConnector("tcp://localhost:0");
+            assertFalse("There must be at least one transport connector initialised.",
+                    broker.getTransportConnectors().isEmpty());
+            String brokerURl = broker.getTransportConnectors().get(0).getConnectUri().toString();
             conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
                     + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + brokerURl + ";connectionFactoryNames#"
                     + "ConnectionFactory");
-            services.init();
             JMSJobEventListener wfEventListener = new JMSJobEventListener();
             wfEventListener.init(conf);
-            broker = new BrokerService();
-            broker.setDataDirectory(getTestCaseDir());
-            broker.addConnector(brokerURl);
             broker.setUseJmx(false);
             broker.start();
             ConnectionContext jmsContext = getConnectionContext();
@@ -296,11 +293,14 @@ public class TestJMSJobEventListener extends XTestCase {
             jmsContext = getConnectionContext();
             // Exception Listener should have removed the old conn context
             assertNull(jmsContext);
+
+            // Re-start broker using the former endpoint
             broker = new BrokerService();
             broker.setDataDirectory(getTestCaseDir());
             broker.addConnector(brokerURl);
             broker.setUseJmx(false);
             broker.start();
+
             WorkflowJobEvent wfe = new WorkflowJobEvent("wfId1", "caId1", WorkflowJob.Status.FAILED, "user1",
                     "wf-app-name1", new Date(), new Date());
 
