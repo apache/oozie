@@ -1508,7 +1508,7 @@ public class TestOozieCLI extends DagServletTestCase {
             @Override
             public Void call() throws Exception {
                 HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
-                String oozieUrl = "http://localhost:11/oozie";
+                String oozieUrl = "http://localhost:11000/oozie";
                 String[] args = new String[] { "job", "-update", "aaa", "-dryrun", "-oozie", oozieUrl, "-debug" };
                 OozieCLI cli = new OozieCLI();
                 CLIParser parser = cli.getCLIParser();
@@ -1553,7 +1553,7 @@ public class TestOozieCLI extends DagServletTestCase {
             @Override
             public Void call() throws Exception {
                 HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
-                String oozieUrl = "http://localhost:11/oozie";
+                String oozieUrl = "http://localhost:11000/oozie";
                 String[] args = new String[] { "job", "-update", "aaa", "-dryrun", "-oozie", oozieUrl, "-debug" };
                 OozieCLI cli = new OozieCLI() {
                     protected void setRetryCount(OozieClient wc) {
