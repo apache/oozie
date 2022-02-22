@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3659 oozieUrl ambiguous port number in TestOozieCLI.java (AlexaD via dionusos)
 OOZIE-3658 Fix TestJMSJobEventListener#testConnectionDrop flakiness again (dionusos via asalamon74)
 OOZIE-3646 Possible dead-lock in SignalXCommand (zuston via dionusos)
 OOZIE-3652 Oozie launcher should retry directory listing when NoSuchFileException occurs (aajisaka via dionusos)

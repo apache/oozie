@@ -84,6 +84,7 @@ public class TestOozieCLI extends DagServletTestCase {
     static final String VERSION = "/v" + OozieClient.WS_PROTOCOL_VERSION;
     static final String[] END_POINTS = {"/versions", VERSION + "/jobs", VERSION + "/job/*", VERSION + "/admin/*",
             VERSION + "/validate/*", "/v1/sla"};
+    static final String INVALID_PORT = "11";
     static final Class<?>[] SERVLET_CLASSES = { HeaderTestingVersionServlet.class, V1JobsServlet.class,
             V2JobServlet.class, V2AdminServlet.class, V2ValidateServlet.class, SLAServlet.class};
 
@@ -1508,7 +1509,8 @@ public class TestOozieCLI extends DagServletTestCase {
             @Override
             public Void call() throws Exception {
                 HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
-                String oozieUrl = "http://localhost:11/oozie";
+                // negative test with an invalid port to verify the no of retries in a timeout case
+                String oozieUrl = "http://localhost:" + INVALID_PORT + "/oozie";
                 String[] args = new String[] { "job", "-update", "aaa", "-dryrun", "-oozie", oozieUrl, "-debug" };
                 OozieCLI cli = new OozieCLI();
                 CLIParser parser = cli.getCLIParser();
@@ -1553,7 +1555,8 @@ public class TestOozieCLI extends DagServletTestCase {
             @Override
             public Void call() throws Exception {
                 HeaderTestingVersionServlet.OOZIE_HEADERS.clear();
-                String oozieUrl = "http://localhost:11/oozie";
+                // negative test with an invalid port to verify the no of retries
+                String oozieUrl = "http://localhost:" + INVALID_PORT + "/oozie";
                 String[] args = new String[] { "job", "-update", "aaa", "-dryrun", "-oozie", oozieUrl, "-debug" };
                 OozieCLI cli = new OozieCLI() {
                     protected void setRetryCount(OozieClient wc) {
