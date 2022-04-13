@@ -2345,4 +2345,13 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         assertTrue("error message should contain: \"Java heap space\"",
                 context.getAction().getErrorMessage().contains("Java heap space"));
     }
+
+    public void testKeyValuePairInProperties() {
+        JavaActionExecutor ae = new JavaActionExecutor();
+        Map<String, String> result = ae.extractEnvVarsFromOozieLauncherProps(
+                "FOO=-Dbar=baz" + File.pathSeparatorChar + "BAR=baz");
+        assertEquals("-Dbar=baz", result.get("FOO"));
+        assertEquals("baz", result.get("BAR"));
+    }
+
 }

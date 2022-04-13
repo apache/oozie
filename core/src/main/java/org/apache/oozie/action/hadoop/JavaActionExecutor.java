@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
@@ -43,7 +44,6 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.DiskChecker;
-import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
@@ -1497,13 +1497,13 @@ public class JavaActionExecutor extends ActionExecutor {
         return vcores;
     }
 
-    private Map<String, String>  extractEnvVarsFromOozieLauncherProps(String oozieLauncherEnvProperty) {
+    Map<String, String>  extractEnvVarsFromOozieLauncherProps(String oozieLauncherEnvProperty) {
         Map<String, String> envMap = new LinkedHashMap<>();
         for (String envVar : StringUtils.split(oozieLauncherEnvProperty, File.pathSeparatorChar)) {
-            String[] env = StringUtils.split(envVar, '=');
+            String[] env = StringUtils.split(envVar, "=", 2);
             Preconditions.checkArgument(env.length == 2, "Invalid launcher setting for environment variables: \"%s\". " +
                                 "<env> should contain a list of ENV_VAR_NAME=VALUE separated by the '%s' character. " +
-                                "Example on Unix: A=foo1:B=foo2", oozieLauncherEnvProperty, File.pathSeparator);
+                                "Example on Unix: A=foo1:B=foo2:C=-Dbar=baz", oozieLauncherEnvProperty, File.pathSeparator);
             envMap.put(env[0], env[1]);
         }
         return envMap;
