@@ -69,6 +69,9 @@ public class EmailActionExecutor extends ActionExecutor {
 
     public static final String CONF_PREFIX = "oozie.email.";
     public static final String EMAIL_SMTP_HOST = CONF_PREFIX + "smtp.host";
+    public static final String EMAIL_SMTP_SOCKET = CONF_PREFIX + "smtp.socketFactory.class";
+    public static final String EMAIL_SMTP_SOCKET_PORT = CONF_PREFIX + "smtp.socketFactory.port";
+    public static final String EMAIL_SMTP_SOCKET_FALLBACK = CONF_PREFIX + "smtp.socketFactory.fallback";
     public static final String EMAIL_SMTP_PORT = CONF_PREFIX + "smtp.port";
     public static final String EMAIL_SMTP_AUTH = CONF_PREFIX + "smtp.auth";
     public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
@@ -183,10 +186,13 @@ public class EmailActionExecutor extends ActionExecutor {
         // Get mailing server details.
         String smtpHost = ConfigurationService.get(EMAIL_SMTP_HOST);
         Integer smtpPortInt = ConfigurationService.getInt(EMAIL_SMTP_PORT);
+        Integer smtpSocketPortInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_PORT);
         Boolean smtpAuthBool = ConfigurationService.getBoolean(EMAIL_SMTP_AUTH);
         String smtpUser = ConfigurationService.get(EMAIL_SMTP_USER);
         String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
         Boolean smtpStarttlsBool = ConfigurationService.getBoolean(EMAIL_SMTP_STARTTLS);
+        String smtpSocketClass = ConfigurationService.get(EMAIL_SMTP_SOCKET);
+        Boolean smtpSocketFallbackBool = ConfigurationService.getBoolean(EMAIL_SMTP_SOCKET_FALLBACK);
         String fromAddr = ConfigurationService.get(EMAIL_SMTP_FROM);
         Integer timeoutMillisInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS);
 
@@ -195,6 +201,9 @@ public class EmailActionExecutor extends ActionExecutor {
         properties.setProperty("mail.smtp.port", smtpPortInt.toString());
         properties.setProperty("mail.smtp.auth", smtpAuthBool.toString());
         properties.setProperty("mail.smtp.starttls.enable", smtpStarttlsBool.toString());
+        properties.setProperty("mail.smtp.socketFactory.class", smtpSocketClass);
+        properties.setProperty("mail.smtp.socketFactory.port", smtpSocketPortInt.toString());
+        properties.setProperty("mail.smtp.socketFactory.fallback", smtpSocketFallbackBool.toString());
 
         // Apply sensible timeouts, as defaults are infinite. See https://s.apache.org/javax-mail-timeouts
         properties.setProperty("mail.smtp.connectiontimeout", timeoutMillisInt.toString());
