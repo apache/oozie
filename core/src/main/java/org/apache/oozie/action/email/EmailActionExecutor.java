@@ -71,7 +71,7 @@ public class EmailActionExecutor extends ActionExecutor {
     public static final String EMAIL_SMTP_HOST = CONF_PREFIX + "smtp.host";
     public static final String SMTP_SOCKET_FACTORY_CLASS = CONF_PREFIX + "smtp.socketFactory.class";
     public static final String EMAIL_SMTP_FACTORY_SOCKET_PORT = CONF_PREFIX + "smtp.socketFactory.port";
-    public static final String EMAIL_SMTP_FACTORY_SOCKET_FALLBACK = CONF_PREFIX + "smtp.socketFactory.fallback";
+    public static final String EMAIL_SMTP_SOCKET_FACTORY_FALLBACK = CONF_PREFIX + "smtp.socketFactory.fallback";
     public static final String EMAIL_SMTP_PORT = CONF_PREFIX + "smtp.port";
     public static final String EMAIL_SMTP_AUTH = CONF_PREFIX + "smtp.auth";
     public static final String EMAIL_SMTP_USER = CONF_PREFIX + "smtp.username";
@@ -192,7 +192,7 @@ public class EmailActionExecutor extends ActionExecutor {
         String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
         Boolean smtpStarttlsBool = ConfigurationService.getBoolean(EMAIL_SMTP_STARTTLS);
         String smtpSocketClass = ConfigurationService.get(SMTP_SOCKET_FACTORY_CLASS);
-        Boolean smtpSocketFallbackBool = ConfigurationService.getBoolean(EMAIL_SMTP_FACTORY_SOCKET_FALLBACK);
+        Boolean smtpSocketFallbackBool = ConfigurationService.getBoolean(EMAIL_SMTP_SOCKET_FACTORY_FALLBACK);
         String fromAddr = ConfigurationService.get(EMAIL_SMTP_FROM);
         Integer timeoutMillisInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS);
 
