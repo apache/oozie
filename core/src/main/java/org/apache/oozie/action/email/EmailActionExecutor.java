@@ -186,15 +186,15 @@ public class EmailActionExecutor extends ActionExecutor {
         // Get mailing server details.
         String smtpHost = ConfigurationService.get(EMAIL_SMTP_HOST);
         Integer smtpPortInt = ConfigurationService.getInt(EMAIL_SMTP_PORT);
-        Integer smtpSocketPortInt = ConfigurationService.getInt(EMAIL_SMTP_FACTORY_SOCKET_PORT);
         Boolean smtpAuthBool = ConfigurationService.getBoolean(EMAIL_SMTP_AUTH);
         String smtpUser = ConfigurationService.get(EMAIL_SMTP_USER);
         String smtpPassword = ConfigurationService.getPassword(EMAIL_SMTP_PASS, "");
         Boolean smtpStarttlsBool = ConfigurationService.getBoolean(EMAIL_SMTP_STARTTLS);
-        String smtpSocketClass = ConfigurationService.get(SMTP_SOCKET_FACTORY_CLASS);
-        Boolean smtpSocketFallbackBool = ConfigurationService.getBoolean(EMAIL_SMTP_SOCKET_FACTORY_FALLBACK);
         String fromAddr = ConfigurationService.get(EMAIL_SMTP_FROM);
         Integer timeoutMillisInt = ConfigurationService.getInt(EMAIL_SMTP_SOCKET_TIMEOUT_MS);
+        Integer smtpSocketPortInt = ConfigurationService.getInt(EMAIL_SMTP_FACTORY_SOCKET_PORT);
+        String smtpSocketClass = ConfigurationService.get(SMTP_SOCKET_FACTORY_CLASS);
+        Boolean smtpSocketFallbackBool = ConfigurationService.getBoolean(EMAIL_SMTP_SOCKET_FACTORY_FALLBACK);
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", smtpHost);
