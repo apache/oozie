@@ -272,6 +272,10 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
                                 Services.get().get(XLogService.class).getOozieLogName());
         logFile.getParentFile().mkdirs();
         Writer logWriter = new OutputStreamWriter(new FileOutputStream(logFile), StandardCharsets.UTF_8);
+
+        // Notice below that the timestamps (2013-06-10 10:25:44,008) of the first log messages of the "Oozie servers"
+        // are the same. This is intentional and is supposed to test a corner case in the mechanism of the log streaming
+
         // local logs
         logWriter.append("2013-06-10 10:25:44,008 WARN HiveActionExecutor:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] "
                 + "APP[hive-wf] JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@hive-node] "
@@ -285,7 +289,7 @@ public class TestZKXLogStreamingService extends ZKXTestCase {
         logWriter.close();
         // logs to be returned by another "Oozie server"
         DummyLogStreamingServlet.logs =
-                "2013-06-10 10:25:43,575 WARN ActionStartXCommand:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
+                "2013-06-10 10:25:44,008 WARN ActionStartXCommand:542 SERVER[foo] USER[rkanter] GROUP[-] TOKEN[] APP[hive-wf] "
                 + "JOB[0000003-130610102426873-oozie-rkan-W] ACTION[0000003-130610102426873-oozie-rkan-W@:start:] "
                 + "[***0000003-130610102426873-oozie-rkan-W@:start:***]Action status=DONE _L1_"
                 + "\n"
