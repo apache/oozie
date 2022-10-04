@@ -101,7 +101,7 @@
          <spark.version>1.6.1</spark.version>
          <spark.streaming.kafka.version>1.6.1</spark.streaming.kafka.version>
          <spark.bagel.version>1.6.1</spark.bagel.version>
-         <spark.guava.version>14.0.1</spark.guava.version>
+         <spark.guava.version>30.1.0.redhat-00001</spark.guava.version>
          <spark.scala.binary.version>2.10</spark.scala.binary.version>
          <sqoop.classifier>hadoop260</sqoop.classifier>
          <tez.version>0.8.4</tez.version>
@@ -1434,7 +1434,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>11.0.2</version>
+                <version>30.1.0.redhat-00001</version>
             </dependency>
 
             <dependency>
