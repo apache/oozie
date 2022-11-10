@@ -59,6 +59,11 @@ public class CoordMaterializeTriggerService implements Service, Instrumentable {
      */
     public static final String CONF_CALLABLE_BATCH_SIZE = CONF_PREFIX + "callable.batch.size";
     /**
+     * The maximum number of actions in a LAST_ONLY/NONE past batch.
+     */
+    public static final String CONF_ACTION_BATCH_SIZE = CONF_PREFIX + "action.batch.size";
+
+    /**
      * The number of coordinator jobs to be picked for materialization at a given time.
      */
     public static final String CONF_MATERIALIZATION_SYSTEM_LIMIT = CONF_PREFIX + "materialization.system.limit";

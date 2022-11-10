@@ -26,6 +26,7 @@ package org.apache.oozie.command;
  * StartChildren() : submit or queue commands to start children
  * notifyParent() : update the status to upstream if any
  */
+@Deprecated
 public abstract class MaterializeTransitionXCommand extends TransitionXCommand<Void> {
 
     /**

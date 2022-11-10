@@ -30,7 +30,7 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
-import org.apache.oozie.command.MaterializeTransitionXCommand;
+import org.apache.oozie.command.TransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordUtils;
@@ -68,9 +68,32 @@ import java.util.TimeZone;
 
 /**
  * Materialize actions for specified start and end time for coordinator job.
+ *
+ *
+ * - Mechanism when the execution's mode is LAST_ONLY or NONE:
+ *
+ * In case the Coordinator job's execution mode is LAST_ONLY or NONE, then the Coordinator action
+ * number to be materialized can be huge.
+ * This can be too much for only one CoordMaterializeTransitionXCommand to handle, as it would lead to
+ * OOM as described in OOZIE-3254.
+ * The cause of this would not only because the insertList object inside CoordMaterializeTransitionXCommand
+ * would get filled with a lot of Coordinator job objects, but the other XCommands invoked inside
+ * CoordMaterializeTransitionXCommand would store Coordinator job objects (or field(s) of them) as well until
+ * CoordMaterializeTransitionXCommand run its course.
+ * Now in order to prevent this situation to happen, the current approach only lets a certain amount of actions
+ * to be materialized within a CoordMaterializeTransitionXCommand with the default value of 10000,
+ * which can be configured through Oozie configuration defined in either oozie-default.xml or oozie-site.xml
+ * using the property name `oozie.service.CoordMaterializeTriggerService.action.batch.size`. NOTE: this "batch mode"
+ * can be turned off by setting its value to -1.
+ * Once a CoordMaterializeTransitionXCommand is finished, the CoordMaterializeTriggerService is responsible for
+ * materializing the potential remaining Coordinator actions. NOTE: the CoordMaterializeTriggerService gets
+ * triggered in every 5 minutes by default. This means if the Coordinator job's execution mode is LAST_ONLY or NONE,
+ * a maximum number of `oozie.service.CoordMaterializeTriggerService.action.batch.size` will be materialized in every
+ * 5 minutes.
+ *
  */
 @SuppressWarnings("deprecation")
-public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCommand {
+public class CoordMaterializeTransitionXCommand extends TransitionXCommand<Void> {
 
     private JPAService jpaService = null;
     private CoordinatorJobBean coordJob = null;
@@ -121,6 +144,20 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
     }
 
     @Override
+    protected Void execute() throws CommandException {
+        try {
+            materialize();
+            updateJob();
+            performWrites();
+            insertList.clear();
+            calcMatdTime();
+        } finally {
+            notifyParent();
+        }
+        return null;
+    }
+
+    @Override
     public void updateJob() throws CommandException {
         updateList.add(new UpdateEntry(CoordJobQuery.UPDATE_COORD_JOB_MATERIALIZE,coordJob));
     }
@@ -137,7 +174,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                         CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(), null);
                     }
 
-                    // TODO: time 100s should be configurable
+                    // TODO: time 100ms should be configurable
                     queue(new CoordActionNotificationXCommand(coordAction), 100);
 
                     //Delay for input check = (nominal time - now)
@@ -336,7 +373,6 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
     }
 
-    @Override
     protected void materialize() throws CommandException {
         Instrumentation.Cron cron = new Instrumentation.Cron();
         cron.start();
@@ -376,7 +412,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
      */
     protected String materializeActions(boolean dryrun) throws Exception {
 
-        Configuration jobConf = null;
+        Configuration jobConf;
         try {
             jobConf = new XConfiguration(new StringReader(coordJob.getConf()));
         }
@@ -418,14 +454,30 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         String action = null;
         int numWaitingActions = dryrun ? 0 : jpaService.execute(new CoordActionsActiveCountJPAExecutor(coordJob.getId()));
-        int maxActionToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
-        // If LAST_ONLY and all materialization is in the past, ignore maxActionsToBeCreated
-        boolean ignoreMaxActions =
-                (coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.LAST_ONLY) ||
-                        coordJob.getExecutionOrder().equals(CoordinatorJob.Execution.NONE))
-                        && endMatdTime.before(new Date());
-        LOG.debug("Coordinator job :" + coordJob.getId() + ", maxActionToBeCreated :" + maxActionToBeCreated
-                + ", Mat_Throttle :" + coordJob.getMatThrottling() + ", numWaitingActions :" + numWaitingActions);
+
+        boolean ignoreMaxActionsToBeCreated = false;
+        int maxActionsToBeCreated = 0;
+        boolean isCoordJobIsLastOnlyOrNone = CoordinatorJob.Execution.LAST_ONLY == coordJob.getExecutionOrder()
+                || CoordinatorJob.Execution.NONE == coordJob.getExecutionOrder();
+
+        if (isCoordJobIsLastOnlyOrNone && endMatdTime.before(new Date())) {
+            int actionBatchSize = ConfigurationService.getInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE);
+            if (actionBatchSize == -1) {
+                // materialization will be done without upper limit. NOTE: can be lead to OOM.
+                ignoreMaxActionsToBeCreated = true;
+            } else {
+                // only let just a certain amount of actions to be materialized, the remaining actions to be
+                // materialized will be materialized via CoordMaterializeTriggerService.
+                maxActionsToBeCreated = actionBatchSize;
+            }
+        } else {
+            maxActionsToBeCreated = coordJob.getMatThrottling() - numWaitingActions;
+        }
+
+        LOG.info("Coordinator job: " + coordJob.getId() + ", maxActionsToBeCreated: "
+                + (ignoreMaxActionsToBeCreated ? " unlimited" : maxActionsToBeCreated)
+                + ", Mat_Throttle: " + (ignoreMaxActionsToBeCreated ? " ignored" : coordJob.getMatThrottling())
+                + ", numWaitingActions: " + numWaitingActions);
 
         boolean isCronFrequency = false;
 
@@ -441,7 +493,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
 
         boolean firstMater = true;
 
-        while (effStart.compareTo(end) < 0 && (ignoreMaxActions || maxActionToBeCreated-- > 0)) {
+        while (effStart.compareTo(end) < 0 && (ignoreMaxActionsToBeCreated || maxActionsToBeCreated-- > 0)) {
             if (pause != null && effStart.compareTo(pause) >= 0) {
                 break;
             }
@@ -494,8 +546,8 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
         }
 
         if (isCronFrequency) {
-            if (effStart.compareTo(end) < 0 && !(ignoreMaxActions || maxActionToBeCreated-- > 0)) {
-                //Since we exceed the throttle, we need to move the nextMadtime forward
+            if (effStart.compareTo(end) < 0 && !(ignoreMaxActionsToBeCreated || maxActionsToBeCreated-- > 0)) {
+                //Since we exceed the throttle, we need to move the nextMatdtime forward
                 //to avoid creating duplicate actions
                 if (!firstMater) {
                     effStart.setTime(CoordCommandUtils.getNextValidActionTimeForCronFrequency(effStart.getTime(), coordJob));

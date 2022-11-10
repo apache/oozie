@@ -119,6 +119,7 @@ public abstract class XDataTestCase extends XHCatTestCase {
             + " <sla:dev-contact>abc@example.com</sla:dev-contact>"
             + " <sla:qa-contact>abc@example.com</sla:qa-contact>" + " <sla:se-contact>abc@example.com</sla:se-contact>"
             + "</sla:info>";
+    protected static final int ONE_HOUR_IN_SECONDS = 60 * 60;
 
     protected String bundleName;
     protected String bundleId;
@@ -164,11 +165,6 @@ public abstract class XDataTestCase extends XHCatTestCase {
     public void tearDownPub() throws Exception {
         tearDown();
     }
-
-    protected int hoursToSeconds(final int hours) {
-        return new Long(java.util.concurrent.TimeUnit.HOURS.toSeconds(hours)).intValue();
-    }
-
 
     /**
      * Inserts the passed coord job

@@ -1147,6 +1147,18 @@ or `READY` will be `SKIPPED` when the current time is more than the configured n
 nominal time. For example, suppose action 1 and 2 are both `READY`, the current time is 5:20pm, and both actions' nominal times are
 before 5:19pm. Both actions will become `SKIPPED`, assuming they don't transition to `SUBMITTED` (or a terminal state) before then.
 
+In case the Coordinator job's execution mode is LAST_ONLY or NONE, then the Coordinator action number to be
+materialized can be huge. This can be too much for only one CoordMaterializeTransitionXCommand to handle,
+as it would lead to OOM as described in OOZIE-3254. In order to prevent this situation to happen, the current
+approach only lets a certain amount of actions to be materialized within a CoordMaterializeTransitionXCommand
+with the default value of 10000, which can be configured through Oozie configuration defined in either oozie-default.xml
+or oozie-site.xml using the property name `oozie.service.CoordMaterializeTriggerService.action.batch.size`.
+NOTE: this "batch mode" can be turned off by setting its value to -1. Once a CoordMaterializeTransitionXCommand
+is finished, the CoordMaterializeTriggerService is responsible for materializing the potential remaining
+Coordinator actions. NOTE: the CoordMaterializeTriggerService gets triggered in every 5 minutes by default.
+This means if the Coordinator job's execution mode is LAST_ONLY or NONE, a maximum number of
+`oozie.service.CoordMaterializeTriggerService.action.batch.size` will be materialized in every 5 minutes.
+
 **<font color="#800080">Syntax: </font>**
 
 

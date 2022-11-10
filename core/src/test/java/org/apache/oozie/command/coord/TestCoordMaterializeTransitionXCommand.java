@@ -51,6 +51,7 @@ import org.apache.oozie.executor.jpa.SLAEventsGetForSeqIdJPAExecutor;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.SchedulerService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.service.CoordMaterializeTriggerService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XConfiguration;
@@ -60,9 +61,14 @@ import org.jdom2.Element;
 @SuppressWarnings("deprecation")
 public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
+    private static final int FOUR_HOURS_IN_SECONDS = 4 * 60 * 60;
+    private static final int NUMBER_OF_ACTIONS_MATERIALIZED_3420 = 57 * 60;
+    private static final int SIXTY_HOURS_IN_MS = 60 * 60 * 60 * 1000;
+    private static final int THREE_HOURS_IN_MS = 3 * 60 * 60 * 1000;
     private static final int TIME_IN_MIN = 60 * 1000;
     private static final int TIME_IN_HOURS = TIME_IN_MIN * 60;
     private static final int TIME_IN_DAY = TIME_IN_HOURS * 24;
+
     private JPAService jpaService;
 
     @Override
@@ -84,7 +90,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordAction(job.getId() + "@1");
     }
 
@@ -96,7 +102,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-hcat.xml",
                 CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         CoordinatorActionBean actionBean = getCoordAction(job.getId() + "@1");
         assertEquals("file://dummyhdfs/2009/05/_SUCCESS" + CoordCommandUtils.RESOLVED_UNRESOLVED_SEPARATOR
                 + "${coord:latestRange(-1,0)}", actionBean.getMissingDependencies());
@@ -115,7 +121,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-neg-hcat.xml",
                 CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
         try {
-            new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+            new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
             fail("Expected Command exception but didn't catch any");
         }
         catch (CommandException e) {
@@ -134,7 +140,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-relative.xml",
                 CoordinatorJob.Status.RUNNING, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
     }
 
     public void testActionMaterWithCronFrequency1() throws Exception {
@@ -142,7 +148,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "10,20 * * * *");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:10Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:20Z")};
         final int expectedNominalTimeCount = 2;
@@ -165,7 +171,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "10-20 * * * *");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:10Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:11Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:12Z"),
@@ -197,7 +203,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "0/15 2 * 5-7 4,5");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         final int expectedNominalTimeCount = 0;
         checkCoordActionsNominalTime(job.getId(), expectedNominalTimeCount, new Date[]{});
 
@@ -218,7 +224,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "0/15 * * 5-7 4,5");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:00Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:15Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:30Z"),
@@ -243,7 +249,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "20/15 * * 5-7 4,5");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:20Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:35Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:50Z"),};
@@ -267,7 +273,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "20");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:00Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:20Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:40Z"),};
@@ -291,7 +297,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-07-18T01:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "20/15 * * 7,10 THU");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:20Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:35Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:50Z"),};
@@ -318,7 +324,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setMatThrottling(3);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
 
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-07-18T00:00Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:10Z"),
                 DateUtils.parseDateOozieTZ("2013-07-18T00:20Z")};
@@ -350,7 +356,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setTimeUnit(Timeunit.CRON);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
 
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         final String startPlusOneHour = "2013-03-10T09:00Z";
         final String startPlusTwoHours = "2013-03-10T10:00Z";
         final Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
@@ -391,7 +397,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setTimeUnit(Timeunit.CRON);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
 
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
 
         final String startPlusOneHour = "2013-03-10T09:00Z";
         final String startPlusTwoHours = "2013-03-10T10:00Z";
@@ -433,7 +439,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setTimeUnit(Timeunit.CRON);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
 
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
 
         final String startPlusOneHour = "2013-03-10T09:00Z";
         final Date[] nominalTimesWithoutDSTChange = new Date[] {DateUtils.parseDateOozieTZ(startInThePast),
@@ -449,7 +455,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2013-03-10T12:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "0 * * * *");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(4)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), FOUR_HOURS_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2013-03-10T08:00Z"),
                 DateUtils.parseDateOozieTZ("2013-03-10T09:00Z"),
                 DateUtils.parseDateOozieTZ("2013-03-10T10:00Z"),
@@ -475,7 +481,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2012-11-04T11:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 "0 * * * *");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(4)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), FOUR_HOURS_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2012-11-04T07:00Z"),
                 DateUtils.parseDateOozieTZ("2012-11-04T08:00Z"),
                 DateUtils.parseDateOozieTZ("2012-11-04T09:00Z"),
@@ -501,7 +507,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
         Date pauseTime = DateUtils.parseDateOozieTZ("2009-03-06T10:04Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime, "5");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2009-03-06T10:00Z")};
         checkCoordActionsNominalTime(job.getId(), 1, nominalTimes);
     }
@@ -511,7 +517,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
         Date pauseTime = DateUtils.parseDateOozieTZ("2009-03-06T10:08Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime, "5");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         Date[] nominalTimes = new Date[] {DateUtils.parseDateOozieTZ("2009-03-06T10:00Z"),
                 DateUtils.parseDateOozieTZ("2009-03-06T10:05Z")};
         checkCoordActionsNominalTime(job.getId(), 2, nominalTimes);
@@ -524,7 +530,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("5");
         job.setTimeUnit(Timeunit.MINUTE);
         job.setMatThrottling(20);
-        String dryRunOutput = new CoordMaterializeTransitionXCommand(job, hoursToSeconds(1), startTime, endTime)
+        String dryRunOutput = new CoordMaterializeTransitionXCommand(job, ONE_HOUR_IN_SECONDS, startTime, endTime)
                 .materializeActions(true);
         String[] actions = dryRunOutput.split("action for new instance");
         assertEquals(3, actions.length -1);
@@ -539,7 +545,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date pauseTime = null;
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime,
                 pauseTime, 300, "5", Timeunit.MINUTE);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordActionsTimeout(job.getId() + "@1", 300);
     }
 
@@ -547,7 +553,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
     }
 
@@ -555,7 +561,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-01T01:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordWaiting(job.getId(), job.getMatThrottling());
     }
 
@@ -569,7 +575,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.parseDateOozieTZ("2099-02-01T01:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2099-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.PREP);
     }
 
@@ -583,7 +589,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.toDate(new Timestamp(System.currentTimeMillis() + 180 * 1000));
         Date endTime = DateUtils.parseDateOozieTZ("2099-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
     }
 
@@ -606,7 +612,8 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
                 + "<workflow>" + "<app-path>hdfs:///tmp/workflows/</app-path>" + "</workflow>" + "</action>"
                 + "</coordinator-app>";
         CoordinatorJobBean job = addRecordToCoordJobTable(coordXml);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
+        JPAService jpaService = Services.get().get(JPAService.class);
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(CoordinatorJob.Status.FAILED, job.getStatus());
         // GetActions for coord job, should be none
@@ -625,7 +632,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.toDate(new Timestamp(System.currentTimeMillis() + 360 * 1000));
         Date endTime = DateUtils.parseDateOozieTZ("2099-02-03T23:59Z");
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.PREP, startTime, endTime, false, false, 0);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.PREP);
     }
 
@@ -645,7 +652,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(new Date(startTime.getTime() + TIME_IN_DAY * 3), job.getNextMaterializedTime());
     }
@@ -659,7 +666,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("HOUR");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         assertEquals(new Date(startTime.getTime() + TIME_IN_HOURS * 10), job.getNextMaterializedTime());
     }
@@ -674,7 +681,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
         adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
@@ -690,7 +697,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date next = new Date(startTime.getTime() + TIME_IN_DAY);
         adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
@@ -706,7 +713,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("5");
         job.setTimeUnitStr("MINUTE");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date next = new Date(startTime.getTime() + TIME_IN_HOURS);
         adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
@@ -721,7 +728,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date next = new Date(startTime.getTime() + TIME_IN_DAY);
         adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
@@ -737,7 +744,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date next = new Date(startTime.getTime() + TIME_IN_DAY * 3);
         adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
@@ -755,7 +762,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setFrequency("1");
         job.setTimeUnitStr("DAY");
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job, hoursToSeconds(1), startTime, endTime).call();
+        new CoordMaterializeTransitionXCommand(job, ONE_HOUR_IN_SECONDS, startTime, endTime).call();
         job = jpaService.execute(new CoordJobGetJPAExecutor(job.getId()));
         Date next = new Date(startTime.getTime() + TIME_IN_DAY * 4);
         adjustExpectedMaterializationDateForDSTSwitch(next, startTime, job);
@@ -1022,8 +1029,11 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         CoordinatorJobBean cronJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 cronFrequency);
 
-        new CoordMaterializeTransitionXCommand(elJob.getId(), TIME_IN_HOURS).call();
-        new CoordMaterializeTransitionXCommand(cronJob.getId(), TIME_IN_HOURS).call();
+        new CoordMaterializeTransitionXCommand(elJob.getId(), ONE_HOUR_IN_SECONDS).call();
+        new CoordMaterializeTransitionXCommand(cronJob.getId(), ONE_HOUR_IN_SECONDS).call();
+
+
+        JPAService jpaService = Services.get().get(JPAService.class);
 
         elJob = jpaService.execute(new CoordJobGetJPAExecutor(elJob.getId()));
         cronJob = jpaService.execute(new CoordJobGetJPAExecutor(cronJob.getId()));
@@ -1038,7 +1048,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     private void testCronNominalTimes (Date startTime, Date endTime, Date[] nominalTimes, String cronFrequency) throws Exception {
         CoordinatorJobBean cronJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 cronFrequency);
-        new CoordMaterializeTransitionXCommand(cronJob.getId(), TIME_IN_HOURS).call();
+        new CoordMaterializeTransitionXCommand(cronJob.getId(), ONE_HOUR_IN_SECONDS).call();
 
         cronJob = jpaService.execute(new CoordJobGetJPAExecutor(cronJob.getId()));
         checkCoordActionsNominalTime(cronJob.getId(), nominalTimes.length, nominalTimes);
@@ -1049,7 +1059,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
             throws Exception {
         CoordinatorJobBean elJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null,
                 elFrequency, elTimeUnit);
-        new CoordMaterializeTransitionXCommand(elJob.getId(), TIME_IN_HOURS).call();
+        new CoordMaterializeTransitionXCommand(elJob.getId(), ONE_HOUR_IN_SECONDS).call();
 
         elJob = jpaService.execute(new CoordJobGetJPAExecutor(elJob.getId()));
         checkCoordActionsNominalTime(elJob.getId(), nominalTimes.length, nominalTimes);
@@ -1061,10 +1071,10 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         Date startTime = DateUtils.toDate(new Timestamp(now - 180 * 60 * 1000));    // 3 hours ago
         Date endTime = DateUtils.toDate(new Timestamp(now + 180 * 60 * 1000));      // 3 hours from now
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "10",
-                CoordinatorJob.Execution.LAST_ONLY);
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
         // This would normally materialize the throttle amount and within a 1 hour window; however, with LAST_ONLY this should
         // ignore those parameters and materialize everything in the past
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
         CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[19];
         Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
@@ -1072,11 +1082,168 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
         startTime = DateUtils.toDate(new Timestamp(now));                           // now
         job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "10",
-                CoordinatorJob.Execution.LAST_ONLY);
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
         // We're starting from "now" this time (i.e. present/future), so it should materialize things normally
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
         expectedStatuses = new CoordinatorActionBean.Status[6];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+    /**
+     * Tests a Coordinator job's materialization process with LAST_ONLY mode and with 5000 action batch size.
+     * According to the expectations, this size is satisfactory for the (57 * 60) actions to be materialized using a
+     * single {@link org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand}
+     **/
+    public void testTooManyLastOnlyMaterializationNonCronSingleBatch() throws Exception {
+        long now = System.currentTimeMillis();
+        Date startTime = DateUtils.toDate(new Timestamp(now - SIXTY_HOURS_IN_MS));
+        Date endTime = DateUtils.toDate(new Timestamp(now - THREE_HOURS_IN_MS));
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "1",
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
+
+        // setting the batch size
+        int actionBatchSize = 5000;
+        Services.get().getConf().setInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE, actionBatchSize);
+
+        CoordMaterializeTransitionXCommand coordMaterializeTransitionXCommand =
+                new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS);
+        coordMaterializeTransitionXCommand.call();
+
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[NUMBER_OF_ACTIONS_MATERIALIZED_3420];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+    /**
+     * Tests a Coordinator job's materialization process with LAST_ONLY mode and with 1000 action batch size.
+     * According to the expectations, this size is NOT satisfactory for the (57 * 60) actions to be materialized using a
+     * single {@link org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand}
+     **/
+    public void testTooManyLastOnlyMaterializationNonCronMultiBatch() throws Exception {
+        long now = System.currentTimeMillis();
+        Date startTime = DateUtils.toDate(new Timestamp(now - SIXTY_HOURS_IN_MS));
+        Date endTime = DateUtils.toDate(new Timestamp(now - THREE_HOURS_IN_MS));
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "1",
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
+
+        // setting the batch size
+        int actionBatchSize = 1000;
+        Services.get().getConf().setInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE, actionBatchSize);
+
+        CoordMaterializeTransitionXCommand coordMaterializeTransitionXCommand =
+                new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS);
+        coordMaterializeTransitionXCommand.call();
+
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[actionBatchSize];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+    /**
+     * Tests a Coordinator job's materialization process with LAST_ONLY mode and with unlimited action batch size.
+     * According to the expectations, this size is satisfactory for the (57 * 60) actions to be materialized using a
+     * single {@link org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand}
+     **/
+    public void testTooManyLastOnlyMaterializationNonCronWithoutBatch() throws Exception {
+        long now = System.currentTimeMillis();
+        Date startTime = DateUtils.toDate(new Timestamp(now - SIXTY_HOURS_IN_MS));
+        Date endTime = DateUtils.toDate(new Timestamp(now - THREE_HOURS_IN_MS));
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "1",
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
+
+        // setting the batch size
+        int actionBatchSize = -1;
+        Services.get().getConf().setInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE, actionBatchSize);
+
+        CoordMaterializeTransitionXCommand coordMaterializeTransitionXCommand =
+                new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS);
+        coordMaterializeTransitionXCommand.call();
+
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[NUMBER_OF_ACTIONS_MATERIALIZED_3420];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+    /**
+     * Tests a Coordinator job's materialization process with LAST_ONLY mode and with 5000 action batch size.
+     * According to the expectations, this size is satisfactory for the (57 * 60) actions to be materialized using a
+     * single {@link org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand}
+     **/
+    public void testTooManyLastOnlyMaterializationCronSingleBatch() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-03-10T08:00Z"); // past
+        Date endTime = DateUtils.parseDateOozieTZ("2013-03-12T17:00Z");   // +57 hours
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "* * * * *",
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
+
+        // setting the batch size
+        int actionBatchSize = 5000;
+        Services.get().getConf().setInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE, actionBatchSize);
+
+        CoordMaterializeTransitionXCommand coordMaterializeTransitionXCommand =
+            new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS);
+        coordMaterializeTransitionXCommand.call();
+
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[NUMBER_OF_ACTIONS_MATERIALIZED_3420];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+    /**
+     * Tests a Coordinator job's materialization process with LAST_ONLY mode and with 5000 action batch size.
+     * According to the expectations, this size is NOT satisfactory for the (57 * 60) actions to be materialized using a
+     * single {@link org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand}
+     **/
+    public void testTooManyLastOnlyMaterializationCronMultiBatch() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-03-10T08:00Z"); // past
+        Date endTime = DateUtils.parseDateOozieTZ("2013-03-12T17:00Z");   // +57 hours
+        CoordinatorJobBean  job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "* * * * *",
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
+
+        // setting the batch size
+        int actionBatchSize = 1000;
+        Services.get().getConf().setInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE, actionBatchSize);
+
+        CoordMaterializeTransitionXCommand coordMaterializeTransitionXCommand =
+                new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS);
+        coordMaterializeTransitionXCommand.call();
+
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[actionBatchSize];
+        Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
+        checkCoordActionsStatus(job.getId(), expectedStatuses);
+    }
+
+    /**
+     * Tests a Coordinator job's materialization process with LAST_ONLY mode and with unlimited action batch size.
+     * According to the expectations, this size is satisfactory for the (57 * 60) actions to be materialized using a
+     * single {@link org.apache.oozie.command.coord.CoordMaterializeTransitionXCommand}
+     **/
+    public void testTooManyLastOnlyMaterializationCronWithoutBatch() throws Exception {
+        Date startTime = DateUtils.parseDateOozieTZ("2013-03-10T08:00Z"); // past
+        Date endTime = DateUtils.parseDateOozieTZ("2013-03-12T17:00Z");   // +57 hours
+        CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, -1, "* * * * *",
+                Timeunit.MINUTE, CoordinatorJob.Execution.LAST_ONLY, 12);
+
+        // setting the batch size
+        int actionBatchSize = -1;
+        Services.get().getConf().setInt(CoordMaterializeTriggerService.CONF_ACTION_BATCH_SIZE, actionBatchSize);
+
+        CoordMaterializeTransitionXCommand coordMaterializeTransitionXCommand =
+                new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS);
+        coordMaterializeTransitionXCommand.call();
+        checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
+        CoordinatorActionBean.Status[] expectedStatuses = new CoordinatorActionBean.Status[NUMBER_OF_ACTIONS_MATERIALIZED_3420];
         Arrays.fill(expectedStatuses, CoordinatorActionBean.Status.WAITING);
         checkCoordActionsStatus(job.getId(), expectedStatuses);
     }
@@ -1084,15 +1251,15 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     public void testCurrentTimeCheck() throws Exception {
         long now = System.currentTimeMillis();
         Date startTime = DateUtils.toDate(new Timestamp(now)); // now
-        Date endTime = DateUtils.toDate(new Timestamp(now + 3 * 60 * 60 * 1000)); // 3 secondsFromHours from now
+        Date endTime = DateUtils.toDate(new Timestamp(now + THREE_HOURS_IN_MS));
         CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, null, "5",
                 20);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         checkCoordJobs(job.getId(), CoordinatorJob.Status.RUNNING);
 
         job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
         assertEquals(job.getLastActionNumber(), 12);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         // unfortunatily XCommand doesn't throw exception on precondition
         // assertEquals(e.getErrorCode(), ErrorCode.E1100);
         // assertTrue(e.getMessage().contains("Request is for future time. Lookup time is"));
@@ -1146,7 +1313,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
         job.setEndTime(endTime);
         job.setMatThrottling(10);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
         assertEquals(job.getLastActionNumber(), 3);
 
@@ -1193,7 +1360,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
         job.setMatThrottling(10);
         CoordJobQueryExecutor.getInstance().executeUpdate(CoordJobQuery.UPDATE_COORD_JOB, job);
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         job = CoordJobQueryExecutor.getInstance().get(CoordJobQuery.GET_COORD_JOB, job.getId());
         assertEquals(4, job.getLastActionNumber());
 
@@ -1278,7 +1445,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
     private void checkCoordActionsStatus(String jobId, CoordinatorActionBean.Status[] statuses) {
         try {
             List<CoordinatorActionBean> actions = jpaService.execute(new CoordJobGetActionsSubsetJPAExecutor(jobId,
-                    null, 1, 1000, false));
+                    null, 1, 100000, false));
 
             if (actions.size() != statuses.length) {
                 fail("Should have " + statuses.length + " actions created for job " + jobId + ", but has " + actions.size()

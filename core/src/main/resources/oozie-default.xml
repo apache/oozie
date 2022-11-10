@@ -617,6 +617,16 @@
     </property>
 
     <property>
+        <name>oozie.service.CoordMaterializeTriggerService.action.batch.size</name>
+        <value>10000</value>
+        <description>
+            Maximum number of actions to be materialized in a batch in case of LAST_ONLY or NONE materialization
+            in the past. If the value is set to -1, then it will not be a maximum number of actions to be
+            materialized.
+        </description>
+    </property>
+
+    <property>
         <name>oozie.service.CoordMaterializeTriggerService.materialization.system.limit</name>
         <value>50</value>
         <description>

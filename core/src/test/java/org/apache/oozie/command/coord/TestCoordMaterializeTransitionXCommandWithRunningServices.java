@@ -55,7 +55,7 @@ public class TestCoordMaterializeTransitionXCommandWithRunningServices extends X
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-06T10:14Z");
         Date pauseTime = DateUtils.parseDateOozieTZ("2009-03-06T09:58Z");
         final CoordinatorJobBean job = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, startTime, endTime, pauseTime, "5");
-        new CoordMaterializeTransitionXCommand(job.getId(), hoursToSeconds(1)).call();
+        new CoordMaterializeTransitionXCommand(job.getId(), ONE_HOUR_IN_SECONDS).call();
         waitFor(60_000, new Predicate() {
             public boolean evaluate() throws Exception {
                 return (getStatus(job.getId()) == CoordinatorJob.Status.PAUSED);
