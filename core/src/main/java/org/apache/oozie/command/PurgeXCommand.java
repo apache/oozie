@@ -367,34 +367,83 @@ public class PurgeXCommand extends XCommand<Void> {
     }
 
     /**
+     * Process coordinators in a Bundle to purge them and their children.
+     * Returns <tt>true</tt> if all of the coordinators (and their children) were purged.
+     *
+     * @param coords List of coordinators to process
+     * @throws JPAExecutorException If a JPA executor has a problem
+     * @return <tt>true</tt> if all of the coordinators (and their children) were purged.
+     */
+    private boolean processCoordinatorsInBundle(List<String> coords) throws JPAExecutorException {
+        List<String> wfActionsInBundle = new ArrayList<>();
+        List<WorkflowJobBean> wfjBeanListInBundle = new ArrayList<>();
+        List<String> wfsToPurgeInBundle;
+        for (String coord : coords) {
+            // Get all of the direct workflow children in this Coordinator
+            List<WorkflowJobBean> wfjBeanListInCoord = new ArrayList<>();
+            int size;
+            do {
+                size = wfjBeanListInCoord.size();
+                wfjBeanListInCoord.addAll(jpaService.execute(
+                        new WorkflowJobsBasicInfoFromCoordParentIdJPAExecutor(coord, wfjBeanListInCoord.size(), limit)));
+            } while (size != wfjBeanListInCoord.size());
+            wfjBeanListInBundle.addAll(wfjBeanListInCoord);
+
+            // Get all of the action children in this Coordinator
+            List<String> wfActionsInCoord = new ArrayList<>();
+            do {
+                size = wfActionsInCoord.size();
+                wfActionsInCoord.addAll(jpaService.execute(
+                        new CoordActionsGetFromCoordJobIdJPAExecutor(coord, wfActionsInCoord.size(), limit)));
+            } while (size != wfActionsInCoord.size());
+            wfActionsInBundle.addAll(wfActionsInCoord);
+        }
+
+        // Get all of the purgable workflows in this Bundle
+        wfsToPurgeInBundle = fetchTerminatedWorkflow(wfjBeanListInBundle);
+
+        // Only purging the Bundle and all of its elements if all of the workflows are purgable
+        if (wfjBeanListInBundle.size() == wfsToPurgeInBundle.size()) {
+            // Process the children workflow
+            processWorkflows(wfsToPurgeInBundle);
+            // Process the children action
+            purgeCoordActions(wfActionsInBundle);
+            // Now that all children have been purged, we can purge the coordinators
+            purgeCoordinators(coords);
+
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Process bundles to purge them and their children
      *
      * @param bundles List of bundles to process
      * @throws JPAExecutorException If a JPA executor has a problem
      */
     private void processBundles(List<String> bundles) throws JPAExecutorException {
-        List<String> coordsToPurge = new ArrayList<String>();
-        List<String> bundlesToPurge = new ArrayList<String>();
-        for (Iterator<String> it = bundles.iterator(); it.hasNext(); ) {
-            String bundleId = it.next();
-            // We only purge the bundle and its children if they are all ready to be purged
+        List<String> bundlesToPurge = new ArrayList<>();
+        for (String bundle : bundles) {
             long numChildrenNotReady = jpaService.execute(
-                    new CoordJobsCountNotForPurgeFromParentIdJPAExecutor(coordOlderThan, bundleId));
+                    new CoordJobsCountNotForPurgeFromParentIdJPAExecutor(coordOlderThan, bundle));
             if (numChildrenNotReady == 0) {
-                bundlesToPurge.add(bundleId);
-                LOG.debug("Purging bundle " + bundleId);
-                // Get all of the direct children for this bundle
-                List<String> children = new ArrayList<String>();
+                // Get all of the coordinators in this bundle
+                List<String> coordsToPurge = new ArrayList<>();
                 int size;
                 do {
-                    size = children.size();
-                    children.addAll(jpaService.execute(new CoordJobsGetFromParentIdJPAExecutor(bundleId, children.size(), limit)));
-                } while (size != children.size());
-                coordsToPurge.addAll(children);
+                    size = coordsToPurge.size();
+                    coordsToPurge.addAll(jpaService.execute(new CoordJobsGetFromParentIdJPAExecutor(bundle,
+                            coordsToPurge.size(), limit)));
+                } while (size != coordsToPurge.size());
+
+                boolean isAllCoordsPurged = processCoordinatorsInBundle(coordsToPurge);
+                if (isAllCoordsPurged) {
+                    bundlesToPurge.add(bundle);
+                    LOG.debug("Purging bundle " + bundle);
+                }
             }
         }
-        // Process the children
-        processCoordinators(coordsToPurge);
         // Now that all children have been purged, we can purge the bundles
         purgeBundles(bundlesToPurge);
     }

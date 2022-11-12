@@ -320,6 +320,114 @@ public class TestPurgeXCommand extends XDataTestCase {
     }
 
     /**
+     * Test : purge bundle job while one of children workflows is not yet purgable
+     * due to its end time is in the future while exceeding the limit (100) of coordinators and workflows.
+     * ([102] workflows, [102] coordinatorActions, [101] coordinators, [1] bundles)
+     *
+     * [Scenario]:
+     *
+     * Bundle[bundleJob] --- Coordinator[coordJob(1..100)] --- Workflow[wfJob(1..100)] <= Ready to be purged
+     *                  |
+     *                   \
+     *                    `- Coordinator[coordJob(101)] --- Workflow[wfJob(101)] <= NOT ready to be purged yet
+     *                                             |
+     *                                              \
+     *                                               `- Workflow[wfJob(102)] <= Ready to be purged
+     *
+     *
+     * [Expectation]: wfJob(101) is not ready to be purged yet, therefore the bundleJob and the
+     * coordJobs and of their wfJobs should not be purged.
+     *
+     * @throws Exception if cannot insert records to the database
+     */
+    public void testBundleIsPurgableButChildrenWfIsNotExceedingLimit() throws Exception {
+        BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+                "2011-01-01T01:00Z"));
+
+        for(int i = 1 ; i < 101 ; i++) {
+            CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+            WorkflowJobBean wfJob = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+            WorkflowActionBean wfAction = addRecordToWfActionTable(wfJob.getId(), String.valueOf(i), WorkflowAction.Status.OK);
+            CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob.getId(), i, CoordinatorAction.Status.SUCCEEDED,
+                    "coord-action-get.xml", wfJob.getId(), "SUCCEEDED", 0);
+            BundleActionBean bundleActionBean1 = addRecordToBundleActionTable(bundleJob.getId(), coordJob.getId(),
+                    "action"+i, 0, Job.Status.RUNNING);
+        }
+
+        CoordinatorJobBean coordJob101 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        WorkflowJobBean wfJob101 = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED,
+                WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction101 = addRecordToWfActionTable(wfJob101.getId(), "2", WorkflowAction.Status.OK);
+        WorkflowJobBean wfJob102 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction102 = addRecordToWfActionTable(wfJob101.getId(), "3", WorkflowAction.Status.OK);
+        CoordinatorActionBean coordAction101 = addRecordToCoordActionTable(coordJob101.getId(), 2,
+                CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", wfJob101.getId(), "SUCCEEDED", 0);
+        CoordinatorActionBean coordAction102 = addRecordToCoordActionTable(coordJob101.getId(), 3,
+                CoordinatorAction.Status.SUCCEEDED, "coord-action-get.xml", wfJob102.getId(), "SUCCEEDED", 0);
+        BundleActionBean bundleActionBean2 = addRecordToBundleActionTable(bundleJob.getId(), coordJob101.getId(),
+                "action101", 0, Job.Status.RUNNING);
+
+        purgeWithDefaultParameters();
+
+        assertBundleJobNotPurged(bundleJob);
+    }
+
+    /**
+     * Test : purge bundle job while one of children workflows is not yet purgable
+     * due to its end time is in the future.
+     *
+     * [Scenario]:
+     *
+     * Bundle[bundleJob] --- Coordinator[coordJob1] --- Workflow[wfJob1] <= Ready to be purged
+     *                  |
+     *                   \
+     *                    `- Coordinator[coordJob2] --- Workflow[wfJob2] <= NOT ready to be purged yet
+     *                                             |
+     *                                              \
+     *                                               `- Workflow[wfJob3] <= Ready to be purged
+     *
+     *
+     * [Expectation]: wfJob2 is not ready to be purged yet, therefore the bundleJob and the
+     * coordJobs and of their wfJobs should not be purged.
+     *
+     * @throws Exception if cannot insert records to the database
+     */
+    public void testBundleIsPurgableButChildrenWfIsNot() throws Exception {
+        BundleJobBean bundleJob = addRecordToBundleJobTable(Job.Status.SUCCEEDED, DateUtils.parseDateOozieTZ(
+                "2011-01-01T01:00Z"));
+
+        CoordinatorJobBean coordJob1 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        WorkflowJobBean wfJob1 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction1 = addRecordToWfActionTable(wfJob1.getId(), "1", WorkflowAction.Status.OK);
+        CoordinatorActionBean coordAction = addRecordToCoordActionTable(coordJob1.getId(), 1, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", wfJob1.getId(), "SUCCEEDED", 0);
+
+        CoordinatorJobBean coordJob2 = addRecordToCoordJobTable(CoordinatorJob.Status.SUCCEEDED, false, false);
+        WorkflowJobBean wfJob2 = addRecordToWfJobTableForNegCase(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction2 = addRecordToWfActionTable(wfJob2.getId(), "2", WorkflowAction.Status.OK);
+        WorkflowJobBean wfJob3 = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
+        WorkflowActionBean wfAction3 = addRecordToWfActionTable(wfJob3.getId(), "3", WorkflowAction.Status.OK);
+        CoordinatorActionBean coordAction2 = addRecordToCoordActionTable(coordJob2.getId(), 2, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", wfJob2.getId(), "SUCCEEDED", 0);
+        CoordinatorActionBean coordAction3 = addRecordToCoordActionTable(coordJob2.getId(), 3, CoordinatorAction.Status.SUCCEEDED,
+                "coord-action-get.xml", wfJob3.getId(), "SUCCEEDED", 0);
+
+        BundleActionBean bundleActionBean1 = addRecordToBundleActionTable(bundleJob.getId(), coordJob1.getId(),
+                "action1", 0, Job.Status.RUNNING);
+        BundleActionBean bundleActionBean2 = addRecordToBundleActionTable(bundleJob.getId(), coordJob2.getId(),
+                "action2", 0, Job.Status.RUNNING);
+
+        purgeWithDefaultParameters();
+
+        assertBundleJobNotPurged(bundleJob);
+        assertCoordinatorJobNotPurged(coordJob1);
+        assertCoordinatorJobNotPurged(coordJob2);
+        assertWorkflowJobNotPurged(wfJob1);
+        assertWorkflowJobNotPurged(wfJob2);
+        assertWorkflowJobNotPurged(wfJob3);
+    }
+
+    /**
      * Test : The workflow should get purged, but the coordinator parent shouldn't get purged --> neither will get purged
      *
      * @throws Exception if cannot insert records to the database
