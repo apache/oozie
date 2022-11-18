@@ -273,8 +273,7 @@ public class AuthOozieClient extends XOozieClient {
     protected void writeAuthToken(AuthenticatedURL.Token authToken) {
         try {
             String jvmName = ManagementFactory.getRuntimeMXBean().getName();
-            File tmpTokenFile = File.createTempFile(".oozie-auth-token", jvmName + "tmp",
-                    new File(System.getProperty("user.home")));
+            File tmpTokenFile = Files.createTempFile(new File(System.getProperty("user.home")).toPath(), ".oozie-auth-token", jvmName + "tmp").toFile();
             // just to be safe, if something goes wrong delete tmp file eventually
             tmpTokenFile.deleteOnExit();
             Writer writer = new OutputStreamWriter(new FileOutputStream(tmpTokenFile), StandardCharsets.UTF_8);
