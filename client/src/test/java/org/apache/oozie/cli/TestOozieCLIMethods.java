@@ -44,9 +44,12 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 
-import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+
 import static org.junit.Assert.assertTrue;
 
+@RunWith(MockitoJUnitRunner.class)
 public class TestOozieCLIMethods {
 
     static final String jobIdPattern = "Job ID[\\s|:]+";

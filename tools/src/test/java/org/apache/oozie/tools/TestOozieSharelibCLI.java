@@ -26,6 +26,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,6 +53,7 @@ import static org.mockito.Mockito.verify;
 /**
  * Test OozieSharelibCLI
  */
+@RunWith(MockitoJUnitRunner.class)
 public class TestOozieSharelibCLI {
 
     private final static String TEST_SHAERELIBNAME1 = "sharelibName";

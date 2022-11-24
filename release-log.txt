@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3675 Upgrade Mockito from 2 to 3.11.2 (jmakai via dionusos)
 OOZIE-3669 Fix purge process for bundles to prevent orphan coordinators (jmakai via dionusos)
 OOZIE-3254 [coordinator] LAST_ONLY and NONE execution modes: possible OutOfMemoryError when there are too many coordinator actions to materialize (jmakai via dionusos)
 OOZIE-3666 Oozie log streaming bug when log timestamps are the same on multiple Oozie servers (jmakai via dionusos)

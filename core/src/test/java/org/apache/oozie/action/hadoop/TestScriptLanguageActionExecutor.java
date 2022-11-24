@@ -23,18 +23,16 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.action.ActionExecutor;
-import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.jdom2.Element;
-import org.jdom2.Namespace;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.nio.charset.StandardCharsets;
 
@@ -44,10 +42,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Services.class)
+@RunWith(MockitoJUnitRunner.class)
 public class TestScriptLanguageActionExecutor {
 
     @Mock private ActionExecutor.Context mockContext;
@@ -60,12 +56,26 @@ public class TestScriptLanguageActionExecutor {
     @Mock private Configuration mockActionConfig;
     @Mock private Services mockServices;
 
-    @Before
-    public void setup() throws ServiceException {
-        PowerMockito.mockStatic(Services.class);
+    private MockedStatic<Services> SERVICES;
 
-        when(Services.get()).thenReturn(mockServices);
+    @Before
+    public void setup()  {
+        SERVICES = Mockito.mockStatic(Services.class);
+        SERVICES.when(Services::get).thenReturn(mockServices);
         doReturn(mockConfiguration).when(mockServices).getConf();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (SERVICES != null) {
+            try {
+                SERVICES.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                SERVICES = null;
+            }
+        }
     }
 
     @Test
@@ -90,8 +100,4 @@ public class TestScriptLanguageActionExecutor {
         verify(fsDataOutputStream).write(expectedInput);
     }
 
-    @After
-    public void cleanUp() {
-        Services.get().destroy();
-    }
 }
