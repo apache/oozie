@@ -33,6 +33,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 
 public class TestLauncher extends XFsTestCase {
 
@@ -127,6 +128,13 @@ public class TestLauncher extends XFsTestCase {
     LauncherHelper.setupLauncherInfo(appConf, "1", "1@a", actionDir, "1@a-0", actionConf, "");
     assertTrue(appConf.getBoolean("oozie.hadoop-2.0.2-alpha.workaround.for.distributed.cache", false));
     assertEquals("aa.jar#aa.jar", actionConf.get("mapreduce.job.cache.files"));
+  }
+
+
+  // tests whether the job tag generation works as expected
+  public void testGetTag() throws NoSuchAlgorithmException {
+      assertEquals("oozie-3c9c30d9f665e74d515c842960d4a451c83a0125fd3de7392d7b37231af10c72",
+              LauncherHelper.getTag("foobar"));
   }
 
     public void testCopyFileMultiplex() throws Exception {

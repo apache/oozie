@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3676 Remove all non FIPS compliant encoding algorithms (jmakai via dionusos)
 OOZIE-3674 Add a --insecure like parameter to Oozie client so it can ignore certificate errors (jmakai via dionusos)
 OOZIE-3673 Add possibility to configure custom SSL/TLS protocols when executing an email action (jmakai via dionusos)
 OOZIE-3675 Upgrade Mockito from 2 to 3.11.2 (jmakai via dionusos)

@@ -155,9 +155,10 @@ public class LauncherHelper {
     }
 
     public static String getTag(String launcherTag) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("MD5");
+        MessageDigest digest = MessageDigest.getInstance("SHA-384");
         digest.update(launcherTag.getBytes(StandardCharsets.UTF_8), 0, launcherTag.length());
-        return "oozie-" + new BigInteger(1, digest.digest()).toString(16);
+
+        return "oozie-" + new BigInteger(1, digest.digest()).toString(16).substring(0, 64);
     }
 
     public static boolean isMainDone(RunningJob runningJob) throws IOException {
