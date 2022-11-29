@@ -119,6 +119,14 @@
             </resource>
         </resources>
         <plugins>
+            <!-- spotbugs plugin. Execute 'mvn verify' and look for target/spotbugs/spotbugsXml.html under each module -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <configuration>
+                    <excludeFilterFile>${basedir}/spotbugs-filter.xml</excludeFilterFile>
+                </configuration>
+            </plugin>
             <plugin>
                  <groupId>org.apache.rat</groupId>
                  <artifactId>apache-rat-plugin</artifactId>

@@ -131,6 +131,7 @@ public class OozieCLI {
     public static final String VALIDATE_JAR_OPTION = "validatejar";
     public static final String SUBMIT_JAR_OPTION = "submitjar";
     public static final String RUN_JAR_OPTION = "runjar";
+    public static final String INSECURE_ACCESS_OPTION = "insecure";
 
     public static final String ACTION_OPTION = "action";
     public static final String DEFINITION_OPTION = "definition";
@@ -299,10 +300,14 @@ public class OozieCLI {
         sharelib.setOptionalArg(true);
         Option purge = new Option(PURGE_OPTION, true, "purge old oozie workflow, coordinator and bundle records from DB " +
                 "(parameter unit: day)");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
 
         Options adminOptions = new Options();
         adminOptions.addOption(oozie);
         adminOptions.addOption(doAs);
+        adminOptions.addOption(insecureAccess);
         OptionGroup group = new OptionGroup();
         group.addOption(system_mode);
         group.addOption(status);
@@ -416,6 +421,9 @@ public class OozieCLI {
 
         Option workflowActionRetries = new Option(WORKFLOW_ACTIONS_RETRIES, true,
                 "Get information of the retry attempts for a given workflow action");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
 
         OptionGroup actions = new OptionGroup();
         actions.addOption(submit);
@@ -470,6 +478,7 @@ public class OozieCLI {
         jobOptions.addOption(logFilter);
         jobOptions.addOption(timeout);
         jobOptions.addOption(interval);
+        jobOptions.addOption(insecureAccess);
         addAuthOptions(jobOptions);
         jobOptions.addOption(showdiff);
 
@@ -513,6 +522,10 @@ public class OozieCLI {
                 "coordinators and actionstatus can be multiple comma separated values. " +
                 "Bundle and coordinators can be id(s) or appName(s) of those jobs. " +
                 "Specifying bundle is mandatory, other params are optional");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
+
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options jobsOptions = new Options();
@@ -530,6 +543,7 @@ public class OozieCLI {
         jobsOptions.addOption(jobtype);
         jobsOptions.addOption(verbose);
         jobsOptions.addOption(bulkMonitor);
+        jobsOptions.addOption(insecureAccess);
         addAuthOptions(jobsOptions);
         return jobsOptions;
     }
@@ -544,6 +558,10 @@ public class OozieCLI {
         Option start = new Option(OFFSET_OPTION, true, "start offset (default '0')");
         Option len = new Option(LEN_OPTION, true, "number of results (default '100', max '1000')");
         Option filter = new Option(FILTER_OPTION, true, "filter of SLA events. e.g., jobid=<J>\\;appname=<A>");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
+
         start.setType(Integer.class);
         len.setType(Integer.class);
         Options slaOptions = new Options();
@@ -551,6 +569,7 @@ public class OozieCLI {
         slaOptions.addOption(len);
         slaOptions.addOption(filter);
         slaOptions.addOption(oozie);
+        slaOptions.addOption(insecureAccess);
         addAuthOptions(slaOptions);
         return slaOptions;
     }
@@ -562,8 +581,12 @@ public class OozieCLI {
      */
     protected Options createValidateOptions() {
         Option oozie = new Option(OOZIE_OPTION, true, "Oozie URL");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
         Options validateOption = new Options();
         validateOption.addOption(oozie);
+        validateOption.addOption(insecureAccess);
         addAuthOptions(validateOption);
         return validateOption;
     }
@@ -583,6 +606,10 @@ public class OozieCLI {
         Option params = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set parameters for script").create("P");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
+
         Options Options = new Options();
         Options.addOption(oozie);
         Options.addOption(doAs);
@@ -590,6 +617,7 @@ public class OozieCLI {
         Options.addOption(property);
         Options.addOption(params);
         Options.addOption(file);
+        Options.addOption(insecureAccess);
         addAuthOptions(Options);
         return Options;
     }
@@ -607,12 +635,17 @@ public class OozieCLI {
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
+
         Options Options = new Options();
         Options.addOption(oozie);
         Options.addOption(doAs);
         Options.addOption(config);
         Options.addOption(property);
         Options.addOption(command);
+        Options.addOption(insecureAccess);
         addAuthOptions(Options);
         return Options;
     }
@@ -639,11 +672,16 @@ public class OozieCLI {
         Option property = OptionBuilder.withArgName("property=value").hasArgs(2).withValueSeparator().withDescription(
                 "set/override value for given property").create("D");
         Option doAs = new Option(DO_AS_OPTION, true, "doAs user, impersonates as the specified user");
+        Option insecureAccess = new Option(INSECURE_ACCESS_OPTION, false, "This option will allow SSL connections " +
+                "even though there's a problem with the certificate. The connection will still be encrypted, " +
+                "but Oozie client won't validate the server certificate.");
+
         Options mrOptions = new Options();
         mrOptions.addOption(oozie);
         mrOptions.addOption(doAs);
         mrOptions.addOption(config);
         mrOptions.addOption(property);
+        mrOptions.addOption(insecureAccess);
         addAuthOptions(mrOptions);
         return mrOptions;
     }
@@ -991,11 +1029,16 @@ public class OozieCLI {
      * @throws OozieCLIException thrown if the XOozieClient could not be configured.
      */
     protected XOozieClient createXOozieClient(CommandLine commandLine) throws OozieCLIException {
-        XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine), getAuthOption(commandLine));
+        XOozieClient wc = new AuthOozieClient(getOozieUrl(commandLine), getAuthOption(commandLine),
+                isInsecureConnEnabled(commandLine));
         addHeader(wc, commandLine);
         setDebugMode(wc,commandLine.hasOption(DEBUG_OPTION));
         setRetryCount(wc);
         return wc;
+    }
+
+    private boolean isInsecureConnEnabled(CommandLine commandLine) {
+        return commandLine.hasOption(INSECURE_ACCESS_OPTION);
     }
 
     protected void setDebugMode(OozieClient wc, boolean debugOpt) {

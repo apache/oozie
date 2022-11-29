@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Base64;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -69,6 +71,7 @@ public class AuthOozieClient extends XOozieClient {
     }
 
     private String authOption = null;
+    private boolean isInsecureConnEnabled = false;
 
     /**
      * authTokenCacheFile defines the location of the authentication token cache file.
@@ -94,8 +97,21 @@ public class AuthOozieClient extends XOozieClient {
      */
     @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "FilenameUtils is used to filter user input. JDK8+ is used.")
     public AuthOozieClient(String oozieUrl, String authOption) {
+        this(oozieUrl, authOption, false);
+    }
+
+    /**
+     * Create an instance of the AuthOozieClient.
+     *
+     * @param oozieUrl the Oozie URL
+     * @param authOption the auth option
+     * @param isInsecureConnEnabled option for handling potential certificate errors
+     */
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "FilenameUtils is used to filter user input. JDK8+ is used.")
+    public AuthOozieClient(String oozieUrl, String authOption, boolean isInsecureConnEnabled) {
         super(oozieUrl);
         this.authOption = authOption;
+        this.isInsecureConnEnabled = isInsecureConnEnabled;
         String filename = getAuthCacheFileName(oozieUrl);
         // just to filter user input
         authTokenCacheFile = new File(System.getProperty("user.home"), FilenameUtils.getName(filename));
@@ -112,6 +128,18 @@ public class AuthOozieClient extends XOozieClient {
             filename = filename.substring(0, AUTH_TOKEN_CACHE_FILENAME_MAXLENGTH);
         }
         return filename;
+    }
+
+    private void configureConnection(HttpURLConnection httpURLConnection) {
+        if (isInsecureConnEnabled && httpURLConnection instanceof HttpsURLConnection) {
+            InsecureConnectionHelper.configureInsecureConnection((HttpsURLConnection) httpURLConnection);
+        }
+    }
+
+    private void configureAuthenticator(Authenticator authenticator) {
+        if (isInsecureConnEnabled) {
+            InsecureConnectionHelper.configureInsecureAuthenticator(authenticator);
+        }
     }
 
     /**
@@ -162,6 +190,7 @@ public class AuthOozieClient extends XOozieClient {
         // If we have a token, double check with the Server to make sure it hasn't expired yet
         if (currentToken.isSet()) {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            configureConnection(conn);
             conn.setRequestMethod("OPTIONS");
             AuthenticatedURL.injectToken(conn, currentToken);
             if (conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED
@@ -193,6 +222,7 @@ public class AuthOozieClient extends XOozieClient {
         // If we didn't have a token, or it had expired, let's get a new one from the Server using the configured Authenticator
         if (!currentToken.isSet()) {
             Authenticator authenticator = getAuthenticator();
+            configureAuthenticator(authenticator);
             try {
                 authenticator.authenticate(url, currentToken);
             }
@@ -216,6 +246,7 @@ public class AuthOozieClient extends XOozieClient {
 
         // Now create a connection using the token and return it to the caller
         HttpURLConnection conn = super.createConnection(url, method);
+        configureConnection(conn);
         AuthenticatedURL.injectToken(conn, currentToken);
         return conn;
     }

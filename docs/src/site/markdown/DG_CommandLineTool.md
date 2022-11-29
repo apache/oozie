@@ -73,6 +73,9 @@ oozie job <OPTIONS>           : job operations
           -ignore <arg>         change status of a coordinator job or action to IGNORED
                                 (-action required to ignore coord actions)
           -info <arg>           info of a job
+          -insecure             This option will allow SSL connections even though there's a problem with the
+                                certificate. The connection will still be encrypted, but Oozie client won't validate
+                                the server certificate.
           -interval <arg>       polling interval in minutes (default is 5, requires -poll)
           -kill <arg>           kill a job (coordinator can mention -action or -date)
           -len <arg>            number of actions (default TOTAL ACTIONS, requires -info)
@@ -144,6 +147,9 @@ oozie jobs <OPTIONS>          : jobs status
                                 'hours' or 'minutes'. startcreatedtime, endcreatedtime: time of
                                 format yyyy-MM-dd'T'HH:mm'Z'. Valid values for sortBy are
                                 'createdTime' or 'lastModifiedTime'.)
+           -insecure            This option will allow SSL connections even though there's a problem with the
+                                certificate. The connection will still be encrypted, but Oozie client won't validate
+                                the server certificate.
            -jobtype <arg>       job type ('Supported in Oozie-2.0 or later versions ONLY -
                                 'coordinator' or 'bundle' or 'wf'(default))
            -kill                bulk kill operation
@@ -168,6 +174,9 @@ oozie admin <OPTIONS>         : admin operations
             -auth <arg>         select authentication type [SIMPLE|BASIC|KERBEROS]
             -configuration      show Oozie system configuration
             -doas <arg>         doAs user, impersonates as the specified user
+            -insecure           This option will allow SSL connections even though there's a problem with the
+                                certificate. The connection will still be encrypted, but Oozie client won't validate
+                                the server certificate.
             -instrumentation    show Oozie system instrumentation
             -javasysprops       show Oozie Java system properties
             -metrics            show Oozie system metrics
@@ -194,6 +203,9 @@ oozie admin <OPTIONS>         : admin operations
 ```
 oozie validate <OPTIONS> <ARGS> : validate a workflow, coordinator, bundle XML file
                -auth <arg>       select authentication type [SIMPLE|BASIC|KERBEROS]
+               -insecure         This option will allow SSL connections even though there's a problem with the
+                                 certificate. The connection will still be encrypted, but Oozie client won't validate
+                                 the server certificate.
                -oozie <arg>      Oozie URL
                -password <arg>   password for BASIC authentication
                -username <arg>   username for BASIC authentication
@@ -208,6 +220,10 @@ oozie sla <OPTIONS>           : sla operations (Deprecated with Oozie 4.0)
           -len <arg>            number of results (default '100', max '1000')
           -offset <arg>         start offset (default '0')
           -oozie <arg>          Oozie URL
+          -filter <arg>         jobid=<JobID/ActionID>\;appname=<Application Name>
+          -insecure             This option will allow SSL connections even though there's a problem with the
+                                certificate. The connection will still be encrypted, but Oozie client won't validate
+                                the server certificate.
           -password <arg>       password for BASIC authentication
           -username <arg>       username for BASIC authentication
 ```
@@ -220,8 +236,10 @@ oozie pig <OPTIONS> -X <ARGS> : submit a pig job, everything after '-X' are pass
           -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
           -config <arg>         job configuration file '.properties'
           -D <property=value>   set/override value for given property
-          -doas <arg>           doAs user, impersonates as the specified user
-          -file <arg>           pig script
+          -file <arg>           Pig script
+          -insecure             This option will allow SSL connections even though there's a problem with the
+                                certificate. The connection will still be encrypted, but Oozie client won't validate
+                                the server certificate.
           -oozie <arg>          Oozie URL
           -P <property=value>   set parameters for script
           -password <arg>       password for BASIC authentication
@@ -238,6 +256,9 @@ oozie hive <OPTIONS> -X<ARGS>  : submit a hive job, everything after '-X' are pa
            -D <property=value>   set/override value for given property
            -doas <arg>           doAs user, impersonates as the specified user
            -file <arg>           hive script
+           -insecure             This option will allow SSL connections even though there's a problem with the
+                                 certificate. The connection will still be encrypted, but Oozie client won't validate
+                                 the server certificate.
            -oozie <arg>          Oozie URL
            -P <property=value>   set parameters for script
            -password <arg>       password for BASIC authentication
@@ -247,16 +268,18 @@ oozie hive <OPTIONS> -X<ARGS>  : submit a hive job, everything after '-X' are pa
 ### Oozie Sqoop submit command
 
 ```
-oozie sqoop <OPTIONS> -X <ARGS> : submit a sqoop job, everything after '-X' are pass-through parameters to sqoop, any '-D'
- arguments after '-X' are put in <configuration>
-            -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
-            -command <command>    sqoop command
-            -config <arg>         job configuration file '.properties'
-            -D <property=value>   set/override value for given property
-            -doas <arg>           doAs user, impersonates as the specified user
-            -oozie <arg>          Oozie URL
-            -password <arg>       password for BASIC authentication
-            -username <arg>       username for BASIC authentication
+oozie sqoop <OPTIONS> -X<ARGS> : submit a sqoop job, any '-D' arguments after '-X' are put in <configuration>
+           -auth <arg>           select authentication type [SIMPLE|BASIC|KERBEROS]
+           -config <arg>         job configuration file '.properties'
+           -D <property=value>   set/override value for given property
+           -doas <arg>           doAs user, impersonates as the specified user
+           -insecure             This option will allow SSL connections even though there's a problem with the
+                                 certificate. The connection will still be encrypted, but Oozie client won't validate
+                                 the server certificate.
+           -command <arg>        sqoop command
+           -oozie <arg>          Oozie URL
+           -password <arg>       password for BASIC authentication
+           -username <arg>       username for BASIC authentication
 ```
 
 ### Oozie info command
@@ -274,6 +297,9 @@ oozie mapreduce <OPTIONS>           : submit a mapreduce job
                 -config <arg>         job configuration file '.properties'
                 -D <property=value>   set/override value for given property
                 -doas <arg>           doAs user, impersonates as the specified user
+                -insecure             This option will allow SSL connections even though there's a problem with the
+                                      certificate. The connection will still be encrypted, but Oozie client won't validate
+                                      the server certificate.
                 -oozie <arg>          Oozie URL
                 -password <arg>       password for BASIC authentication
                 -username <arg>       username for BASIC authentication
@@ -324,6 +350,15 @@ If the `-oozie` option is not specified, the `oozie` CLI will look for the `OOZI
 and uses it if set.
 
 If the option is not provided and the environment variable is not set, the `oozie` CLI will fail.
+
+### Insecure connection
+
+In case `-insecure` option is used then it will cause Oozie to allow certificate errors where the data is still encrypted,
+but the client does not check the certificate.
+
+If the `-insecure` option is not specified and SSL is enabled, the user needs to pass the `-Djavax.net.ssl.trustStore`
+and `-Djavax.net.ssl.trustStorePassword` system properties to the Oozie client or the certificate needs to be imported
+into the JDK's cert store otherwise Oozie client won't be able to connect to the Oozie server.
 
 ### Time zone
 
