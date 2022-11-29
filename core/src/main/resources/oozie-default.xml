@@ -3136,6 +3136,16 @@ will be the requeue interval for the actions which are waiting for a long time w
     </property>
 
     <property>
+        <name>oozie.email.smtp.ssl.protocols</name>
+        <value> </value>
+        <description>
+            String property that has the supported protocols enumerated separate by space.
+            The default empty value has no effect.
+            E.g. "TLSv1 TLSv1.1 TLSv1.2"
+        </description>
+    </property>
+
+    <property>
       <name>oozie.email.smtp.username</name>
       <value></value>
       <description>

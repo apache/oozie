@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3673 Add possibility to configure custom SSL/TLS protocols when executing an email action (jmakai via dionusos)
 OOZIE-3675 Upgrade Mockito from 2 to 3.11.2 (jmakai via dionusos)
 OOZIE-3669 Fix purge process for bundles to prevent orphan coordinators (jmakai via dionusos)
 OOZIE-3254 [coordinator] LAST_ONLY and NONE execution modes: possible OutOfMemoryError when there are too many coordinator actions to materialize (jmakai via dionusos)
