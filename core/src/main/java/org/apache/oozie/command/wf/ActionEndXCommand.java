@@ -128,22 +128,37 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
         if (wfAction == null) {
             throw new PreconditionException(ErrorCode.E0605, actionId);
         }
-        if (wfAction.isPending()
-                && (wfAction.getStatus() == WorkflowActionBean.Status.DONE
-                        || wfAction.getStatus() == WorkflowActionBean.Status.END_RETRY || wfAction.getStatus()
-                        == WorkflowActionBean.Status.END_MANUAL)) {
+
+        executor = Services.get().get(ActionService.class).getExecutor(wfAction.getType());
+        if (executor == null) {
+            throw new CommandException(ErrorCode.E0802, wfAction.getType());
+        }
+
+        if (wfAction.isPending() && (wfAction.getStatus() == WorkflowActionBean.Status.DONE
+                || wfAction.getStatus() == WorkflowActionBean.Status.END_RETRY
+                || wfAction.getStatus() == WorkflowActionBean.Status.END_MANUAL)) {
 
             if (wfJob.getStatus() != WorkflowJob.Status.RUNNING) {
+                // In case of forked actions there might be a case when an action - running in parallel - fails.
+                // In that case in the same fork, an other running action would not pass the precondition
+                // check, as the workflow job itself gets failed as well because of the other action's failure.
+                // This behaviour leads to the incidence that the action will stick in RUNNING phase.
+                // Hence the below method is responsible for recognizing those scenarios.
+
+                // If there is an (other) action which's status is FAILED in the same workflow job of this action
+                // to be checked, then it means this action was launched in parallel (with that other action),
+                // because otherwise the workflow job would not have transitioned to this action due to the
+                // other workflow's failure.
+                if (isOtherActionFailedUnderJob(wfJob, wfAction)) {
+                    // Skipping throwing exception, therefore preventing this action to be stuck in RUNNING phase
+                    return;
+                }
+
                 throw new PreconditionException(ErrorCode.E0811,  WorkflowJob.Status.RUNNING.toString());
             }
         }
         else {
             throw new PreconditionException(ErrorCode.E0812, wfAction.isPending(), wfAction.getStatusStr());
-        }
-
-        executor = Services.get().get(ActionService.class).getExecutor(wfAction.getType());
-        if (executor == null) {
-            throw new CommandException(ErrorCode.E0802, wfAction.getType());
         }
     }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -34,6 +34,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.control.ForkActionExecutor;
 import org.apache.oozie.action.hadoop.LauncherHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
@@ -252,6 +253,39 @@ public class TestActionCheckXCommand extends XDataTestCase {
         counterVal = inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP)
             .get(checkCmd.getName() + ".preconditionfailed").getValue();
         assertEquals(3L, counterVal);
+    }
+
+    /**
+     * Test : verify that ActionCheckXCommand failed the precondition verification phase when job != RUNNING and
+     * there is an other action which status' is FAILED.
+     *
+     * @throws Exception
+     */
+    public void testParalellyFailedActionInJobContainingFork() throws Exception {
+        Instrumentation inst = Services.get().get(InstrumentationService.class).get();
+
+        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.FAILED, WorkflowInstance.Status.FAILED);
+
+        WorkflowActionBean forkAction = this.addRecordToWfActionTableWithType(job.getId(), "forkAction",
+                WorkflowAction.Status.OK, ForkActionExecutor.TYPE);
+
+        WorkflowActionBean failedAction = this.addRecordToWfActionTable(job.getId(), "failedAction",
+                WorkflowAction.Status.FAILED);
+
+        WorkflowActionBean greenAction = this.addRecordToWfActionTable(job.getId(), "greenAction",
+                WorkflowAction.Status.RUNNING);
+
+        ActionCheckXCommand checkCmd = new ActionCheckXCommand(greenAction.getId());
+
+        checkCmd.call();
+
+        try {
+            // this is supposed to throw NullPointerException
+            inst.getCounters().get(XCommand.INSTRUMENTATION_GROUP).get(checkCmd.getName() + ".preconditionfailed").getValue();
+            fail("A NullPointerException should have been thrown");
+        } catch (NullPointerException expect) {
+            // we should get here
+        }
     }
 
     public void testActionCheck() throws Exception {
@@ -608,7 +642,7 @@ public class TestActionCheckXCommand extends XDataTestCase {
     @Override
     protected WorkflowActionBean addRecordToWfActionTable(
             String wfId, String actionName, WorkflowAction.Status status) throws Exception {
-        WorkflowActionBean action = createWorkflowActionSetPending(wfId, status);
+        WorkflowActionBean action = createWorkflowActionSetPending(wfId, actionName, status);
         try {
             JPAService jpaService = Services.get().get(JPAService.class);
             assertNotNull(jpaService);
@@ -622,48 +656,4 @@ public class TestActionCheckXCommand extends XDataTestCase {
         }
         return action;
     }
-
-    protected WorkflowActionBean createWorkflowActionSetPending(String wfId, WorkflowAction.Status status) throws Exception {
-        WorkflowActionBean action = new WorkflowActionBean();
-        String actionname = "testAction";
-        action.setName(actionname);
-        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionname));
-        action.setJobId(wfId);
-        action.setType("map-reduce");
-        action.setTransition("transition");
-        action.setStatus(status);
-        action.setStartTime(new Date());
-        action.setEndTime(new Date());
-        action.setLastCheckTime(new Date());
-        action.setPending();
-        action.setExecutionPath("/");
-        action.setUserRetryMax(2);
-
-        Path inputDir = new Path(getFsTestCaseDir(), "input");
-        Path outputDir = new Path(getFsTestCaseDir(), "output");
-
-        FileSystem fs = getFileSystem();
-        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
-        w.write("dummy\n");
-        w.write("dummy\n");
-        w.close();
-
-        String actionXml = "<map-reduce>" +
-        "<job-tracker>" + getJobTrackerUri() + "</job-tracker>" +
-        "<name-node>" + getNameNodeUri() + "</name-node>" +
-        "<prepare><delete path=\"" + outputDir.toString() + "\"/></prepare>" +
-        "<configuration>" +
-        "<property><name>mapred.mapper.class</name><value>" + MapperReducerForTest.class.getName() +
-        "</value></property>" +
-        "<property><name>mapred.reducer.class</name><value>" + MapperReducerForTest.class.getName() +
-        "</value></property>" +
-        "<property><name>mapred.input.dir</name><value>"+inputDir.toString()+"</value></property>" +
-        "<property><name>mapred.output.dir</name><value>"+outputDir.toString()+"</value></property>" +
-        "</configuration>" +
-        "</map-reduce>";
-        action.setConf(actionXml);
-
-        return action;
-    }
-
 }

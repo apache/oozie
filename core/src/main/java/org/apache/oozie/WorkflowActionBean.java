@@ -155,7 +155,12 @@ import org.json.simple.JSONObject;
             + "= 'END_MANUAL')"),
 
     @NamedQuery(name = "GET_ACTIONS_FOR_WORKFLOW_RERUN", query = "select a.id, a.name, a.statusStr, a.endTimestamp, a.type "
-            + "from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp") })
+            + "from WorkflowActionBean a where a.wfId = :wfId order by a.startTimestamp"),
+
+    @NamedQuery(name = "GET_ACTIONS_FAILED_OUTSIDE_OF_PROVIDED_ACTION", query = "select OBJECT(a) from "
+            + "WorkflowActionBean a where a.wfId = :wfId AND a.id <> :actionId AND a.statusStr = 'FAILED' order by "
+            + "a.startTimestamp")})
+
 @Table(name = "WF_ACTIONS")
 public class WorkflowActionBean implements Writable, WorkflowAction, JsonBean {
     @Id

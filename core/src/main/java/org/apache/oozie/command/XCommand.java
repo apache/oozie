@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,11 +20,16 @@ package org.apache.oozie.command;
 
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.FaultInjection;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
+import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.executor.jpa.WorkflowActionsFailedOutsideOfProvidedActionGetForJobJPAExecutor;
 import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.InstrumentationService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.MemoryLocksService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.Instrumentation;
@@ -546,5 +551,32 @@ public abstract class XCommand<T> implements XCallable<T> {
     @Override
     public String toString() {
         return getKey();
+    }
+
+    /**
+     * Checks whether the given workflow job contains at least one failed action except for the action which this
+     * function was called with
+     *
+     * @param wfJob the workflow job
+     * @param wfAction the workflow action
+     * @return true if there is a failed action outside of the action which this function was called with
+     * @throws CommandException in case a missing JPAService
+     */
+    public boolean isOtherActionFailedUnderJob(WorkflowJobBean wfJob, WorkflowActionBean wfAction) throws CommandException {
+        JPAService jpaService = Services.get().get(JPAService.class);
+        if (jpaService == null) {
+            throw new CommandException(ErrorCode.E0610);
+        }
+
+        List<WorkflowActionBean> actionList = null;
+        try {
+            // Getting the failed actions of the the given job outside of the given action
+            actionList = jpaService.execute(new WorkflowActionsFailedOutsideOfProvidedActionGetForJobJPAExecutor(
+                    wfJob.getId(), wfAction.getId()));
+        } catch (JPAExecutorException e) {
+            LOG.error("Could not get the actions of job [{0}]", wfJob.getId(), e);
+        }
+
+        return actionList != null && actionList.size() > 0;
     }
 }

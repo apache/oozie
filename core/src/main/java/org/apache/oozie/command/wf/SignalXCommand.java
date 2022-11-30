@@ -155,6 +155,21 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         if ((wfAction == null) || (wfAction.isComplete() && wfAction.isPending())) {
             if (wfJob.getStatus() != WorkflowJob.Status.RUNNING && wfJob.getStatus() != WorkflowJob.Status.PREP) {
+                // In case of forked actions there might be a case when an action - running in parallel - fails.
+                // In that case in the same fork, an other running action would not pass the precondition
+                // check, as the workflow job itself gets failed as well because of the other action's failure.
+                // This behaviour leads to the incidence that the action will stick in RUNNING phase.
+                // Hence the below method is responsible for recognizing those scenarios.
+
+                // If there is an (other) action which's status is FAILED n in the same workflow job of this action
+                // to be checked, then it means this action was launched in parallel (with that other action),
+                // because otherwise the workflow job would not have transitioned to this action due to the
+                // other workflow's failure.
+                if (isOtherActionFailedUnderJob(wfJob, wfAction)) {
+                    // Skipping throwing exception, therefore preventing this action to be stuck in RUNNING phase
+                    return;
+                }
+
                 throw new PreconditionException(ErrorCode.E0813, wfJob.getStatusStr());
             }
         }

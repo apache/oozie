@@ -1972,4 +1972,80 @@ public abstract class XDataTestCase extends XHCatTestCase {
         assertEquals(stat, action.getStatus());
         return action;
     }
+
+    protected WorkflowActionBean addRecordToWfActionTableWithType(String wfId, String actionName, WorkflowAction.Status status,
+                                                                  String type) throws Exception {
+        WorkflowActionBean action = createWorkflowActionSetPending(wfId, actionName, status);
+        action.setType(type);
+        try {
+            JPAService jpaService = Services.get().get(JPAService.class);
+            assertNotNull(jpaService);
+            WorkflowActionInsertJPAExecutor actionInsertCmd = new WorkflowActionInsertJPAExecutor(action);
+            jpaService.execute(actionInsertCmd);
+        }
+        catch (JPAExecutorException ce) {
+            ce.printStackTrace();
+            fail("Unable to insert the test wf action record to table");
+            throw ce;
+        }
+        return action;
+    }
+
+    protected WorkflowActionBean createWorkflowActionSetPending(String wfId, WorkflowAction.Status status) throws Exception {
+        return createWorkflowActionSetPending(wfId, "actionName", status);
+    }
+
+    protected WorkflowActionBean createWorkflowActionSetPending(String wfId, String actionName, WorkflowAction.Status status)
+            throws Exception {
+        WorkflowActionBean action = new WorkflowActionBean();
+        action.setName(actionName);
+        action.setId(Services.get().get(UUIDService.class).generateChildId(wfId, actionName));
+        action.setJobId(wfId);
+        action.setType("map-reduce");
+        action.setTransition("transition");
+        action.setStatus(status);
+        action.setStartTime(new Date());
+        action.setEndTime(new Date());
+        action.setLastCheckTime(new Date());
+        action.setPending();
+        action.setExecutionPath("/");
+        action.setUserRetryMax(2);
+
+        Path inputDir = new Path(getFsTestCaseDir(), "input");
+        Path outputDir = new Path(getFsTestCaseDir(), "output");
+
+        FileSystem fs = getFileSystem();
+        Writer w = new OutputStreamWriter(fs.create(new Path(inputDir, "data.txt")), StandardCharsets.UTF_8);
+        w.write("dummy\n");
+        w.write("dummy\n");
+        w.close();
+
+        String actionXml =
+                        " <map-reduce>"
+                        + "  <job-tracker>" + getJobTrackerUri() + "</job-tracker>"
+                        + "  <name-node>" + getNameNodeUri() + "</name-node>"
+                        + "  <prepare><delete path=\"" + outputDir.toString() + "\"/></prepare>"
+                        + "  <configuration>"
+                        + "    <property>"
+                        + "      <name>mapred.mapper.class</name>"
+                        + "      <value>" + MapperReducerForTest.class.getName() + "</value>"
+                        + "    </property>"
+                        + "    <property>"
+                        + "      <name>mapred.reducer.class</name>"
+                        + "      <value>" + MapperReducerForTest.class.getName() + "</value>"
+                        + "    </property>"
+                        + "    <property>"
+                        + "      <name>mapred.input.dir</name>"
+                        + "      <value>" + inputDir.toString() + "</value>"
+                        + "    </property>"
+                        + "    <property>"
+                        + "      <name>mapred.output.dir</name>"
+                        + "      <value>" + outputDir.toString() + "</value>"
+                        + "    </property>"
+                        + "  </configuration>"
+                        + "</map-reduce>";
+        action.setConf(actionXml);
+
+        return action;
+    }
 }
