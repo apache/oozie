@@ -23,13 +23,20 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.test.XFsTestCase;
 import org.apache.oozie.test.XTestCase;
+import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.apache.oozie.util.ClasspathUtils.OOZIE_CLASSPATHUTILS_RESOLVE;
 
 public class TestClasspathUtils extends XFsTestCase {
 
@@ -103,5 +110,55 @@ public class TestClasspathUtils extends XFsTestCase {
         Arrays.sort(paths);
         assertEquals("$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/*", paths[0]);
         assertEquals("$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*", paths[1]);
+    }
+
+    public void testResolvePathNotInvoked() throws Exception {
+        // turning OFF resolving file path
+        ConfigurationService.setBoolean(OOZIE_CLASSPATHUTILS_RESOLVE, false);
+
+        Configuration conf = new Configuration(false);
+        Map<String, String> env = new HashMap<>();
+
+        Path p1 = new Path(getFsTestCaseDir(), "foo.xml");
+        Path p2 = new Path(getFsTestCaseDir(), "fooSymlink");
+        getFileSystem().createNewFile(p1);
+        getFileSystem().createSymlink(p1, p2, false);
+        DistributedCache.addFileToClassPath(p1, conf);
+        DistributedCache.addFileToClassPath(p2, conf);
+
+        ClasspathUtils.setupClasspath(env, conf);
+
+        assertEquals(2, env.size());
+        assertTrue(env.containsKey("$PWD"));
+        String[] paths = env.get("$PWD").split(":");
+        assertEquals(2, paths.length);
+        Arrays.sort(paths);
+        assertEquals("$PWD/foo.xml", paths[0]);
+        assertEquals("$PWD/fooSymlink", paths[1]);
+    }
+
+    public void testResolvePathInvoked() throws Exception {
+        // turning ON resolving file path
+        ConfigurationService.setBoolean(OOZIE_CLASSPATHUTILS_RESOLVE, true);
+
+        Configuration conf = new Configuration(false);
+        Map<String, String> env = new HashMap<>();
+
+        Path p1 = new Path(getFsTestCaseDir(), "foo.xml");
+        Path p2 = new Path(getFsTestCaseDir(), "fooSymlink");
+        getFileSystem().createNewFile(p1);
+        getFileSystem().createSymlink(p1, p2, false);
+        DistributedCache.addFileToClassPath(p1, conf);
+        DistributedCache.addFileToClassPath(p2, conf);
+
+        ClasspathUtils.setupClasspath(env, conf);
+
+        assertEquals(2, env.size());
+        assertTrue(env.containsKey("$PWD"));
+        String[] paths = env.get("$PWD").split(":");
+        assertEquals(2, paths.length);
+        Arrays.sort(paths);
+        assertEquals("$PWD/foo.xml", paths[0]);
+        assertEquals("$PWD/foo.xml", paths[1]);
     }
 }

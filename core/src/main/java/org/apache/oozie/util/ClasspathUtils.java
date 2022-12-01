@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.oozie.service.ConfigurationService;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,7 @@ import java.util.Map;
 
 
 public class ClasspathUtils {
+    public static final String OOZIE_CLASSPATHUTILS_RESOLVE = "oozie.classpathutils.resolve";
     private static boolean usingMiniYarnCluster = false;
     private static final List<String> CLASSPATH_ENTRIES = Arrays.asList(
             ApplicationConstants.Environment.PWD.$(),
@@ -109,13 +111,14 @@ public class ClasspathUtils {
                                                Map<String, String> environment,
                                                String classpathEnvVar) throws IOException {
         if (paths != null) {
+            boolean resolve = ConfigurationService.getBoolean(OOZIE_CLASSPATHUTILS_RESOLVE);
             HashMap<Path, String> linkLookup = new HashMap<Path, String>();
             if (withLinks != null) {
                 for (URI u: withLinks) {
                     Path p = new Path(u);
                     FileSystem remoteFS = p.getFileSystem(conf);
-                    p = remoteFS.resolvePath(p.makeQualified(remoteFS.getUri(),
-                            remoteFS.getWorkingDirectory()));
+                    p = p.makeQualified(remoteFS.getUri(), remoteFS.getWorkingDirectory());
+                    if (resolve) p = remoteFS.resolvePath(p);
                     String name = (null == u.getFragment())
                             ? p.getName() : u.getFragment();
                     if (!name.toLowerCase(Locale.ENGLISH).endsWith(".jar")) {
@@ -126,8 +129,8 @@ public class ClasspathUtils {
 
             for (Path p : paths) {
                 FileSystem remoteFS = p.getFileSystem(conf);
-                p = remoteFS.resolvePath(p.makeQualified(remoteFS.getUri(),
-                        remoteFS.getWorkingDirectory()));
+                p = p.makeQualified(remoteFS.getUri(), remoteFS.getWorkingDirectory());
+                if (resolve) p = remoteFS.resolvePath(p);
                 String name = linkLookup.get(p);
                 if (name == null) {
                     name = p.getName();

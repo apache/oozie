@@ -3497,4 +3497,12 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <property>
+        <name>oozie.classpathutils.resolve</name>
+        <value>false</value>
+        <description>
+            If false, then Oozie will not turn to NameNode to resolve file path one by one before starts the Yarn application.
+        </description>
+    </property>
+
 </configuration>
