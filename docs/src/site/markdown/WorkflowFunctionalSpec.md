@@ -2288,6 +2288,29 @@ It returns the size in bytes of specified file. If the path is not a file, or if
 
 It returns the block size in bytes of specified file. If the path is not a file, or if it does not exist it returns -1.
 
+#### 4.2.7.1 File system configuration for EL functions
+
+There is a use case when you need to access special file systems to check data availability and you need to have
+file system principal and key file set. You can have them configured globally in oozie-site.xml or per workflow run
+through job.properties file.
+
+Example of global configuration to have all the abfss:// access via EL functions configured:
+```
+<property>
+        <name>FsELFunctions.conf.fs.abfss</name>
+        <value>
+            hadoop.security.credstore.java-keystore-provider.password-file=password_file_name,
+            hadoop.security.credential.provider.path=jceks:///path/to/file
+        </value>
+    </property>
+```
+
+Example of per workflow configuration via job.properties:
+```
+FsELFunctions.conf.fs.abfss.hadoop.security.credstore.java-keystore-provider.password-file=password_file_name,
+FsELFunctions.conf.fs.abfss.hadoop.security.credential.provider.path=jceks:///path/to/file
+```
+
 #### 4.2.8 HCatalog EL Functions
 
 For all the functions in this section the URI must be a hcatalog URI identifying a table or set of partitions in a table.

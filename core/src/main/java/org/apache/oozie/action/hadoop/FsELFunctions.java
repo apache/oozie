@@ -19,6 +19,7 @@
 package org.apache.oozie.action.hadoop;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -28,24 +29,76 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.oozie.DagELFunctions;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
+import org.apache.oozie.util.XConfiguration;
 
 /**
  * EL function for fs action executor.
  */
 public class FsELFunctions {
+    static final String FS_EL_FUNCTIONS_CONF = "FsELFunctions.conf.fs.";
 
     private static FileSystem getFileSystem(URI uri) throws HadoopAccessorException {
         WorkflowJob workflow = DagELFunctions.getWorkflow();
         String user = workflow.getUser();
         HadoopAccessorService has = Services.get().get(HadoopAccessorService.class);
         Configuration conf = has.createConfiguration(uri.getAuthority());
+
+        extractExtraFsConfiguration(workflow, conf, uri);
+
         return has.createFileSystem(user, uri, conf);
+    }
+
+    static void extractExtraFsConfiguration(WorkflowJob workflow, Configuration conf, URI uri)
+            throws HadoopAccessorException {
+        if (workflow.getConf() != null) {
+            try {
+                readFsConfigFromOozieSite(conf, uri);
+                readFsConfigFromWorkflow(workflow, conf, uri);
+            } catch (Exception e) {
+                throw new HadoopAccessorException(ErrorCode.E0759, e);
+            }
+        }
+    }
+
+    private static void readFsConfigFromOozieSite(Configuration conf, URI uri) {
+        final String fsElFunctionsConfWithScheme = FS_EL_FUNCTIONS_CONF + uri.getScheme();
+        final String customELFsProperties = ConfigurationService.get(fsElFunctionsConfWithScheme);
+
+        for (final String entry : customELFsProperties.split(",")) {
+            final String[] nameAndValue = entry.trim().split("=", 2);
+            if (nameAndValue.length < 2) {
+                continue;
+            }
+            putKeyToConfIfAllowed(conf, nameAndValue[0], nameAndValue[1]);
+        }
+    }
+
+    private static void readFsConfigFromWorkflow(WorkflowJob workflow, Configuration conf, URI uri) throws Exception {
+        if (workflow.getConf() == null) {
+            return;
+        }
+        final String FS_EL_FUNCTIONS_CONF_WITH_SCHEME = FS_EL_FUNCTIONS_CONF + uri.getScheme() + ".";
+        final XConfiguration workflowConf = new XConfiguration(new StringReader(workflow.getConf()));
+        for (Object _key : workflowConf.toProperties().keySet()) {
+            String key = (String) _key;
+            if (!key.startsWith(FS_EL_FUNCTIONS_CONF_WITH_SCHEME)) {
+                continue;
+            }
+            putKeyToConfIfAllowed(conf, key.substring(FS_EL_FUNCTIONS_CONF_WITH_SCHEME.length()), workflowConf.get(key));
+        }
+    }
+
+    private static void putKeyToConfIfAllowed(Configuration conf, String key, String value) {
+        if (!JavaActionExecutor.DISALLOWED_PROPERTIES.contains(key)) {
+            conf.set(key, value);
+        }
     }
 
     /**

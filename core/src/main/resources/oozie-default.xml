@@ -826,6 +826,62 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
+    <!-- Have default empty value for every file system enumerated in oozie.service.HadoopAccessorService.supported.filesystems -->
+
+    <property>
+        <name>FsELFunctions.conf.fs.hdfs</name>
+        <value></value>
+        <description>
+            You can configure custom hdfs file system properties for EL functions globally.
+            Value shall be a comma separated list of key=value pairs.
+        </description>
+    </property>
+
+    <property>
+        <name>FsELFunctions.conf.fs.hftp</name>
+        <value></value>
+        <description>
+            You can configure custom hftp file system properties for EL functions globally.
+            Value shall be a comma separated list of key=value pairs.
+        </description>
+    </property>
+
+    <property>
+        <name>FsELFunctions.conf.fs.abfs</name>
+        <value></value>
+        <description>
+            You can configure custom abfs file system properties for EL functions globally.
+            Value shall be a comma separated list of key=value pairs.
+        </description>
+    </property>
+
+    <property>
+        <name>FsELFunctions.conf.fs.abfss</name>
+        <value></value>
+        <description>
+            You can configure custom abfss file system properties for EL functions globally.
+            Value shall be a comma separated list of key=value pairs.
+        </description>
+    </property>
+
+    <property>
+        <name>FsELFunctions.conf.fs.s3</name>
+        <value></value>
+        <description>
+            You can configure custom s3 file system properties for EL functions globally.
+            Value shall be a comma separated list of key=value pairs.
+        </description>
+    </property>
+
+    <property>
+        <name>FsELFunctions.conf.fs.webhdfs</name>
+        <value></value>
+        <description>
+            You can configure custom webhdfs file system properties for EL functions globally.
+            Value shall be a comma separated list of key=value pairs.
+        </description>
+    </property>
+
     <property>
         <name>oozie.service.WorkflowAppService.WorkflowDefinitionMaxLength</name>
         <value>100000</value>

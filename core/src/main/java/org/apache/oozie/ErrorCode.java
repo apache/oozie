@@ -158,6 +158,7 @@ public enum ErrorCode {
     E0756(XLog.STD, "Exception parsing Kill node message [{0}]"),
     E0757(XLog.STD, "Fork node [{0}] has multiple joins: [{1}]"),
     E0758(XLog.STD, "Join node [{0}] has multiple forks: [{1}]"),
+    E0759(XLog.STD, "Could not read the workflow configuration"),
 
     E0800(XLog.STD, "Action it is not running its in [{1}] state, action [{0}]"),
     E0801(XLog.STD, "Workflow already running, workflow [{0}]"),

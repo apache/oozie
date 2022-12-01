@@ -30,6 +30,7 @@ import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagELFunctions;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.workflow.lite.EndNodeDef;
 import org.apache.oozie.workflow.lite.LiteWorkflowApp;
@@ -43,28 +44,33 @@ import org.apache.oozie.util.XConfiguration;
 
 public class TestFsELFunctions extends XFsTestCase {
 
+    public static final String PASSWORD_FILE_KEY = "hadoop.security.credstore.java-keystore-provider.password-file";
+    public static final String CREDENTIAL_PATH_KEY = "hadoop.security.credential.provider.path";
+    public static final String HDFS_FILE = "hdfs://path/to/file";
+    public static final String JCEKS_FILE = "jceks://path/to/file";
+    public static final String PASSWORD_FILE = "password.file";
+    public static final String KEY_WE_DONOT_WANT = "key.shall.not.used";
+    public static final String HDFS_ELF_FS_CONF_PREFIX = FsELFunctions.FS_EL_FUNCTIONS_CONF + "hdfs";
+    private Configuration jobConf;
+    private Configuration protoConf;
+    private Configuration conf;
+    private LiteWorkflowInstance job;
+    private WorkflowJobBean wf;
+    private FileSystem fs;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         new Services().init();
-    }
 
-    @Override
-    protected void tearDown() throws Exception {
-        Services.get().destroy();
-        super.tearDown();
-    }
-
-    public void testFunctions() throws Exception {
         String file1 = new Path(getFsTestCaseDir(), "file1").toString();
         String file2 = new Path(getFsTestCaseDir(), "file2").toString();
         String dir = new Path(getFsTestCaseDir(), "dir").toString();
-        Configuration protoConf = new Configuration();
+        protoConf = new Configuration();
         protoConf.set(OozieClient.USER_NAME, getTestUser());
         protoConf.set("hadoop.job.ugi", getTestUser() + "," + "group");
 
-
-        FileSystem fs = getFileSystem();
+        fs = getFileSystem();
         fs.mkdirs(new Path(dir));
         fs.create(new Path(file1)).close();
         OutputStream os = fs.create(new Path(dir, "a"));
@@ -83,7 +89,7 @@ public class TestFsELFunctions extends XFsTestCase {
         String dirExtraSlashInPath = new URI(dirURI.getScheme(), dirURI.getAuthority(),
                 "/" + dirURI.getPath(), null, null).toString();
 
-        Configuration conf = new XConfiguration();
+        conf = new XConfiguration();
         conf.set(OozieClient.APP_PATH, "appPath");
         conf.set(OozieClient.USER_NAME, getTestUser());
 
@@ -100,11 +106,11 @@ public class TestFsELFunctions extends XFsTestCase {
 
         LiteWorkflowApp def =
                 new LiteWorkflowApp("name", "<workflow-app/>",
-                                    new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
-                    addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
-        LiteWorkflowInstance job = new LiteWorkflowInstance(def, conf, "wfId");
+                        new StartNodeDef(LiteWorkflowStoreService.LiteControlNodeHandler.class, "end")).
+                        addNode(new EndNodeDef("end", LiteWorkflowStoreService.LiteControlNodeHandler.class));
+        job = new LiteWorkflowInstance(def, conf, "wfId");
 
-        WorkflowJobBean wf = new WorkflowJobBean();
+        wf = new WorkflowJobBean();
         wf.setId(job.getId());
         wf.setAppName("name");
         wf.setAppPath("appPath");
@@ -114,7 +120,15 @@ public class TestFsELFunctions extends XFsTestCase {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         protoConf.writeXml(baos);
         wf.setProtoActionConf(baos.toString(StandardCharsets.UTF_8.name()));
+    }
 
+    @Override
+    protected void tearDown() throws Exception {
+        Services.get().destroy();
+        super.tearDown();
+    }
+
+    public void testFunctions() throws Exception {
         WorkflowActionBean action = new WorkflowActionBean();
         action.setId("actionId");
         action.setName("actionName");
@@ -140,4 +154,60 @@ public class TestFsELFunctions extends XFsTestCase {
                 3, (int) eval.evaluate("${fs:dirSize(wf:conf('dirExtraSlashInPath'))}", Integer.class));
     }
 
+    public void testCustomFileSystemPropertiesCanBeSet() throws Exception {
+        jobConf = new Configuration();
+        jobConf.set(HDFS_ELF_FS_CONF_PREFIX + "." + CREDENTIAL_PATH_KEY, JCEKS_FILE);
+        jobConf.set(HDFS_ELF_FS_CONF_PREFIX + "." + PASSWORD_FILE_KEY, PASSWORD_FILE);
+        jobConf.set("hadoop.irrelevant.configuration", "value");
+        jobConf.set("user.name", "Malice");
+        jobConf.set(HDFS_ELF_FS_CONF_PREFIX + "user.name", "Malice");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        jobConf.writeXml(baos);
+        wf.setConf(baos.toString(StandardCharsets.UTF_8.name()));
+
+        Configuration resultFsConf = new Configuration(false);
+        FsELFunctions.extractExtraFsConfiguration(wf, resultFsConf, fs.getUri());
+        assertEquals(JCEKS_FILE, resultFsConf.get(CREDENTIAL_PATH_KEY));
+        assertEquals(PASSWORD_FILE, resultFsConf.get(PASSWORD_FILE_KEY));
+        assertNull("Irrelevant property shall not be set.", resultFsConf.get("hadoop.irrelevant.configuration"));
+        assertNull("Disallowed property shall not be set.", resultFsConf.get("user.name"));
+
+    }
+
+    public void testOozieSiteConfigRead() throws Exception {
+        Configuration cnf = new Configuration(false);
+        URI uri = new URI(HDFS_FILE);
+        ConfigurationService.set(HDFS_ELF_FS_CONF_PREFIX,
+                CREDENTIAL_PATH_KEY + "=" + JCEKS_FILE + "," + PASSWORD_FILE_KEY + "=" + PASSWORD_FILE);
+        ConfigurationService.set(FsELFunctions.FS_EL_FUNCTIONS_CONF + "hdfsx", KEY_WE_DONOT_WANT + "=value");
+
+        jobConf = new Configuration();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        jobConf.writeXml(baos);
+        wf.setConf(baos.toString(StandardCharsets.UTF_8.name()));
+
+        FsELFunctions.extractExtraFsConfiguration(wf, cnf, uri);
+
+        assertEquals(JCEKS_FILE, cnf.get(CREDENTIAL_PATH_KEY));
+        assertEquals(PASSWORD_FILE, cnf.get(PASSWORD_FILE_KEY));
+        assertNull(cnf.get(KEY_WE_DONOT_WANT));
+    }
+
+    public void testIfWorkflowConfOverwritesSiteConf() throws Exception {
+        Configuration cnf = new Configuration(false);
+        URI uri = new URI(HDFS_FILE);
+        String KEY_TO_OVERRIDE = CREDENTIAL_PATH_KEY;
+        ConfigurationService.set(HDFS_ELF_FS_CONF_PREFIX, KEY_TO_OVERRIDE + "=" + JCEKS_FILE);
+
+        jobConf = new Configuration();
+        jobConf.set(HDFS_ELF_FS_CONF_PREFIX  + "." + KEY_TO_OVERRIDE, "Desired value");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        jobConf.writeXml(baos);
+        wf.setConf(baos.toString(StandardCharsets.UTF_8.name()));
+
+        FsELFunctions.extractExtraFsConfiguration(wf, cnf, uri);
+
+        assertEquals("Desired value", cnf.get(CREDENTIAL_PATH_KEY));
+    }
 }
