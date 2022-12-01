@@ -52,8 +52,10 @@ import java.util.Objects;
 public class EmbeddedOozieServer {
     private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOozieServer.class);
     protected static final String OOZIE_HTTPS_TRUSTSTORE_FILE = "oozie.https.truststore.file";
+    protected static final String OOZIE_HTTPS_TRUSTSTORE_TYPE = "oozie.https.truststore.type";
     protected static final String OOZIE_HTTPS_TRUSTSTORE_PASS = "oozie.https.truststore.pass";
     protected static final String TRUSTSTORE_PATH_SYSTEM_PROPERTY = "javax.net.ssl.trustStore";
+    protected static final String TRUSTSTORE_TYPE_SYSTEM_PROPERTY = "javax.net.ssl.trustStoreType";
     protected static final String TRUSTSTORE_PASS_SYSTEM_PROPERTY = "javax.net.ssl.trustStorePassword";
     private static String contextPath;
     protected Server server;
@@ -124,6 +126,7 @@ public class EmbeddedOozieServer {
 
         HandlerCollection handlerCollection = new HandlerCollection();
         setTrustStore();
+        setTrustStoreType();
         setTrustStorePassword();
 
         if (isSecured()) {
@@ -163,6 +166,21 @@ public class EmbeddedOozieServer {
             }
         } else {
             LOG.info("javax.net.ssl.trustStore is already set. The value from config file will be ignored");
+        }
+    }
+
+    /**
+     * set the truststore type from the config file, if is not set by the user
+     */
+    private void setTrustStoreType() {
+        if (System.getProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY) == null) {
+            final String trustStoreType = conf.get(OOZIE_HTTPS_TRUSTSTORE_TYPE);
+            if (trustStoreType != null) {
+                LOG.info("Setting javax.net.ssl.trustStoreType from config file");
+                System.setProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY, trustStoreType);
+            }
+        } else {
+            LOG.info("javax.net.ssl.trustStoreType is already set. The value from config file will be ignored");
         }
     }
 
@@ -259,7 +277,7 @@ public class EmbeddedOozieServer {
                 try {
                     shutdown();
                 } catch (final Exception e) {
-                    LOG.error(String.format("There were errors during shutdown. Error message: %s", e.getMessage()));
+                    LOG.error("There were errors during shutdown.", e);
                 }
             }
         });
@@ -271,9 +289,8 @@ public class EmbeddedOozieServer {
         EmbeddedOozieServer embeddedOozieServer = null;
         try {
             embeddedOozieServer = guiceInjector.getInstance(EmbeddedOozieServer.class);
-        }
-        catch (final ProvisionException ex) {
-            LOG.error(ex.getMessage());
+        } catch (final ProvisionException ex) {
+            LOG.error("Failed to get EmbeddedOozieServer", ex);
             System.exit(1);
         }
 
@@ -282,7 +299,7 @@ public class EmbeddedOozieServer {
         try {
             embeddedOozieServer.start();
         } catch (final Exception e) {
-            LOG.error(String.format("Could not start EmbeddedOozieServer! Error message: %s", e.getMessage()));
+            LOG.error("Could not start EmbeddedOozieServer!", e);
             System.exit(1);
         }
         embeddedOozieServer.join();

@@ -35,21 +35,26 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyObject;
-import static org.mockito.ArgumentMatchers.isA;
+import static org.apache.oozie.server.EmbeddedOozieServer.OOZIE_HTTPS_TRUSTSTORE_TYPE;
+import static org.apache.oozie.server.EmbeddedOozieServer.TRUSTSTORE_TYPE_SYSTEM_PROPERTY;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  *  Server tests
@@ -175,5 +180,75 @@ public class TestEmbeddedOozieServer {
     public void numberFormatExceptionThrownWithInvalidHttpPort() throws ServiceException, IOException, URISyntaxException {
         doReturn("INVALID_PORT").when(mockConfiguration).get("oozie.http.port");
         embeddedOozieServer.setup();
+    }
+
+    @Test
+    public void testTrustStoreTypeSetFromConfigIfNotSetInSystemProperties()
+            throws ServiceException, IOException, URISyntaxException {
+
+        ConfigurationService configurationService = mock(ConfigurationService.class);
+        String truststoreType = "MY-TRUSTSTORE-TYPE";
+
+        // clearing system property
+        System.clearProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY);
+
+        when(mockConfiguration.get(Mockito.eq(OOZIE_HTTPS_TRUSTSTORE_TYPE))).thenReturn(truststoreType);
+        when(configurationService.getConf()).thenReturn(mockConfiguration);
+        when(mockServices.get(Mockito.eq(ConfigurationService.class))).thenReturn(configurationService);
+
+        // when
+        embeddedOozieServer.setup();
+
+        // then
+        Assert.assertEquals(truststoreType, System.getProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY));
+
+        // to satisfy test teardown
+        verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+    }
+
+    @Test
+    public void testTrustStoreTypeNotSetFromConfigIfSetInSystemProperties()
+            throws ServiceException, IOException, URISyntaxException {
+
+        ConfigurationService configurationService = mock(ConfigurationService.class);
+        String truststoreTypeFromProperty = "MY-TRUSTSTORE-TYPE-PROPERTY";
+
+        // setting system property
+        System.setProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY, truststoreTypeFromProperty);
+
+        when(configurationService.getConf()).thenReturn(mockConfiguration);
+        when(mockServices.get(Mockito.eq(ConfigurationService.class))).thenReturn(configurationService);
+
+        // when
+        embeddedOozieServer.setup();
+
+        // then
+        Assert.assertEquals(truststoreTypeFromProperty, System.getProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY));
+
+        // to satisfy test teardown
+        verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
+    }
+
+
+    @Test
+    public void testTrustStoreTypeNotSetIfNotProvidedAtAll()
+            throws ServiceException, IOException, URISyntaxException {
+
+        ConfigurationService configurationService = mock(ConfigurationService.class);
+
+        // clearing system property
+        System.clearProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY);
+
+        when(configurationService.getConf()).thenReturn(mockConfiguration);
+        when(mockServices.get(Mockito.eq(ConfigurationService.class))).thenReturn(configurationService);
+
+        // when
+        embeddedOozieServer.setup();
+
+        // then
+        Assert.assertNull(System.getProperty(TRUSTSTORE_TYPE_SYSTEM_PROPERTY));
+
+        // to satisfy test teardown
+        verify(mockJspHandler).setupWebAppContext(isA(WebAppContext.class));
     }
 }

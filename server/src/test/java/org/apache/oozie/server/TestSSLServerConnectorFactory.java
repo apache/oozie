@@ -29,6 +29,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -42,9 +43,11 @@ import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCL
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_INCLUDE_PROTOCOLS;
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_FILE;
 import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_PASS;
+import static org.apache.oozie.server.SSLServerConnectorFactory.OOZIE_HTTPS_KEYSTORE_TYPE;
 import static org.apache.oozie.util.ConfigUtils.OOZIE_HTTP_PORT;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -65,6 +68,7 @@ public class TestSSLServerConnectorFactory {
     @Before public void setUp() {
         testConfig = new Configuration();
         testConfig.set(OOZIE_HTTPS_KEYSTORE_FILE, "test_keystore_file");
+        testConfig.set(OOZIE_HTTPS_KEYSTORE_TYPE, "test_keystore_type");
         testConfig.set(OOZIE_HTTPS_KEYSTORE_PASS, "keypass");
         testConfig.set(OOZIE_HTTP_PORT, "11000");
         testConfig.set(OOZIE_HTTP_REQUEST_HEADER_SIZE, "65536");
@@ -174,5 +178,17 @@ public class TestSSLServerConnectorFactory {
         HttpConnectionFactory factory = (HttpConnectionFactory)connector.getConnectionFactory(HttpVersion.HTTP_1_1.asString());
         long actualMaxAge = factory.getHttpConfiguration().getCustomizer(SecureRequestCustomizer.class).getStsMaxAge();
         assertEquals("HSTS max age mismatch", expectedMaxAge, actualMaxAge);
+    }
+
+    @Test
+    public void testKeyStoreTypeSetSelectedValue() {
+        String keyStoreType = "MY-KEYSTORE-TYPE";
+        testConfig.set(OOZIE_HTTPS_KEYSTORE_TYPE, keyStoreType);
+
+        // when
+        sslServerConnectorFactory.createSecureServerConnector(42, testConfig, mockServer);
+
+        // then
+        verify(mockSSLContextFactory).setKeyStoreType(eq(keyStoreType));
     }
 }

@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3677 Oozie should accept a keyStoreType and trustStoreType property in oozie-site.xml (jmakai via dionusos)
 OOZIE-3678 Reduce the number of NameNode access when starting the Yarn job (jmakai via dionusos)
 OOZIE-3670 Actions can stuck while running in a Fork-Join workflow (jmakai via dionusos)
 OOZIE-3676 Remove all non FIPS compliant encoding algorithms (jmakai via dionusos)

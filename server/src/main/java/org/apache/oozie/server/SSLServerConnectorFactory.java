@@ -45,6 +45,7 @@ class SSLServerConnectorFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SSLServerConnectorFactory.class);
     public static final String OOZIE_HTTPS_KEYSTORE_PASS = "oozie.https.keystore.pass";
     public static final String OOZIE_HTTPS_KEYSTORE_FILE = "oozie.https.keystore.file";
+    public static final String OOZIE_HTTPS_KEYSTORE_TYPE = "oozie.https.keystore.type";
     public static final String OOZIE_HTTPS_EXCLUDE_PROTOCOLS = "oozie.https.exclude.protocols";
     public static final String OOZIE_HTTPS_INCLUDE_PROTOCOLS = "oozie.https.include.protocols";
     public static final String OOZIE_HTTPS_INCLUDE_CIPHER_SUITES = "oozie.https.include.cipher.suites";
@@ -83,6 +84,7 @@ class SSLServerConnectorFactory {
         setExludeCipherSuites();
 
         setKeyStoreFile();
+        setKeyStoreType();
         setKeystorePass();
 
         HttpConfiguration httpsConfiguration = getHttpsConfiguration();
@@ -144,6 +146,13 @@ class SSLServerConnectorFactory {
         String keystoreFile = conf.get(OOZIE_HTTPS_KEYSTORE_FILE);
         Objects.requireNonNull(keystoreFile, "keystoreFile is null");
         sslContextFactory.setKeyStorePath(keystoreFile);
+    }
+
+    private void setKeyStoreType() {
+        String keyStoreType = conf.get(OOZIE_HTTPS_KEYSTORE_TYPE);
+        if(keyStoreType != null) {
+            sslContextFactory.setKeyStoreType(keyStoreType);
+        }
     }
 
     private HttpConfiguration getHttpsConfiguration() {
