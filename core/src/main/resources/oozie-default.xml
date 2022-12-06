@@ -2285,35 +2285,6 @@ will be the requeue interval for the actions which are waiting for a long time w
         </description>
     </property>
 
-    <!-- Have default empty value for every file system enumerated in oozie.service.HadoopAccessorService.supported.filesystems -->
-
-    <property>
-        <name>oozie.service.HadoopAccessorService.fs.hdfs</name>
-        <value> </value>
-        <description>
-            You can configure custom hdfs file system properties globally.
-            Value shall be a comma separated list of key=value pairs.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.HadoopAccessorService.fs.hftp</name>
-        <value> </value>
-        <description>
-            You can configure custom hftp file system properties globally.
-            Value shall be a comma separated list of key=value pairs.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.HadoopAccessorService.fs.webhdfs</name>
-        <value> </value>
-        <description>
-            You can configure custom webhdfs file system properties globally.
-            Value shall be a comma separated list of key=value pairs.
-        </description>
-    </property>
-
     <property>
         <name>oozie.service.HadoopAccessorService.fs.s3a</name>
         <value> </value>
@@ -2323,24 +2294,6 @@ will be the requeue interval for the actions which are waiting for a long time w
             fs.s3a.fast.upload.buffer=bytebuffer,fs.s3a.impl.disable.cache=true
             Limitation: the custom file system properties cannot contain comma neither
             in key nor in value.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.HadoopAccessorService.fs.abfs</name>
-        <value> </value>
-        <description>
-            You can configure custom abfs file system properties globally.
-            Value shall be a comma separated list of key=value pairs.
-        </description>
-    </property>
-
-    <property>
-        <name>oozie.service.HadoopAccessorService.fs.abfss</name>
-        <value> </value>
-        <description>
-            You can configure custom abfss file system properties globally.
-            Value shall be a comma separated list of key=value pairs.
         </description>
     </property>
 
@@ -2591,7 +2544,7 @@ will be the requeue interval for the actions which are waiting for a long time w
 
     <property>
         <name>oozie.service.HadoopAccessorService.supported.filesystems</name>
-        <value>hdfs,hftp,webhdfs,s3a,abfs,abfss</value>
+        <value>hdfs,hftp,webhdfs</value>
         <description>
             Enlist the different filesystems supported for federation. If wildcard "*" is specified,
             then ALL file schemes will be allowed.

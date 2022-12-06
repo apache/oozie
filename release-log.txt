@@ -1,6 +1,5 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
-OOZIE-3680 Add default value to custom configuration of all the supported file systems in Oozie (jmakai via dionusos)
 OOZIE-3606 Extend file system EL functions to use custom file system properties (jmakai via dionusos)
 OOZIE-3677 Oozie should accept a keyStoreType and trustStoreType property in oozie-site.xml (jmakai via dionusos)
 OOZIE-3678 Reduce the number of NameNode access when starting the Yarn job (jmakai via dionusos)
