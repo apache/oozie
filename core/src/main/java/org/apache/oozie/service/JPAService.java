@@ -90,7 +90,8 @@ public class JPAService implements Service, Instrumentable {
     public static final String CONF_VALIDATE_DB_CONN_EVICTION_NUM = CONF_PREFIX + "validate.db.connection.eviction.num";
     public static final String CONF_OPENJPA_BROKER_IMPL = CONF_PREFIX + "openjpa.BrokerImpl";
     public static final String INITIAL_WAIT_TIME = CONF_PREFIX + "retry.initial-wait-time.ms";
-    public static final String MAX_WAIT_TIME = CONF_PREFIX + "maximum-wait-time.ms";
+    public static final String MAX_WAIT_TIME = CONF_PREFIX + "retry.maximum-wait-time.ms";
+    public static final String MAX_WAIT_TIME_DEPRECATED = CONF_PREFIX + "maximum-wait-time.ms";
     public static final String MAX_RETRY_COUNT = CONF_PREFIX + "retry.max-retries";
     public static final String SKIP_COMMIT_FAULT_INJECTION_CLASS = SkipCommitFaultInjection.class.getName();
 
@@ -259,7 +260,8 @@ public class JPAService implements Service, Instrumentable {
 
     private void initRetryHandler() {
         final long initialWaitTime = ConfigurationService.getInt(INITIAL_WAIT_TIME, (int) DEFAULT_INITIAL_WAIT_TIME);
-        final long maxWaitTime = ConfigurationService.getInt(MAX_WAIT_TIME, (int) DEFAULT_MAX_WAIT_TIME);
+        final long maxWaitTime = ConfigurationService.getInt(MAX_WAIT_TIME_DEPRECATED,
+                ConfigurationService.getInt(MAX_WAIT_TIME, (int) DEFAULT_MAX_WAIT_TIME));
         final int maxRetryCount = ConfigurationService.getInt(MAX_RETRY_COUNT, DEFAULT_MAX_RETRY_COUNT);
 
         LOG.info(XLog.STD, "Failing database operations will be retried {0} times, with an initial sleep time of {1} ms,"
