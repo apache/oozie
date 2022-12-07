@@ -139,7 +139,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
         slaRegBean1.setAppName("app-name");
-        slaRegBean1.setExpectedDuration(123);
+        slaRegBean1.setExpectedDuration(10000);
         slaRegBean1.setExpectedEnd(sdf.parse("2012-02-07"));
         slaRegBean1.setExpectedStart(sdf.parse("2011-02-07"));
         slaRegBean1.setNominalTime(sdf.parse("2012-01-06"));
@@ -216,7 +216,7 @@ public class TestSLACalculatorMemory extends XDataTestCase {
         assertEquals("job-1-W", calc.getId());
         assertEquals(AppType.WORKFLOW_JOB, calc.getAppType());
         assertEquals("app-name", calc.getAppName());
-        assertEquals(123, calc.getExpectedDuration());
+        assertEquals(10000, calc.getExpectedDuration());
         assertEquals(sdf.parse("2012-02-07"), calc.getExpectedEnd());
         assertEquals(sdf.parse("2011-02-07"), calc.getExpectedStart());
         assertEquals(sdf.parse("2012-01-06"), calc.getNominalTime());
