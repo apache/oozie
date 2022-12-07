@@ -23,8 +23,10 @@ shift
 callbackCmnd=${1}
 shift
 callbackUrl=${1}
+callbackUrl=$(echo ${callbackUrl} | tr -d '"')
 shift
 callbackPost=${1}
+callbackPost=$(echo ${callbackPost} | tr -d '"')
 shift
 actionId=${1}
 shift

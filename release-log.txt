@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3682 Prepare ssh-wrapper script to handle callback specific arguments with quotes (jmakai via dionusos)
 OOZIE-3683 Fix intermittent unit test failure in testLoadOnRestart (jmakai via dionusos)
 OOZIE-3679 Correct maximum wait time between database retry attempts property (jmakai via dionusos)
 OOZIE-3606 Extend file system EL functions to use custom file system properties (jmakai via dionusos)
