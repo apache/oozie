@@ -136,15 +136,13 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
         CallableQueueService queueservice = services.get(CallableQueueService.class);
 
-        for (MyCoordActionInputCheckXCommand c : callables) {
-            queueservice.queue(c);
-        }
+        queueservice.queueSerial(callables);
 
         waitFor(200, new Predicate() {
             public boolean evaluate() throws Exception {
                 return callable1.executed != 0 && callable2.executed == 0 && callable3.executed == 0;
             }
-        });
+        }, 50L);
 
         assertTrue(callable1.executed != 0);
         assertTrue(callable2.executed == 0);

@@ -788,6 +788,17 @@ public abstract class XTestCase extends TestCase {
      * @return the waited time.
      */
     protected long waitFor(int timeout, Predicate predicate) {
+        return waitFor(timeout, predicate, 1000L);
+    }
+
+    /**
+     * Wait for a condition, expressed via a {@link Predicate} to become true.
+     *
+     * @param timeout maximum time in milliseconds to wait for the predicate to become true.
+     * @param predicate predicate waiting on.
+     * @return the waited time.
+     */
+    protected long waitFor(int timeout, Predicate predicate, long waitTime) {
         Objects.requireNonNull(predicate, "predicate cannot be null");
         XLog log = new XLog(LogFactory.getLog(getClass()));
         long started = System.currentTimeMillis();
@@ -803,7 +814,7 @@ public abstract class XTestCase extends TestCase {
                     log.info("Waiting up to [{0}] msec", waiting);
                     lastEcho = System.currentTimeMillis();
                 }
-                Thread.sleep(1000);
+                Thread.sleep(waitTime);
             }
             if (!eval) {
                 log.info("Waiting timed out after [{0}] msec", timeout);
