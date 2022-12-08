@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3686 Repair flaky testRetryConsoleUrlForked unit test (jmakai via dionusos)
 OOZIE-3684 Migrate to commons-lang3 again (jmakai via dionusos)
 OOZIE-3682 Prepare ssh-wrapper script to handle callback specific arguments with quotes (jmakai via dionusos)
 OOZIE-3683 Fix intermittent unit test failure in testLoadOnRestart (jmakai via dionusos)

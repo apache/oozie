@@ -156,6 +156,12 @@ public class TestWorkflowActionRetryInfoXCommand extends XDataTestCase {
             }
         });
 
+        // Sleeping here 5 seconds which lets Oozie finish its back end DB synchronisation
+        // otherwise in some cases the below action1 or action2 end time is null.
+        // To reproduce the issue just put a sleep into the beginning of
+        // org.apache.oozie.ForTestingActionExecutor.start
+        Thread.sleep(5000);
+
         List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
         WorkflowActionBean action1 = null;
         WorkflowActionBean action2 = null;
