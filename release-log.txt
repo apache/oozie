@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3688 Introduce retry mechanism when starting embedded servlet containers in unit tests (jmakai via dionusos)
 OOZIE-3685 Repair flaky testCoordActionInputCheckXCommandUniqueness unit test (jmakai via dionusos)
 OOZIE-3686 Repair flaky testRetryConsoleUrlForked unit test (jmakai via dionusos)
 OOZIE-3684 Migrate to commons-lang3 again (jmakai via dionusos)

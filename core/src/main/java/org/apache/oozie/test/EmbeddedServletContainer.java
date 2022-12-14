@@ -49,6 +49,9 @@ public class EmbeddedServletContainer {
     private String contextPath;
     private ServletContextHandler context;
 
+    private static final int CONTAINER_START_DEFAULT_RETRIES = 30;
+    private static final long CONTAINER_START_DEFAULT_WAIT_BETWEEN_RETRIES_IN_SECS = 1;
+
     /**
      * Create a servlet container.
      *
@@ -121,14 +124,30 @@ public class EmbeddedServletContainer {
     }
 
     /**
-     * Start the servlet container. <p> The container starts on a free port or a specific port.
+     * Start the servlet container with retry mechanism. The default retry attempts are 30 with wait times of 30 seconds
+     * in between. The container starts on a free port or a specific port.
      *
-     * @throws Exception thrown if the container could not start.
+     * @throws Exception thrown if the container could not start after `retries` number of tries.
      */
     public void start() throws Exception {
-        host = InetAddress.getLocalHost().getHostName();
-        port = startServerWithPort(port);
-        System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
+        for (int i = 0; i <= CONTAINER_START_DEFAULT_RETRIES; i++) {
+            try {
+                host = InetAddress.getLocalHost().getHostName();
+                port = startServerWithPort(port);
+                System.out.println("Running embedded servlet container at: http://" + host + ":" + port);
+                break;
+            } catch (Exception ex) {
+                System.err.println("An exception is thrown while starting embedded servlet container at port: "
+                        + port + ". Exception:\n" + ex.getMessage());
+
+                // throw exception if the last re-try fails
+                if (i >= CONTAINER_START_DEFAULT_RETRIES) {
+                    throw ex;
+                }
+
+                Thread.sleep(CONTAINER_START_DEFAULT_WAIT_BETWEEN_RETRIES_IN_SECS * 1000);
+            }
+        }
     }
 
     /**
