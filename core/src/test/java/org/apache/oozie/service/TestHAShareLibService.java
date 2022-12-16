@@ -23,11 +23,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.client.rest.JsonTags;
@@ -95,13 +94,13 @@ public class TestHAShareLibService extends ZKXTestCase {
         DummyZKOozie dummyOozie_2 = null;
         try {
             dummyOozie_1 = new DummyZKOozie("9876", container.getServletURL("/other-oozie-server/*"));
-            String url = container.getServletURL("/v2/admin/*") + "update_sharelib?" + RestConstants.ALL_SERVER_REQUEST
-                    + "=true";
-            HttpClient client = new HttpClient();
-            GetMethod method = new GetMethod(url);
-            int statusCode = client.executeMethod(method);
+            URL url = new URL(container.getServletURL("/v2/admin/*") + "update_sharelib?" + RestConstants.ALL_SERVER_REQUEST
+                    + "=true");
+
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            int statusCode = conn.getResponseCode();
             assertEquals(HttpURLConnection.HTTP_OK, statusCode);
-            Reader reader = new InputStreamReader(method.getResponseBodyAsStream(), StandardCharsets.UTF_8);
+            Reader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
             JSONArray sharelib = (JSONArray) JSONValue.parse(reader);
             assertEquals(2, sharelib.size());
             // 1st server update is successful
@@ -117,9 +116,10 @@ public class TestHAShareLibService extends ZKXTestCase {
             // 3rd server not defined.should throw exception.
             dummyOozie_2 = new DummyZKOozie("9873", container.getServletURL("/") + "not-defined/");
 
-            statusCode = client.executeMethod(method);
+            conn = (HttpURLConnection) url.openConnection();
+            statusCode = conn.getResponseCode();
             assertEquals(HttpURLConnection.HTTP_OK, statusCode);
-            reader = new InputStreamReader(method.getResponseBodyAsStream(),StandardCharsets.UTF_8);
+            reader = new InputStreamReader(conn.getInputStream(),StandardCharsets.UTF_8);
             sharelib = (JSONArray) JSONValue.parse(reader);
             assertEquals(3, sharelib.size());
 
