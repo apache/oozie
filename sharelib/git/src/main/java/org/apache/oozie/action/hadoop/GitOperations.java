@@ -92,13 +92,10 @@ class GitOperations {
         final CloneCommand cloneCommand = Git.cloneRepository();
         cloneCommand.setURI(srcURL.toString());
 
-        if (srcURL.getScheme().toLowerCase().equals("ssh")) {
-          cloneCommand.setTransportConfigCallback(new TransportConfigCallback() {
-              @Override
-              public void configure(final Transport transport) {
-                  final SshTransport sshTransport = (SshTransport)transport;
-                  sshTransport.setSshSessionFactory(sshSessionFactory);
-              }
+        if ("ssh".equalsIgnoreCase(srcURL.getScheme())) {
+          cloneCommand.setTransportConfigCallback(transport -> {
+              final SshTransport sshTransport = (SshTransport)transport;
+              sshTransport.setSshSessionFactory(sshSessionFactory);
           });
         }
 
