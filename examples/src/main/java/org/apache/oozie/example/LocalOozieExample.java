@@ -18,6 +18,7 @@
 
 package org.apache.oozie.example;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;

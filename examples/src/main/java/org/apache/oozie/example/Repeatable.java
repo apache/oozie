@@ -19,6 +19,7 @@
 package org.apache.oozie.example;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.Calendar;
 
@@ -172,7 +173,7 @@ public class Repeatable {
     }
 
     public void setBaseline(Date baseline) {
-        this.baseline = baseline;
+        this.baseline = Objects.requireNonNull(baseline, "Baseline date cannot be null");
     }
 
     public TimeZone getTimeZone() {
