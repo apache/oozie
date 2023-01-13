@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -46,10 +47,10 @@ public class SparkMain extends LauncherMain {
             Pattern.compile("Submitted application (application[0-9_]*)") };
     @VisibleForTesting
     static final Pattern SPARK_ASSEMBLY_JAR_PATTERN = Pattern
-            .compile("^spark-assembly((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
+            .compile("^spark-assembly(-|_|\\d|\\.)*\\.jar$");
     @VisibleForTesting
     static final Pattern SPARK_YARN_JAR_PATTERN = Pattern
-            .compile("^spark-yarn((?:(-|_|(\\d+\\.))\\d+(?:\\.\\d+)*))*\\.jar$");
+            .compile("^spark-yarn(-|_|\\d|\\.)*\\.jar$");
     static final String HIVE_SITE_CONF = "hive-site.xml";
     static final String SPARK_LOG4J_PROPS = "spark-log4j.properties";
 
@@ -131,7 +132,7 @@ public class SparkMain extends LauncherMain {
 
         for(final Pattern fileNamePattern : PYSPARK_DEP_FILE_PATTERN) {
             final File file = getMatchingPyFile(fileNamePattern);
-            final File destination = new File(pythonLibDir, file.getName());
+            final File destination = new File(pythonLibDir, FilenameUtils.getName(file.getName()));
             FileUtils.copyFile(file, destination);
             System.out.println("Copied " + file + " to " + destination.getAbsolutePath());
         }
@@ -171,7 +172,7 @@ public class SparkMain extends LauncherMain {
 
         for (final String fileName : localFileNames){
             if (fileNamePattern.matcher(fileName).find()){
-                return new File(fileName);
+                return new File(FilenameUtils.getName(fileName));
             }
         }
 
