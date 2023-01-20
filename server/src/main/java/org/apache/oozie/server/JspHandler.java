@@ -57,7 +57,8 @@ public class JspHandler {
     private File getScratchDir() throws IOException
     {
         if (scratchDir.exists()) {
-            LOG.info(String.format("Scratch directory exists and will be reused: %s", scratchDir.getAbsolutePath()));
+            LOG.info(String.format("Scratch directory exists and will be reused: %s",
+                    scratchDir.getAbsolutePath().replaceAll("[\r\n]","")));
             return scratchDir;
         }
 
@@ -65,7 +66,7 @@ public class JspHandler {
             throw new IOException("Unable to create scratch directory: " + scratchDir);
         }
 
-        LOG.info(String.format("Scratch directory created: %s", scratchDir.getAbsolutePath()));
+        LOG.info(String.format("Scratch directory created: %s", scratchDir.getAbsolutePath().replaceAll("[\r\n]","")));
         return scratchDir;
     }
 

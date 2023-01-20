@@ -228,13 +228,13 @@ public class EmbeddedOozieServer {
     }
 
     private boolean isSecured() {
-        String isSSLEnabled = conf.get("oozie.https.enabled");
+        boolean isSSLEnabled = Boolean.parseBoolean(conf.get("oozie.https.enabled"));
         LOG.info("Server started with oozie.https.enabled = " + isSSLEnabled);
-        return isSSLEnabled != null && Boolean.valueOf(isSSLEnabled);
+        return isSSLEnabled;
     }
 
     public static void setContextPath(Configuration oozieConfiguration) {
-        String baseUrl = oozieConfiguration.get("oozie.base.url");
+        String baseUrl = oozieConfiguration.get("oozie.base.url").replaceAll("[\r\n]","");
         String contextPath = baseUrl.substring(baseUrl.lastIndexOf("/"));
         LOG.info("Server started with contextPath = " + contextPath);
         EmbeddedOozieServer.contextPath = contextPath;

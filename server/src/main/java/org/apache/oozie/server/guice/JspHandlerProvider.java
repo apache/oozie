@@ -20,6 +20,7 @@ package org.apache.oozie.server.guice;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.server.JspHandler;
 import org.apache.oozie.server.WebRootResourceLocator;
@@ -40,7 +41,8 @@ public class JspHandlerProvider implements Provider<JspHandler> {
 
     @Override
     public JspHandler get() {
-        final File tempDir = new File(oozieConfiguration.get(OOZIE_JSP_TMP_DIR), EMBEDDED_JETTY_JSP_DIR);
+        final File tempDir = new File(FilenameUtils.getName(oozieConfiguration.get(OOZIE_JSP_TMP_DIR)),
+                FilenameUtils.getName(EMBEDDED_JETTY_JSP_DIR));
 
         return new JspHandler(tempDir, new WebRootResourceLocator());
     }

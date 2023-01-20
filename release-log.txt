@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3690 [server] Fix current SpotBugs discovered issues in Oozie's server module (jmakai via dionusos)
 OOZIE-3692 [sharelib-spark] Fix current SpotBugs discovered issues in Oozie's sharelib-spark module (jmakai via dionusos)
 OOZIE-3693 [examples] Fix current SpotBugs discovered issues in Oozie's examples module (jmakai via dionusos)
 OOZIE-3696 [sharelib-git] Fix current SpotBugs discovered issues in Oozie's sharelib-git module (dionusos via jmakai)

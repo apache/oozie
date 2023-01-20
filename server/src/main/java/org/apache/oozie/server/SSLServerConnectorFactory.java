@@ -103,7 +103,8 @@ class SSLServerConnectorFactory {
         String[] excludeCipherSuites = excludeCipherList.split(",");
         sslContextFactory.setExcludeCipherSuites(excludeCipherSuites);
 
-        LOG.info(String.format("SSL context - excluding cipher suites: %s", Arrays.toString(excludeCipherSuites)));
+        LOG.info(String.format("SSL context - excluding cipher suites: %s",
+                Arrays.toString(excludeCipherSuites).replaceAll("[\r\n]","")));
     }
 
     private void setIncludeCipherSuites() {
@@ -115,7 +116,8 @@ class SSLServerConnectorFactory {
         String[] includeCipherSuites = includeCipherList.split(",");
         sslContextFactory.setIncludeCipherSuites(includeCipherSuites);
 
-        LOG.info(String.format("SSL context - including cipher suites: %s", Arrays.toString(includeCipherSuites)));
+        LOG.info(String.format("SSL context - including cipher suites: %s",
+                Arrays.toString(includeCipherSuites).replaceAll("[\r\n]","")));
     }
 
     private void setIncludeProtocols() {
@@ -123,7 +125,8 @@ class SSLServerConnectorFactory {
         String[] enabledProtocols = enabledProtocolsList.split(",");
         sslContextFactory.setIncludeProtocols(enabledProtocols);
 
-        LOG.info(String.format("SSL context - including protocols: %s", Arrays.toString(enabledProtocols)));
+        LOG.info(String.format("SSL context - including protocols: %s",
+                Arrays.toString(enabledProtocols).replaceAll("[\r\n]","")));
     }
 
     private void setExcludeProtocols() {
@@ -133,7 +136,8 @@ class SSLServerConnectorFactory {
         }
         String[] excludedProtocols = excludedProtocolsList.split(",");
         sslContextFactory.setExcludeProtocols(excludedProtocols);
-        LOG.info(String.format("SSL context - excluding protocols: %s", Arrays.toString(excludedProtocols)));
+        LOG.info(String.format("SSL context - excluding protocols: %s",
+                Arrays.toString(excludedProtocols).replaceAll("[\r\n]","")));
     }
 
     private void setKeystorePass() {

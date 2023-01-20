@@ -97,7 +97,7 @@ public class ServletMapper {
         try {
             servletContextHandler.addServlet(new ServletHolder(servletClass.newInstance()), servletPath);
         } catch (final InstantiationException | IllegalAccessException e) {
-            LOG.error(e.getMessage(), e);
+            LOG.error(e.getMessage().replaceAll("[\r\n]",""), e);
         }
     }
 }

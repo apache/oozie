@@ -63,6 +63,7 @@ public class TestJspHandler {
     public void scratchDir_Is_Created_When_Setup_Called_And_ScratchDir_Did_Not_Exist() throws IOException, URISyntaxException {
         when(mockScratchDir.exists()).thenReturn(false);
         when(mockScratchDir.mkdirs()).thenReturn(true);
+        when(mockScratchDir.getAbsolutePath()).thenReturn("foobar");
 
         jspHandler.setupWebAppContext(mockWebAppContext);
 
@@ -84,6 +85,7 @@ public class TestJspHandler {
     @Test
     public void scratchDir_Is_Reused_When_Setup_Called_And_ScratchDir_Existed() throws IOException, URISyntaxException {
         when(mockScratchDir.exists()).thenReturn(true);
+        when(mockScratchDir.getAbsolutePath()).thenReturn("foobar");
 
         jspHandler.setupWebAppContext(mockWebAppContext);
 
