@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hive.beeline.BeeLine;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class Hive2Main extends LauncherMain {
     @VisibleForTesting
@@ -103,6 +104,7 @@ public class Hive2Main extends LauncherMain {
         return actionConf;
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "Hive script file created without user input")
     @Override
     protected void run(String[] args) throws Exception {
         System.out.println();
@@ -266,6 +268,7 @@ public class Hive2Main extends LauncherMain {
         return filename;
     }
 
+    @SuppressFBWarnings(value ="PATH_TRAVERSAL_OUT", justification = "Path is created runtime")
     private void runBeeline(String[] args, String logFile) throws Exception {
         // We do this instead of calling BeeLine.main so we can duplicate the error stream for harvesting Hadoop child job IDs
         BeeLine beeLine = new BeeLine();
@@ -274,10 +277,11 @@ public class Hive2Main extends LauncherMain {
         int status = beeLine.begin(args, null);
         beeLine.close();
         if (status != 0) {
-            System.exit(status);
+            throw new RuntimeException("Beeline exited with status: " + status);
         }
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "Hive script file created without user input")
     private static String readStringFromFile(String filePath) throws IOException {
         String line;
         BufferedReader br = null;

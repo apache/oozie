@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3695 [sharelib-hive2] Fix current SpotBugs discovered issues in Oozie's sharelib-hive2 module (jmakai via dionusos)
 OOZIE-3694 [sharelib-hive] Fix current SpotBugs discovered issues in Oozie's sharelib-hive module (jmakai via dionusos)
 OOZIE-3690 [server] Fix current SpotBugs discovered issues in Oozie's server module (jmakai via dionusos)
 OOZIE-3692 [sharelib-spark] Fix current SpotBugs discovered issues in Oozie's sharelib-spark module (jmakai via dionusos)
