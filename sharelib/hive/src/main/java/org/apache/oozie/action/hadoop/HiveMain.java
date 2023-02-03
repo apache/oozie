@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.hive.conf.HiveConf;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class HiveMain extends LauncherMain {
     @VisibleForTesting
@@ -182,6 +183,7 @@ public class HiveMain extends LauncherMain {
         return hiveConf;
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "Hive script file created without user input")
     @Override
     protected void run(String[] args) throws Exception {
         System.out.println();
@@ -310,6 +312,7 @@ public class HiveMain extends LauncherMain {
         CliDriver.main(args);
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "Hive script file created without user input")
     private static String readStringFromFile(String filePath) throws IOException {
         String line;
         BufferedReader br = null;
