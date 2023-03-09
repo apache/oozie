@@ -549,6 +549,9 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 if (context.getJobStatus() != null && context.getJobStatus().equals(Job.Status.FAILED)) {
                     LOG.warn("Action has failed, failing job" + context.getAction().getId());
                     new ActionStartXCommand(context.getAction().getId(), null).failJob(context);
+                    // fixed fork out more than one transitions submit , one transition fail can't execute KillXCommand and other transitions still running
+                    queue(new WorkflowNotificationXCommand((WorkflowJobBean) context.getWorkflow(), (WorkflowActionBean) context.getAction()));
+                    queue(new KillXCommand(context.getWorkflow().getId()));
                     updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_START,
                             (WorkflowActionBean) context.getAction()));
                     if (context.isShouldEndWF()) {
