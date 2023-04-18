@@ -410,9 +410,6 @@ public class LauncherAM {
             // Enable LauncherSecurityManager to catch System.exit calls
             launcherSecurityManager.enable();
             mainMethod.invoke(null, (Object) mainArgs);
-            System.out.println();
-            System.out.println("<<< Invocation of Main class completed <<<");
-            System.out.println();
             actionMainExecutedProperly = true;
         } catch (InvocationTargetException ex) {
             actionMainExecutedProperly = handleInvocationError(eHolder, ex);
@@ -426,6 +423,11 @@ public class LauncherAM {
         } finally {
             // Disable LauncherSecurityManager
             launcherSecurityManager.disable();
+            if (actionMainExecutedProperly) {
+                System.out.println();
+                System.out.println("<<< Invocation of Main class completed <<<");
+                System.out.println();
+            }
         }
         return actionMainExecutedProperly;
     }
