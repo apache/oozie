@@ -1,5 +1,6 @@
 -- Oozie 5.3.0 release (trunk - unreleased)
 
+OOZIE-3715 Fix fork out more than one transitions submit , one transition submit fail can't execute KillXCommand (chenhd via dionusos)
 OOZIE-3716 Invocation of Main class completed Message is skipped when LauncherSecurityManager calls system exit (khr9603 via dionusos)
 OOZIE-3695 [sharelib-hive2] Fix current SpotBugs discovered issues in Oozie's sharelib-hive2 module (jmakai via dionusos)
 OOZIE-3694 [sharelib-hive] Fix current SpotBugs discovered issues in Oozie's sharelib-hive module (jmakai via dionusos)
