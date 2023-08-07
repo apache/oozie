@@ -56,7 +56,6 @@ import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.ELEvaluationException;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.JobUtils;
@@ -91,6 +90,19 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
     public ActionStartXCommand(WorkflowJobBean job, String actionId, String type) {
         super("action.start", type, 0);
+        this.actionId = actionId;
+        this.wfJob = job;
+        this.jobId = wfJob.getId();
+    }
+
+    public ActionStartXCommand(String actionId, String type, String name) {
+        super(name, type, 0);
+        this.actionId = actionId;
+        this.jobId = Services.get().get(UUIDService.class).getId(actionId);
+    }
+
+    public ActionStartXCommand(WorkflowJobBean job, String actionId, String type, String name) {
+        super(name, type, 0);
         this.actionId = actionId;
         this.wfJob = job;
         this.jobId = wfJob.getId();

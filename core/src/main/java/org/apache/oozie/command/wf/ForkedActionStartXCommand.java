@@ -25,16 +25,17 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
-import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 
 public class ForkedActionStartXCommand extends ActionStartXCommand {
 
+    private final static String FORKED_ACTION_START_NAME = "action.forkedstart";
+
     public ForkedActionStartXCommand(String actionId, String type) {
-        super(actionId, type);
+        super(actionId, type, FORKED_ACTION_START_NAME);
     }
 
     public ForkedActionStartXCommand(WorkflowJobBean wfJob, String id, String type) {
-        super(wfJob, id, type);
+        super(wfJob, id, type, FORKED_ACTION_START_NAME);
     }
 
     protected ActionExecutorContext execute() throws CommandException {
