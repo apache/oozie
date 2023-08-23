@@ -1558,6 +1558,7 @@ public class TestJavaActionExecutor extends ActionExecutorTestCase {
         conf.clear();
         ae.addToCache(conf, appPath, appSoFragmentFullPath.toString(), false);
         assertTrue(conf.get("mapred.cache.files").contains(appSoFragmentFullPath.toString()));
+        assertTrue(Arrays.asList(conf.get("mapred.cache.files").split(",")).contains(appSoFragmentFullPath.toString()));
         assertTrue(DistributedCache.getSymlink(conf));
 
         // test .jar without fragment where app path is on same cluster as jar path
