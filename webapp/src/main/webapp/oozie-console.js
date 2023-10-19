@@ -204,8 +204,30 @@ function getCustomFilter() {
     return filter;
 }
 
-function convertStatusToUpperCase(filterText) {
-    var converted = filterText.replace(/status=([a-zA-Z]+)/g, function(){
+// code imported and modified from Handlebars escapeExpression utility
+const escape = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '`': '&#x60;',
+};
+
+function escapeChar(chr) {
+  return escape[chr];
+}
+
+const badChars = /[&<>`]/g,
+  possible = /[&<>`]/;
+
+function escapeExpression(text) {
+  if (!possible.test(text)) {
+    return text;
+  }
+  return text.replace(badChars, escapeChar);
+}
+
+function convertStatusToUpperCaseAndEscapeHtml(filterText) {
+    var converted = escapeExpression(filterText).replace(/status=([a-zA-Z]+)/g, function(){
           var text = arguments[1];
           return "status="+ text.toUpperCase();
     });
@@ -2618,7 +2640,7 @@ var changeFilterAction = new Ext.Action({
     handler: function() {
         Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
             if (btn == 'ok' && text) {
-                var filter = convertStatusToUpperCase(text);
+                var filter = convertStatusToUpperCaseAndEscapeHtml(text);
                 refreshCustomJobsAction.setText(filter);
                 Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
                     expires: new Date(new Date().getTime()+315569259747)
@@ -2637,7 +2659,7 @@ var changeCoordFilterAction = new Ext.Action({
     handler: function() {
         Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
             if (btn == 'ok' && text) {
-                var filter = convertStatusToUpperCase(text);
+                var filter = convertStatusToUpperCaseAndEscapeHtml(text);
                 refreshCoordCustomJobsAction.setText(filter);
                 Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
                     expires: new Date(new Date().getTime()+315569259747)
@@ -2656,7 +2678,7 @@ var changeBundleFilterAction = new Ext.Action({
     handler: function() {
         Ext.Msg.prompt('Filter Criteria', 'Filter text:', function(btn, text) {
             if (btn == 'ok' && text) {
-                var filter = convertStatusToUpperCase(text);
+                var filter = convertStatusToUpperCaseAndEscapeHtml(text);
                 refreshBundleCustomJobsAction.setText(filter);
                 Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
                     expires: new Date(new Date().getTime()+315569259747)
@@ -3231,7 +3253,7 @@ function initConsole() {
                     Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
                         expires: new Date(new Date().getTime()+315569259747) // about 10 years from now!
                     }));
-                    var upper_value = convertStatusToUpperCase(value);
+                    var upper_value = convertStatusToUpperCaseAndEscapeHtml(value);
                     Ext.state.Manager.set("GlobalCustomFilter", upper_value);
                 }
             }}
