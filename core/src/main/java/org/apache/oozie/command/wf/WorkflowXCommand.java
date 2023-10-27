@@ -85,6 +85,7 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
                     wfAction.getStatus(), wfUser, wfAction.getName(), wfAction.getStartTime(), wfAction.getEndTime());
             event.setErrorCode(wfAction.getErrorCode());
             event.setErrorMessage(wfAction.getErrorMessage());
+            event.setHadoopId(wfAction.getExternalId());
             getEventService().queueEvent(event);
         }
     }
