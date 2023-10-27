@@ -96,7 +96,7 @@
          <pig.version>0.16.0</pig.version>
          <pig.classifier>h2</pig.classifier>
          <hive.classifier>core</hive.classifier>
-         <snappy-java.version>1.1.8.4</snappy-java.version>
+         <snappy-java.version>1.1.10.1</snappy-java.version>
          <sqoop.version>1.4.7</sqoop.version>
          <spark.version>1.6.1</spark.version>
          <spark.streaming.kafka.version>1.6.1</spark.streaming.kafka.version>
