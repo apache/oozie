@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class TestGraphGenerator extends XTestCase {
     private static final XLog LOG = XLog.getLog(TestGraphGenerator.class);
@@ -100,7 +101,7 @@ public class TestGraphGenerator extends XTestCase {
     private void generateAndAssertPng(final WorkflowJobBean workflowJob, final String path, final boolean showKill) {
         File outputPng = null;
         try {
-            outputPng = File.createTempFile("graph-output", path + ".png");
+            outputPng = Files.createTempFile("graph-output", path + ".png").toFile();
             final String content = IOUtils.getResourceAsString(path, -1);
             final GraphGenerator g = new GraphGenerator(content, workflowJob, showKill, new GraphvizRenderer());
             g.write(new FileOutputStream(outputPng), OutputFormat.PNG);
@@ -131,7 +132,7 @@ public class TestGraphGenerator extends XTestCase {
 
         File outputDot = null;
         try {
-            outputDot = File.createTempFile("graph-output", "graph-workflow-simple.dot");
+            outputDot = Files.createTempFile("graph-output", "graph-workflow-simple.dot").toFile();
             final String content = IOUtils.getResourceAsString("graph-workflow-simple.xml", -1);
             final GraphGenerator g = new GraphGenerator(content, jsonWFJob, true, new GraphvizRenderer());
             g.write(new FileOutputStream(outputDot), OutputFormat.DOT);
@@ -165,7 +166,7 @@ public class TestGraphGenerator extends XTestCase {
 
         File outputDot = null;
         try {
-            outputDot = File.createTempFile("graph-output", "graph-workflow-simple.svg");
+            outputDot = Files.createTempFile("graph-output", "graph-workflow-simple.svg").toFile();
             final String content = IOUtils.getResourceAsString("graph-workflow-simple.xml", -1);
             final GraphGenerator g = new GraphGenerator(content, jsonWFJob, true, new GraphvizRenderer());
             g.write(new FileOutputStream(outputDot), OutputFormat.SVG);

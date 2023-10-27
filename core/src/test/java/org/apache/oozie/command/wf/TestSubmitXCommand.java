@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -327,7 +328,7 @@ public class TestSubmitXCommand extends XDataTestCase {
         assertNull(protoConf.get(WorkflowAppService.APP_LIB_PATH_LIST));
 
         new File(getTestCaseDir() + "/lib").mkdirs();
-        File.createTempFile("parentLibrary", ".jar", new File(getTestCaseDir() + "/lib"));
+        Files.createTempFile(new File(getTestCaseDir() + "/lib").toPath(), "parentLibrary", ".jar").toFile();
         conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("appName", "var-app-name");

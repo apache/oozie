@@ -38,6 +38,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -126,7 +127,7 @@ public class OozieDBCLI {
                 CommandLine commandLine = command.getCommandLine();
                 String sqlFile =  commandLine.getOptionValue(SQL_FILE_OPT);
                 if (sqlFile == null || sqlFile.isEmpty()) {
-                    File tempFile = File.createTempFile("ooziedb-", ".sql");
+                    File tempFile = Files.createTempFile("ooziedb-", ".sql").toFile();
                     tempFile.deleteOnExit();
                     sqlFile = tempFile.getAbsolutePath();
                 }
