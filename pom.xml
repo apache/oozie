@@ -91,7 +91,7 @@
 
 
          <!-- Sharelib component versions -->
-         <hive.version>1.2.2</hive.version>
+         <hive.version>3.1.2</hive.version>
          <hive.jline.version>2.12</hive.jline.version>
          <pig.version>0.16.0</pig.version>
          <pig.classifier>h2</pig.classifier>
