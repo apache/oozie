@@ -316,13 +316,14 @@ public class CoordinatorEngine extends BaseEngine {
                 // Use set implementation that maintains order or elements to achieve reproducibility:
                 Set<String> actionSet = new LinkedHashSet<String>();
                 String[] list = logRetrievalScope.split(",");
+                LOG.debug("Value for the retrieval type of JobId : " + jobId);
+                int continuousRangeSum = 0;
                 for (String s : list) {
                     s = s.trim();
                     if (s.contains("-")) {
                         String[] range = s.split("-");
                         if (range.length != 2) {
-                            throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s
-                                    + "'");
+                            throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', an example of correct format is 1-5");
                         }
                         int start;
                         int end;
@@ -341,7 +342,15 @@ public class CoordinatorEngine extends BaseEngine {
                         if (start > end) {
                             throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "'");
                         }
+
+                        LOG.debug("Start and end actionIds are : " + start + " to " + end);
+                        continuousRangeSum = continuousRangeSum + (end - start + 1);
+                        if (continuousRangeSum > maxNumActionsForLog) {
+                            throw new CommandException(ErrorCode.E0302, "action's range: " + continuousRangeSum + " is too large than allowed: " + maxNumActionsForLog);
+                        }
+
                         for (int i = start; i <= end; i++) {
+                            LOG.debug("Adding to actionSet.");
                             actionSet.add(jobId + "@" + i);
                         }
                     }

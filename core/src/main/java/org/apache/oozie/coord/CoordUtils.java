@@ -63,7 +63,16 @@ import com.google.common.annotations.VisibleForTesting;
 
 
 public class CoordUtils {
+    private static final XLog LOG = XLog.getLog(CoordUtils.class);
     public static final String HADOOP_USER = "user.name";
+
+    public final static String COORD_ACTIONS_LOG_MAX_COUNT = "oozie.coord.actions.log.max.count";
+    private final static int COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT = 50;
+    private static int maxNumActionsForLog;
+    static {
+        maxNumActionsForLog = Services.get().getConf().getInt(COORD_ACTIONS_LOG_MAX_COUNT, COORD_ACTIONS_LOG_MAX_COUNT_DEFAULT);
+        LOG.info("maxNumActionsForLog set to = " + maxNumActionsForLog);
+    }
 
     public static String getDoneFlag(Element doneFlagElement) {
         if (doneFlagElement != null) {
@@ -198,6 +207,8 @@ public class CoordUtils {
 
         Set<String> actions = new LinkedHashSet<String>();
         String[] list = scope.split(",");
+        LOG.debug("Value for the retrieval type of JobId : " + jobId);
+        int continuousRangeSum = 0;
         for (String s : list) {
             s = s.trim();
             // An action range is specified with two actions separated by '-'
@@ -221,11 +232,19 @@ public class CoordUtils {
                 } catch (NumberFormatException ne) {
                     throw new CommandException(ErrorCode.E0302, "could not parse " + range[1].trim() + "into an integer", ne);
                 }
+                LOG.debug("Start and end actionIds are : " + start + " to " + end);
+                continuousRangeSum = continuousRangeSum + (end - start + 1);
+                LOG.debug("continuousRangeSum = " + continuousRangeSum);
+                LOG.debug("maxNumActionsForLog = " + maxNumActionsForLog);
+                if (continuousRangeSum > maxNumActionsForLog) {
+                    throw new CommandException(ErrorCode.E0302, "action's range: " + continuousRangeSum + " is too large than allowed: " + maxNumActionsForLog);
+                }
                 if (start > end) {
                     throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', starting action"
                             + "number of the range should be less than ending action number, an example will be 1-4");
                 }
                 // Add the actionIds
+                LOG.debug("Adding to actionSet.");
                 for (int i = start; i <= end; i++) {
                     actions.add(jobId + "@" + i);
                 }
