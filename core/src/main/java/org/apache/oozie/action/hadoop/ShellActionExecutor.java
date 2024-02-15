@@ -54,7 +54,7 @@ public class ShellActionExecutor extends JavaActionExecutor {
         Namespace ns = actionXml.getNamespace();
 
         String exec = actionXml.getChild("exec", ns).getTextTrim();
-        String execName = new Path(exec).getName();
+        String execName = resolveExecutable(exec);
         actionConf.set(ShellMain.CONF_OOZIE_SHELL_EXEC, execName);
 
         // Setting Shell command's arguments
@@ -149,5 +149,26 @@ public class ShellActionExecutor extends JavaActionExecutor {
                     + conf.get(propertyName, "") + ", new value :" + val);
         }
     }
+
+    /**
+     * This method extract the exec name from exec tag.
+     *
+     * @param exec
+     * @return
+     */
+    private String resolveExecutable(String exec) {
+        String localFilePrefix = "file://";
+        String execName;
+
+        // When exec starts with 'file://' refer it as local file.
+        if (exec.startsWith(localFilePrefix)) {
+            execName = exec.substring(localFilePrefix.length());
+        } else {
+            execName = new Path(exec).getName();
+        }
+        return execName;
+
+    }
+
 
 }
