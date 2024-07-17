@@ -30,13 +30,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BaseEngine;
 import org.apache.oozie.BaseEngineException;
-import org.apache.oozie.BundleEngine;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorEngine;
 import org.apache.oozie.CoordinatorEngineException;
 import org.apache.oozie.CoordinatorWfActionBean;
-import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.DagEngine;
 import org.apache.oozie.DagEngineException;
 import org.apache.oozie.ErrorCode;
@@ -46,7 +44,6 @@ import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.coord.CoordCommandUtils;
-import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.service.BundleEngineService;
 import org.apache.oozie.service.CoordinatorEngineService;
@@ -222,6 +219,9 @@ public class V2JobServlet extends V1JobServlet {
         String type = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
         String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
         String changeValue = "status=" + CoordinatorAction.Status.IGNORED;
+
+        validateScopeSize(scope, type);
+
         List<CoordinatorActionBean> coordActions = new ArrayList<CoordinatorActionBean>();
         try {
             if (type != null && !type.equals(RestConstants.JOB_COORD_SCOPE_ACTION)) {

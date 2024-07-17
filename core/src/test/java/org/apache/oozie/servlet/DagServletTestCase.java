@@ -64,11 +64,21 @@ public abstract class DagServletTestCase extends XDataTestCase {
     @SuppressWarnings("unchecked")
     protected void runTest(String servletPath, Class servletClass, boolean securityEnabled, Callable<Void> assertions)
             throws Exception {
-        runTest(new String[]{servletPath}, new Class[]{servletClass}, securityEnabled, assertions);
+        runTest(servletPath, servletClass, securityEnabled, assertions, null);
+    }
+
+    protected void runTest(String servletPath, Class servletClass, boolean securityEnabled, Callable<Void> assertions,
+                           Map<String, String> extraServicesConf) throws Exception {
+        runTest(new String[]{servletPath}, new Class[]{servletClass}, securityEnabled, assertions, extraServicesConf);
     }
 
     protected void runTest(String[] servletPath, Class[] servletClass, boolean securityEnabled,
                            Callable<Void> assertions) throws Exception {
+        runTest(servletPath,servletClass, securityEnabled, assertions, null);
+    }
+
+    protected void runTest(String[] servletPath, Class[] servletClass, boolean securityEnabled,
+                           Callable<Void> assertions, Map<String, String> extraServicesConf) throws Exception {
         Services services = new Services();
         this.servletPath = servletPath[0];
         try {
@@ -79,6 +89,11 @@ public abstract class DagServletTestCase extends XDataTestCase {
                                    ProxyUserService.GROUPS, "*");
             services.init();
             services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, securityEnabled);
+
+            if (extraServicesConf != null && !extraServicesConf.isEmpty()) {
+                extraServicesConf.forEach(Services.get().getConf()::set);
+            }
+
             Services.get().setService(ForTestAuthorizationService.class);
             Services.get().setService(ForTestWorkflowStoreService.class);
             Services.get().setService(MockDagEngineService.class);

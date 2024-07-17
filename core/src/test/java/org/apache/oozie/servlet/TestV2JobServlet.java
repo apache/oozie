@@ -460,4 +460,41 @@ public class TestV2JobServlet extends DagServletTestCase {
             }
         });
     }
+
+    public void testCoordJobIgnoreWithScopeValidation() throws Exception {
+        runTest("/v2/job/*", V2JobServlet.class, IS_SECURITY_ENABLED, () -> {
+
+            MockDagEngineService.reset();
+            final Map<String, String> params = new HashMap<>();
+            params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_IGNORE);
+            params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, "action");
+            params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1-300");
+
+            // url - oozie/v2/coord_job_id?action=ignore&scope=1-300&type=action
+            final URL url = createURL("0000001-1234567890-C", params);
+            final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            conn.setDoOutput(true);
+
+            // conn.getResponseCode() is also needed to send the request
+            final int responseCode = conn.getResponseCode();
+            final String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
+            final String message = conn.getHeaderField(RestConstants.OOZIE_ERROR_MESSAGE);
+
+            assertEquals("Unexpected error code: " + conn.getResponseMessage(),
+                    HttpServletResponse.SC_BAD_REQUEST, responseCode);
+            assertEquals("Unexpected Oozie error code", "E0309", error);
+            assertEquals(
+                    "Unexpected error message",
+                    "E0309: Invalid parameter value, [scope] = [1-300], " +
+                            "too many elements are requested: 300, maximum allowed: 50",
+                    message
+            );
+
+
+            return null;
+        });
+    }
+
 }
