@@ -80,7 +80,7 @@
         </oozie.test.default.config.file>
         <oozie.test.config.file>${oozie.test.default.config.file}</oozie.test.config.file>
 
-        <hadoop.version>2.6.0</hadoop.version>
+        <hadoop.version>2.8.5</hadoop.version>
         <hadoop.majorversion>2</hadoop.majorversion>
         <hadooplib.version>hadoop-${hadoop.majorversion}-${project.version}</hadooplib.version>
         <hbase.version>1.2.3</hbase.version>
@@ -161,6 +161,9 @@
             <id>apache.snapshots.repo</id>
             <url>https://repository.apache.org/content/groups/snapshots</url>
             <name>Apache Snapshots Repository</name>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -561,6 +564,10 @@
                         <groupId>joda-time</groupId>
                         <artifactId>joda-time</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.pentaho</groupId>
+                        <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -605,6 +612,10 @@
                     <exclusion>
                         <groupId>javax.jms</groupId>
                         <artifactId>jms</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.pentaho</groupId>
+                        <artifactId>pentaho-aggdesigner-algorithm</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

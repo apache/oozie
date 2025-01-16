@@ -123,7 +123,7 @@ specified in the `test.properties` file (which is loaded by the `XTestCase` clas
 
 **hadoop.version** `(*)`: indicates the Hadoop version you wish to build Oozie against specifically. It will
 substitute this value in the Oozie POM properties and pull the corresponding Hadoop artifacts from Maven.
-The default version is 2.6.0 and that is the minimum supported Hadoop version.
+The default version is 2.8.5 and that is the minimum supported Hadoop version.
 
 **generateSite** (*): generates Oozie documentation, default is undefined (no documentation is generated)
 
