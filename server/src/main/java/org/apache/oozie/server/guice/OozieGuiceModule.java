@@ -20,7 +20,6 @@ package org.apache.oozie.server.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
-import org.apache.oozie.server.JspHandler;
 import org.apache.oozie.service.Services;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -37,8 +36,6 @@ public class OozieGuiceModule extends AbstractModule {
         bind(WebAppContext.class).in(Singleton.class);
 
         bind(ConstraintSecurityHandler.class).toProvider(ConstraintSecurityHandlerProvider.class).in(Singleton.class);
-
-        bind(JspHandler.class).toProvider(JspHandlerProvider.class).in(Singleton.class);
 
         bind(RewriteHandler.class).toProvider(RewriteHandlerProvider.class).in(Singleton.class);
     }

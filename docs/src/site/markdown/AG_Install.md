@@ -82,15 +82,12 @@ Usage  : oozie-setup.sh <Command and OPTIONS>
 If a directory `libext/` is present in Oozie installation directory, the `oozie-setup.sh` script will
 include all JARs in Jetty's `webapp/WEB_INF/lib/` directory.
 
-If the ExtJS ZIP file is present in the `libext/` directory, it will be added to the Jetty's `webapp/` directory as well.
-The ExtJS library file name be `ext-2.2.zip`.
-
 ### Setting Up Oozie with an Alternate Tomcat
 
 Use the `addtowar.sh` script to prepare the Oozie server only if Oozie will run with a different
 servlet  container than the embedded Jetty provided with the distribution.
 
-The `addtowar.sh` script adds Hadoop JARs, JDBC JARs and the ExtJS library to the Oozie WAR file.
+The `addtowar.sh` script adds Hadoop JARs, JDBC JARs to the Oozie WAR file.
 
 The `addtowar.sh` script options are:
 
@@ -100,19 +97,18 @@ The `addtowar.sh` script options are:
  Options: -inputwar INPUT_OOZIE_WAR
           -outputwar OUTPUT_OOZIE_WAR
           [-hadoop HADOOP_VERSION HADOOP_PATH]
-          [-extjs EXTJS_PATH]
           [-jars JARS_PATH] (multiple JAR path separated by ':')
           [-secureWeb WEB_XML_PATH] (path to secure web.xml)
 ```
 
 The original `oozie.war` file is in the Oozie server installation directory.
 
-After the Hadoop JARs and the ExtJS library has been added to the `oozie.war` file Oozie is ready to run.
+After the Hadoop JARs has been added to the `oozie.war` file Oozie is ready to run.
 
 Delete any previous deployment of the `oozie.war` from the servlet container (if using Tomcat, delete
 `oozie.war` and `oozie` directory from Tomcat's `webapps/` directory)
 
-Deploy the prepared `oozie.war` file (the one that contains the Hadoop JARs and the ExtJS library) in the
+Deploy the prepared `oozie.war` file (the one that contains the Hadoop JARs) in the
 servlet container (if using Tomcat, copy the prepared `oozie.war` file to Tomcat's `webapps/` directory).
 
 **IMPORTANT:** Only one Oozie instance can be deployed per Tomcat instance.
@@ -967,14 +963,6 @@ Also, these steps must be done on every machine where you intend to use the Oozi
 3. When using the Oozie Client, you will need to use `https://oozie.server.hostname:11443/oozie` instead of
     `http://oozie.server.hostname:11000/oozie` -- Java will not automatically redirect from the http address to the https address.
 
-#### Connect to the Oozie Web UI using SSL (HTTPS)
-
-1. Use `https://oozie.server.hostname:11443/oozie`
-    though most browsers should automatically redirect you if you use `http://oozie.server.hostname:11000/oozie`
-
-    **IMPORTANT**: If using a Self-Signed Certificate, your browser will warn you that it can't verify the certificate or something
-    similar. You will probably have to add your certificate as an exception.
-
 #### Additional considerations for Oozie HA with SSL
 
 You'll need to configure the load balancer to do SSL pass-through.  This will allow the clients talking to Oozie to use the
@@ -1035,12 +1023,10 @@ The deprecated `InstrumentationService` can be enabled by adding `Instrumentatio
 ```
 
 By default the `admin/instrumentation` REST endpoint is no longer be available and instead the `admin/metrics` endpoint can
-be used (see the [Web Services API](WebServicesAPI.html#Oozie_Metrics) documentation for more details); the Oozie Web UI also replaces
-the "Instrumentation" tab with a "Metrics" tab.
+be used (see the [Web Services API](WebServicesAPI.html#Oozie_Metrics) documentation for more details).
 
 If the deprecated `InstrumentationService` is used, the `admin/instrumentation` REST endpoint gets enabled, the `admin/metrics`
-REST endpoint is no longer available (see the [Web Services API](WebServicesAPI.html#Oozie_Metrics) documentation for more details);
-the Oozie Web UI also replaces the "Metrics" tab with the "Instrumentation" tab.
+REST endpoint is no longer available (see the [Web Services API](WebServicesAPI.html#Oozie_Metrics) documentation for more details).
 
 We can also publish the instrumentation metrics to the external server graphite or ganglia. For this the following
 properties should be specified in oozie-site.xml :
@@ -1195,7 +1181,7 @@ Multiple Oozie Servers can be configured against the same database to provide Hi
 
 8. Start the Oozie servers.
 
-    Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job in the Web UI, REST API, or client may
+    Note: If one of the Oozie servers becomes unavailable, querying Oozie for the logs from a job via the REST API, or client may
     be missing information until that server comes back up.
 
 #### Security

@@ -243,9 +243,6 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{2}: 
 
 Shell action's stdout and stderr output are redirected to the Oozie Launcher map-reduce job task STDOUT that runs the shell command.
 
-From Oozie web-console, from the Shell action pop up using the 'Console URL' link, it is possible
-to navigate to the Oozie Launcher map-reduce job task logs via the Hadoop job-tracker web-console.
-
 ### Shell Action Limitations
 Although Shell action can execute any shell command, there are some limitations.
 

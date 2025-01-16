@@ -73,8 +73,6 @@ hcatalog libraries, however they are required for oozie to work. There are 2 opt
    * Java 1.8+
    * Hadoop
       * [Apache Hadoop](http://hadoop.apache.org) (tested with 1.2.1 & 2.6.0+)
-   * ExtJS library (optional, to enable Oozie webconsole)
-      * [ExtJS 2.2](http://archive.cloudera.com/gplextras/misc/ext-2.2.zip)
 
 The Java 1.8+ `bin` directory should be in the command path.
 
@@ -84,11 +82,6 @@ The Java 1.8+ `bin` directory should be in the command path.
 
    * Build an Oozie binary distribution
    * Download a Hadoop binary distribution
-   * Download ExtJS library (it must be version 2.2)
-
-**NOTE:** The ExtJS library is not bundled with Oozie because it uses a different license.
-
-**NOTE:** Oozie UI browser compatibility Chrome (all), Firefox (3.5), Internet Explorer (8.0), Opera (10.5).
 
 **NOTE:** It is recommended to use a Oozie Unix user for the Oozie server.
 
@@ -117,8 +110,6 @@ The following two properties are required in Hadoop core-site.xml:
 
 Replace the capital letter sections with specific values and then restart Hadoop.
 
-The ExtJS library is optional (only required for the Oozie web-console to work)
-
 **IMPORTANT:** all Oozie server scripts (`oozie-setup.sh`, `oozied.sh`, `oozie-start.sh`, `oozie-run.sh`
 and `oozie-stop.sh`) run only under the Unix user that owns the Oozie installation directory,
 if necessary use `sudo -u OOZIE_USER` when invoking the scripts.
@@ -130,8 +121,8 @@ behaviors of `oozie-start.sh`, `oozie-run.sh`, and `oozie-stop.sh` respectively.
 
 Create a **libext/** directory in the directory where Oozie was expanded.
 
-If using the ExtJS library copy the ZIP file to the **libext/** directory. If hadoop and hcatalog libraries are not
-already included in the war, add the corresponding libraries to **libext/** directory.
+If hadoop and hcatalog libraries are not already included in the war,
+add the corresponding libraries to **libext/** directory.
 
 A "sharelib create -fs fs_default_name [-locallib sharelib]" command is available when running oozie-setup.sh
 for uploading new sharelib into hdfs where the first argument is the default fs name
@@ -205,7 +196,7 @@ Using the Oozie command line tool check the status of Oozie:
 $ bin/oozie admin -oozie http://localhost:11000/oozie -status
 ```
 
-Using a browser go to the [Oozie web console](http://localhost:11000/oozie.html), Oozie status should be **NORMAL**.
+The Oozie web console was removed in version 5.3.1.
 
 Refer to the [Running the Examples](DG_Examples.html) document for details on running the examples.
 

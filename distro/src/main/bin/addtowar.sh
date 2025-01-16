@@ -114,7 +114,6 @@ function printUsage() {
   echo "          -outputwar OUTPUT_OOZIE_WAR"
   echo "          [-hadoop HADOOP_VERSION HADOOP_PATH]"
   echo "          [-hadoopJarsSNAPSHOT] (if Hadoop jars version on system is SNAPSHOT)"
-  echo "          [-extjs EXTJS_PATH] (expanded or ZIP)"
   echo "          [-jars JARS_PATH] (multiple JAR path separated by ':')"
   echo "          [-secureWeb WEB_XML_PATH] (path to secure web.xml)"
   echo
@@ -129,12 +128,10 @@ if [ $# -eq 0 ]; then
 fi
 
 addHadoop=""
-addExtjs=""
 addJars=""
 hadoopVersion=""
 hadoopHome=""
 hadoopJarsSuffix=""
-extjsHome=""
 jarsPath=""
 inputWar=""
 outputWar=""
@@ -166,17 +163,6 @@ do
   elif [ "$1" = "-hadoopJarsSNAPSHOT" ]; then
     shift
     hadoopJarsSuffix="SNAPSHOT"
-  elif [ "$1" = "-extjs" ]; then
-    shift
-    if [ $# -eq 0 ]; then
-      echo
-      echo "Missing option value, ExtJS path"
-      echo
-      printUsage
-      exit -1
-    fi
-    extjsHome=$1
-    addExtjs=true
   elif [ "$1" = "-jars" ]; then
     shift
     if [ $# -eq 0 ]; then
@@ -223,7 +209,7 @@ do
     shift
 done
 
-if [ "${addHadoop}${addExtjs}${addJars}" == "" ]; then
+if [ "${addHadoop}${addJars}" == "" ]; then
   echo
   echo "Nothing to do"
   echo
@@ -241,10 +227,6 @@ checkFileDoesNotExist ${outputWar}
 if [ "${addHadoop}" = "true" ]; then
   checkFileExists ${hadoopHome}
   getHadoopJars ${hadoopVersion}
-fi
-  
-if [ "${addExtjs}" = "true" ]; then
-  checkFileExists ${extjsHome}
 fi
 
 if [ "${addJars}" = "true" ]; then
@@ -289,28 +271,6 @@ if [ "${addHadoop}" = "true" ]; then
       cp ${jar} ${tmpWarDir}/WEB-INF/lib/
       checkExec "copying jar ${jar} to staging"
     done
-fi
-
-if [ "${addExtjs}" = "true" ]; then
-  if [ ! "${components}" = "" ];then
-    components="${components}, "
-  fi
-  components="${components}ExtJS library"
-  if [ -e ${tmpWarDir}/ext-2.2 ]; then
-    echo
-    echo "Specified Oozie WAR '${inputWar}' already contains ExtJS library files"
-    echo
-    cleanUp
-    exit -1
-  fi
-  #If the extjs path given is a ZIP, expand it and use it from there
-  if [ -f ${extjsHome} ]; then
-    unzip ${extjsHome} -d ${tmpDir} > /dev/null
-    extjsHome=${tmpDir}/ext-2.2
-  fi
-  #Inject the library in oozie war
-  cp -r ${extjsHome} ${tmpWarDir}/ext-2.2
-  checkExec "copying ExtJS files into staging"
 fi
 
 if [ "${addJars}" = "true" ]; then

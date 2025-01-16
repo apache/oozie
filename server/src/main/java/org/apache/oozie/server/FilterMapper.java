@@ -49,10 +49,7 @@ public class FilterMapper {
         mapFilter(authFilter, "/v0/*");
         mapFilter(authFilter, "/v1/*");
         mapFilter(authFilter, "/v2/*");
-        mapFilter(authFilter, "/index.jsp");
         mapFilter(authFilter, "/admin/*");
-        mapFilter(authFilter, "/*.js");
-        mapFilter(authFilter, "/ext-2.2/*");
         mapFilter(authFilter, "/docs/*");
         mapFilter(authFilter, "/error/*");
     }

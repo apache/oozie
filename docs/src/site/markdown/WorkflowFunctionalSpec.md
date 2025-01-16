@@ -2580,14 +2580,7 @@ Oozie provides command line tool that allows to perform all common workflow job 
 
 The command line tool is implemented as a client of the Web Services API.
 
-## 14 Web UI Console
-
-Oozie provides a read-only Web based console that allows to allow to monitor Oozie system status, workflow
-applications status and workflow jobs status.
-
-The Web base console is implemented as a client of the Web Services API.
-
-## 15 Customizing Oozie with Extensions
+## 14 Customizing Oozie with Extensions
 
 Out of the box Oozie provides support for a predefined set of action node types and Expression Language functions.
 
@@ -2597,7 +2590,7 @@ API, to add support for additional action node types.
 Extending Oozie should not require any code change to the Oozie codebase. It will require adding the JAR files
 providing the new functionality and declaring them in Oozie system configuration.
 
-## 16 Workflow Jobs Priority
+## 15 Workflow Jobs Priority
 
 Oozie does not handle workflow jobs priority. As soon as a workflow job is ready to do a transition, Oozie will
 trigger the transition. Workflow transitions and action triggering are assumed to be fast and lightweight operations.
@@ -2609,7 +2602,7 @@ Any prioritization of jobs in the remote systems is outside of the scope of Oozi
 Workflow applications can influence the remote systems priority via configuration if the remote systems support it.
 
 <a name="ShareLib"></a>
-## 17 HDFS Share Libraries for Workflow Applications (since Oozie 2.3)
+## 16 HDFS Share Libraries for Workflow Applications (since Oozie 2.3)
 
 Oozie supports job and system share libraries for workflow jobs.
 
@@ -2627,7 +2620,7 @@ A workflow job can use the system share library by setting the job property `ooz
 `oozie.use.system.libpath` can be also configured at action configuration.
 `oozie.use.system.libpath` defined at action level overrides job property.
 
-### 17.1 Action Share Library Override (since Oozie 3.3)
+### 16.1 Action Share Library Override (since Oozie 3.3)
 
 Oozie share libraries are organized per action type, for example Pig action share library directory is `share/lib/pig/`
 and Mapreduce Streaming share library directory is `share/library/mapreduce-streaming/`.
@@ -2657,7 +2650,7 @@ both pig and hcatalog jars.
 
 <a name="UserRetryWFActions"></a>
 
-### 17.2 Action Share Library Exclude (since Oozie 5.2)
+### 16.2 Action Share Library Exclude (since Oozie 5.2)
 
 Oozie allows to exclude files on its share library directory from being added to the Distributed Cache. This feature is useful to
 prevent the submitted applications from runtime jar conflict issues.
@@ -2710,7 +2703,7 @@ the expected Distributed Cache content is:
    /user/oozie/share/lib/lib20180701/java/component-connector.jar
 ```
 
-## 18 User-Retry for Workflow Actions (since Oozie 3.1)
+## 17 User-Retry for Workflow Actions (since Oozie 3.1)
 
 Oozie provides User-Retry capabilities when an action is in `ERROR` or `FAILED` state.
 
@@ -2746,7 +2739,7 @@ Examples of User-Retry in a workflow action is :
 ```
 
 <a name="GlobalConfigurations"></a>
-## 19 Global Configurations
+## 18 Global Configurations
 
 Oozie allows a global section to reduce the redundant resource-manager and name-node declarations for each action. The user can
 define a `global` section in the beginning of the `workflow.xml`. The global section may contain the `job-xml`, `configuration`,
@@ -2772,7 +2765,7 @@ Example of a global element:
 ...
 ```
 
-## 20 Suspend On Nodes
+## 19 Suspend On Nodes
 
 Specifying `oozie.suspend.on.nodes` in a job.properties file lets users specify a list of actions that will cause Oozie to
 automatically suspend the workflow upon reaching any of those actions; like breakpoints in a debugger. To continue running the

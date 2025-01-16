@@ -190,9 +190,6 @@ of all map-reduce jobs run by the Sqoop import all command.
 
 Sqoop action logs are redirected to the Oozie Launcher map-reduce job task STDOUT/STDERR that runs Sqoop.
 
-From Oozie web-console, from the Sqoop action pop up using the 'Console URL' link, it is possible
-to navigate to the Oozie Launcher map-reduce job task logs via the Hadoop job-tracker web-console.
-
 The logging level of the Sqoop action can set in the Sqoop action configuration using the
 property `oozie.sqoop.log.level`. The default value is `INFO`.
 

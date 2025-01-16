@@ -29,3 +29,5 @@ distro/downloads
 SecurityAuth.audit
 build
 webapp/overlays
+# macos
+.DS_Store
