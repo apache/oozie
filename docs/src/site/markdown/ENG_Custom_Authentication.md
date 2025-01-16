@@ -27,7 +27,7 @@
     resources file (ex. web.xml) needs to include a filter class derived from `AuthenticationFilter`.
 
     For more information have a look at the appropriate
-    [Hadoop documentation](https://hadoop.apache.org/docs/r2.7.2/hadoop-auth/index.html).
+    [Hadoop documentation](https://hadoop.apache.org/docs/r2.8.5/hadoop-auth/index.html).
 
 ## Provide Custom Authentication to Oozie Client
 

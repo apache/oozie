@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +61,7 @@ import org.apache.oozie.command.coord.CoordSubmitXCommand;
 import org.apache.oozie.command.coord.CoordSuspendXCommand;
 import org.apache.oozie.command.coord.CoordUpdateXCommand;
 import org.apache.oozie.command.coord.CoordWfActionInfoXCommand;
+import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.dependency.ActionDependency;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
@@ -314,48 +314,7 @@ public class CoordinatorEngine extends BaseEngine {
             // if coordinator action logs are to be retrieved based on action id range
             if (logRetrievalType.equals(RestConstants.JOB_LOG_ACTION)) {
                 // Use set implementation that maintains order or elements to achieve reproducibility:
-                Set<String> actionSet = new LinkedHashSet<String>();
-                String[] list = logRetrievalScope.split(",");
-                for (String s : list) {
-                    s = s.trim();
-                    if (s.contains("-")) {
-                        String[] range = s.split("-");
-                        if (range.length != 2) {
-                            throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s
-                                    + "'");
-                        }
-                        int start;
-                        int end;
-                        try {
-                            start = Integer.parseInt(range[0].trim());
-                        } catch (NumberFormatException ne) {
-                            throw new CommandException(ErrorCode.E0302, "could not parse " + range[0].trim() + "into an integer",
-                                    ne);
-                        }
-                        try {
-                            end = Integer.parseInt(range[1].trim());
-                        } catch (NumberFormatException ne) {
-                            throw new CommandException(ErrorCode.E0302, "could not parse " + range[1].trim() + "into an integer",
-                                    ne);
-                        }
-                        if (start > end) {
-                            throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "'");
-                        }
-                        for (int i = start; i <= end; i++) {
-                            actionSet.add(jobId + "@" + i);
-                        }
-                    }
-                    else {
-                        try {
-                            Integer.parseInt(s);
-                        }
-                        catch (NumberFormatException ne) {
-                            throw new CommandException(ErrorCode.E0302, "format is wrong for action id'" + s
-                                    + "'. Integer only.");
-                        }
-                        actionSet.add(jobId + "@" + s);
-                    }
-                }
+                final Set<String> actionSet = CoordUtils.getActionsIds(jobId, logRetrievalScope);
 
                 if (actionSet.size() >= maxNumActionsForLog) {
                     throw new CommandException(ErrorCode.E0302,

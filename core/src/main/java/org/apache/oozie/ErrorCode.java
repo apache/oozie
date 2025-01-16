@@ -66,6 +66,7 @@ public enum ErrorCode {
     E0306(XLog.STD, "Invalid parameter"),
     E0307(XLog.STD, "Runtime error [{0}]"),
     E0308(XLog.STD, "Could not parse date range parameter [{0}]"),
+    E0309(XLog.STD, "Invalid parameter value, [{0}] = [{1}], {2}"),
 
     E0401(XLog.STD, "Missing configuration property [{0}]"),
     E0402(XLog.STD, "Invalid callback ID [{0}]"),

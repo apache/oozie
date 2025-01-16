@@ -22,15 +22,17 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
@@ -63,6 +65,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 
 public class CoordUtils {
+    private static final XLog LOG = XLog.getLog(CoordUtils.class);
     public static final String HADOOP_USER = "user.name";
 
     public static String getDoneFlag(Element doneFlagElement) {
@@ -92,7 +95,7 @@ public class CoordUtils {
      * @throws CommandException thrown if failed to get coordinator actions by given date range
      */
     public static List<CoordinatorActionBean> getCoordActions(String rangeType, String jobId, String scope,
-            boolean active) throws CommandException {
+                                                              boolean active) throws CommandException {
         List<CoordinatorActionBean> coordActions = null;
         if (rangeType.equals(RestConstants.JOB_COORD_SCOPE_DATE)) {
             coordActions = CoordUtils.getCoordActionsFromDates(jobId, scope, active);
@@ -196,52 +199,116 @@ public class CoordUtils {
         ParamChecker.notEmpty(jobId, "jobId");
         ParamChecker.notEmpty(scope, "scope");
 
-        Set<String> actions = new LinkedHashSet<String>();
-        String[] list = scope.split(",");
-        for (String s : list) {
-            s = s.trim();
-            // An action range is specified with two actions separated by '-'
-            if (s.contains("-")) {
-                String[] range = s.split("-");
-                // Check the format for action's range
-                if (range.length != 2) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', an example of"
-                            + " correct format is 1-5");
+        final Set<String> actions = new LinkedHashSet<>();
+        for (final Range<Integer> range : parseScopeToRanges(scope)) {
+            // Add the actionIds
+            for (int i = range.getMinimum(); i <= range.getMaximum(); i++) {
+                final String jobIdToAdd = jobId + "@" + i;
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Adding {0} to actionSet.", jobIdToAdd);
                 }
-                int start;
-                int end;
-                //Get the starting and ending action numbers
-                try {
-                    start = Integer.parseInt(range[0].trim());
-                } catch (NumberFormatException ne) {
-                    throw new CommandException(ErrorCode.E0302, "could not parse " + range[0].trim() + "into an integer", ne);
-                }
-                try {
-                    end = Integer.parseInt(range[1].trim());
-                } catch (NumberFormatException ne) {
-                    throw new CommandException(ErrorCode.E0302, "could not parse " + range[1].trim() + "into an integer", ne);
-                }
-                if (start > end) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action's range '" + s + "', starting action"
-                            + "number of the range should be less than ending action number, an example will be 1-4");
-                }
-                // Add the actionIds
-                for (int i = start; i <= end; i++) {
-                    actions.add(jobId + "@" + i);
-                }
-            }
-            else {
-                try {
-                    Integer.parseInt(s);
-                }
-                catch (NumberFormatException ne) {
-                    throw new CommandException(ErrorCode.E0302, "format is wrong for action id'" + s
-                            + "'. Integer only.");
-                }
-                actions.add(jobId + "@" + s);
+                actions.add(jobIdToAdd);
             }
         }
         return actions;
+    }
+
+    /**
+     * Parses a string value into a {@link org.apache.commons.lang3.Range} object while does sanity checking.
+     *
+     * @param rangeToParse string representing a minimum and maximum value separated by a dash: '1-5'
+     * @return the parsed range class
+     * @throws CommandException when the provided range string is empty, invalid or starting value is greater than ending value
+     */
+    public static Range<Integer> parseRange(final String rangeToParse) throws CommandException {
+        final String range = StringUtils.stripToNull(rangeToParse);
+        if (range == null) {
+            throw new CommandException(ErrorCode.E0302, String.format("Range cannot be empty: %s", rangeToParse));
+        }
+        final String[] parts = range.split("-");
+        if (parts.length != 2) {
+            throw new CommandException(
+                    ErrorCode.E0302,
+                    String.format("format is wrong for action's range '%s', an example of correct format is 1-5", rangeToParse)
+            );
+        }
+        try {
+           final int start = Integer.parseInt(parts[0].trim());
+           final int end = Integer.parseInt(parts[1].trim());
+
+            if (start > end) {
+                throw new CommandException(
+                        ErrorCode.E0302,
+                        String.format("format is wrong for action's range '%s', starting action number of the range " +
+                                "should be less than ending action number, an example will be 1-4", rangeToParse)
+                );
+            }
+
+           return Range.between(start, end);
+        } catch (final NumberFormatException ne) {
+            throw new CommandException(
+                    ErrorCode.E0302,
+                    String.format("could not parse boundaries of %s into an integer", rangeToParse),
+                    ne
+            );
+        }
+    }
+
+    /**
+     * Parses a scope definition (comma-separated list of values and ranges) into a list of
+     * {@link org.apache.commons.lang3.Range}s. If a single value is defined, a [1-1] range will be created.
+     *
+     * @param scope comma-separated list of values and ranges
+     * @return list of ranges based on the provided 'scope'
+     * @throws CommandException when provided scope string is empty, invalid
+     *     or the ranges' starting value is greater than ending value
+     */
+    public static List<Range<Integer>> parseScopeToRanges(final String scope) throws CommandException {
+        if (StringUtils.stripToNull(scope) == null) {
+            throw new CommandException(ErrorCode.E0302, "scope should not be empty");
+        }
+        final List<Range<Integer>> result = new ArrayList<>();
+        final String[] list = scope.split(",");
+        for (final String s : list) {
+            final String range = StringUtils.stripToNull(s);
+            if (range == null) {
+                continue;
+            }
+
+            if (range.contains("-")) {
+                // assume it is a valid range: 1-5
+                result.add(parseRange(range));
+            } else {
+                // assume it is a plain number
+                try {
+                    final int elem = Integer.parseInt(range);
+                    result.add(Range.between(elem, elem));
+                } catch (final NumberFormatException ne) {
+                    throw new CommandException(ErrorCode.E0302, String.format("could not parse %s into an integer", range), ne);
+                }
+            }
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(
+                    "Created the following ranges from \"{0}\": {1}",
+                    scope,
+                    result
+                            .stream()
+                            .map(r -> String.format("[%s-%s]", r.getMinimum(), r.getMaximum()))
+                            .collect(Collectors.joining(", "))
+            );
+        }
+        return result;
+    }
+
+    /**
+     * Calculates the number of elements described in the list of ranges.
+     *
+     * @param ranges list of {@link org.apache.commons.lang3.Range}s
+     * @return the number of elements the provided ranges contain
+     */
+    public static int getElemCountOfRanges(final List<Range<Integer>> ranges) {
+        return ranges.stream().mapToInt(r -> r.getMaximum() - r.getMinimum() + 1).sum();
     }
 
     /**

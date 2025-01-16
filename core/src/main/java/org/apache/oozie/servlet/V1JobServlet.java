@@ -28,11 +28,28 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.common.base.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oozie.*;
+import org.apache.oozie.BaseEngineException;
+import org.apache.oozie.BundleEngine;
+import org.apache.oozie.BundleEngineException;
+import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorActionInfo;
+import org.apache.oozie.CoordinatorEngine;
+import org.apache.oozie.CoordinatorEngineException;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.DagEngine;
+import org.apache.oozie.DagEngineException;
+import org.apache.oozie.ErrorCode;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.XException;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
-import org.apache.oozie.client.rest.*;
+import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.JsonUtils;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.service.BundleEngineService;
@@ -42,6 +59,7 @@ import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.util.Instrumentation;
+import org.apache.oozie.util.ParameterVerifierException;
 import org.apache.oozie.util.graph.GraphGenerator;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.graph.GraphRenderer;
@@ -568,6 +586,8 @@ public class V1JobServlet extends BaseJobServlet {
         String rangeType = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
         String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
 
+        validateScopeSize(scope, rangeType);
+
         try {
             if (rangeType != null && scope != null) {
                 XLog.getLog(getClass()).info(
@@ -730,6 +750,8 @@ public class V1JobServlet extends BaseJobServlet {
                 "Rerun coordinator for jobId=" + jobId + ", rerunType=" + rerunType + ",scope=" + scope + ",refresh="
                         + refresh + ", noCleanup=" + noCleanup);
 
+        validateScopeSize(scope, rerunType);
+
         try {
             if (!(rerunType.equals(RestConstants.JOB_COORD_SCOPE_DATE) || rerunType
                     .equals(RestConstants.JOB_COORD_SCOPE_ACTION))) {
@@ -751,6 +773,39 @@ public class V1JobServlet extends BaseJobServlet {
         }
 
         return json;
+    }
+
+    /**
+     * Validates if the number of elements defined in 'scope' (comma separated list of values and ranges)
+     * is less than or equal than the maximum allowed count: oozie.coord.actions.scope.max.size.
+     *
+     * @param scope comma separated list of values and ranges
+     * @throws XServletException if there are too many elements or ranges/values are invalid
+     */
+    static void validateScopeSize(final String scope, final String rangeType) throws XServletException {
+        if (!"action".equalsIgnoreCase(StringUtils.stripToNull(rangeType))) {
+            return;
+        }
+
+        final int maxElemCount = ConfigurationService.getInt("oozie.coord.actions.scope.max.size");
+
+        try {
+            final int elemCountOfRanges = CoordUtils.getElemCountOfRanges(CoordUtils.parseScopeToRanges(scope));
+            if (elemCountOfRanges > maxElemCount) {
+                throw new ParameterVerifierException(
+                        ErrorCode.E0309,
+                        "scope",
+                        scope,
+                        String.format(
+                                "too many elements are requested: %s, maximum allowed: %s",
+                                elemCountOfRanges,
+                                maxElemCount
+                        )
+                );
+            }
+        } catch (final XException e) {
+            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, e);
+        }
     }
 
     /**
@@ -1103,6 +1158,9 @@ public class V1JobServlet extends BaseJobServlet {
         String coordActionId;
         String type = request.getParameter(RestConstants.JOB_COORD_RANGE_TYPE_PARAM);
         String scope = request.getParameter(RestConstants.JOB_COORD_SCOPE_PARAM);
+
+        validateScopeSize(scope, type);
+
         // for getting allruns for coordinator action - 2 alternate endpoints
         if (type != null && type.equals(RestConstants.JOB_COORD_SCOPE_ACTION) && scope != null) {
             // endpoint - oozie/v2/coord-job-id?type=action&scope=action-num&show=allruns

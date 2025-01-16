@@ -1794,7 +1794,7 @@ This parameter has no effect when workflow fails and the failure node leads to t
 always.
 
 The optional `format` parameter describes whether the response has to be rendered as a PNG image, or an SVG image, or a DOT string.
-When omitted, `format` is considered as `png` for backwards compatibility. Oozie Web UI uses the `svg` `format`.
+When omitted, `format` is considered as `png` for backwards compatibility.
 
 The node labels are the node names provided in the workflow XML.
 

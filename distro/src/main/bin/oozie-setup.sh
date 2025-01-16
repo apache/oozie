@@ -44,8 +44,6 @@ function printUsage() {
   echo "                                                                created by export"
   echo "          (without options prints this usage information)"
   echo
-  echo " EXTJS can be downloaded from http://www.extjs.com/learn/Ext_Version_Archives"
-  echo
 }
 
 #Creating temporary directory
@@ -117,10 +115,8 @@ JETTY_LIB_DIR=${JETTY_WEBAPP_DIR}/WEB-INF/lib/
 
 source ${BASEDIR}/bin/oozie-sys.sh -silent
 
-addExtjs=""
 addHadoopJars=""
 additionalDir=""
-extjsHome=""
 jarsPath=""
 prepareWar=""
 
@@ -181,15 +177,7 @@ log_ready_to_start() {
   echo
 }
 
-check_extjs() {
-  if [ "${addExtjs}" = "true" ]; then
-    checkFileExists ${extjsHome}
-  else
-    echo "INFO: Oozie webconsole disabled, ExtJS library not specified"
-  fi
-}
-
-# Check if it is necessary to add extension JARs and ExtJS
+# Check if it is necessary to add extension JARs
 check_adding_extensions() {
   libext=${OOZIE_HOME}/libext
   if [ "${additionalDir}" != "" ]; then
@@ -204,10 +192,6 @@ check_adding_extensions() {
         addJars="true"
       done
     fi
-    if [ -f "${libext}/ext-2.2.zip" ]; then
-      extjsHome=${libext}/ext-2.2.zip
-      addExtjs=true
-    fi
   fi
 }
 
@@ -219,16 +203,6 @@ cleanup_and_exit() {
 
 prepare_jetty() {
   check_adding_extensions
-  check_extjs
-
-  if [ "${addExtjs}" = "true" -a ! -e ${JETTY_WEBAPP_DIR}/ext-2.2 ]; then
-     unzip ${extjsHome} -d ${JETTY_WEBAPP_DIR}
-    checkExec "Extracting ExtJS to ${JETTY_WEBAPP_DIR}/"
-  elif [ "${addExtjs}" = "true" -a -e ${JETTY_WEBAPP_DIR}/ext-2.2 ]; then
-     # TODO
-    echo "${JETTY_WEBAPP_DIR}/ext-2.2 already exists"
-    cleanup_and_exit
-  fi
 
   if [ "${addJars}" = "true" ]; then
     for jarPath in ${jarsPath//:/$'\n'}

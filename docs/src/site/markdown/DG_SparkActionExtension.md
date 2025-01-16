@@ -177,9 +177,6 @@ expressions.
 
 Spark action logs are redirected to the Oozie Launcher map-reduce job task STDOUT/STDERR that runs Spark.
 
-From Oozie web-console, from the Spark action pop up using the 'Console URL' link, it is possible
-to navigate to the Oozie Launcher map-reduce job task logs via the Hadoop job-tracker web-console.
-
 ### Spark on YARN
 
 To ensure that your Spark job shows up in the Spark History Server, make sure to specify these three Spark configuration properties

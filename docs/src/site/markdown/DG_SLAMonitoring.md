@@ -19,9 +19,6 @@ In versions earlier than 4.x, this was a passive feature where users needed to q
 to fetch the records regarding job status changes, and use their own custom calculation engine to compute
 whether SLA was met or missed, based on initial definition of time limits.
 
-Oozie now also has a SLA tab in the Oozie UI, where users can query for SLA information and have a summarized view
-of how their jobs fared against their SLAs.
-
 
 ## Oozie Server Configuration
 
@@ -118,7 +115,7 @@ is much more compact and meaningful, getting rid of redundant and unused tags.
    * `should-end`: Relative to `nominal-time` this is the amount of time (along with time-unit - MINUTES, HOURS, DAYS) within which your job should *finish* to meet SLA.
    * `max-duration`: This is the maximum amount of time (along with time-unit - MINUTES, HOURS, DAYS) your job is expected to run. This is optional.
    * `alert-events`: Specify the types of events for which **Email** alerts should be sent. Allowable values in this comma-separated list are start_miss, end_miss and duration_miss. *_met events can generally be deemed low priority and hence email alerting for these is not necessary. However, note that this setting is only for alerts via *email* alerts and not via JMS messages, where all events send out notifications, and user can filter them using desired selectors. This is optional and only applicable when alert-contact is configured.
-   * `alert-contact`: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you just want to view your job SLA history in the UI and do not want to receive email alerts.
+   * `alert-contact`: Specify a comma separated list of email addresses where you wish your alerts to be sent. This is optional and need not be configured if you do not want to receive email alerts.
 
 NOTE: All tags can be parameterized as a EL function or a fixed value.
 
@@ -167,7 +164,6 @@ can be applied to and embedded under Workflow-Action as well as Coordinator-Acti
 
 SLA information is accessible via the following ways:
 
-   * Through the SLA tab of the Oozie Web UI.
    * JMS messages sent to a configured JMS provider for instantaneous tracking.
    * RESTful API to query for SLA summary.
    * As an `Instrumentation.Counter` entry that is accessible via RESTful API and reflects to the number of all SLA tracked external

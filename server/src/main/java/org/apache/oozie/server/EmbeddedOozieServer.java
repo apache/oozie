@@ -64,7 +64,6 @@ public class EmbeddedOozieServer {
     private final WebAppContext servletContextHandler;
     private final ServletMapper oozieServletMapper;
     private final FilterMapper oozieFilterMapper;
-    private JspHandler jspHandler;
     private Services serviceController;
     private SSLServerConnectorFactory sslServerConnectorFactory;
     private Configuration conf;
@@ -74,7 +73,6 @@ public class EmbeddedOozieServer {
     /**
      * Construct Oozie server
      * @param server jetty server to be embedded
-     * @param jspHandler handler responsible for setting webapp context for JSP
      * @param serviceController controller for Oozie services; must be already initialized
      * @param sslServerConnectorFactory factory to create server connector configured for SSL
      * @param oozieRewriteHandler URL rewriter
@@ -85,7 +83,6 @@ public class EmbeddedOozieServer {
      */
     @Inject
     public EmbeddedOozieServer(final Server server,
-                               final JspHandler jspHandler,
                                final Services serviceController,
                                final SSLServerConnectorFactory sslServerConnectorFactory,
                                final RewriteHandler oozieRewriteHandler,
@@ -96,7 +93,6 @@ public class EmbeddedOozieServer {
     {
         this.constraintSecurityHandler = constraintSecurityHandler;
         this.serviceController = Objects.requireNonNull(serviceController, "serviceController is null");
-        this.jspHandler = Objects.requireNonNull(jspHandler, "jspHandler is null");
         this.sslServerConnectorFactory = Objects.requireNonNull(sslServerConnectorFactory,
                 "sslServerConnectorFactory is null");
         this.server = Objects.requireNonNull(server, "server is null");
@@ -145,7 +141,6 @@ public class EmbeddedOozieServer {
         oozieFilterMapper.addFilters();
 
         servletContextHandler.setParentLoaderPriority(true);
-        jspHandler.setupWebAppContext(servletContextHandler);
 
         addErrorHandler();
 

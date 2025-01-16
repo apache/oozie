@@ -76,8 +76,6 @@ mr-node                 map-reduce  OK         end         job_200904281535_0254
 .----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
 
-To check the workflow job status via the Oozie web console, with a browser go to `http://localhost:11000/oozie`.
-
 To avoid having to provide the `-oozie` option with the Oozie URL with every `oozie` command, set `OOZIE_URL` env
 variable to the Oozie URL in the shell environment. For example:
 

@@ -430,4 +430,133 @@ public class TestV1JobServlet extends DagServletTestCase {
             }
         });
     }
+
+    public void testCoordActionKillWithScopeValidation() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, () -> {
+            MockCoordinatorEngineService.reset();
+            final Map<String, String> params = new HashMap<>();
+            params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_KILL);
+            params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, "action");
+            params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1-300");
+
+            final URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+            final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            conn.setDoOutput(true);
+
+            // conn.getResponseCode() is also needed to send the request
+            final int responseCode = conn.getResponseCode();
+            final String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
+            final String message = conn.getHeaderField(RestConstants.OOZIE_ERROR_MESSAGE);
+
+            assertEquals("Unexpected error code: " + conn.getResponseMessage(),
+                    HttpServletResponse.SC_BAD_REQUEST, responseCode);
+            assertEquals("Unexpected Oozie error code", "E0309", error);
+            assertEquals(
+                    "Unexpected error message",
+                    "E0309: Invalid parameter value, [scope] = [1-300], " +
+                            "too many elements are requested: 300, maximum allowed: 50",
+                    message
+            );
+
+
+            return null;
+        });
+    }
+
+    public void testCoordActionRerunWithScopeValidation() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, () -> {
+            MockCoordinatorEngineService.reset();
+            final Map<String, String> params = new HashMap<>();
+            params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_RERUN);
+            params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, "action");
+            params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1-300");
+
+            final URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+            final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            conn.setDoOutput(true);
+            new Configuration().writeXml(conn.getOutputStream());
+
+            // conn.getResponseCode() is also needed to send the request
+            final int responseCode = conn.getResponseCode();
+            final String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
+            final String message = conn.getHeaderField(RestConstants.OOZIE_ERROR_MESSAGE);
+
+            assertEquals("Unexpected error code: " + conn.getResponseMessage(),
+                    HttpServletResponse.SC_BAD_REQUEST, responseCode);
+            assertEquals("Unexpected Oozie error code", "E0309", error);
+            assertEquals(
+                    "Unexpected error message",
+                    "E0309: Invalid parameter value, [scope] = [1-300], " +
+                            "too many elements are requested: 300, maximum allowed: 50",
+                    message
+            );
+
+            return null;
+        });
+    }
+
+    public void testCoordActionShowWithScopeValidation() throws Exception {
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, () -> {
+            MockCoordinatorEngineService.reset();
+            final Map<String, String> params = new HashMap<>();
+            params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, "action");
+            params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1-300");
+            params.put(RestConstants.JOB_SHOW_PARAM, RestConstants.ALL_WORKFLOWS_FOR_COORD_ACTION);
+
+            final URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+            final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+
+            // conn.getResponseCode() is also needed to send the request
+            final int responseCode = conn.getResponseCode();
+            final String error = conn.getHeaderField(RestConstants.OOZIE_ERROR_CODE);
+            final String message = conn.getHeaderField(RestConstants.OOZIE_ERROR_MESSAGE);
+
+            assertEquals("Unexpected error code: " + conn.getResponseMessage(),
+                    HttpServletResponse.SC_BAD_REQUEST, responseCode);
+            assertEquals("Unexpected Oozie error code", "E0309", error);
+            assertEquals(
+                    "Unexpected error message",
+                    "E0309: Invalid parameter value, [scope] = [1-300], " +
+                            "too many elements are requested: 300, maximum allowed: 50",
+                    message
+            );
+
+            return null;
+        });
+    }
+
+    public void testCoordActionKillWithScopeValidationIncreasedScope() throws Exception {
+       final Map<String, String> extraServicesConf = new HashMap<>();
+       extraServicesConf.put("oozie.coord.actions.scope.max.size", "300");
+
+        runTest("/v1/job/*", V1JobServlet.class, IS_SECURITY_ENABLED, () -> {
+            MockCoordinatorEngineService.reset();
+            final Map<String, String> params = new HashMap<>();
+            params.put(RestConstants.ACTION_PARAM, RestConstants.JOB_ACTION_KILL);
+            params.put(RestConstants.JOB_COORD_RANGE_TYPE_PARAM, "action");
+            params.put(RestConstants.JOB_COORD_SCOPE_PARAM, "1-300");
+
+            final URL url = createURL(MockCoordinatorEngineService.JOB_ID + 1, params);
+            final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("content-type", RestConstants.XML_CONTENT_TYPE);
+            conn.setDoOutput(true);
+
+            // conn.getResponseCode() is also needed to send the request
+            final int responseCode = conn.getResponseCode();
+            final String message = conn.getResponseMessage();
+
+            assertEquals("Unexpected error code: " + message, HttpServletResponse.SC_OK, responseCode);
+            assertEquals("Unexpected error message", "OK", message);
+
+            return null;
+        }, extraServicesConf);
+    }
+
 }
