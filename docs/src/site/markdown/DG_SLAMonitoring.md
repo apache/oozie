@@ -167,7 +167,6 @@ can be applied to and embedded under Workflow-Action as well as Coordinator-Acti
 
 SLA information is accessible via the following ways:
 
-   * Through the SLA tab of the Oozie Web UI.
    * JMS messages sent to a configured JMS provider for instantaneous tracking.
    * RESTful API to query for SLA summary.
    * As an `Instrumentation.Counter` entry that is accessible via RESTful API and reflects to the number of all SLA tracked external
