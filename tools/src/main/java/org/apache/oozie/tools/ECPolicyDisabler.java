@@ -48,7 +48,7 @@ public final class ECPolicyDisabler {
     }
 
     public static void tryDisableECPolicyForPath(FileSystem fs, Path path) {
-        switch (check(fs, path)) {
+        switch (check(fs, path, GETERASURECODINGPOLICY_METHOD)) {
             case DONE:
                 System.out.println("Done");
                 break;
@@ -64,12 +64,12 @@ public final class ECPolicyDisabler {
         }
     }
 
-    static Result check(FileSystem fs, Path path) {
+    static Result check(FileSystem fs, Path path, String getErasureCodingPolicyMethodName) {
         if (fs instanceof DistributedFileSystem && supportsErasureCoding()) {
             System.out.println("Found Hadoop that supports Erasure Coding. Trying to disable Erasure Coding for path: "+ path);
             DistributedFileSystem dfs = (DistributedFileSystem) fs;
             final Object replicationPolicy = getReplicationPolicy();
-            Method getErasureCodingPolicyMethod = getMethod(dfs, GETERASURECODINGPOLICY_METHOD);
+            Method getErasureCodingPolicyMethod = getMethod(dfs, getErasureCodingPolicyMethodName);
             final Pair<Object,Result> currentECPolicy = safeInvokeMethod(getErasureCodingPolicyMethod, dfs, path);
             if (currentECPolicy.getRight() != null) {
                 return currentECPolicy.getRight();

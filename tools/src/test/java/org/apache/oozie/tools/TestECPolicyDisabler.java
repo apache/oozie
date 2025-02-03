@@ -43,11 +43,17 @@ import org.mockito.Mockito;
 
 /**
  * Test for the Erasure Coding disabler code.
+ *
+ * Noted that getErasureCodingPolicy was introduced to hadoop 3 and the returned class (ErasureCodingPolicy) does
+ * NOT exist in hadoop 2. That is to say, the implementation of getErasureCodingPolicy can't work with both hadoop 2
+ * and hadoop 3. Hence, this test makes ECPolicyDisabler#check to test another method `getFakeErasureCodingPolicy`
  */
 public class TestECPolicyDisabler  {
 
+    private static final String FAKE_METHOD_NAME = "getFakeErasureCodingPolicy";
+
     static abstract class MockDistributedFileSystem extends DistributedFileSystem {
-        public abstract SystemErasureCodingPolicies.ReplicationPolicy getErasureCodingPolicy(Path path);
+        public abstract SystemErasureCodingPolicies.ReplicationPolicy getFakeErasureCodingPolicy(Path path);
         public abstract void setErasureCodingPolicy(Path path, String policy);
     }
 
@@ -59,27 +65,27 @@ public class TestECPolicyDisabler  {
     @Test
     public void testNotSupported() {
         FileSystem fs = mock(FileSystem.class);
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
         Assert.assertEquals("result is expected", Result.NOT_SUPPORTED, result);
     }
 
     @Test
     public void testOkNotChanged() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.DEFAULT);
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        when(fs.getFakeErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.DEFAULT);
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
         assertEquals("result is expected", Result.ALREADY_SET, result);
-        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).getFakeErasureCodingPolicy(any());
         verifyNoMoreInteractions(fs);
     }
 
     @Test
     public void testOkChanged() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        when(fs.getFakeErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
         assertEquals("result is expected", Result.DONE, result);
-        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).getFakeErasureCodingPolicy(any());
         verify(fs).setErasureCodingPolicy(any(), eq("DEFAULT"));
         verifyNoMoreInteractions(fs);
     }
@@ -87,11 +93,11 @@ public class TestECPolicyDisabler  {
     @Test
     public void testServerNotSupports() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+        when(fs.getFakeErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
         Mockito.doThrow(createNoSuchMethodException()).when(fs).setErasureCodingPolicy(any(), any());
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
         assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
-        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).getFakeErasureCodingPolicy(any());
         verify(fs).setErasureCodingPolicy(any(), eq("DEFAULT"));
         verifyNoMoreInteractions(fs);
     }
@@ -99,35 +105,35 @@ public class TestECPolicyDisabler  {
     @Test
     public void testServerNotSupportsGetErasureCodingPolicyMethod() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any(Path.class))).thenThrow(createNoSuchMethodException());
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, mock(Path.class));
+        when(fs.getFakeErasureCodingPolicy(any(Path.class))).thenThrow(createNoSuchMethodException());
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, mock(Path.class), FAKE_METHOD_NAME);
         assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
-        verify(fs).getErasureCodingPolicy(any(Path.class));
+        verify(fs).getFakeErasureCodingPolicy(any(Path.class));
         verifyNoMoreInteractions(fs);
     }
 
     @Test
     public void testServerNotSupportsGetName() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+        when(fs.getFakeErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
 
         ReplicationPolicy mockPolicy = mock(ReplicationPolicy.class);
         SystemErasureCodingPolicies.setSystemPolicy(mockPolicy);
         when(mockPolicy.getName()).thenThrow(createNoSuchMethodException());
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
         assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
-        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).getFakeErasureCodingPolicy(any());
         verifyNoMoreInteractions(fs);
     }
 
     @Test
     public void testServerNotSupportsSetErasureCodingPolicyMethod() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+        when(fs.getFakeErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
         Mockito.doThrow(createNoSuchMethodException()).when(fs).setErasureCodingPolicy(any(), any());
-        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null);
+        ECPolicyDisabler.Result result = ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
         assertEquals("result is expected", Result.NO_SUCH_METHOD, result);
-        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).getFakeErasureCodingPolicy(any());
         verify(fs).setErasureCodingPolicy(any(), eq("DEFAULT"));
         verifyNoMoreInteractions(fs);
     }
@@ -135,15 +141,15 @@ public class TestECPolicyDisabler  {
     @Test
     public void testOtherRuntimeExceptionThrown() {
         MockDistributedFileSystem fs = mock(MockDistributedFileSystem.class);
-        when(fs.getErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
+        when(fs.getFakeErasureCodingPolicy(any())).thenReturn(ReplicationPolicy.OTHER);
         Mockito.doThrow(new RuntimeException("mock io exception")).when(fs).setErasureCodingPolicy(any(), any());
         try {
-            ECPolicyDisabler.check(fs, null);
+            ECPolicyDisabler.check(fs, null, FAKE_METHOD_NAME);
             Assert.fail("exception expected");
         } catch (RuntimeException e) {
             assertNotNull("runtime exception got", e);
         }
-        verify(fs).getErasureCodingPolicy(any());
+        verify(fs).getFakeErasureCodingPolicy(any());
         verify(fs).setErasureCodingPolicy(any(), eq("DEFAULT"));
         verifyNoMoreInteractions(fs);
     }
