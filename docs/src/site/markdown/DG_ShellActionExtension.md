@@ -100,7 +100,8 @@ The `configuration` element, if present, contains configuration
 properties that are passed to the Shell job.
 
 The `exec` element must contain the path of the Shell command to
-execute. The arguments of Shell command can then be specified
+execute. It can contain "file://path/to/shell/command" or it can contain 
+only the name of the shell command. The arguments of Shell command can then be specified
 using one or more `argument` element.
 
 The `argument` element, if present, contains argument to be passed to
